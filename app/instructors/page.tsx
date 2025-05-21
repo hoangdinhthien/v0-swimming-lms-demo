@@ -17,10 +17,13 @@ export default function InstructorsPage() {
     {
       id: 1,
       name: "Sarah Johnson",
-      specialty: "Beginner Swimming, Water Safety",
-      experience: "10+ years",
-      certifications: ["American Red Cross WSI", "Lifeguard Certified"],
-      bio: "Sarah specializes in teaching beginners and helping students overcome water anxiety. Her patient approach makes learning to swim enjoyable for all ages.",
+      specialty: "Bơi Cơ Bản, An Toàn Dưới Nước",
+      experience: "10+ năm",
+      certifications: [
+        "Huấn Luyện Viên Hội Chữ Thập Đỏ WSI",
+        "Chứng Nhận Cứu Hộ",
+      ],
+      bio: "Sarah chuyên dạy người mới bắt đầu và giúp học viên vượt qua nỗi lo âu dưới nước. Phương pháp kiên nhẫn của cô giúp việc học bơi trở nên thú vị cho mọi lứa tuổi.",
       rating: 4.9,
       reviews: 124,
       image: "/placeholder.svg?height=300&width=300&text=Sarah",
@@ -28,10 +31,13 @@ export default function InstructorsPage() {
     {
       id: 2,
       name: "Michael Chen",
-      specialty: "Competitive Swimming, Advanced Techniques",
-      experience: "15+ years",
-      certifications: ["USA Swimming Coach", "Former Olympic Athlete"],
-      bio: "Michael is a former competitive swimmer who now shares his expertise with students looking to perfect their technique and improve their speed.",
+      specialty: "Bơi Thi Đấu, Kỹ Thuật Nâng Cao",
+      experience: "15+ năm",
+      certifications: [
+        "Huấn Luyện Viên Bơi Hoa Kỳ",
+        "Cựu Vận Động Viên Olympic",
+      ],
+      bio: "Michael là cựu vận động viên bơi lội thi đấu, hiện đang chia sẻ chuyên môn của mình với học viên muốn hoàn thiện kỹ thuật và cải thiện tốc độ.",
       rating: 4.8,
       reviews: 98,
       image: "/placeholder.svg?height=300&width=300&text=Michael",
@@ -39,10 +45,10 @@ export default function InstructorsPage() {
     {
       id: 3,
       name: "Emma Rodriguez",
-      specialty: "Youth Swimming, Stroke Development",
-      experience: "8+ years",
-      certifications: ["ASCA Level 2 Coach", "Swim America Instructor"],
-      bio: "Emma has a special talent for working with children and developing proper stroke techniques from an early age.",
+      specialty: "Bơi Lội Thanh Thiếu Niên, Phát Triển Kỹ Thuật",
+      experience: "8+ năm",
+      certifications: ["Huấn Luyện Viên ASCA Cấp 2", "Giảng Viên Swim America"],
+      bio: "Emma có tài năng đặc biệt làm việc với trẻ em và phát triển các kỹ thuật bơi đúng từ độ tuổi sớm.",
       rating: 4.7,
       reviews: 87,
       image: "/placeholder.svg?height=300&width=300&text=Emma",
@@ -50,10 +56,13 @@ export default function InstructorsPage() {
     {
       id: 4,
       name: "David Wilson",
-      specialty: "Parent & Child Swimming, Water Acclimation",
-      experience: "12+ years",
-      certifications: ["Infant Swimming Resource", "Water Safety Instructor"],
-      bio: "David specializes in parent-child swimming lessons and helping infants and toddlers become comfortable in the water.",
+      specialty: "Bơi Phụ Huynh & Trẻ Em, Làm Quen Với Nước",
+      experience: "12+ năm",
+      certifications: [
+        "Chuyên Gia Bơi Lội Cho Trẻ Sơ Sinh",
+        "Giảng Viên An Toàn Dưới Nước",
+      ],
+      bio: "David chuyên về các bài học bơi dành cho phụ huynh-trẻ em và giúp trẻ sơ sinh và trẻ mới biết đi làm quen với môi trường nước.",
       rating: 4.9,
       reviews: 112,
       image: "/placeholder.svg?height=300&width=300&text=David",
@@ -61,13 +70,13 @@ export default function InstructorsPage() {
     {
       id: 5,
       name: "Lisa Thompson",
-      specialty: "Adult Learn-to-Swim, Aquatic Fitness",
-      experience: "9+ years",
+      specialty: "Dạy Bơi Cho Người Lớn, Thể Dục Dưới Nước",
+      experience: "9+ năm",
       certifications: [
-        "Adult-Learn-To-Swim Instructor",
-        "Aquatic Exercise Association",
+        "Giảng Viên Dạy Bơi Cho Người Lớn",
+        "Hiệp Hội Thể Dục Dưới Nước",
       ],
-      bio: "Lisa focuses on adult swimmers and those looking to use swimming for fitness and rehabilitation purposes.",
+      bio: "Lisa tập trung vào các học viên là người lớn và những người muốn sử dụng bơi lội cho mục đích thể dục và phục hồi.",
       rating: 4.8,
       reviews: 76,
       image: "/placeholder.svg?height=300&width=300&text=Lisa",
@@ -75,10 +84,13 @@ export default function InstructorsPage() {
     {
       id: 6,
       name: "James Anderson",
-      specialty: "Competitive Coaching, Performance Analysis",
-      experience: "20+ years",
-      certifications: ["ASCA Level 4 Coach", "Sports Performance Analyst"],
-      bio: "James has coached competitive swimmers at national and international levels, with expertise in performance analysis and technique refinement.",
+      specialty: "Huấn Luyện Thi Đấu, Phân Tích Hiệu Suất",
+      experience: "20+ năm",
+      certifications: [
+        "Huấn Luyện Viên ASCA Cấp 4",
+        "Chuyên Gia Phân Tích Hiệu Suất Thể Thao",
+      ],
+      bio: "James đã huấn luyện các vận động viên bơi lội thi đấu ở cấp quốc gia và quốc tế, với chuyên môn về phân tích hiệu suất và hoàn thiện kỹ thuật.",
       rating: 4.9,
       reviews: 145,
       image: "/placeholder.svg?height=300&width=300&text=James",
@@ -102,33 +114,34 @@ export default function InstructorsPage() {
               href='/'
               className='text-sm font-medium'
             >
-              Home
+              Trang Chủ
             </Link>
             <Link
               href='/courses'
               className='text-sm font-medium'
             >
-              Courses
+              Khóa Học
             </Link>
             <Link
               href='/instructors'
               className='text-sm font-medium text-sky-600 dark:text-sky-400'
             >
-              Instructors
+              Giảng Viên
             </Link>
             <Link
               href='/about'
               className='text-sm font-medium'
             >
-              About
+              Giới Thiệu
             </Link>
           </nav>
           <div className='flex items-center gap-4'>
+            {" "}
             <Link href='/login'>
-              <Button variant='outline'>Log In</Button>
+              <Button variant='outline'>Đăng Nhập</Button>
             </Link>
             <Link href='/signup'>
-              <Button>Sign Up</Button>
+              <Button>Đăng Ký</Button>
             </Link>
           </div>
         </div>
@@ -136,26 +149,27 @@ export default function InstructorsPage() {
       {/* Main Content */}
       <main className='flex-1'>
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12'>
+          {" "}
           <div className='flex flex-col gap-4'>
-            <h1 className='text-3xl font-bold'>Our Swimming Instructors</h1>
+            <h1 className='text-3xl font-bold'>Đội Ngũ Giảng Viên Bơi Lội</h1>
             <p className='text-muted-foreground'>
-              Meet our team of certified swimming instructors with years of
-              experience teaching swimmers of all ages and abilities.
+              Gặp gỡ đội ngũ giảng viên bơi lội được chứng nhận của chúng tôi
+              với nhiều năm kinh nghiệm dạy bơi cho học viên ở mọi lứa tuổi và
+              trình độ.
             </p>
           </div>
-
           {/* Search */}
           <div className='my-8'>
             <div className='relative max-w-md'>
+              {" "}
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
                 type='search'
-                placeholder='Search instructors by name or specialty...'
+                placeholder='Tìm kiếm giảng viên theo tên hoặc chuyên môn...'
                 className='w-full pl-8'
               />
             </div>
           </div>
-
           {/* Instructors Grid */}
           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {instructors.map((instructor) => (
@@ -178,17 +192,19 @@ export default function InstructorsPage() {
                   <p className='text-sm'>{instructor.bio}</p>
                   <div className='flex items-center gap-1'>
                     <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
-                    <span className='font-medium'>{instructor.rating}</span>
+                    <span className='font-medium'>
+                      {instructor.rating}
+                    </span>{" "}
                     <span className='text-muted-foreground text-sm'>
-                      ({instructor.reviews} reviews)
+                      ({instructor.reviews} đánh giá)
                     </span>
                   </div>
                   <div className='space-y-1'>
-                    <p className='text-sm font-medium'>Experience:</p>
+                    <p className='text-sm font-medium'>Kinh nghiệm:</p>
                     <p className='text-sm'>{instructor.experience}</p>
                   </div>
                   <div className='space-y-1'>
-                    <p className='text-sm font-medium'>Certifications:</p>
+                    <p className='text-sm font-medium'>Chứng chỉ:</p>
                     <ul className='text-sm list-disc pl-5'>
                       {instructor.certifications.map((cert, index) => (
                         <li key={index}>{cert}</li>
@@ -201,9 +217,9 @@ export default function InstructorsPage() {
                     variant='outline'
                     className='flex-1'
                   >
-                    View Profile
+                    Xem Hồ Sơ
                   </Button>
-                  <Button className='flex-1'>Book Lesson</Button>
+                  <Button className='flex-1'>Đặt Lịch Học</Button>
                 </CardFooter>
               </Card>
             ))}
@@ -216,29 +232,29 @@ export default function InstructorsPage() {
           <div className='flex items-center gap-2 font-semibold'>
             <Waves className='h-5 w-5 text-sky-500' />
             <span>AquaLearn</span>
-          </div>
+          </div>{" "}
           <p className='text-sm text-muted-foreground'>
-            © {new Date().getFullYear()} AquaLearn Swimming Center. All rights
-            reserved.
+            © {new Date().getFullYear()} Trung Tâm Dạy Bơi AquaLearn. Đã đăng ký
+            bản quyền.
           </p>
           <div className='flex items-center gap-4'>
             <Link
               href='/terms'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Terms
+              Điều khoản
             </Link>
             <Link
               href='/privacy'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Privacy
+              Bảo mật
             </Link>
             <Link
               href='/contact'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Contact
+              Liên hệ
             </Link>
           </div>
         </div>

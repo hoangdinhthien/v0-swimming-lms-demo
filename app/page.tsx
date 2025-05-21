@@ -19,39 +19,39 @@ export default function Home() {
           <div className='flex items-center gap-2 font-bold text-xl'>
             <Waves className='h-6 w-6 text-sky-500' />
             <span>AquaLearn</span>
-          </div>
+          </div>{" "}
           <nav className='hidden md:flex items-center gap-6'>
             <Link
               href='/'
               className='text-sm font-medium'
             >
-              Home
+              Trang Chủ
             </Link>
             <Link
               href='/courses'
               className='text-sm font-medium'
             >
-              Courses
+              Khóa Học
             </Link>
             <Link
               href='/instructors'
               className='text-sm font-medium'
             >
-              Instructors
+              Giáo Viên
             </Link>
             <Link
               href='/about'
               className='text-sm font-medium'
             >
-              About
+              Giới Thiệu
             </Link>
           </nav>
           <div className='flex items-center gap-4'>
             <Link href='/login'>
-              <Button variant='outline'>Log In</Button>
+              <Button variant='outline'>Đăng Nhập</Button>
             </Link>
             <Link href='/signup'>
-              <Button>Sign Up</Button>
+              <Button>Đăng Ký</Button>
             </Link>
           </div>
         </div>
@@ -61,14 +61,15 @@ export default function Home() {
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
           <div className='grid gap-6 lg:grid-cols-2 lg:gap-12 items-center'>
             <div className='flex flex-col justify-center space-y-4'>
+              {" "}
               <div className='space-y-2'>
                 <h1 className='text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none'>
-                  Learn to Swim with Confidence
+                  Học Bơi Với Sự Tự Tin
                 </h1>
                 <p className='max-w-[600px] text-muted-foreground md:text-xl'>
-                  Our comprehensive swimming courses are designed for all ages
-                  and skill levels. Track your progress and achieve your
-                  swimming goals with our expert instructors.
+                  Các khóa học bơi toàn diện của chúng tôi được thiết kế cho mọi
+                  lứa tuổi và trình độ. Theo dõi sự tiến bộ và đạt được mục tiêu
+                  bơi lội của bạn với các giáo viên chuyên nghiệp.
                 </p>
               </div>
               <div className='flex flex-col gap-2 min-[400px]:flex-row'>
@@ -77,7 +78,7 @@ export default function Home() {
                     size='lg'
                     className='bg-sky-600 hover:bg-sky-700'
                   >
-                    Browse Courses
+                    Xem Khóa Học
                     <ArrowRight className='ml-2 h-4 w-4' />
                   </Button>
                 </Link>
@@ -86,7 +87,7 @@ export default function Home() {
                     size='lg'
                     variant='outline'
                   >
-                    Learn More
+                    Tìm Hiểu Thêm
                   </Button>
                 </Link>
               </div>
@@ -95,7 +96,7 @@ export default function Home() {
               <div className='aspect-video overflow-hidden rounded-xl'>
                 <img
                   src='/placeholder.svg?height=500&width=800'
-                  alt='Swimming lessons in action'
+                  alt='Các buổi học bơi đang diễn ra'
                   className='object-cover w-full h-full'
                 />
               </div>
@@ -108,50 +109,52 @@ export default function Home() {
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
           <div className='flex flex-col items-center justify-center space-y-4 text-center'>
             <div className='space-y-2'>
+              {" "}
               <h2 className='text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl'>
-                Why Choose Our Swimming LMS?
+                Tại Sao Chọn Hệ Thống Học Bơi Của Chúng Tôi?
               </h2>
               <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
-                Our learning management system is designed specifically for
-                swimming education, providing a seamless experience for students
-                and instructors.
+                Hệ thống quản lý học tập của chúng tôi được thiết kế đặc biệt
+                cho giáo dục bơi lội, mang lại trải nghiệm liền mạch cho học
+                viên và giáo viên.
               </p>
             </div>
           </div>
           <div className='mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12'>
+            {" "}
             <Card>
               <CardHeader className='flex flex-row items-center gap-4'>
                 <Calendar className='h-8 w-8 text-sky-500' />
-                <CardTitle>Flexible Scheduling</CardTitle>
+                <CardTitle>Lịch Học Linh Hoạt</CardTitle>
               </CardHeader>
               <CardContent>
                 <p>
-                  Book lessons at your convenience with our easy-to-use calendar
-                  system.
+                  Đặt lịch học theo sự thuận tiện của bạn với hệ thống lịch dễ
+                  sử dụng của chúng tôi.
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className='flex flex-row items-center gap-4'>
                 <Users className='h-8 w-8 text-sky-500' />
-                <CardTitle>Expert Instructors</CardTitle>
+                <CardTitle>Giáo Viên Chuyên Nghiệp</CardTitle>
               </CardHeader>
               <CardContent>
                 <p>
-                  Learn from certified swimming coaches with years of teaching
-                  experience.
+                  Học từ các huấn luyện viên bơi lội được chứng nhận với nhiều
+                  năm kinh nghiệm giảng dạy.
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className='flex flex-row items-center gap-4'>
                 <Award className='h-8 w-8 text-sky-500' />
-                <CardTitle>Progress Tracking</CardTitle>
+                <CardTitle>Theo Dõi Tiến Độ</CardTitle>
               </CardHeader>
               <CardContent>
                 <p>
-                  Monitor your improvement with detailed progress reports and
-                  skill assessments.
+                  Theo dõi sự tiến bộ của bạn với báo cáo chi tiết và đánh giá
+                  kỹ năng.
                 </p>
               </CardContent>
             </Card>
@@ -163,40 +166,42 @@ export default function Home() {
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
           <div className='flex flex-col items-center justify-center space-y-4 text-center'>
             <div className='space-y-2'>
+              {" "}
               <h2 className='text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl'>
-                Popular Swimming Courses
+                Các Khóa Học Bơi Phổ Biến
               </h2>
               <p className='max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed'>
-                Explore our most popular swimming programs for all ages and
-                skill levels.
+                Khám phá các chương trình học bơi phổ biến nhất của chúng tôi
+                cho mọi lứa tuổi và trình độ.
               </p>
             </div>
           </div>
           <div className='mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-12'>
+            {" "}
             {[
               {
-                title: "Beginner Swimming",
+                title: "Bơi Cơ Bản",
                 description:
-                  "Perfect for those new to swimming. Learn water safety and basic strokes.",
-                level: "Beginner",
-                age: "5+ years",
-                duration: "8 weeks",
+                  "Hoàn hảo cho người mới bắt đầu. Học an toàn dưới nước và các kiểu bơi cơ bản.",
+                level: "Cơ bản",
+                age: "5+ tuổi",
+                duration: "8 tuần",
               },
               {
-                title: "Intermediate Techniques",
+                title: "Kỹ Thuật Trung Cấp",
                 description:
-                  "Refine your strokes and build endurance for confident swimming.",
-                level: "Intermediate",
-                age: "8+ years",
-                duration: "10 weeks",
+                  "Hoàn thiện các kiểu bơi và xây dựng sức bền cho việc bơi tự tin.",
+                level: "Trung cấp",
+                age: "8+ tuổi",
+                duration: "10 tuần",
               },
               {
-                title: "Advanced Performance",
+                title: "Nâng Cao Hiệu Suất",
                 description:
-                  "Master competitive techniques and advanced swimming skills.",
-                level: "Advanced",
-                age: "12+ years",
-                duration: "12 weeks",
+                  "Làm chủ các kỹ thuật thi đấu và kỹ năng bơi nâng cao.",
+                level: "Nâng cao",
+                age: "12+ tuổi",
+                duration: "12 tuần",
               },
             ].map((course, index) => (
               <Card
@@ -215,15 +220,17 @@ export default function Home() {
                   <CardDescription>{course.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {" "}
                   <div className='grid grid-cols-2 gap-2 text-sm'>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Level:</span> {course.level}
+                      <span className='font-medium'>Trình độ:</span>{" "}
+                      {course.level}
                     </div>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Age:</span> {course.age}
+                      <span className='font-medium'>Độ tuổi:</span> {course.age}
                     </div>
                     <div className='flex items-center gap-1 col-span-2'>
-                      <span className='font-medium'>Duration:</span>{" "}
+                      <span className='font-medium'>Thời gian:</span>{" "}
                       {course.duration}
                     </div>
                   </div>
@@ -233,19 +240,19 @@ export default function Home() {
                     href={`/courses/${index + 1}`}
                     className='w-full'
                   >
-                    <Button className='w-full'>View Course</Button>
+                    <Button className='w-full'>Xem Khóa Học</Button>
                   </Link>
                 </CardFooter>
               </Card>
             ))}
-          </div>
+          </div>{" "}
           <div className='flex justify-center mt-8'>
             <Link href='/courses'>
               <Button
                 variant='outline'
                 size='lg'
               >
-                View All Courses
+                Xem Tất Cả Khóa Học
                 <ArrowRight className='ml-2 h-4 w-4' />
               </Button>
             </Link>
@@ -258,29 +265,29 @@ export default function Home() {
           <div className='flex items-center gap-2 font-semibold'>
             <Waves className='h-5 w-5 text-sky-500' />
             <span>AquaLearn</span>
-          </div>
+          </div>{" "}
           <p className='text-sm text-muted-foreground'>
-            © {new Date().getFullYear()} AquaLearn Swimming Center. All rights
-            reserved.
+            © {new Date().getFullYear()} Trung Tâm Bơi AquaLearn. Mọi quyền được
+            bảo lưu.
           </p>
           <div className='flex items-center gap-4'>
             <Link
               href='/terms'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Terms
+              Điều Khoản
             </Link>
             <Link
               href='/privacy'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Privacy
+              Bảo Mật
             </Link>
             <Link
               href='/contact'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Contact
+              Liên Hệ
             </Link>
           </div>
         </div>

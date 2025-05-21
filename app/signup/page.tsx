@@ -32,28 +32,29 @@ export default function SignupPage() {
         </Link>
 
         <Card className='w-full max-w-md'>
+          {" "}
           <CardHeader className='space-y-1'>
             <CardTitle className='text-2xl font-bold text-center'>
-              Create an account
+              Tạo tài khoản mới
             </CardTitle>
             <CardDescription className='text-center'>
-              Enter your information to get started with AquaLearn
+              Nhập thông tin của bạn để bắt đầu với AquaLearn
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-4'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='space-y-2'>
-                <Label htmlFor='first-name'>First name</Label>
+                <Label htmlFor='first-name'>Tên</Label>
                 <Input
                   id='first-name'
-                  placeholder='John'
+                  placeholder='Nguyễn'
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='last-name'>Last name</Label>
+                <Label htmlFor='last-name'>Họ</Label>
                 <Input
                   id='last-name'
-                  placeholder='Doe'
+                  placeholder='Văn A'
                 />
               </div>
             </div>
@@ -66,44 +67,44 @@ export default function SignupPage() {
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='password'>Password</Label>
+              <Label htmlFor='password'>Mật khẩu</Label>
               <Input
                 id='password'
                 type='password'
               />
-            </div>
+            </div>{" "}
             <div className='space-y-2'>
-              <Label htmlFor='confirm-password'>Confirm Password</Label>
+              <Label htmlFor='confirm-password'>Xác nhận mật khẩu</Label>
               <Input
                 id='confirm-password'
                 type='password'
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='account-type'>Account Type</Label>
+              <Label htmlFor='account-type'>Loại tài khoản</Label>
               <Select>
                 <SelectTrigger id='account-type'>
-                  <SelectValue placeholder='Select account type' />
+                  <SelectValue placeholder='Chọn loại tài khoản' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='student'>Student</SelectItem>
-                  <SelectItem value='parent'>Parent</SelectItem>
+                  <SelectItem value='student'>Học viên</SelectItem>
+                  <SelectItem value='parent'>Phụ huynh</SelectItem>
                   <SelectItem value='instructor'>
-                    Instructor (requires approval)
+                    Giáo viên (cần phê duyệt)
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </CardContent>
+          </CardContent>{" "}
           <CardFooter className='flex flex-col space-y-4'>
-            <Button className='w-full'>Create Account</Button>
+            <Button className='w-full'>Tạo Tài Khoản</Button>
             <div className='text-center text-sm'>
-              Already have an account?{" "}
+              Bạn đã có tài khoản?{" "}
               <Link
                 href='/login'
                 className='text-sky-600 hover:underline'
               >
-                Sign in
+                Đăng nhập
               </Link>
             </div>
           </CardFooter>

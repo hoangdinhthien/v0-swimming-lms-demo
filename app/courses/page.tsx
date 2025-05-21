@@ -23,68 +23,67 @@ export default function CoursesPage() {
   const courses = [
     {
       id: 1,
-      title: "Beginner Swimming",
+      title: "Bơi Cơ Bản",
       description:
-        "Perfect for those new to swimming. Learn water safety and basic strokes.",
-      level: "Beginner",
-      age: "5+ years",
-      duration: "8 weeks",
+        "Hoàn hảo cho người mới bắt đầu. Học an toàn dưới nước và các kiểu bơi cơ bản.",
+      level: "Cơ bản",
+      age: "5+ tuổi",
+      duration: "8 tuần",
       instructor: "Sarah Johnson",
-      price: "$120",
+      price: "2.500.000₫",
     },
     {
       id: 2,
-      title: "Intermediate Techniques",
+      title: "Kỹ Thuật Trung Cấp",
       description:
-        "Refine your strokes and build endurance for confident swimming.",
-      level: "Intermediate",
-      age: "8+ years",
-      duration: "10 weeks",
+        "Hoàn thiện các kiểu bơi và xây dựng sức bền cho việc bơi tự tin.",
+      level: "Trung cấp",
+      age: "8+ tuổi",
+      duration: "10 tuần",
       instructor: "Michael Chen",
-      price: "$150",
+      price: "3.200.000₫",
     },
     {
       id: 3,
-      title: "Advanced Performance",
-      description:
-        "Master competitive techniques and advanced swimming skills.",
-      level: "Advanced",
-      age: "12+ years",
-      duration: "12 weeks",
+      title: "Nâng Cao Hiệu Suất",
+      description: "Làm chủ các kỹ thuật thi đấu và kỹ năng bơi nâng cao.",
+      level: "Nâng cao",
+      age: "12+ tuổi",
+      duration: "12 tuần",
       instructor: "Emma Rodriguez",
-      price: "$180",
+      price: "3.600.000₫",
     },
     {
       id: 4,
-      title: "Parent & Child Swimming",
+      title: "Phụ Huynh & Trẻ Em",
       description:
-        "Bond with your child while teaching them essential water skills.",
-      level: "Beginner",
-      age: "6 months - 3 years",
-      duration: "6 weeks",
+        "Gắn kết với con bạn trong khi dạy cho chúng các kỹ năng nước cần thiết.",
+      level: "Cơ bản",
+      age: "6 tháng - 3 tuổi",
+      duration: "6 tuần",
       instructor: "David Wilson",
-      price: "$100",
+      price: "2.000.000₫",
     },
     {
       id: 5,
-      title: "Adult Learn to Swim",
+      title: "Khóa Học Bơi Cho Người Lớn",
       description:
-        "It's never too late to learn! Designed specifically for adult beginners.",
-      level: "Beginner",
-      age: "16+ years",
-      duration: "8 weeks",
+        "Không bao giờ là quá muộn để học! Được thiết kế đặc biệt cho người mới bắt đầu ở độ tuổi trưởng thành.",
+      level: "Cơ bản",
+      age: "16+ tuổi",
+      duration: "8 tuần",
       instructor: "Lisa Thompson",
-      price: "$140",
+      price: "2.800.000₫",
     },
     {
       id: 6,
-      title: "Competitive Stroke Refinement",
-      description: "Perfect your technique for competitive swimming events.",
-      level: "Advanced",
-      age: "14+ years",
-      duration: "10 weeks",
+      title: "Hoàn Thiện Kỹ Thuật Thi Đấu",
+      description: "Hoàn thiện kỹ thuật của bạn cho các sự kiện bơi thi đấu.",
+      level: "Nâng cao",
+      age: "14+ tuổi",
+      duration: "10 tuần",
       instructor: "James Anderson",
-      price: "$200",
+      price: "4.000.000₫",
     },
   ];
 
@@ -105,33 +104,34 @@ export default function CoursesPage() {
               href='/'
               className='text-sm font-medium'
             >
-              Home
+              Trang Chủ
             </Link>
             <Link
               href='/courses'
               className='text-sm font-medium text-sky-600 dark:text-sky-400'
             >
-              Courses
+              Khóa Học
             </Link>
             <Link
               href='/instructors'
               className='text-sm font-medium'
             >
-              Instructors
+              Giảng Viên
             </Link>
             <Link
               href='/about'
               className='text-sm font-medium'
             >
-              About
+              Giới Thiệu
             </Link>
           </nav>
           <div className='flex items-center gap-4'>
+            {" "}
             <Link href='/login'>
-              <Button variant='outline'>Log In</Button>
+              <Button variant='outline'>Đăng Nhập</Button>
             </Link>
             <Link href='/signup'>
-              <Button>Sign Up</Button>
+              <Button>Đăng Ký</Button>
             </Link>
           </div>
         </div>
@@ -139,49 +139,49 @@ export default function CoursesPage() {
       {/* Main Content */}
       <main className='flex-1'>
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12'>
+          {" "}
           <div className='flex flex-col gap-4'>
-            <h1 className='text-3xl font-bold'>Swimming Courses</h1>
+            <h1 className='text-3xl font-bold'>Khóa Học Bơi</h1>
             <p className='text-muted-foreground'>
-              Browse our comprehensive selection of swimming courses for all
-              ages and skill levels.
+              Duyệt qua các khóa học bơi toàn diện cho mọi lứa tuổi và trình độ
+              kỹ năng.
             </p>
           </div>
-
           {/* Filters */}
           <div className='my-8 grid gap-4 md:grid-cols-4'>
             <div className='relative md:col-span-2'>
+              {" "}
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
                 type='search'
-                placeholder='Search courses...'
+                placeholder='Tìm kiếm khóa học...'
                 className='w-full pl-8'
               />
-            </div>
+            </div>{" "}
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder='Skill Level' />
+                <SelectValue placeholder='Trình Độ' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Levels</SelectItem>
-                <SelectItem value='beginner'>Beginner</SelectItem>
-                <SelectItem value='intermediate'>Intermediate</SelectItem>
-                <SelectItem value='advanced'>Advanced</SelectItem>
+                <SelectItem value='all'>Tất Cả Trình Độ</SelectItem>
+                <SelectItem value='beginner'>Cơ Bản</SelectItem>
+                <SelectItem value='intermediate'>Trung Cấp</SelectItem>
+                <SelectItem value='advanced'>Nâng Cao</SelectItem>
               </SelectContent>
-            </Select>
+            </Select>{" "}
             <Select>
               <SelectTrigger>
-                <SelectValue placeholder='Age Group' />
+                <SelectValue placeholder='Nhóm Tuổi' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Ages</SelectItem>
-                <SelectItem value='toddler'>Toddler (0-3)</SelectItem>
-                <SelectItem value='children'>Children (4-12)</SelectItem>
-                <SelectItem value='teen'>Teen (13-17)</SelectItem>
-                <SelectItem value='adult'>Adult (18+)</SelectItem>
+                <SelectItem value='all'>Tất Cả Độ Tuổi</SelectItem>
+                <SelectItem value='toddler'>Trẻ Nhỏ (0-3)</SelectItem>
+                <SelectItem value='children'>Trẻ Em (4-12)</SelectItem>
+                <SelectItem value='teen'>Thanh Thiếu Niên (13-17)</SelectItem>
+                <SelectItem value='adult'>Người Lớn (18+)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
           {/* Course Grid */}
           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {courses.map((course) => (
@@ -201,22 +201,25 @@ export default function CoursesPage() {
                   <CardDescription>{course.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {" "}
                   <div className='grid grid-cols-2 gap-2 text-sm'>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Level:</span> {course.level}
+                      <span className='font-medium'>Trình độ:</span>{" "}
+                      {course.level}
                     </div>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Age:</span> {course.age}
+                      <span className='font-medium'>Độ tuổi:</span> {course.age}
                     </div>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Duration:</span>{" "}
+                      <span className='font-medium'>Thời gian:</span>{" "}
                       {course.duration}
                     </div>
                     <div className='flex items-center gap-1'>
-                      <span className='font-medium'>Price:</span> {course.price}
+                      <span className='font-medium'>Học phí:</span>{" "}
+                      {course.price}
                     </div>
                     <div className='flex items-center gap-1 col-span-2'>
-                      <span className='font-medium'>Instructor:</span>{" "}
+                      <span className='font-medium'>Giảng viên:</span>{" "}
                       {course.instructor}
                     </div>
                   </div>
@@ -226,18 +229,19 @@ export default function CoursesPage() {
                     href={`/courses/${course.id}`}
                     className='flex-1'
                   >
+                    {" "}
                     <Button
                       variant='outline'
                       className='w-full'
                     >
-                      Details
+                      Chi Tiết
                     </Button>
                   </Link>
                   <Link
                     href={`/courses/${course.id}/enroll`}
                     className='flex-1'
                   >
-                    <Button className='w-full'>Enroll</Button>
+                    <Button className='w-full'>Đăng Ký</Button>
                   </Link>
                 </CardFooter>
               </Card>
@@ -251,29 +255,29 @@ export default function CoursesPage() {
           <div className='flex items-center gap-2 font-semibold'>
             <Waves className='h-5 w-5 text-sky-500' />
             <span>AquaLearn</span>
-          </div>
+          </div>{" "}
           <p className='text-sm text-muted-foreground'>
-            © {new Date().getFullYear()} AquaLearn Swimming Center. All rights
-            reserved.
+            © {new Date().getFullYear()} Trung Tâm Dạy Bơi AquaLearn. Đã đăng ký
+            bản quyền.
           </p>
           <div className='flex items-center gap-4'>
             <Link
               href='/terms'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Terms
+              Điều khoản
             </Link>
             <Link
               href='/privacy'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Privacy
+              Bảo mật
             </Link>
             <Link
               href='/contact'
               className='text-sm text-muted-foreground hover:underline'
             >
-              Contact
+              Liên hệ
             </Link>
           </div>
         </div>

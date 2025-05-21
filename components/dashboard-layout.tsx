@@ -31,116 +31,116 @@ export default function DashboardLayout({
     student: [
       {
         href: "/dashboard/student",
-        label: "Dashboard",
+        label: "Bảng Điều Khiển",
         icon: <LayoutDashboard className='h-5 w-5' />,
       },
       {
         href: "/dashboard/student/courses",
-        label: "My Courses",
+        label: "Khóa Học Của Tôi",
         icon: <Award className='h-5 w-5' />,
       },
       {
         href: "/dashboard/student/schedule",
-        label: "Schedule",
+        label: "Lịch Học",
         icon: <Calendar className='h-5 w-5' />,
       },
       {
         href: "/dashboard/student/payments",
-        label: "Payments",
+        label: "Thanh Toán",
         icon: <CreditCard className='h-5 w-5' />,
       },
       {
         href: "/dashboard/student/notifications",
-        label: "Notifications",
+        label: "Thông Báo",
         icon: <Bell className='h-5 w-5' />,
       },
       {
         href: "/chat",
-        label: "Messages",
+        label: "Tin Nhắn",
         icon: <MessageSquare className='h-5 w-5' />,
       },
       {
         href: "/dashboard/student/feedback",
-        label: "Feedback",
+        label: "Đánh Giá",
         icon: <Star className='h-5 w-5' />,
       },
     ],
     instructor: [
       {
         href: "/dashboard/instructor",
-        label: "Dashboard",
+        label: "Bảng Điều Khiển",
         icon: <LayoutDashboard className='h-5 w-5' />,
       },
       {
         href: "/dashboard/instructor/classes",
-        label: "My Classes",
+        label: "Lớp Học Của Tôi",
         icon: <Users className='h-5 w-5' />,
       },
       {
         href: "/dashboard/instructor/students",
-        label: "Students",
+        label: "Học Viên",
         icon: <Users className='h-5 w-5' />,
       },
       {
         href: "/dashboard/instructor/schedule",
-        label: "Schedule",
+        label: "Lịch Dạy",
         icon: <Calendar className='h-5 w-5' />,
       },
       {
         href: "/dashboard/instructor/feedback",
-        label: "Feedback",
+        label: "Phản Hồi",
         icon: <MessageSquare className='h-5 w-5' />,
       },
       {
         href: "/chat",
-        label: "Messages",
+        label: "Tin Nhắn",
         icon: <MessageSquare className='h-5 w-5' />,
       },
     ],
     admin: [
       {
         href: "/dashboard/admin",
-        label: "Dashboard",
+        label: "Bảng Điều Khiển",
         icon: <LayoutDashboard className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/courses",
-        label: "Courses",
+        label: "Khóa Học",
         icon: <Award className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/instructors",
-        label: "Instructors",
+        label: "Giáo Viên",
         icon: <Users className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/students",
-        label: "Students",
+        label: "Học Viên",
         icon: <Users className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/pools",
-        label: "Pool Management",
+        label: "Quản Lý Hồ Bơi",
         icon: <Waves className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/finances",
-        label: "Finances",
+        label: "Tài Chính",
         icon: <CreditCard className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/promotions",
-        label: "Promotions",
+        label: "Khuyến Mãi",
         icon: <Percent className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/reports",
-        label: "Reports",
+        label: "Báo Cáo",
         icon: <BarChart3 className='h-5 w-5' />,
       },
       {
         href: "/dashboard/admin/settings",
-        label: "Settings",
+        label: "Cài Đặt",
         icon: <Settings className='h-5 w-5' />,
       },
     ],
@@ -156,6 +156,7 @@ export default function DashboardLayout({
             href='/'
             className='flex items-center gap-2 font-bold text-xl'
           >
+            {" "}
             <Waves className='h-6 w-6 text-sky-500' />
             <span>AquaLearn</span>
           </Link>
@@ -177,7 +178,7 @@ export default function DashboardLayout({
               size='icon'
             >
               <LogOut className='h-5 w-5' />
-              <span className='sr-only'>Log out</span>
+              <span className='sr-only'>Đăng xuất</span>
             </Button>
           </div>
         </div>

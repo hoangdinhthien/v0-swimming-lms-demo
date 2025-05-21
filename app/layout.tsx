@@ -1,28 +1,36 @@
-import type React from "react"
-import "@/app/globals.css"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
+import type React from "react";
+import "@/app/globals.css";
+import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "AquaLearn - Swimming Center LMS",
-  description: "A comprehensive learning management system for swimming education",
-    generator: 'v0.dev'
-}
+  title: "AquaLearn - Trung Tâm Học Bơi",
+  description: "Hệ thống quản lý học tập toàn diện cho việc dạy bơi",
+  generator: "v0.dev",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang='vi'
+      suppressHydrationWarning
+    >
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='light'
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
