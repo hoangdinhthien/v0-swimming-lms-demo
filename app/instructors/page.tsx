@@ -1,8 +1,15 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Waves, Search, Star } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Waves, Search, Star } from "lucide-react";
 
 export default function InstructorsPage() {
   // Sample instructor data
@@ -56,7 +63,10 @@ export default function InstructorsPage() {
       name: "Lisa Thompson",
       specialty: "Adult Learn-to-Swim, Aquatic Fitness",
       experience: "9+ years",
-      certifications: ["Adult-Learn-To-Swim Instructor", "Aquatic Exercise Association"],
+      certifications: [
+        "Adult-Learn-To-Swim Instructor",
+        "Aquatic Exercise Association",
+      ],
       bio: "Lisa focuses on adult swimmers and those looking to use swimming for fitness and rehabilitation purposes.",
       rating: 4.8,
       reviews: 76,
@@ -73,131 +83,166 @@ export default function InstructorsPage() {
       reviews: 145,
       image: "/placeholder.svg?height=300&width=300&text=James",
     },
-  ]
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-10 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <Waves className="h-6 w-6 text-sky-500" />
+    <div className='flex flex-col min-h-screen'>
+      {/* Header */}{" "}
+      <header className='sticky top-0 z-10 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
+        <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between'>
+          <Link
+            href='/'
+            className='flex items-center gap-2 font-bold text-xl'
+          >
+            <Waves className='h-6 w-6 text-sky-500' />
             <span>AquaLearn</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium">
+          <nav className='hidden md:flex items-center gap-6'>
+            <Link
+              href='/'
+              className='text-sm font-medium'
+            >
               Home
             </Link>
-            <Link href="/courses" className="text-sm font-medium">
+            <Link
+              href='/courses'
+              className='text-sm font-medium'
+            >
               Courses
             </Link>
-            <Link href="/instructors" className="text-sm font-medium text-sky-600 dark:text-sky-400">
+            <Link
+              href='/instructors'
+              className='text-sm font-medium text-sky-600 dark:text-sky-400'
+            >
               Instructors
             </Link>
-            <Link href="/about" className="text-sm font-medium">
+            <Link
+              href='/about'
+              className='text-sm font-medium'
+            >
               About
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="outline">Log In</Button>
+          <div className='flex items-center gap-4'>
+            <Link href='/login'>
+              <Button variant='outline'>Log In</Button>
             </Link>
-            <Link href="/signup">
+            <Link href='/signup'>
               <Button>Sign Up</Button>
             </Link>
           </div>
         </div>
-      </header>
-
+      </header>{" "}
       {/* Main Content */}
-      <main className="flex-1">
-        <div className="container py-8 md:py-12">
-          <div className="flex flex-col gap-4">
-            <h1 className="text-3xl font-bold">Our Swimming Instructors</h1>
-            <p className="text-muted-foreground">
-              Meet our team of certified swimming instructors with years of experience teaching swimmers of all ages and
-              abilities.
+      <main className='flex-1'>
+        <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12'>
+          <div className='flex flex-col gap-4'>
+            <h1 className='text-3xl font-bold'>Our Swimming Instructors</h1>
+            <p className='text-muted-foreground'>
+              Meet our team of certified swimming instructors with years of
+              experience teaching swimmers of all ages and abilities.
             </p>
           </div>
 
           {/* Search */}
-          <div className="my-8">
-            <div className="relative max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search instructors by name or specialty..." className="w-full pl-8" />
+          <div className='my-8'>
+            <div className='relative max-w-md'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Search instructors by name or specialty...'
+                className='w-full pl-8'
+              />
             </div>
           </div>
 
           {/* Instructors Grid */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {instructors.map((instructor) => (
-              <Card key={instructor.id} className="overflow-hidden">
-                <div className="aspect-square w-full overflow-hidden">
+              <Card
+                key={instructor.id}
+                className='overflow-hidden'
+              >
+                <div className='aspect-square w-full overflow-hidden'>
                   <img
                     src={instructor.image || "/placeholder.svg"}
                     alt={instructor.name}
-                    className="object-cover w-full h-full"
+                    className='object-cover w-full h-full'
                   />
                 </div>
                 <CardHeader>
                   <CardTitle>{instructor.name}</CardTitle>
                   <CardDescription>{instructor.specialty}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm">{instructor.bio}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{instructor.rating}</span>
-                    <span className="text-muted-foreground text-sm">({instructor.reviews} reviews)</span>
+                <CardContent className='space-y-4'>
+                  <p className='text-sm'>{instructor.bio}</p>
+                  <div className='flex items-center gap-1'>
+                    <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
+                    <span className='font-medium'>{instructor.rating}</span>
+                    <span className='text-muted-foreground text-sm'>
+                      ({instructor.reviews} reviews)
+                    </span>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Experience:</p>
-                    <p className="text-sm">{instructor.experience}</p>
+                  <div className='space-y-1'>
+                    <p className='text-sm font-medium'>Experience:</p>
+                    <p className='text-sm'>{instructor.experience}</p>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Certifications:</p>
-                    <ul className="text-sm list-disc pl-5">
+                  <div className='space-y-1'>
+                    <p className='text-sm font-medium'>Certifications:</p>
+                    <ul className='text-sm list-disc pl-5'>
                       {instructor.certifications.map((cert, index) => (
                         <li key={index}>{cert}</li>
                       ))}
                     </ul>
                   </div>
                 </CardContent>
-                <CardFooter className="flex gap-2">
-                  <Button variant="outline" className="flex-1">
+                <CardFooter className='flex gap-2'>
+                  <Button
+                    variant='outline'
+                    className='flex-1'
+                  >
                     View Profile
                   </Button>
-                  <Button className="flex-1">Book Lesson</Button>
+                  <Button className='flex-1'>Book Lesson</Button>
                 </CardFooter>
               </Card>
             ))}
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col md:flex-row items-center justify-between gap-4 md:h-24">
-          <div className="flex items-center gap-2 font-semibold">
-            <Waves className="h-5 w-5 text-sky-500" />
+      {/* Footer */}{" "}
+      <footer className='w-full border-t py-6 md:py-0'>
+        <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 md:h-24'>
+          <div className='flex items-center gap-2 font-semibold'>
+            <Waves className='h-5 w-5 text-sky-500' />
             <span>AquaLearn</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} AquaLearn Swimming Center. All rights reserved.
+          <p className='text-sm text-muted-foreground'>
+            © {new Date().getFullYear()} AquaLearn Swimming Center. All rights
+            reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/terms" className="text-sm text-muted-foreground hover:underline">
+          <div className='flex items-center gap-4'>
+            <Link
+              href='/terms'
+              className='text-sm text-muted-foreground hover:underline'
+            >
               Terms
             </Link>
-            <Link href="/privacy" className="text-sm text-muted-foreground hover:underline">
+            <Link
+              href='/privacy'
+              className='text-sm text-muted-foreground hover:underline'
+            >
               Privacy
             </Link>
-            <Link href="/contact" className="text-sm text-muted-foreground hover:underline">
+            <Link
+              href='/contact'
+              className='text-sm text-muted-foreground hover:underline'
+            >
               Contact
             </Link>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
