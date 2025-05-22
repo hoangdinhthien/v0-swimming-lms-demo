@@ -9,53 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Waves, Users, Calendar, Award, ArrowRight } from "lucide-react";
+import SiteHeader from "@/components/site-header";
 
 export default function Home() {
   return (
     <div className='flex flex-col min-h-screen'>
-      {/* Header */}
-      <header className='sticky top-0 z-10 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
-        <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between'>
-          <div className='flex items-center gap-2 font-bold text-xl'>
-            <Waves className='h-6 w-6 text-sky-500' />
-            <span>AquaLearn</span>
-          </div>{" "}
-          <nav className='hidden md:flex items-center gap-6'>
-            <Link
-              href='/'
-              className='text-sm font-medium'
-            >
-              Trang Chủ
-            </Link>
-            <Link
-              href='/courses'
-              className='text-sm font-medium'
-            >
-              Khóa Học
-            </Link>
-            <Link
-              href='/instructors'
-              className='text-sm font-medium'
-            >
-              Giáo Viên
-            </Link>
-            <Link
-              href='/about'
-              className='text-sm font-medium'
-            >
-              Giới Thiệu
-            </Link>
-          </nav>
-          <div className='flex items-center gap-4'>
-            <Link href='/login'>
-              <Button variant='outline'>Đăng Nhập</Button>
-            </Link>
-            <Link href='/signup'>
-              <Button>Đăng Ký</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
       {/* Hero Section */}
       <section className='w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-sky-50 to-white dark:from-slate-900 dark:to-slate-800'>
         <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>

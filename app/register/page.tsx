@@ -812,7 +812,9 @@ export default function RegisterPage() {
   );
 }
 
-function CheckCircle(props) {
+interface CheckCircleProps extends React.SVGProps<SVGSVGElement> {}
+
+function CheckCircle(props: CheckCircleProps) {
   return (
     <svg
       {...props}

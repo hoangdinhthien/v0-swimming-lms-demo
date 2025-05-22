@@ -165,8 +165,8 @@ export default function AdminDashboardPage() {
   return (
     <DashboardLayout userRole='admin'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+        {" "}
         <div>
-          {" "}
           <h1 className='text-3xl font-bold'>Bảng Điều Khiển Quản Trị</h1>
           <p className='text-muted-foreground'>
             Chào mừng trở lại, {admin.name}!
@@ -174,26 +174,25 @@ export default function AdminDashboardPage() {
         </div>
         <div className='flex gap-2'>
           <Link href='/dashboard/admin/reports'>
+            {" "}
             <Button variant='outline'>
-              {" "}
               <FileText className='mr-2 h-4 w-4' />
               Báo Cáo
             </Button>
           </Link>
           <Link href='/dashboard/admin/settings'>
+            {" "}
             <Button variant='outline'>
-              {" "}
               <Settings className='mr-2 h-4 w-4' />
               Cài Đặt
             </Button>
           </Link>
         </div>
       </div>
-
       <div className='grid gap-6 mt-8 md:grid-cols-3 lg:grid-cols-5'>
         <Card>
+          {" "}
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
             <CardTitle className='text-sm font-medium'>
               Tổng Số Học Viên
             </CardTitle>
@@ -207,8 +206,8 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         <Card>
+          {" "}
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
             <CardTitle className='text-sm font-medium'>
               Giáo Viên Hoạt Động
             </CardTitle>
@@ -222,8 +221,8 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         <Card>
+          {" "}
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
             <CardTitle className='text-sm font-medium'>
               Khóa Học Hoạt Động
             </CardTitle>
@@ -237,8 +236,8 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         <Card>
+          {" "}
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
             <CardTitle className='text-sm font-medium'>
               Tổng Doanh Thu
             </CardTitle>
@@ -252,8 +251,8 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
         <Card>
+          {" "}
           <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
             <CardTitle className='text-sm font-medium'>
               Sử Dụng Hồ Bơi
             </CardTitle>
@@ -268,25 +267,22 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-      </div>
-
+      </div>{" "}
       <Tabs
         defaultValue='courses'
         className='mt-8'
       >
-        {" "}
         <TabsList className='grid w-full grid-cols-5'>
           <TabsTrigger value='courses'>Khóa Học</TabsTrigger>
           <TabsTrigger value='instructors'>Giáo Viên</TabsTrigger>
           <TabsTrigger value='pools'>Quản Lý Hồ Bơi</TabsTrigger>
           <TabsTrigger value='finances'>Tài Chính</TabsTrigger>
           <TabsTrigger value='reports'>Báo Cáo</TabsTrigger>
-        </TabsList>
+        </TabsList>{" "}
         <TabsContent
           value='courses'
           className='space-y-6 mt-6'
         >
-          {" "}
           <div className='flex items-center justify-between'>
             <h2 className='text-xl font-bold'>Quản Lý Khóa Học</h2>
             <Link href='/dashboard/admin/courses/new'>
@@ -299,10 +295,10 @@ export default function AdminDashboardPage() {
           <Card>
             <CardContent className='p-0'>
               <div className='rounded-md overflow-hidden'>
+                {" "}
                 <table className='w-full'>
                   <thead>
                     <tr className='border-b bg-muted/50'>
-                      {" "}
                       <th className='py-3 px-4 text-left font-medium text-sm'>
                         Khóa Học
                       </th>
@@ -348,12 +344,13 @@ export default function AdminDashboardPage() {
                             <Link
                               href={`/dashboard/admin/courses/${course.id}`}
                             >
+                              {" "}
                               <Button
                                 variant='outline'
                                 size='sm'
                               >
                                 {" "}
-                                View
+                                Xem
                               </Button>
                             </Link>
                             <Link
@@ -380,12 +377,13 @@ export default function AdminDashboardPage() {
           value='instructors'
           className='space-y-6 mt-6'
         >
+          {" "}
           <div className='flex items-center justify-between'>
-            <h2 className='text-xl font-bold'>Instructor Management</h2>
+            <h2 className='text-xl font-bold'>Quản Lý Giáo Viên</h2>
             <Link href='/dashboard/admin/instructors/new'>
               <Button>
                 <PlusCircle className='mr-2 h-4 w-4' />
-                Add New Instructor
+                Thêm Giáo Viên Mới
               </Button>
             </Link>
           </div>
@@ -393,25 +391,26 @@ export default function AdminDashboardPage() {
             <CardContent className='p-0'>
               <div className='rounded-md overflow-hidden'>
                 <table className='w-full'>
+                  {" "}
                   <thead>
                     <tr className='border-b bg-muted/50'>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Instructor
+                        Giáo Viên
                       </th>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Specialty
+                        Chuyên Môn
                       </th>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Students
+                        Học Viên
                       </th>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Classes
+                        Lớp Học
                       </th>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Rating
+                        Đánh Giá
                       </th>
                       <th className='py-3 px-4 text-left font-medium text-sm'>
-                        Actions
+                        Thao Tác
                       </th>
                     </tr>
                   </thead>
@@ -448,10 +447,10 @@ export default function AdminDashboardPage() {
                         <td className='py-3 px-4'>{instructor.rating}/5.0</td>
                         <td className='py-3 px-4'>
                           <div className='flex gap-2'>
+                            {" "}
                             <Link
                               href={`/dashboard/admin/instructors/${instructor.id}`}
                             >
-                              {" "}
                               <Button
                                 variant='outline'
                                 size='sm'
@@ -462,11 +461,12 @@ export default function AdminDashboardPage() {
                             <Link
                               href={`/dashboard/admin/instructors/${instructor.id}/edit`}
                             >
+                              {" "}
                               <Button
                                 variant='outline'
                                 size='sm'
                               >
-                                Edit
+                                Chỉnh Sửa
                               </Button>
                             </Link>
                           </div>
@@ -483,19 +483,20 @@ export default function AdminDashboardPage() {
           value='pools'
           className='space-y-6 mt-6'
         >
+          {" "}
           <div className='flex items-center justify-between'>
-            <h2 className='text-xl font-bold'>Pool Management</h2>
+            <h2 className='text-xl font-bold'>Quản Lý Hồ Bơi</h2>
             <div className='flex gap-2'>
               <Link href='/dashboard/admin/pools/maintenance'>
                 <Button variant='outline'>
                   <Wrench className='mr-2 h-4 w-4' />
-                  Schedule Maintenance
+                  Lịch Bảo Trì
                 </Button>
               </Link>
               <Link href='/dashboard/admin/pools/new'>
                 <Button>
                   <Droplets className='mr-2 h-4 w-4' />
-                  Add New Pool
+                  Thêm Hồ Bơi Mới
                 </Button>
               </Link>
             </div>
@@ -509,30 +510,30 @@ export default function AdminDashboardPage() {
                     <Badge
                       variant='outline'
                       className={
-                        pool.status === "Operational"
+                        pool.status === "Đang hoạt động"
                           ? "bg-green-50 text-green-700 border-green-200"
                           : "bg-amber-50 text-amber-700 border-amber-200"
                       }
                     >
                       {pool.status}
                     </Badge>
-                  </div>
+                  </div>{" "}
                   <CardDescription>
-                    {pool.lanes} lanes | Temperature: {pool.temperature}
+                    {pool.lanes} làn đường | Nhiệt độ: {pool.temperature}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-2'>
                     <div className='flex justify-between text-sm'>
-                      <span>Current Classes:</span>
+                      <span>Lớp Học Hiện Tại:</span>
                       <span>{pool.currentClasses}</span>
                     </div>
                     <div className='flex justify-between text-sm'>
-                      <span>Last Maintenance:</span>
+                      <span>Bảo Trì Gần Nhất:</span>
                       <span>{pool.lastMaintenance}</span>
                     </div>
                     <div className='flex justify-between text-sm'>
-                      <span>Next Maintenance:</span>
+                      <span>Bảo Trì Kế Tiếp:</span>
                       <span>{pool.nextMaintenance}</span>
                     </div>
                   </div>
@@ -542,12 +543,13 @@ export default function AdminDashboardPage() {
                     href={`/dashboard/admin/pools/${pool.id}`}
                     className='flex-1'
                   >
+                    {" "}
                     <Button
                       variant='outline'
                       className='w-full'
                       size='sm'
                     >
-                      View Details
+                      Xem Chi Tiết
                     </Button>
                   </Link>
                   <Link
@@ -558,7 +560,7 @@ export default function AdminDashboardPage() {
                       className='w-full'
                       size='sm'
                     >
-                      Manage Schedule
+                      Quản Lý Lịch
                     </Button>
                   </Link>
                 </CardFooter>
@@ -570,40 +572,44 @@ export default function AdminDashboardPage() {
           value='finances'
           className='space-y-6 mt-6'
         >
+          {" "}
           <div className='flex items-center justify-between'>
-            <h2 className='text-xl font-bold'>Financial Overview</h2>
+            <h2 className='text-xl font-bold'>Tổng Quan Tài Chính</h2>
             <div className='flex gap-2'>
               <Button variant='outline'>
                 <FileText className='mr-2 h-4 w-4' />
-                Export Report
+                Xuất Báo Cáo
               </Button>
               <select className='h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'>
-                <option value='this-month'>This Month</option>
-                <option value='last-month'>Last Month</option>
-                <option value='last-3-months'>Last 3 Months</option>
-                <option value='year-to-date'>Year to Date</option>
+                <option value='this-month'>Tháng Này</option>
+                <option value='last-month'>Tháng Trước</option>
+                <option value='last-3-months'>3 Tháng Gần Nhất</option>
+                <option value='year-to-date'>Từ Đầu Năm</option>
               </select>
             </div>
           </div>
           <div className='grid gap-6 md:grid-cols-2'>
             <Card>
+              {" "}
               <CardHeader>
-                <CardTitle>Revenue by Course</CardTitle>
+                <CardTitle>Doanh Thu Theo Khóa Học</CardTitle>
                 <CardDescription>
-                  Monthly revenue breakdown by course
+                  Phân tích doanh thu hàng tháng theo khóa học
                 </CardDescription>
               </CardHeader>
               <CardContent className='h-80 flex items-center justify-center'>
                 <div className='text-center text-muted-foreground'>
                   <BarChart3 className='h-16 w-16 mx-auto mb-2' />
-                  <p>Revenue chart visualization would appear here</p>
+                  <p>Biểu đồ doanh thu sẽ hiển thị ở đây</p>
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Recent Payments</CardTitle>
-                <CardDescription>Latest payment transactions</CardDescription>
+                <CardTitle>Thanh Toán Gần Đây</CardTitle>
+                <CardDescription>
+                  Các giao dịch thanh toán mới nhất
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
@@ -633,13 +639,13 @@ export default function AdminDashboardPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
+              </CardContent>{" "}
               <CardFooter>
                 <Button
                   variant='outline'
                   size='sm'
                 >
-                  View All Transactions
+                  Xem Tất Cả Giao Dịch
                 </Button>
               </CardFooter>
             </Card>
@@ -649,66 +655,72 @@ export default function AdminDashboardPage() {
           value='reports'
           className='space-y-6 mt-6'
         >
+          {" "}
           <div className='flex items-center justify-between'>
-            <h2 className='text-xl font-bold'>Reports & Analytics</h2>
+            <h2 className='text-xl font-bold'>Báo Cáo & Phân Tích</h2>
             <div className='flex gap-2'>
               <select className='h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'>
-                <option value='this-month'>This Month</option>
-                <option value='last-month'>Last Month</option>
-                <option value='last-3-months'>Last 3 Months</option>
-                <option value='year-to-date'>Year to Date</option>
+                <option value='this-month'>Tháng Này</option>
+                <option value='last-month'>Tháng Trước</option>
+                <option value='last-3-months'>3 Tháng Gần Nhất</option>
+                <option value='year-to-date'>Từ Đầu Năm</option>
               </select>
               <Button>
                 <FileText className='mr-2 h-4 w-4' />
-                Generate Report
+                Tạo Báo Cáo
               </Button>
             </div>
           </div>
           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
             <Card>
+              {" "}
               <CardHeader>
-                <CardTitle>Enrollment Trends</CardTitle>
-                <CardDescription>Student enrollment over time</CardDescription>
-              </CardHeader>
-              <CardContent className='h-60 flex items-center justify-center'>
-                <div className='text-center text-muted-foreground'>
-                  <BarChart3 className='h-12 w-12 mx-auto mb-2' />
-                  <p>Enrollment chart would appear here</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Course Popularity</CardTitle>
-                <CardDescription>Most popular swimming courses</CardDescription>
-              </CardHeader>
-              <CardContent className='h-60 flex items-center justify-center'>
-                <div className='text-center text-muted-foreground'>
-                  <BarChart3 className='h-12 w-12 mx-auto mb-2' />
-                  <p>Course popularity chart would appear here</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Instructor Performance</CardTitle>
+                <CardTitle>Xu Hướng Ghi Danh</CardTitle>
                 <CardDescription>
-                  Instructor ratings and student count
+                  Học viên ghi danh theo thời gian
                 </CardDescription>
               </CardHeader>
               <CardContent className='h-60 flex items-center justify-center'>
                 <div className='text-center text-muted-foreground'>
                   <BarChart3 className='h-12 w-12 mx-auto mb-2' />
-                  <p>Instructor performance chart would appear here</p>
+                  <p>Biểu đồ ghi danh sẽ hiển thị ở đây</p>
                 </div>
               </CardContent>
             </Card>
-          </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Khóa Học Phổ Biến</CardTitle>
+                <CardDescription>
+                  Khóa học bơi được ưa chuộng nhất
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='h-60 flex items-center justify-center'>
+                <div className='text-center text-muted-foreground'>
+                  <BarChart3 className='h-12 w-12 mx-auto mb-2' />
+                  <p>Biểu đồ độ phổ biến khóa học sẽ hiển thị ở đây</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Hiệu Suất Giáo Viên</CardTitle>
+                <CardDescription>
+                  Đánh giá giáo viên và số lượng học viên
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='h-60 flex items-center justify-center'>
+                <div className='text-center text-muted-foreground'>
+                  <BarChart3 className='h-12 w-12 mx-auto mb-2' />
+                  <p>Biểu đồ hiệu suất giáo viên sẽ hiển thị ở đây</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>{" "}
           <Card>
             <CardHeader>
-              <CardTitle>Available Reports</CardTitle>
+              <CardTitle>Báo Cáo Có Sẵn</CardTitle>
               <CardDescription>
-                Generate and download detailed reports
+                Tạo và tải xuống các báo cáo chi tiết
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -718,9 +730,9 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Financial Summary</span>
+                    <span className='font-medium'>Tổng Kết Tài Chính</span>
                     <span className='text-xs text-muted-foreground'>
-                      Revenue, expenses, and profit
+                      Doanh thu, chi phí và lợi nhuận
                     </span>
                   </div>
                 </Button>
@@ -729,9 +741,9 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Attendance Report</span>
+                    <span className='font-medium'>Báo Cáo Điểm Danh</span>
                     <span className='text-xs text-muted-foreground'>
-                      Student attendance by course
+                      Điểm danh học viên theo khóa học
                     </span>
                   </div>
                 </Button>
@@ -740,9 +752,9 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Instructor Performance</span>
+                    <span className='font-medium'>Hiệu Suất Giáo Viên</span>
                     <span className='text-xs text-muted-foreground'>
-                      Ratings and student feedback
+                      Đánh giá và phản hồi từ học viên
                     </span>
                   </div>
                 </Button>
@@ -751,9 +763,11 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Pool Usage Analytics</span>
+                    <span className='font-medium'>
+                      Phân Tích Sử Dụng Hồ Bơi
+                    </span>
                     <span className='text-xs text-muted-foreground'>
-                      Pool utilization and maintenance
+                      Mức độ sử dụng và bảo trì hồ bơi
                     </span>
                   </div>
                 </Button>
@@ -762,9 +776,9 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Student Progress</span>
+                    <span className='font-medium'>Tiến Độ Học Viên</span>
                     <span className='text-xs text-muted-foreground'>
-                      Learning outcomes and achievements
+                      Kết quả học tập và thành tích
                     </span>
                   </div>
                 </Button>
@@ -773,9 +787,9 @@ export default function AdminDashboardPage() {
                   className='h-auto py-4 justify-start'
                 >
                   <div className='flex flex-col items-start'>
-                    <span className='font-medium'>Course Completion</span>
+                    <span className='font-medium'>Hoàn Thành Khóa Học</span>
                     <span className='text-xs text-muted-foreground'>
-                      Certification and graduation rates
+                      Tỷ lệ chứng nhận và tốt nghiệp
                     </span>
                   </div>
                 </Button>
