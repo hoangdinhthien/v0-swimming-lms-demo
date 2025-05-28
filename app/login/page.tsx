@@ -39,32 +39,8 @@ export default function LoginPage() {
         setAuthCookies(token, user);
       }
       // Debug: log user data
-      console.log("Login response:", data);
-      // Check user role and redirect
-      let role = "";
-      if (user) {
-        if (typeof user.role_system === "string") {
-          role = user.role_system.toLowerCase();
-        } else if (
-          Array.isArray(user.role_front) &&
-          user.role_front.length > 0
-        ) {
-          role = user.role_front[0].toLowerCase();
-        } else if (Array.isArray(user.role) && user.role.length > 0) {
-          role = user.role[0].toLowerCase();
-        } else if (typeof user.role === "string") {
-          role = user.role.toLowerCase();
-        }
-      }
-      if (role === "admin") {
-        router.push("/dashboard/admin");
-      } else if (role === "instructor") {
-        router.push("/dashboard/instructor");
-      } else if (role === "student") {
-        router.push("/dashboard/student");
-      } else {
-        router.push("/");
-      }
+      console.log("Login response:", data); // For this version, always redirect to manager dashboard
+      router.push("/dashboard/manager");
     } catch (err: any) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {

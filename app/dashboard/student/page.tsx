@@ -26,7 +26,8 @@ import {
   CreditCard,
   FileText,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard-layout";
+import DashboardLayout from "@/components/dashboard-layout-v2";
+import RoleGuard from "@/components/role-guard";
 
 export default function StudentDashboardPage() {
   const [progress, setProgress] = useState({
@@ -154,352 +155,361 @@ export default function StudentDashboardPage() {
   };
 
   return (
-    <DashboardLayout userRole='student'>
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-        <div>
-          {" "}
-          <h1 className='text-3xl font-bold'>Bảng Điều Khiển Học Viên</h1>
-          <p className='text-muted-foreground'>
-            Chào mừng trở lại, {user.name}!
-          </p>
+    <RoleGuard
+      allowedRoles={["student"]}
+      fallbackUrl='/dashboard'
+    >
+      <DashboardLayout userRole='student'>
+        <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+          <div>
+            {" "}
+            <h1 className='text-3xl font-bold'>Bảng Điều Khiển Học Viên</h1>
+            <p className='text-muted-foreground'>
+              Chào mừng trở lại, {user.name}!
+            </p>
+          </div>
+          <div className='flex gap-2'>
+            <Link href='/courses'>
+              <Button variant='outline'>
+                {" "}
+                <BookOpen className='mr-2 h-4 w-4' />
+                Duyệt Khóa Học
+              </Button>
+            </Link>
+            <Link href='/dashboard/student/notifications'>
+              <Button
+                variant='outline'
+                className='relative'
+              >
+                <Bell className='h-4 w-4' />
+                {user.notifications.filter((n) => !n.read).length > 0 && (
+                  <span className='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white'>
+                    {user.notifications.filter((n) => !n.read).length}
+                  </span>
+                )}
+                <span className='sr-only'>Thông báo</span>
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className='flex gap-2'>
-          <Link href='/courses'>
-            <Button variant='outline'>
+
+        <div className='grid gap-6 mt-8 md:grid-cols-3'>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
               {" "}
-              <BookOpen className='mr-2 h-4 w-4' />
-              Duyệt Khóa Học
-            </Button>
-          </Link>
-          <Link href='/dashboard/student/notifications'>
-            <Button
-              variant='outline'
-              className='relative'
-            >
-              <Bell className='h-4 w-4' />
-              {user.notifications.filter((n) => !n.read).length > 0 && (
-                <span className='absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white'>
-                  {user.notifications.filter((n) => !n.read).length}
-                </span>
-              )}
-              <span className='sr-only'>Thông báo</span>
-            </Button>
-          </Link>
+              <CardTitle className='text-sm font-medium'>
+                Khóa Học Đã Đăng Ký
+              </CardTitle>
+              <BookOpen className='h-4 w-4 text-muted-foreground' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>
+                {user.enrolledCourses.length}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Khóa học đang tham gia
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              {" "}
+              <CardTitle className='text-sm font-medium'>
+                Bài Học Sắp Tới
+              </CardTitle>
+              <Calendar className='h-4 w-4 text-muted-foreground' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>
+                {user.upcomingLessons.length}
+              </div>
+              <p className='text-xs text-muted-foreground'>
+                Buổi học đã lên lịch
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className='flex flex-row items-center justify-between pb-2'>
+              <CardTitle className='text-sm font-medium'>
+                Achievements
+              </CardTitle>
+              <Award className='h-4 w-4 text-muted-foreground' />
+            </CardHeader>
+            <CardContent>
+              <div className='text-2xl font-bold'>
+                {user.achievements.length}
+              </div>
+              <p className='text-xs text-muted-foreground'>Earned badges</p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
 
-      <div className='grid gap-6 mt-8 md:grid-cols-3'>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
-            <CardTitle className='text-sm font-medium'>
-              Khóa Học Đã Đăng Ký
-            </CardTitle>
-            <BookOpen className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {user.enrolledCourses.length}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              Khóa học đang tham gia
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            {" "}
-            <CardTitle className='text-sm font-medium'>
-              Bài Học Sắp Tới
-            </CardTitle>
-            <Calendar className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {user.upcomingLessons.length}
-            </div>
-            <p className='text-xs text-muted-foreground'>
-              Buổi học đã lên lịch
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-sm font-medium'>Achievements</CardTitle>
-            <Award className='h-4 w-4 text-muted-foreground' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>{user.achievements.length}</div>
-            <p className='text-xs text-muted-foreground'>Earned badges</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs
-        defaultValue='progress'
-        className='mt-8'
-      >
-        <TabsList className='grid w-full grid-cols-5'>
-          {" "}
-          <TabsTrigger value='progress'>Tiến Độ Của Tôi</TabsTrigger>
-          <TabsTrigger value='schedule'>Lịch Học</TabsTrigger>
-          <TabsTrigger value='achievements'>Thành Tích</TabsTrigger>
-          <TabsTrigger value='payments'>Thanh Toán</TabsTrigger>
-          <TabsTrigger value='notifications'>Thông Báo</TabsTrigger>
-        </TabsList>
-        <TabsContent
-          value='progress'
-          className='space-y-6 mt-6'
+        <Tabs
+          defaultValue='progress'
+          className='mt-8'
         >
-          <h2 className='text-xl font-bold'>Course Progress</h2>
-          {user.enrolledCourses.map((course) => (
-            <Card key={course.id}>
+          <TabsList className='grid w-full grid-cols-5'>
+            {" "}
+            <TabsTrigger value='progress'>Tiến Độ Của Tôi</TabsTrigger>
+            <TabsTrigger value='schedule'>Lịch Học</TabsTrigger>
+            <TabsTrigger value='achievements'>Thành Tích</TabsTrigger>
+            <TabsTrigger value='payments'>Thanh Toán</TabsTrigger>
+            <TabsTrigger value='notifications'>Thông Báo</TabsTrigger>
+          </TabsList>
+          <TabsContent
+            value='progress'
+            className='space-y-6 mt-6'
+          >
+            <h2 className='text-xl font-bold'>Course Progress</h2>
+            {user.enrolledCourses.map((course) => (
+              <Card key={course.id}>
+                <CardHeader>
+                  <CardTitle>{course.title}</CardTitle>
+                  <CardDescription>
+                    Instructor: {course.instructor}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className='space-y-2'>
+                    <div className='flex justify-between text-sm'>
+                      <span>Progress</span>
+                      <span className='font-medium'>{course.progress}%</span>
+                    </div>
+                    <Progress
+                      value={course.progress}
+                      className='h-2'
+                    />
+                  </div>
+                  <div className='mt-4 space-y-2'>
+                    <h4 className='text-sm font-medium'>Completed Modules</h4>
+                    <ul className='space-y-1'>
+                      {user.completedModules.map((module, index) => (
+                        <li
+                          key={index}
+                          className='text-sm flex items-center gap-2'
+                        >
+                          <CheckCircle2 className='h-4 w-4 text-green-500' />
+                          {module}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+                <CardFooter className='flex justify-between'>
+                  <div className='text-sm'>
+                    <span className='font-medium'>Next Lesson:</span>{" "}
+                    {course.nextLesson}
+                  </div>
+                  <div className='flex gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                    >
+                      View Course
+                    </Button>
+                    {course.progress === 100 && (
+                      <Button size='sm'>
+                        <FileText className='mr-2 h-4 w-4' />
+                        Get Certificate
+                      </Button>
+                    )}
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </TabsContent>
+          <TabsContent
+            value='schedule'
+            className='space-y-6 mt-6'
+          >
+            <h2 className='text-xl font-bold'>Upcoming Lessons</h2>
+            <div className='space-y-4'>
+              {user.upcomingLessons.map((lesson) => (
+                <Card key={lesson.id}>
+                  <CardHeader>
+                    <CardTitle>{lesson.title}</CardTitle>
+                    <CardDescription>{lesson.course}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='grid gap-2 md:grid-cols-2'>
+                      <div className='flex items-center gap-2'>
+                        <Calendar className='h-4 w-4 text-muted-foreground' />
+                        <span className='text-sm'>{lesson.date}</span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Clock className='h-4 w-4 text-muted-foreground' />
+                        <span className='text-sm'>{lesson.time}</span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <User className='h-4 w-4 text-muted-foreground' />
+                        <span className='text-sm'>
+                          Instructor: {lesson.instructor}
+                        </span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <Waves className='h-4 w-4 text-muted-foreground' />
+                        <span className='text-sm'>
+                          Location: {lesson.location}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className='flex gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                    >
+                      Add to Calendar
+                    </Button>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                    >
+                      Request Reschedule
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent
+            value='achievements'
+            className='space-y-6 mt-6'
+          >
+            <h2 className='text-xl font-bold'>Your Achievements</h2>
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {user.achievements.map((achievement) => (
+                <Card key={achievement.id}>
+                  <CardHeader className='pb-2'>
+                    <div className='flex justify-center mb-2'>
+                      <div className='w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center'>
+                        <Award className='h-8 w-8 text-sky-600' />
+                      </div>
+                    </div>
+                    <CardTitle className='text-center'>
+                      {achievement.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className='text-sm text-center text-muted-foreground'>
+                      {achievement.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter className='flex justify-center pt-0'>
+                    <p className='text-xs text-muted-foreground'>
+                      Earned on {achievement.date}
+                    </p>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          <TabsContent
+            value='payments'
+            className='space-y-6 mt-6'
+          >
+            <div className='flex items-center justify-between'>
+              <h2 className='text-xl font-bold'>Payment History</h2>
+              <Button>
+                <CreditCard className='mr-2 h-4 w-4' />
+                Make Payment
+              </Button>
+            </div>
+            <Card>
               <CardHeader>
-                <CardTitle>{course.title}</CardTitle>
+                <CardTitle>Recent Transactions</CardTitle>
                 <CardDescription>
-                  Instructor: {course.instructor}
+                  View your payment history and receipts
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className='space-y-2'>
-                  <div className='flex justify-between text-sm'>
-                    <span>Progress</span>
-                    <span className='font-medium'>{course.progress}%</span>
-                  </div>
-                  <Progress
-                    value={course.progress}
-                    className='h-2'
-                  />
-                </div>
-                <div className='mt-4 space-y-2'>
-                  <h4 className='text-sm font-medium'>Completed Modules</h4>
-                  <ul className='space-y-1'>
-                    {user.completedModules.map((module, index) => (
-                      <li
-                        key={index}
-                        className='text-sm flex items-center gap-2'
-                      >
-                        <CheckCircle2 className='h-4 w-4 text-green-500' />
-                        {module}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-              <CardFooter className='flex justify-between'>
-                <div className='text-sm'>
-                  <span className='font-medium'>Next Lesson:</span>{" "}
-                  {course.nextLesson}
-                </div>
-                <div className='flex gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                  >
-                    View Course
-                  </Button>
-                  {course.progress === 100 && (
-                    <Button size='sm'>
-                      <FileText className='mr-2 h-4 w-4' />
-                      Get Certificate
-                    </Button>
-                  )}
-                </div>
-              </CardFooter>
-            </Card>
-          ))}
-        </TabsContent>
-        <TabsContent
-          value='schedule'
-          className='space-y-6 mt-6'
-        >
-          <h2 className='text-xl font-bold'>Upcoming Lessons</h2>
-          <div className='space-y-4'>
-            {user.upcomingLessons.map((lesson) => (
-              <Card key={lesson.id}>
-                <CardHeader>
-                  <CardTitle>{lesson.title}</CardTitle>
-                  <CardDescription>{lesson.course}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className='grid gap-2 md:grid-cols-2'>
-                    <div className='flex items-center gap-2'>
-                      <Calendar className='h-4 w-4 text-muted-foreground' />
-                      <span className='text-sm'>{lesson.date}</span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Clock className='h-4 w-4 text-muted-foreground' />
-                      <span className='text-sm'>{lesson.time}</span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <User className='h-4 w-4 text-muted-foreground' />
-                      <span className='text-sm'>
-                        Instructor: {lesson.instructor}
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Waves className='h-4 w-4 text-muted-foreground' />
-                      <span className='text-sm'>
-                        Location: {lesson.location}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className='flex gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                  >
-                    Add to Calendar
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                  >
-                    Request Reschedule
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent
-          value='achievements'
-          className='space-y-6 mt-6'
-        >
-          <h2 className='text-xl font-bold'>Your Achievements</h2>
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {user.achievements.map((achievement) => (
-              <Card key={achievement.id}>
-                <CardHeader className='pb-2'>
-                  <div className='flex justify-center mb-2'>
-                    <div className='w-16 h-16 rounded-full bg-sky-100 flex items-center justify-center'>
-                      <Award className='h-8 w-8 text-sky-600' />
-                    </div>
-                  </div>
-                  <CardTitle className='text-center'>
-                    {achievement.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-sm text-center text-muted-foreground'>
-                    {achievement.description}
-                  </p>
-                </CardContent>
-                <CardFooter className='flex justify-center pt-0'>
-                  <p className='text-xs text-muted-foreground'>
-                    Earned on {achievement.date}
-                  </p>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent
-          value='payments'
-          className='space-y-6 mt-6'
-        >
-          <div className='flex items-center justify-between'>
-            <h2 className='text-xl font-bold'>Payment History</h2>
-            <Button>
-              <CreditCard className='mr-2 h-4 w-4' />
-              Make Payment
-            </Button>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>
-                View your payment history and receipts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                {user.payments.map((payment) => (
-                  <div
-                    key={payment.id}
-                    className='flex items-center justify-between border-b pb-4'
-                  >
-                    <div>
-                      <p className='font-medium'>{payment.course}</p>
-                      <p className='text-sm text-muted-foreground'>
-                        {payment.date}
-                      </p>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <p className='font-medium'>{payment.amount}</p>
-                      <Badge
-                        variant='outline'
-                        className='bg-green-50 text-green-700 border-green-200'
-                      >
-                        {payment.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                variant='outline'
-                size='sm'
-              >
-                View All Transactions
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>{" "}
-        <TabsContent
-          value='notifications'
-          className='space-y-6 mt-6'
-        >
-          <h2 className='text-xl font-bold'>Thông Báo</h2>
-          <Card>
-            <CardContent className='pt-6'>
-              <div className='space-y-4'>
-                {user.notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`flex items-start gap-4 border-b pb-4 ${
-                      !notification.read ? "bg-sky-50 p-3 rounded-md" : ""
-                    }`}
-                  >
-                    <Bell
-                      className={`h-5 w-5 mt-0.5 ${
-                        !notification.read
-                          ? "text-sky-500"
-                          : "text-muted-foreground"
-                      }`}
-                    />
-                    <div className='flex-1'>
-                      <div className='flex items-center justify-between'>
-                        <p className='font-medium'>{notification.title}</p>
-                        <p className='text-xs text-muted-foreground'>
-                          {notification.date}
+                <div className='space-y-4'>
+                  {user.payments.map((payment) => (
+                    <div
+                      key={payment.id}
+                      className='flex items-center justify-between border-b pb-4'
+                    >
+                      <div>
+                        <p className='font-medium'>{payment.course}</p>
+                        <p className='text-sm text-muted-foreground'>
+                          {payment.date}
                         </p>
                       </div>
-                      <p className='text-sm mt-1'>{notification.message}</p>
+                      <div className='flex items-center gap-2'>
+                        <p className='font-medium'>{payment.amount}</p>
+                        <Badge
+                          variant='outline'
+                          className='bg-green-50 text-green-700 border-green-200'
+                        >
+                          {payment.status}
+                        </Badge>
+                      </div>
                     </div>
-                    {!notification.read && (
-                      <Badge className='bg-sky-100 text-sky-700 hover:bg-sky-200 cursor-pointer'>
-                        Mark as read
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button
-                variant='outline'
-                size='sm'
-              >
-                Mark All as Read
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </DashboardLayout>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  variant='outline'
+                  size='sm'
+                >
+                  View All Transactions
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>{" "}
+          <TabsContent
+            value='notifications'
+            className='space-y-6 mt-6'
+          >
+            <h2 className='text-xl font-bold'>Thông Báo</h2>
+            <Card>
+              <CardContent className='pt-6'>
+                <div className='space-y-4'>
+                  {user.notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`flex items-start gap-4 border-b pb-4 ${
+                        !notification.read ? "bg-sky-50 p-3 rounded-md" : ""
+                      }`}
+                    >
+                      <Bell
+                        className={`h-5 w-5 mt-0.5 ${
+                          !notification.read
+                            ? "text-sky-500"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                      <div className='flex-1'>
+                        <div className='flex items-center justify-between'>
+                          <p className='font-medium'>{notification.title}</p>
+                          <p className='text-xs text-muted-foreground'>
+                            {notification.date}
+                          </p>
+                        </div>
+                        <p className='text-sm mt-1'>{notification.message}</p>
+                      </div>
+                      {!notification.read && (
+                        <Badge className='bg-sky-100 text-sky-700 hover:bg-sky-200 cursor-pointer'>
+                          Mark as read
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  variant='outline'
+                  size='sm'
+                >
+                  Mark All as Read
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </DashboardLayout>
+    </RoleGuard>
   );
 }

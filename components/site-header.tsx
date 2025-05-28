@@ -33,21 +33,21 @@ export default function SiteHeader() {
             user.name || user.fullName || user.username || "Người dùng"
           );
 
-          // Determine user role
-          let role = "";
-          if (typeof user.role_system === "string") {
-            role = user.role_system.toLowerCase();
-          } else if (
-            Array.isArray(user.role_front) &&
-            user.role_front.length > 0
-          ) {
-            role = user.role_front[0].toLowerCase();
+          // Determine user role - prioritize role_front for frontend display
+          let frontendRole = "";
+          if (Array.isArray(user.role_front) && user.role_front.length > 0) {
+            frontendRole = user.role_front[0].toLowerCase();
+          } else if (typeof user.role_front === "string") {
+            frontendRole = user.role_front.toLowerCase();
+          } else if (typeof user.role_system === "string") {
+            // Fallback to role_system if role_front is not available
+            frontendRole = user.role_system.toLowerCase();
           } else if (Array.isArray(user.role) && user.role.length > 0) {
-            role = user.role[0].toLowerCase();
+            frontendRole = user.role[0].toLowerCase();
           } else if (typeof user.role === "string") {
-            role = user.role.toLowerCase();
+            frontendRole = user.role.toLowerCase();
           }
-          setUserRole(role);
+          setUserRole(frontendRole);
         }
       }
     };
@@ -85,7 +85,7 @@ export default function SiteHeader() {
             }}
           >
             <Waves className='h-6 w-6 text-sky-500' />
-            <span>AquaLearn</span>
+            <span>AquaLearn Manager</span>
           </Link>
         </div>
         <nav className='hidden md:flex items-center gap-6'>

@@ -20,7 +20,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard-layout";
+import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function PoolDetailPage({ params }: { params: { id: string } }) {
   // Mock pool data

@@ -41,12 +41,35 @@ export function logout() {
   }
 }
 
+export function isTokenExpired(token: string): boolean {
+  try {
+    // JWT format: header.payload.signature
+    const payload = token.split(".")[1];
+    if (!payload) return true;
+    const decoded = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    if (!decoded.exp) return true;
+    // exp is in seconds since epoch
+    const now = Math.floor(Date.now() / 1000);
+    return decoded.exp < now;
+  } catch (e) {
+    return true;
+  }
+}
+
 export function isAuthenticated() {
   if (typeof window !== "undefined") {
     // Check cookies first, then localStorage as fallback
     const tokenCookie = Cookies.get("token");
     const tokenLocal = localStorage.getItem("token");
-    return !!(tokenCookie || tokenLocal);
+    const token = tokenCookie || tokenLocal;
+    if (!token) return false;
+    if (isTokenExpired(token)) {
+      logout();
+      return false;
+    }
+    return true;
   }
   return false;
 }

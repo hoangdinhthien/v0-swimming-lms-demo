@@ -1,13 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Save, MessageSquare } from "lucide-react"
-import DashboardLayout from "@/components/dashboard-layout"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ArrowLeft, Save, MessageSquare } from "lucide-react";
+import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function AttendancePage({ params }: { params: { id: string } }) {
   const [attendance, setAttendance] = useState<Record<number, boolean>>({
@@ -16,7 +23,7 @@ export default function AttendancePage({ params }: { params: { id: string } }) {
     3: false,
     4: true,
     5: true,
-  })
+  });
 
   // Mock class data
   const classData = {
@@ -62,46 +69,46 @@ export default function AttendancePage({ params }: { params: { id: string } }) {
         avatar: "/placeholder.svg?height=40&width=40&text=JT",
       },
     ],
-  }
+  };
 
   const handleAttendanceChange = (studentId: number, isPresent: boolean) => {
     setAttendance((prev) => ({
       ...prev,
       [studentId]: isPresent,
-    }))
-  }
+    }));
+  };
 
   const saveAttendance = () => {
     // In a real app, this would send the data to the server
-    alert("Attendance saved successfully!")
-  }
+    alert("Attendance saved successfully!");
+  };
 
   return (
-    <DashboardLayout userRole="instructor">
-      <div className="mb-6">
+    <DashboardLayout userRole='instructor'>
+      <div className='mb-6'>
         <Link
-          href="/dashboard/instructor"
-          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
+          href='/dashboard/instructor'
+          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className='mr-1 h-4 w-4' />
           Back to Dashboard
         </Link>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className="text-3xl font-bold">Take Attendance</h1>
-          <p className="text-muted-foreground">
+          <h1 className='text-3xl font-bold'>Take Attendance</h1>
+          <p className='text-muted-foreground'>
             {classData.title} | {classData.date}
           </p>
         </div>
         <Button onClick={saveAttendance}>
-          <Save className="mr-2 h-4 w-4" />
+          <Save className='mr-2 h-4 w-4' />
           Save Attendance
         </Button>
       </div>
 
-      <Card className="mt-8">
+      <Card className='mt-8'>
         <CardHeader>
           <CardTitle>{classData.title}</CardTitle>
           <CardDescription>
@@ -109,12 +116,18 @@ export default function AttendancePage({ params }: { params: { id: string } }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {classData.students.map((student) => (
-              <div key={student.id} className="flex items-center justify-between border-b pb-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={student.avatar || "/placeholder.svg"} alt={student.name} />
+              <div
+                key={student.id}
+                className='flex items-center justify-between border-b pb-4'
+              >
+                <div className='flex items-center gap-3'>
+                  <Avatar className='h-10 w-10'>
+                    <AvatarImage
+                      src={student.avatar || "/placeholder.svg"}
+                      alt={student.name}
+                    />
                     <AvatarFallback>
                       {student.name
                         .split(" ")
@@ -123,38 +136,45 @@ export default function AttendancePage({ params }: { params: { id: string } }) {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{student.name}</p>
-                    <p className="text-xs text-muted-foreground">Previous attendance: {student.lastAttendance}</p>
+                    <p className='font-medium'>{student.name}</p>
+                    <p className='text-xs text-muted-foreground'>
+                      Previous attendance: {student.lastAttendance}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
+                <div className='flex items-center gap-4'>
+                  <div className='flex items-center gap-2'>
                     <Checkbox
                       id={`attendance-${student.id}`}
                       checked={attendance[student.id]}
-                      onCheckedChange={(checked) => handleAttendanceChange(student.id, checked === true)}
+                      onCheckedChange={(checked) =>
+                        handleAttendanceChange(student.id, checked === true)
+                      }
                     />
                     <label
                       htmlFor={`attendance-${student.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                     >
                       Present
                     </label>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    <MessageSquare className="h-4 w-4" />
-                    <span className="sr-only">Add Note</span>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                  >
+                    <MessageSquare className='h-4 w-4' />
+                    <span className='sr-only'>Add Note</span>
                   </Button>
                 </div>
               </div>
             ))}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline">Cancel</Button>
+        <CardFooter className='flex justify-between'>
+          <Button variant='outline'>Cancel</Button>
           <Button onClick={saveAttendance}>Save Attendance</Button>
         </CardFooter>
       </Card>
     </DashboardLayout>
-  )
+  );
 }

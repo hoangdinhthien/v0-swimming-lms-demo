@@ -34,7 +34,7 @@ import {
   Trash2,
   Copy,
 } from "lucide-react";
-import DashboardLayout from "@/components/dashboard-layout";
+import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function PromotionsPage() {
   const [showNewPromotion, setShowNewPromotion] = useState(false);
