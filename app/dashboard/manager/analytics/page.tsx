@@ -31,7 +31,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function AnalyticsPage() {
   const [timeframe, setTimeframe] = useState("monthly");
@@ -108,7 +107,7 @@ export default function AnalyticsPage() {
     (a, b) => b.rating - a.rating
   )[0];
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -699,12 +698,12 @@ export default function AnalyticsPage() {
                   <div className='text-center'>
                     <p className='text-sm'>Maintenance impact chart</p>
                   </div>
-                </div>
+                </div>{" "}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
-    </DashboardLayout>
+    </>
   );
 }

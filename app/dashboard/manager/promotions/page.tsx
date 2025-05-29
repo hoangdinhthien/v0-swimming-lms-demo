@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function PromotionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,7 +130,7 @@ export default function PromotionsPage() {
   };
 
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -412,6 +411,7 @@ export default function PromotionsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {" "}
             <div className='text-2xl font-bold'>$12,450</div>
             <p className='text-xs text-muted-foreground'>
               Discount value applied
@@ -419,6 +419,6 @@ export default function PromotionsPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

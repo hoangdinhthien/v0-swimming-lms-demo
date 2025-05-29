@@ -30,9 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import DashboardLayout from "@/components/dashboard-layout-v2";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function SettingsPage() {
   const [profileForm, setProfileForm] = useState({
@@ -76,7 +78,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -495,6 +497,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </DashboardLayout>
+    </>
   );
 }

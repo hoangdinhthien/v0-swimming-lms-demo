@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function InstructorsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -151,7 +150,7 @@ export default function InstructorsPage() {
   });
 
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -404,6 +403,6 @@ export default function InstructorsPage() {
           </div>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 }

@@ -151,8 +151,8 @@ export default function ManagerDashboardPage() {
       },
     ],
   };
+
   return (
-    <>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Manager Dashboard</h1>
@@ -285,10 +285,7 @@ export default function ManagerDashboardPage() {
                 </div>
                 <div className='mt-4 flex justify-center'>
                   <Link href='/dashboard/manager/courses'>
-                    <Button
-                      variant='outline'
-                      className='w-full'
-                    >
+                    <Button variant='outline' className='w-full'>
                       View All Courses
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
@@ -323,10 +320,7 @@ export default function ManagerDashboardPage() {
                   ))}
                 </div>
                 <div className='mt-4 flex justify-center'>
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                  >
+                  <Button variant='outline' className='w-full'>
                     View All Notifications
                     <ArrowRight className='ml-2 h-4 w-4' />
                   </Button>
@@ -371,10 +365,7 @@ export default function ManagerDashboardPage() {
                 </div>
                 <div className='mt-4 flex justify-center'>
                   <Link href='/dashboard/manager/transactions'>
-                    <Button
-                      variant='outline'
-                      className='w-full'
-                    >
+                    <Button variant='outline' className='w-full'>
                       View All Transactions
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
@@ -394,9 +385,7 @@ export default function ManagerDashboardPage() {
                       className='flex flex-col gap-1 border-b pb-3 last:border-0'
                     >
                       <div className='flex justify-between'>
-                        <div className='text-sm font-medium'>
-                          {class_.title}
-                        </div>
+                        <div className='text-sm font-medium'>{class_.title}</div>
                         <Badge variant='outline'>{class_.pool}</Badge>
                       </div>
                       <div className='flex items-center gap-2 text-xs'>
@@ -416,10 +405,7 @@ export default function ManagerDashboardPage() {
                 </div>
                 <div className='mt-4 flex justify-center'>
                   <Link href='/dashboard/manager/courses'>
-                    <Button
-                      variant='outline'
-                      className='w-full'
-                    >
+                    <Button variant='outline' className='w-full'>
                       View All Classes
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
@@ -497,8 +483,7 @@ export default function ManagerDashboardPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>{" "}
+        </TabsContent>
       </Tabs>
-    </>
   );
 }

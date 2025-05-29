@@ -35,7 +35,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,7 +188,7 @@ export default function TransactionsPage() {
   });
 
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -422,6 +421,6 @@ export default function TransactionsPage() {
           </div>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 }

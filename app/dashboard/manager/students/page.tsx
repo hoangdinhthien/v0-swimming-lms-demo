@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 export default function StudentsPage() {
   const [filter, setFilter] = useState("all");
@@ -159,9 +158,8 @@ export default function StudentsPage() {
 
     return statusMatch && searchMatch;
   });
-
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -337,6 +335,6 @@ export default function StudentsPage() {
           </div>
         </CardContent>
       </Card>
-    </DashboardLayout>
+    </>
   );
 }

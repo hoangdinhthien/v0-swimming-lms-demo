@@ -21,6 +21,7 @@ import {
   Star,
   Menu,
   X,
+  Building,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -69,8 +70,7 @@ export default function DashboardLayout({
 
   const handleLogout = () => {
     logout();
-  };
-  // Navigation items - for this version, we only have manager role
+  }; // Navigation items - for this version, we only have manager role
   const navItems = {
     manager: [
       {
@@ -107,6 +107,11 @@ export default function DashboardLayout({
         name: "Khuyến Mãi",
         href: "/dashboard/manager/promotions",
         icon: <Percent className='h-4 w-4 mr-2' />,
+      },
+      {
+        name: "Chi Nhánh",
+        href: "/dashboard/manager/tenants",
+        icon: <Building className='h-4 w-4 mr-2' />,
       },
       {
         name: "Cài Đặt Tài Khoản",
@@ -157,15 +162,14 @@ export default function DashboardLayout({
         icon: <Settings className='h-4 w-4 mr-2' />,
       },
     ],
-  };
-  // For this version of the application, we're focusing on manager functionality
+  }; // For this version of the application, we're focusing on manager functionality
   // Default to manager navigation items unless explicitly overridden  // For this version, we always use manager navigation items
   const currentNavItems = navItems.manager;
   // Build the content
   const content = (
     <div className='flex min-h-screen flex-col'>
       {/* Header */}
-      <header className='sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6'>
+      <header className='fixed top-0 left-0 right-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6'>
         <nav className='hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6'>
           <Link
             href='/'
@@ -185,10 +189,10 @@ export default function DashboardLayout({
               <Menu className='h-5 w-5' />
               <span className='sr-only'>Toggle Menu</span>
             </Button>
-          </SheetTrigger>
+          </SheetTrigger>{" "}
           <SheetContent
             side='left'
-            className='pr-0'
+            className='pr-0 overflow-y-auto'
           >
             <div className='px-7'>
               <Link
@@ -286,10 +290,10 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>
-      </header>
-      <div className='grid flex-1 md:grid-cols-[220px_1fr]'>
-        <nav className='hidden border-r bg-muted/40 md:block'>
-          <div className='grid gap-2 p-4'>
+      </header>{" "}
+      <div className='flex flex-1'>
+        <nav className='hidden border-r bg-muted/40 md:flex h-[calc(100vh-64px)] fixed top-16 w-[220px] z-20'>
+          <div className='grid gap-2 p-4 w-full overflow-y-auto'>
             {currentNavItems.map((item) => (
               <Link
                 key={item.href}
@@ -301,8 +305,8 @@ export default function DashboardLayout({
               </Link>
             ))}
           </div>
-        </nav>{" "}
-        <main className='flex flex-1 flex-col p-4 md:gap-8 md:p-6'>
+        </nav>
+        <main className='flex flex-1 flex-col p-4 md:gap-8 md:p-6 md:ml-[220px] mt-16'>
           {children}
         </main>
       </div>
