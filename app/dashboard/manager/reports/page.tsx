@@ -28,7 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import DashboardLayout from "@/components/dashboard-layout-v2";
+// No need to import DashboardLayout since it's provided by manager/layout.tsx
 
 export default function ReportsPage() {
   const [reportType, setReportType] = useState("financial");
@@ -408,9 +408,8 @@ export default function ReportsPage() {
         return <p>Select a report type to view data</p>;
     }
   };
-
   return (
-    <DashboardLayout userRole='manager'>
+    <>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager'
@@ -420,7 +419,6 @@ export default function ReportsPage() {
           Back to Dashboard
         </Link>
       </div>
-
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Reports & Analysis</h1>
@@ -440,7 +438,6 @@ export default function ReportsPage() {
           </Button>
         </div>
       </div>
-
       {/* Report Controls */}
       <div className='mt-8 flex flex-col gap-4 md:flex-row'>
         <Select
@@ -486,10 +483,9 @@ export default function ReportsPage() {
             <SelectItem value='yearly'>Last 12 Months</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
+      </div>{" "}
       {/* Current Report Content */}
       <div className='mt-8'>{renderCurrentReport()}</div>
-    </DashboardLayout>
+    </>
   );
 }

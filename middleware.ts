@@ -1,6 +1,41 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+// Simplified token expiration check for server-side middleware
+function isTokenExpiredServerSide(token: string): boolean {
+  try {
+    // JWT format: header.payload.signature
+    const payload = token.split(".")[1];
+    if (!payload) return true;
+
+    // Base64 decode the payload
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = Buffer.from(base64, "base64").toString("utf8");
+    const decoded = JSON.parse(jsonPayload);
+
+    if (!decoded.exp) return true;
+
+    // exp is in seconds since epoch
+    const now = Math.floor(Date.now() / 1000);
+
+    // App version timestamp - change this on significant updates
+    const APP_VERSION_TIMESTAMP = "2025-05-30";
+
+    // Check if token was issued before current app version
+    if (
+      decoded.iat &&
+      new Date(decoded.iat * 1000).toISOString().slice(0, 10) <
+        APP_VERSION_TIMESTAMP
+    ) {
+      return true;
+    }
+
+    return decoded.exp < now;
+  } catch (e) {
+    return true;
+  }
+}
+
 export function middleware(request: NextRequest) {
   // Get the token from cookies or headers
   const token =
@@ -9,8 +44,8 @@ export function middleware(request: NextRequest) {
 
   // Check if the user is accessing a dashboard route
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
-    // If there's no token and the route requires authentication, redirect to login
-    if (!token) {
+    // If there's no token or token is expired, redirect to login
+    if (!token || isTokenExpiredServerSide(token)) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Calendar,
@@ -13,6 +13,8 @@ import {
   Plus,
   ArrowRight,
   Percent,
+  Bell,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +28,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { getNews, formatRelativeTime, NewsItem } from "@/api/news-api";
 
 export default function ManagerDashboardPage() {
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = useState(true);
+
+  // Fetch news when the component mounts
+  useEffect(() => {
+    async function fetchNews() {
+      try {
+        setIsLoadingNews(true);
+        const news = await getNews();
+        // Managers can see all notifications/news
+        setNewsItems(news);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      } finally {
+        setIsLoadingNews(false);
+      }
+    }
+
+    fetchNews();
+  }, []);
+
   // Mock manager data
   const manager = {
     name: "Manager User",
@@ -75,6 +99,7 @@ export default function ManagerDashboardPage() {
         status: "Active",
       },
     ],
+    // We'll keep this as fallback in case API fails
     notifications: [
       {
         id: 1,
@@ -295,41 +320,90 @@ export default function ManagerDashboardPage() {
                   </Link>
                 </div>
               </CardContent>
-            </Card>
+            </Card>{" "}
             <Card className='lg:col-span-3'>
-              <CardHeader>
+              <CardHeader className='flex flex-row items-center justify-between'>
                 <CardTitle>Notifications</CardTitle>
-              </CardHeader>
+                {isLoadingNews && (
+                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                )}
+              </CardHeader>{" "}
               <CardContent>
-                <div className='space-y-4'>
-                  {manager.notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className='flex items-start gap-2 border-b pb-3 last:border-0'
-                    >
-                      <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
-                      <div className='flex flex-1 flex-col gap-1'>
-                        <div className='text-sm font-medium'>
-                          {notification.title}
-                        </div>
-                        <div className='text-xs text-muted-foreground'>
-                          {notification.description}
-                        </div>
-                        <div className='text-xs text-muted-foreground'>
-                          {notification.time}
+                {isLoadingNews ? (
+                  <div className='space-y-4'>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className='flex items-start gap-2 border-b pb-3'
+                      >
+                        <div className='mt-1 flex h-2 w-2 rounded-full bg-muted' />
+                        <div className='flex flex-1 flex-col gap-1'>
+                          <div className='h-4 w-3/4 rounded bg-muted' />
+                          <div className='h-3 w-full rounded bg-muted' />
+                          <div className='h-3 w-1/4 rounded bg-muted' />
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : newsItems.length > 0 ? (
+                  <div className='space-y-4'>
+                    {/* Show only the 3 most recent notifications */}
+                    {newsItems.slice(0, 3).map((newsItem) => (
+                      <Link
+                        key={newsItem._id}
+                        href={`/dashboard/manager/notifications/${newsItem._id}`}
+                        className='block'
+                      >
+                        <div className='flex items-start gap-2 border-b pb-3 last:border-0 hover:bg-muted/20 p-2 -mx-2 rounded-md transition-colors'>
+                          <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
+                          <div className='flex flex-1 flex-col gap-1'>
+                            <div className='text-sm font-medium'>
+                              {newsItem.title}
+                            </div>
+                            <div className='text-xs text-muted-foreground line-clamp-2'>
+                              {newsItem.content}
+                            </div>
+                            <div className='text-xs text-muted-foreground'>
+                              {formatRelativeTime(newsItem.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='space-y-4'>
+                    {manager.notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className='flex items-start gap-2 border-b pb-3 last:border-0'
+                      >
+                        <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
+                        <div className='flex flex-1 flex-col gap-1'>
+                          <div className='text-sm font-medium'>
+                            {notification.title}
+                          </div>
+                          <div className='text-xs text-muted-foreground'>
+                            {notification.description}
+                          </div>
+                          <div className='text-xs text-muted-foreground'>
+                            {notification.time}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}{" "}
                 <div className='mt-4 flex justify-center'>
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                  >
-                    View All Notifications
-                    <ArrowRight className='ml-2 h-4 w-4' />
-                  </Button>
+                  <Link href='/dashboard/manager/notifications'>
+                    <Button
+                      variant='outline'
+                      className='w-full'
+                    >
+                      View All Notifications
+                      <ArrowRight className='ml-2 h-4 w-4' />
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Cookies from "js-cookie";
 
-// Set cookie expiry to 7 days by default
-const COOKIE_EXPIRY_DAYS = 7;
+// Set cookie expiry to 1 day for more frequent authentication
+const COOKIE_EXPIRY_DAYS = 1;
 
 export function setAuthCookies(token: string, user: any) {
   // Store the token in a cookie
@@ -41,6 +41,9 @@ export function logout() {
   }
 }
 
+// App version timestamp - change this on significant updates to force re-authentication
+const APP_VERSION_TIMESTAMP = "2025-05-30";
+
 export function isTokenExpired(token: string): boolean {
   try {
     // JWT format: header.payload.signature
@@ -50,10 +53,25 @@ export function isTokenExpired(token: string): boolean {
       atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
     );
     if (!decoded.exp) return true;
+
     // exp is in seconds since epoch
     const now = Math.floor(Date.now() / 1000);
+
+    // Check token timestamp against app version
+    if (
+      decoded.iat &&
+      new Date(decoded.iat * 1000).toISOString().slice(0, 10) <
+        APP_VERSION_TIMESTAMP
+    ) {
+      console.log(
+        "Token was issued before the current app version - forcing refresh"
+      );
+      return true;
+    }
+
     return decoded.exp < now;
   } catch (e) {
+    console.error("Error checking token expiration:", e);
     return true;
   }
 }
