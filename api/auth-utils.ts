@@ -116,3 +116,15 @@ export function getAuthenticatedUser() {
   }
   return null;
 }
+
+export function getAuthToken(): string | null {
+  if (typeof window !== "undefined") {
+    // Try to get token from cookie first
+    const tokenCookie = Cookies.get("token");
+    if (tokenCookie) return tokenCookie;
+
+    // Fallback to localStorage
+    return localStorage.getItem("token");
+  }
+  return null;
+}

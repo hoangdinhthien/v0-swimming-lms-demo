@@ -1,4 +1,5 @@
 import config from "./config.json";
+import { apiGet } from "./api-utils";
 
 export interface NewsItem {
   _id: string;
@@ -38,7 +39,7 @@ export interface NewsDetailResponse {
 
 export async function getNews() {
   try {
-    const response = await fetch(
+    const response = await apiGet(
       `${config.API}/v1/workflow-process/public/news`
     );
 
@@ -61,8 +62,18 @@ export async function getNews() {
 
 export async function getNewsById(id: string): Promise<NewsItem | null> {
   try {
+    const tenantId = getSelectedTenant();
+    const headers: Record<string, string> = {};
+
+    if (tenantId) {
+      headers["x-tenant-id"] = tenantId;
+    }
+
     const response = await fetch(
-      `${config.API}/v1/workflow-process/public/new?id=${id}`
+      `${config.API}/v1/workflow-process/public/new?id=${id}`,
+      {
+        headers,
+      }
     );
 
     if (!response.ok) {

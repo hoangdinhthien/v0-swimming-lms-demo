@@ -42,6 +42,17 @@ export function middleware(request: NextRequest) {
     request.cookies.get("token")?.value ||
     request.headers.get("authorization")?.split(" ")[1];
 
+  // Check if the user is accessing tenant selection page
+  if (request.nextUrl.pathname === "/tenant-selection") {
+    // If there's no token or token is expired, redirect to login
+    if (!token || isTokenExpiredServerSide(token)) {
+      const loginUrl = new URL("/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Allow access to tenant selection if authenticated
+    return NextResponse.next();
+  }
+
   // Check if the user is accessing a dashboard route
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
     // If there's no token or token is expired, redirect to login
@@ -106,5 +117,5 @@ export function middleware(request: NextRequest) {
 
 // Matching paths for middleware to run on
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/tenant-selection"],
 };

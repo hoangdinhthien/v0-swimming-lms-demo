@@ -25,8 +25,9 @@ import {
   Wrench,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard-layout";
+import { withTenantGuard } from "@/components/tenant-provider";
 
-export default function AdminDashboardPage() {
+function AdminDashboardPage() {
   // Mock admin data
   const admin = {
     name: "Admin User",
@@ -797,7 +798,9 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+      </Tabs>{" "}
     </DashboardLayout>
   );
 }
+
+export default withTenantGuard(AdminDashboardPage);

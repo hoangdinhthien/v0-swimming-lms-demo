@@ -29,8 +29,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getNews, formatRelativeTime, NewsItem } from "@/api/news-api";
+import { withTenantGuard } from "@/components/tenant-provider";
+import { TenantInfo } from "@/components/tenant-info";
 
-export default function ManagerDashboardPage() {
+function ManagerDashboardPage() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(true);
 
@@ -178,6 +180,7 @@ export default function ManagerDashboardPage() {
   };
   return (
     <>
+      <TenantInfo />
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Manager Dashboard</h1>
@@ -570,9 +573,11 @@ export default function ManagerDashboardPage() {
                 </Table>
               </div>
             </CardContent>
-          </Card>
+          </Card>{" "}
         </TabsContent>{" "}
       </Tabs>
     </>
   );
 }
+
+export default withTenantGuard(ManagerDashboardPage);

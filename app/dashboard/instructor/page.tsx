@@ -27,8 +27,9 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard-layout-v2";
 import RoleGuard from "@/components/role-guard";
+import { withTenantGuard } from "@/components/tenant-provider";
 
-export default function InstructorDashboardPage() {
+function InstructorDashboardPage() {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
 
   // Mock instructor data
@@ -199,7 +200,6 @@ export default function InstructorDashboardPage() {
             </Link>
           </div>
         </div>
-
         <div className='grid gap-6 mt-8 md:grid-cols-3'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -253,7 +253,6 @@ export default function InstructorDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
         <Tabs
           defaultValue='classes'
           className='mt-8'
@@ -647,8 +646,10 @@ export default function InstructorDashboardPage() {
               ))}
             </div>
           </TabsContent>
-        </Tabs>
+        </Tabs>{" "}
       </DashboardLayout>
     </RoleGuard>
   );
 }
+
+export default withTenantGuard(InstructorDashboardPage);

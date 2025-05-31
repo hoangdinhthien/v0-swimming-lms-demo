@@ -28,8 +28,9 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard-layout-v2";
 import RoleGuard from "@/components/role-guard";
+import { withTenantGuard } from "@/components/tenant-provider";
 
-export default function StudentDashboardPage() {
+function StudentDashboardPage() {
   const [progress, setProgress] = useState({
     "Beginner Swimming": 45,
     "Water Safety": 80,
@@ -192,7 +193,6 @@ export default function StudentDashboardPage() {
             </Link>
           </div>
         </div>
-
         <div className='grid gap-6 mt-8 md:grid-cols-3'>
           <Card>
             <CardHeader className='flex flex-row items-center justify-between pb-2'>
@@ -243,7 +243,6 @@ export default function StudentDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
         <Tabs
           defaultValue='progress'
           className='mt-8'
@@ -508,8 +507,10 @@ export default function StudentDashboardPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-        </Tabs>
+        </Tabs>{" "}
       </DashboardLayout>
     </RoleGuard>
   );
 }
+
+export default withTenantGuard(StudentDashboardPage);

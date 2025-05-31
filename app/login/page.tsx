@@ -37,10 +37,11 @@ export default function LoginPage() {
       // Save token/user info using auth utility for consistency
       if (token && user) {
         setAuthCookies(token, user);
-      }
-      // Debug: log user data
-      console.log("Login response:", data); // For this version, always redirect to manager dashboard
-      router.push("/dashboard/manager");
+      } // Debug: log user data
+      console.log("Login response:", data);
+
+      // Redirect to tenant selection page
+      router.push("/tenant-selection");
     } catch (err: any) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {
