@@ -4,9 +4,10 @@ export async function fetchCourses({
   tenantId,
   token,
 }: {
-  tenantId: string;
-  token: string;
-}) {
+  tenantId?: string;
+  token?: string;
+} = {}) {
+  if (!tenantId || !token) return [];
   const res = await fetch(`${config.API}/v1/workflow-process/public/courses`, {
     headers: {
       "x-tenant-id": tenantId,
