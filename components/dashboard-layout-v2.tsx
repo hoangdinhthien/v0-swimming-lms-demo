@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePathname } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -51,6 +52,7 @@ export default function DashboardLayout({
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState<string>(propUserRole || "");
+  const pathname = usePathname();
   // Get the current user's name and role from localStorage on component mount
   useEffect(() => {
     const user = getAuthenticatedUser();
@@ -109,8 +111,8 @@ export default function DashboardLayout({
         icon: <Percent className='h-4 w-4 mr-2' />,
       },
       {
-        name: "Chi Nhánh",
-        href: "/dashboard/manager/tenants",
+        name: "Đơn từ",
+        href: "/dashboard/manager/applications",
         icon: <Building className='h-4 w-4 mr-2' />,
       },
       {
@@ -294,16 +296,24 @@ export default function DashboardLayout({
       <div className='flex flex-1'>
         <nav className='hidden border-r bg-muted/40 md:flex h-[calc(100vh-64px)] fixed top-16 w-[220px] z-20'>
           <div className='grid gap-2 p-4 w-full overflow-y-auto'>
-            {currentNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className='flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted hover:text-foreground'
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {currentNavItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all
+                    ${
+                      isActive
+                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
           </div>
         </nav>
         <main className='flex flex-1 flex-col p-4 md:gap-8 md:p-6 md:ml-[220px] mt-16'>

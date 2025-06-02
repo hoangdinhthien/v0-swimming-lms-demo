@@ -28,7 +28,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { getNews, formatRelativeTime, NewsItem } from "@/api/news-api";
+import {
+  getNews,
+  formatRelativeTime,
+  NewsItem,
+  getNewsDetail,
+} from "@/api/news-api";
 import { withTenantGuard } from "@/components/tenant-provider";
 import { TenantInfo } from "@/components/tenant-info";
 
@@ -53,12 +58,11 @@ function ManagerDashboardPage() {
 
     fetchNews();
   }, []);
-
   // Mock manager data
   const manager = {
-    name: "Manager User",
+    name: "Quản Lý",
     email: "manager@example.com",
-    role: "Manager",
+    role: "Quản Lý",
     centerStats: {
       totalStudents: 156,
       activeInstructors: 8,
@@ -70,7 +74,7 @@ function ManagerDashboardPage() {
     courses: [
       {
         id: 1,
-        title: "Beginner Swimming",
+        title: "Bơi Cho Người Mới",
         students: 42,
         instructors: 3,
         revenue: "$5,040",
@@ -78,7 +82,7 @@ function ManagerDashboardPage() {
       },
       {
         id: 2,
-        title: "Advanced Swimming",
+        title: "Bơi Nâng Cao",
         students: 28,
         instructors: 2,
         revenue: "$3,920",
@@ -86,7 +90,7 @@ function ManagerDashboardPage() {
       },
       {
         id: 3,
-        title: "Water Safety",
+        title: "An Toàn Dưới Nước",
         students: 36,
         instructors: 2,
         revenue: "$3,600",
@@ -94,7 +98,7 @@ function ManagerDashboardPage() {
       },
       {
         id: 4,
-        title: "Competitive Training",
+        title: "Huấn Luyện Thi Đấu",
         students: 18,
         instructors: 1,
         revenue: "$2,160",
@@ -105,76 +109,76 @@ function ManagerDashboardPage() {
     notifications: [
       {
         id: 1,
-        title: "New Student Registration",
-        description: "A new student has registered for Beginner Swimming",
-        time: "3 hours ago",
+        title: "Đăng Ký Học Viên Mới",
+        description: "Một học viên mới đã đăng ký khóa Bơi Cho Người Mới",
+        time: "3 giờ trước",
       },
       {
         id: 2,
-        title: "Instructor Absence",
-        description: "Instructor John Smith has reported absence for tomorrow",
-        time: "5 hours ago",
+        title: "Huấn Luyện Viên Vắng Mặt",
+        description: "Huấn luyện viên Nguyễn Văn A đã báo nghỉ vào ngày mai",
+        time: "5 giờ trước",
       },
       {
         id: 3,
-        title: "Low Pool Chemical Levels",
-        description: "Chlorine levels need to be checked in Pool 2",
-        time: "Yesterday",
+        title: "Mức Hóa Chất Hồ Bơi Thấp",
+        description: "Cần kiểm tra mức clo tại Hồ Bơi 2",
+        time: "Hôm qua",
       },
     ],
     recentTransactions: [
       {
         id: 1,
         student: "Mai Tran",
-        course: "Advanced Swimming",
+        course: "Bơi Nâng Cao",
         amount: "$140",
-        date: "Today",
+        date: "Hôm nay",
         status: "Completed",
       },
       {
         id: 2,
         student: "Duc Nguyen",
-        course: "Beginner Swimming",
+        course: "Bơi Cho Người Mới",
         amount: "$120",
-        date: "Today",
+        date: "Hôm nay",
         status: "Completed",
       },
       {
         id: 3,
         student: "Linh Pham",
-        course: "Water Safety",
+        course: "An Toàn Dưới Nước",
         amount: "$100",
-        date: "Yesterday",
+        date: "Hôm qua",
         status: "Completed",
       },
     ],
     upcomingClasses: [
       {
         id: 1,
-        title: "Beginner Swimming - Group A",
-        time: "9:00 AM - 10:00 AM",
-        date: "Today",
+        title: "Bơi Cho Người Mới - Nhóm A",
+        time: "9:00 - 10:00",
+        date: "Hôm nay",
         instructor: "Nguyen Van A",
         students: 12,
-        pool: "Pool 1",
+        pool: "Hồ bơi 1",
       },
       {
         id: 2,
-        title: "Advanced Swimming - Group B",
-        time: "10:30 AM - 12:00 PM",
-        date: "Today",
+        title: "Bơi Nâng Cao - Nhóm B",
+        time: "10:30 - 12:00",
+        date: "Hôm nay",
         instructor: "Tran Thi B",
         students: 8,
-        pool: "Pool 2",
+        pool: "Hồ bơi 2",
       },
       {
         id: 3,
-        title: "Water Safety Training",
-        time: "2:00 PM - 3:30 PM",
-        date: "Today",
+        title: "Huấn Luyện An Toàn Dưới Nước",
+        time: "14:00 - 15:30",
+        date: "Hôm nay",
         instructor: "Le Van C",
         students: 15,
-        pool: "Pool 1",
+        pool: "Hồ bơi 1",
       },
     ],
   };
@@ -183,37 +187,38 @@ function ManagerDashboardPage() {
       <TenantInfo />
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Manager Dashboard</h1>
-          <p className='text-muted-foreground'>Welcome back, {manager.name}!</p>
+          <h1 className='text-3xl font-bold'>Bảng Điều Khiển Quản Lý</h1>
+          <p className='text-muted-foreground'>
+            Chào mừng trở lại, {manager.name}!
+          </p>
         </div>
         <div className='flex gap-2'>
           <Link href='/dashboard/manager/reports'>
             <Button variant='outline'>
               <FileText className='mr-2 h-4 w-4' />
-              Reports
+              Báo Cáo
             </Button>
           </Link>
           <Link href='/dashboard/manager/settings'>
             <Button variant='outline'>
               <Settings className='mr-2 h-4 w-4' />
-              Settings
+              Cài Đặt
             </Button>
           </Link>
         </div>
       </div>
-
       <Tabs defaultValue='overview'>
         <TabsList className='grid w-full grid-cols-3 md:w-auto'>
-          <TabsTrigger value='overview'>Overview</TabsTrigger>
-          <TabsTrigger value='analytics'>Analytics</TabsTrigger>
-          <TabsTrigger value='reports'>Reports</TabsTrigger>
+          <TabsTrigger value='overview'>Tổng Quan</TabsTrigger>
+          <TabsTrigger value='analytics'>Phân Tích</TabsTrigger>
+          <TabsTrigger value='reports'>Báo Cáo</TabsTrigger>
         </TabsList>
         <TabsContent value='overview'>
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>
-                  Total Students
+                  Tổng Học Viên
                 </CardTitle>
                 <Users className='h-4 w-4 text-muted-foreground' />
               </CardHeader>
@@ -222,14 +227,14 @@ function ManagerDashboardPage() {
                   {manager.centerStats.totalStudents}
                 </div>
                 <p className='text-xs text-muted-foreground'>
-                  +{manager.centerStats.weeklyNewRegistrations} from last week
+                  +{manager.centerStats.weeklyNewRegistrations} từ tuần trước
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>
-                  Active Instructors
+                  Huấn Luyện Viên Hoạt Động
                 </CardTitle>
                 <Users className='h-4 w-4 text-muted-foreground' />
               </CardHeader>
@@ -238,14 +243,14 @@ function ManagerDashboardPage() {
                   {manager.centerStats.activeInstructors}
                 </div>
                 <p className='text-xs text-muted-foreground'>
-                  All instructors currently active
+                  Tất cả huấn luyện viên đang hoạt động
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>
-                  Total Revenue
+                  Tổng Doanh Thu
                 </CardTitle>
                 <DollarSign className='h-4 w-4 text-muted-foreground' />
               </CardHeader>
@@ -254,14 +259,14 @@ function ManagerDashboardPage() {
                   {manager.centerStats.totalRevenue}
                 </div>
                 <p className='text-xs text-muted-foreground'>
-                  +12% from last month
+                  +12% so với tháng trước
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                 <CardTitle className='text-sm font-medium'>
-                  Pool Utilization
+                  Sử Dụng Hồ Bơi
                 </CardTitle>
                 <Waves className='h-4 w-4 text-muted-foreground' />
               </CardHeader>
@@ -270,22 +275,23 @@ function ManagerDashboardPage() {
                   {manager.centerStats.poolUtilization}
                 </div>
                 <p className='text-xs text-muted-foreground'>
-                  +5% from last month
+                  +5% so với tháng trước
                 </p>
               </CardContent>
             </Card>
           </div>
-
           <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
             <Card className='lg:col-span-4'>
               <CardHeader>
-                <CardTitle>Course Overview</CardTitle>
+                <CardTitle>Tổng Quan Khóa Học</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='space-y-8'>
                   <div className='space-y-2'>
                     <div className='flex items-center'>
-                      <div className='text-sm font-medium'>Active Courses</div>
+                      <div className='text-sm font-medium'>
+                        Khóa Học Đang Hoạt Động
+                      </div>
                       <div className='ml-auto'>{manager.courses.length}</div>
                     </div>
                     <div className='space-y-2'>
@@ -298,13 +304,13 @@ function ManagerDashboardPage() {
                             {course.title}
                           </div>
                           <div className='text-right text-sm'>
-                            {course.students} students
+                            {course.students} học viên
                           </div>
                           <div className='text-right text-sm'>
                             {course.revenue}
                           </div>
                           <div className='text-right'>
-                            <Badge variant='outline'>{course.status}</Badge>
+                            <Badge variant='outline'>Đang hoạt động</Badge>
                           </div>
                         </div>
                       ))}
@@ -317,20 +323,20 @@ function ManagerDashboardPage() {
                       variant='outline'
                       className='w-full'
                     >
-                      View All Courses
+                      Xem Tất Cả Khóa Học
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
                 </div>
               </CardContent>
-            </Card>{" "}
+            </Card>
             <Card className='lg:col-span-3'>
               <CardHeader className='flex flex-row items-center justify-between'>
-                <CardTitle>Notifications</CardTitle>
+                <CardTitle>Thông Báo</CardTitle>
                 {isLoadingNews && (
                   <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
                 )}
-              </CardHeader>{" "}
+              </CardHeader>
               <CardContent>
                 {isLoadingNews ? (
                   <div className='space-y-4'>
@@ -376,6 +382,7 @@ function ManagerDashboardPage() {
                   </div>
                 ) : (
                   <div className='space-y-4'>
+                    {" "}
                     {manager.notifications.map((notification) => (
                       <div
                         key={notification.id}
@@ -396,14 +403,14 @@ function ManagerDashboardPage() {
                       </div>
                     ))}
                   </div>
-                )}{" "}
+                )}
                 <div className='mt-4 flex justify-center'>
                   <Link href='/dashboard/manager/notifications'>
                     <Button
                       variant='outline'
                       className='w-full'
                     >
-                      View All Notifications
+                      Xem Tất Cả Thông Báo
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
@@ -411,22 +418,21 @@ function ManagerDashboardPage() {
               </CardContent>
             </Card>
           </div>
-
           <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
             <Card className='lg:col-span-4'>
               <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
+                <CardTitle>Giao Dịch Gần Đây</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className='text-right'>Status</TableHead>
+                        <TableHead>Học viên</TableHead>
+                        <TableHead>Khóa học</TableHead>
+                        <TableHead>Số tiền</TableHead>
+                        <TableHead>Ngày</TableHead>
+                        <TableHead className='text-right'>Trạng thái</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -437,9 +443,7 @@ function ManagerDashboardPage() {
                           <TableCell>{transaction.amount}</TableCell>
                           <TableCell>{transaction.date}</TableCell>
                           <TableCell className='text-right'>
-                            <Badge variant='outline'>
-                              {transaction.status}
-                            </Badge>
+                            <Badge variant='outline'>Hoàn thành</Badge>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -452,7 +456,7 @@ function ManagerDashboardPage() {
                       variant='outline'
                       className='w-full'
                     >
-                      View All Transactions
+                      Xem Tất Cả Giao Dịch
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
@@ -461,7 +465,7 @@ function ManagerDashboardPage() {
             </Card>
             <Card className='lg:col-span-3'>
               <CardHeader>
-                <CardTitle>Upcoming Classes Today</CardTitle>
+                <CardTitle>Lớp Học Hôm Nay</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
@@ -483,10 +487,10 @@ function ManagerDashboardPage() {
                         </span>
                       </div>
                       <div className='text-xs text-muted-foreground'>
-                        Instructor: {class_.instructor}
+                        Huấn luyện viên: {class_.instructor}
                       </div>
                       <div className='text-xs text-muted-foreground'>
-                        Students: {class_.students}
+                        Học viên: {class_.students}
                       </div>
                     </div>
                   ))}
@@ -497,7 +501,7 @@ function ManagerDashboardPage() {
                       variant='outline'
                       className='w-full'
                     >
-                      View All Classes
+                      Xem Tất Cả Lớp Học
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
@@ -509,7 +513,7 @@ function ManagerDashboardPage() {
         <TabsContent value='analytics'>
           <Card>
             <CardHeader>
-              <CardTitle>Revenue Analytics</CardTitle>
+              <CardTitle>Phân Tích Doanh Thu</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
@@ -517,33 +521,32 @@ function ManagerDashboardPage() {
                   <div className='text-center'>
                     <BarChart2 className='mx-auto h-12 w-12 text-muted-foreground' />
                     <h3 className='mt-2 text-xl font-semibold'>
-                      Analytics Charts
+                      Biểu Đồ Phân Tích
                     </h3>
                     <p className='mt-1 text-sm text-muted-foreground'>
-                      Visualize revenue and enrollment data
+                      Trực quan hóa dữ liệu doanh thu và đăng ký
                     </p>
                     <Link href='/dashboard/manager/analytics'>
                       <Button className='mt-4'>
-                        Go to Analytics
+                        Đến Trang Phân Tích
                         <ArrowRight className='ml-2 h-4 w-4' />
                       </Button>
                     </Link>
                   </div>
                 </div>
-
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Period</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Students</TableHead>
-                      <TableHead>Classes</TableHead>
-                      <TableHead className='text-right'>Growth</TableHead>
+                      <TableHead>Thời Gian</TableHead>
+                      <TableHead>Doanh Thu</TableHead>
+                      <TableHead>Học Viên</TableHead>
+                      <TableHead>Lớp Học</TableHead>
+                      <TableHead className='text-right'>Tăng Trưởng</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell className='font-medium'>This Week</TableCell>
+                      <TableCell className='font-medium'>Tuần Này</TableCell>
                       <TableCell>$3,245</TableCell>
                       <TableCell>24</TableCell>
                       <TableCell>42</TableCell>
@@ -552,7 +555,7 @@ function ManagerDashboardPage() {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className='font-medium'>This Month</TableCell>
+                      <TableCell className='font-medium'>Tháng Này</TableCell>
                       <TableCell>$14,560</TableCell>
                       <TableCell>68</TableCell>
                       <TableCell>156</TableCell>
@@ -561,7 +564,7 @@ function ManagerDashboardPage() {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className='font-medium'>This Year</TableCell>
+                      <TableCell className='font-medium'>Năm Nay</TableCell>
                       <TableCell>$124,580</TableCell>
                       <TableCell>1,245</TableCell>
                       <TableCell>312</TableCell>
@@ -573,8 +576,8 @@ function ManagerDashboardPage() {
                 </Table>
               </div>
             </CardContent>
-          </Card>{" "}
-        </TabsContent>{" "}
+          </Card>
+        </TabsContent>
       </Tabs>
     </>
   );

@@ -53,7 +53,7 @@ export default function TenantSelectionPage() {
         setSelectedTenantId(availableTenants[0].tenant_id._id);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to fetch available tenants");
+      setError(err.message || "Không thể tải danh sách chi nhánh");
     } finally {
       setLoading(false);
     }
@@ -61,9 +61,8 @@ export default function TenantSelectionPage() {
 
   const handleTenantSelection = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!selectedTenantId) {
-      setError("Please select a tenant");
+      setError("Vui lòng chọn một chi nhánh");
       return;
     }
 
@@ -77,7 +76,7 @@ export default function TenantSelectionPage() {
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Failed to access tenant dashboard");
+      setError(err.message || "Không thể truy cập bảng điều khiển chi nhánh");
     } finally {
       setSubmitting(false);
     }
@@ -99,9 +98,9 @@ export default function TenantSelectionPage() {
             <CardContent className='pt-6'>
               <div className='flex items-center justify-center'>
                 <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500'></div>
-              </div>
+              </div>{" "}
               <p className='text-center mt-4 text-sm text-gray-600'>
-                Loading available tenants...
+                Đang tải danh sách chi nhánh...
               </p>
             </CardContent>
           </Card>
@@ -124,11 +123,12 @@ export default function TenantSelectionPage() {
         <Card className='w-full max-w-md'>
           <CardHeader className='space-y-1'>
             <CardTitle className='text-2xl font-bold text-center flex items-center justify-center gap-2'>
+              {" "}
               <Building2 className='h-6 w-6 text-sky-500' />
-              Select Tenant
+              Chọn Chi Nhánh
             </CardTitle>
             <CardDescription className='text-center'>
-              Choose a tenant to access the dashboard
+              Chọn một chi nhánh để truy cập bảng điều khiển
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleTenantSelection}>
@@ -141,16 +141,18 @@ export default function TenantSelectionPage() {
 
               {tenants.length === 0 ? (
                 <div className='text-center py-8'>
-                  <Building2 className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                  <p className='text-gray-600'>No tenants available</p>
+                  {" "}
+                  <Building2 className='h-12 w-12 text-gray-400 mx-auto mb-4' />{" "}
+                  <p className='text-gray-600'>Không có chi nhánh nào</p>
                   <p className='text-sm text-gray-500 mt-2'>
-                    Please contact your administrator for access
+                    Vui lòng liên hệ quản trị viên để được cấp quyền truy cập
                   </p>
                 </div>
               ) : (
                 <div className='space-y-2'>
+                  {" "}
                   <Label htmlFor='tenant'>
-                    Tenant: <span className='text-red-500'>*</span>
+                    Chi nhánh: <span className='text-red-500'>*</span>
                   </Label>
                   <Select
                     value={selectedTenantId}
@@ -158,7 +160,7 @@ export default function TenantSelectionPage() {
                     disabled={submitting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Select a tenant' />
+                      <SelectValue placeholder='Chọn một chi nhánh' />
                     </SelectTrigger>
                     <SelectContent>
                       {tenants.map((tenant) => (
@@ -182,14 +184,15 @@ export default function TenantSelectionPage() {
                   type='submit'
                   disabled={!selectedTenantId || submitting}
                 >
-                  {submitting ? "Accessing..." : "Access Tenant Dashboard"}
+                  {" "}
+                  {submitting ? "Đang truy cập..." : "Truy cập Bảng Điều Khiển"}
                 </Button>{" "}
                 <div className='text-center text-sm'>
                   <Link
                     href='/login'
                     className='text-sky-600 hover:underline'
                   >
-                    Back to Login
+                    Quay lại Đăng nhập
                   </Link>
                 </div>
               </CardFooter>

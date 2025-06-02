@@ -6,35 +6,57 @@ import { ArrowLeft, Calendar, User } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getNewsById, type NewsItem, formatRelativeTime } from "@/api/news-api";
+import {
+  getNewsDetail,
+  getMediaDetails,
+  type NewsItem,
+  formatRelativeTime,
+} from "@/api/news-api";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Trang chi tiết thông báo
 export default function NotificationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     async function fetchNewsDetail() {
       if (typeof params.id !== "string") {
-        setError("Invalid notification ID");
+        setError("ID thông báo không hợp lệ");
         setIsLoading(false);
         return;
       }
-
       try {
         setIsLoading(true);
-        const newsDetail = await getNewsById(params.id);
+        const newsDetail = await getNewsDetail(params.id);
 
         if (!newsDetail) {
-          setError("Notification not found");
+          setError("Không tìm thấy thông báo");
         } else {
           setNewsItem(newsDetail);
+
+          // Always try to fetch the media path if cover exists
+          if (newsDetail.cover) {
+            try {
+              const mediaPath = await getMediaDetails(newsDetail.cover);
+              if (mediaPath) {
+                setCoverImageUrl(mediaPath);
+              } else {
+                setCoverImageUrl("/placeholder.svg");
+              }
+            } catch (mediaErr) {
+              console.error("Error fetching media details:", mediaErr);
+              setCoverImageUrl("/placeholder.svg");
+            }
+          } else {
+            setCoverImageUrl("/placeholder.svg");
+          }
         }
       } catch (err) {
-        setError("Failed to load notification details");
+        setError("Không thể tải thông tin chi tiết thông báo");
         console.error("Error fetching notification details:", err);
       } finally {
         setIsLoading(false);
@@ -52,10 +74,9 @@ export default function NotificationDetailPage() {
           className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
           <ArrowLeft className='mr-1 h-4 w-4' />
-          Back to Dashboard
+          Trở về Trang Quản Lý
         </Link>
       </div>
-
       {isLoading ? (
         <Card>
           <CardHeader>
@@ -74,12 +95,12 @@ export default function NotificationDetailPage() {
             <CardTitle className='text-red-500'>{error}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Unable to load the notification details.</p>
+            <p>Không thể tải thông tin chi tiết thông báo.</p>
             <Button
               onClick={() => router.push("/dashboard/manager")}
               className='mt-4'
             >
-              Return to Dashboard
+              Trở về Trang Quản Lý
             </Button>
           </CardContent>
         </Card>
@@ -96,9 +117,23 @@ export default function NotificationDetailPage() {
                 <div className='flex items-center gap-1'>
                   <User className='h-3.5 w-3.5' />
                   <span>
-                    For:{" "}
+                    Đối tượng:{" "}
                     {newsItem.type
-                      .map((t) => t.charAt(0).toUpperCase() + t.slice(1))
+                      .map((t) => {
+                        // Translate role types to Vietnamese
+                        switch (t.toLowerCase()) {
+                          case "admin":
+                            return "Quản trị viên";
+                          case "manager":
+                            return "Quản lý";
+                          case "instructor":
+                            return "Huấn luyện viên";
+                          case "student":
+                            return "Học viên";
+                          default:
+                            return t.charAt(0).toUpperCase() + t.slice(1);
+                        }
+                      })
                       .join(", ")}
                   </span>
                 </div>
@@ -106,17 +141,41 @@ export default function NotificationDetailPage() {
             </CardHeader>
             <CardContent>
               <div className='prose max-w-none'>
-                <p>{newsItem.content}</p>
-                {/* If there's cover image, display it */}
-                {newsItem.cover && (
-                  <div className='mt-4'>
+                <div className='mb-6 flex justify-center'>
+                  <div className='w-full max-w-xl aspect-video bg-muted rounded-md flex items-center justify-center'>
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_URL}/files/${newsItem.cover}`}
+                      src={coverImageUrl || "/placeholder.svg"}
                       alt={newsItem.title}
-                      className='rounded-md max-w-full h-auto'
+                      className='object-contain w-full h-full rounded-md'
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
                     />
                   </div>
-                )}
+                </div>
+                <div className='whitespace-pre-wrap'>{newsItem.content}</div>
+
+                <div className='mt-8 text-sm text-muted-foreground border-t pt-4'>
+                  <div className='flex justify-between flex-wrap gap-2'>
+                    <div>
+                      <p>
+                        <strong>Ngày tạo:</strong>{" "}
+                        {new Date(newsItem.created_at).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                      {newsItem.created_at !== newsItem.updated_at && (
+                        <p>
+                          <strong>Cập nhật:</strong>{" "}
+                          {new Date(newsItem.updated_at).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

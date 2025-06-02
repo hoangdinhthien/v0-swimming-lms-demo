@@ -23,10 +23,12 @@ export function TenantInfo() {
 
   return (
     <Card className='mb-6'>
+      {" "}
       <CardHeader>
+        {" "}
         <CardTitle className='flex items-center gap-2'>
           <Building2 className='h-5 w-5' />
-          Current Tenant
+          Chi Nhánh Hiện Tại
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -37,10 +39,10 @@ export function TenantInfo() {
               className='flex items-center gap-1'
             >
               <CheckCircle className='h-3 w-3' />
-              Connected
+              Đã kết nối
             </Badge>
             <span className='text-sm text-gray-600'>
-              Tenant ID: {selectedTenantId}
+              ID Chi Nhánh: {selectedTenantId}
             </span>
           </div>
           <Button
@@ -48,12 +50,12 @@ export function TenantInfo() {
             size='sm'
             onClick={handleSwitchTenant}
           >
-            Switch Tenant
+            Chuyển Chi Nhánh
           </Button>
         </div>
         <p className='text-sm text-gray-500 mt-2'>
-          All API requests will automatically include the x-tenant-id header
-          with this tenant ID.
+          Tất cả các yêu cầu API sẽ tự động bao gồm header x-tenant-id với ID
+          chi nhánh này.
         </p>
       </CardContent>
     </Card>
