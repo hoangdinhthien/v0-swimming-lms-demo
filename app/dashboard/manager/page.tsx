@@ -36,10 +36,16 @@ import {
 } from "@/api/news-api";
 import { withTenantGuard } from "@/components/tenant-provider";
 import { TenantInfo } from "@/components/tenant-info";
+import { fetchCourses } from "@/api/courses-api";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getAuthToken } from "@/api/auth-utils";
 
 function ManagerDashboardPage() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(true);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
 
   // Fetch news when the component mounts
   useEffect(() => {
@@ -57,6 +63,26 @@ function ManagerDashboardPage() {
     }
 
     fetchNews();
+  }, []);
+
+  useEffect(() => {
+    async function fetchCoursesData() {
+      setIsLoadingCourses(true);
+      setCoursesError(null);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+        if (!tenantId || !token)
+          throw new Error("Thiếu thông tin tenant hoặc token");
+        const data = await fetchCourses({ tenantId, token });
+        setCourses(data);
+      } catch (e: any) {
+        setCoursesError(e.message || "Lỗi không xác định");
+        setCourses([]);
+      }
+      setIsLoadingCourses(false);
+    }
+    fetchCoursesData();
   }, []);
   // Mock manager data
   const manager = {
@@ -286,37 +312,54 @@ function ManagerDashboardPage() {
                 <CardTitle>Tổng Quan Khóa Học</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='space-y-8'>
-                  <div className='space-y-2'>
-                    <div className='flex items-center'>
-                      <div className='text-sm font-medium'>
-                        Khóa Học Đang Hoạt Động
-                      </div>
-                      <div className='ml-auto'>{manager.courses.length}</div>
-                    </div>
+                {isLoadingCourses ? (
+                  <div className='space-y-2'>Đang tải dữ liệu khóa học...</div>
+                ) : coursesError ? (
+                  <div className='text-red-500'>{coursesError}</div>
+                ) : (
+                  <div className='space-y-8'>
                     <div className='space-y-2'>
-                      {manager.courses.map((course) => (
-                        <div
-                          key={course.id}
-                          className='grid grid-cols-4 items-center gap-2'
-                        >
-                          <div className='text-sm font-medium'>
-                            {course.title}
-                          </div>
-                          <div className='text-right text-sm'>
-                            {course.students} học viên
-                          </div>
-                          <div className='text-right text-sm'>
-                            {course.revenue}
-                          </div>
-                          <div className='text-right'>
-                            <Badge variant='outline'>Đang hoạt động</Badge>
-                          </div>
+                      <div className='flex items-center'>
+                        <div className='text-sm font-medium'>
+                          Khóa Học Đang Hoạt Động
                         </div>
-                      ))}
+                        <div className='ml-auto'>
+                          {courses.filter((c) => c.is_active).length}
+                        </div>
+                      </div>
+                      <div className='space-y-2'>
+                        {courses.slice(0, 4).map((course: any) => (
+                          <div
+                            key={course._id}
+                            className='grid grid-cols-4 items-center gap-2'
+                          >
+                            <div className='text-sm font-medium'>
+                              {course.title}
+                            </div>
+                            <div className='text-right text-sm'>
+                              {typeof course.students === "number"
+                                ? course.students
+                                : 0}{" "}
+                              học viên
+                            </div>
+                            <div className='text-right text-sm'>
+                              {course.price
+                                ? course.price.toLocaleString() + "₫"
+                                : ""}
+                            </div>
+                            <div className='text-right'>
+                              <Badge variant='outline'>
+                                {course.is_active
+                                  ? "Đang hoạt động"
+                                  : "Đã kết thúc"}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
                 <div className='mt-4 flex justify-center'>
                   <Link href='/dashboard/manager/courses'>
                     <Button

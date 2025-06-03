@@ -8,10 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   getNewsDetail,
-  getMediaDetails,
   type NewsItem,
   formatRelativeTime,
 } from "@/api/news-api";
+import { getMediaDetails } from "@/api/media-api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Trang chi tiết thông báo

@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Filter, Calendar } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { fetchCourses } from "@/api/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CoursesPage() {
   const [levelFilter, setLevelFilter] = useState("all");
@@ -33,6 +41,9 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -52,6 +63,33 @@ export default function CoursesPage() {
       setLoading(false);
     }
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      setLoadingCategories(true);
+      setCategoriesError(null);
+      try {
+        const tenantId = getSelectedTenant();
+        if (!tenantId) throw new Error("Thiếu thông tin tenant");
+        const res = await fetch(
+          "https://capstone.caucalamdev.io.vn/api/v1/workflow-process/public/course-categories",
+          {
+            headers: { "x-tenant-id": tenantId },
+            cache: "no-store",
+          }
+        );
+        if (!res.ok) throw new Error("Không thể tải danh mục trình độ");
+        const data = await res.json();
+        const arr = data?.data?.[0]?.[0]?.data || [];
+        setCategories(arr);
+      } catch (e: any) {
+        setCategoriesError(e.message || "Lỗi không xác định");
+        setCategories([]);
+      }
+      setLoadingCategories(false);
+    }
+    fetchCategories();
   }, []);
 
   // Filter courses based on filters and search
@@ -83,7 +121,72 @@ export default function CoursesPage() {
   });
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <div className='w-full max-w-3xl'>
+          <div className='rounded-md border overflow-hidden'>
+            <table className='w-full'>
+              <thead>
+                <tr className='border-b bg-muted/50'>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Tên khóa học
+                  </th>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Nhóm trình độ
+                  </th>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Giá
+                  </th>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Số buổi
+                  </th>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Thời lượng/buổi
+                  </th>
+                  <th className='py-3 px-4 text-left font-medium text-sm'>
+                    Trạng thái
+                  </th>
+                  <th className='py-3 px-4 text-right font-medium text-sm'>
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...Array(4)].map((_, i) => (
+                  <tr
+                    key={i}
+                    className='border-b'
+                  >
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-32' />
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-24' />
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-16' />
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-10' />
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-16' />
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Skeleton className='h-4 w-20' />
+                    </td>
+                    <td className='py-3 px-4 text-right'>
+                      <Skeleton className='h-8 w-20' />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -219,10 +322,37 @@ export default function CoursesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>Tất cả trình độ</SelectItem>
-                    <SelectItem value='Beginner'>Cơ bản</SelectItem>
-                    <SelectItem value='Intermediate'>Trung bình</SelectItem>
-                    <SelectItem value='Advanced'>Nâng cao</SelectItem>
-                    <SelectItem value='All Levels'>Mọi trình độ</SelectItem>
+                    {loadingCategories ? (
+                      <SelectItem
+                        value=''
+                        disabled
+                      >
+                        Đang tải...
+                      </SelectItem>
+                    ) : categoriesError ? (
+                      <SelectItem
+                        value=''
+                        disabled
+                      >
+                        Lỗi tải trình độ
+                      </SelectItem>
+                    ) : categories.length > 0 ? (
+                      categories.map((cat) => (
+                        <SelectItem
+                          key={cat._id}
+                          value={cat.title}
+                        >
+                          {cat.title}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem
+                        value=''
+                        disabled
+                      >
+                        Không có trình độ
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
 
@@ -236,7 +366,6 @@ export default function CoursesPage() {
                   <SelectContent>
                     <SelectItem value='all'>Tất cả trạng thái</SelectItem>
                     <SelectItem value='Active'>Đang hoạt động</SelectItem>
-                    <SelectItem value='Upcoming'>Sắp khai giảng</SelectItem>
                     <SelectItem value='Completed'>Đã kết thúc</SelectItem>
                   </SelectContent>
                 </Select>
