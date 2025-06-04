@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Calendar, Tag } from "lucide-react";
-import { fetchCourseById } from "@/api/courses-api";
+import { fetchCourseById, fetchCourses } from "@/api/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
 
 export default function CourseDetailPage() {
@@ -24,11 +24,41 @@ export default function CourseDetailPage() {
       setError(null);
       try {
         const tenantId = getSelectedTenant();
-        const token = getAuthToken();
+        const token = getAuthToken() ?? undefined;
         if (!tenantId) throw new Error("Thiếu thông tin tenant");
 
-        const courseData = await fetchCourseById({ courseId, tenantId, token });
+        let realCourseId = courseId;
+        // Try to fetch by id first
+        let courseData = await fetchCourseById({
+          courseId: realCourseId,
+          tenantId,
+          token,
+        });
+        // If not found, try to resolve slug to id
+        if (!courseData || courseData.slug === courseId) {
+          // If the param is a slug, fetch all courses and find the id
+          const allCourses = await fetchCourses({ tenantId, token });
+          const found = allCourses.find((c: any) => c.slug === courseId);
+          if (found) {
+            realCourseId = found._id;
+            courseData = await fetchCourseById({
+              courseId: realCourseId,
+              tenantId,
+              token,
+            });
+          }
+        }
         setCourse(courseData);
+        // If the URL param is the id, but the course has a slug, update the URL
+        if (courseData && courseId === courseData._id && courseData.slug) {
+          if (typeof window !== "undefined") {
+            window.history.replaceState(
+              null,
+              "",
+              `/dashboard/manager/courses/${courseData.slug}`
+            );
+          }
+        }
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setCourse(null);
@@ -37,6 +67,19 @@ export default function CourseDetailPage() {
     }
     if (courseId) loadCourse();
   }, [courseId]);
+
+  // Set slug in search bar when course is loaded
+  useEffect(() => {
+    if (course && course.slug) {
+      if (typeof window !== "undefined") {
+        // Set the search bar value
+        const searchInput = document.getElementById("course-search-bar");
+        if (searchInput) {
+          (searchInput as HTMLInputElement).value = course.slug;
+        }
+      }
+    }
+  }, [course, courseId]);
 
   if (loading) {
     return (
@@ -66,8 +109,10 @@ export default function CourseDetailPage() {
         </Link>
       </div>
 
-      <div className='container mx-auto bg-white rounded-lg shadow p-4 md:p-6 mb-6'>
-        <h1 className='text-2xl font-bold mb-2'>{course.title}</h1>
+      <div className='container mx-auto bg-card rounded-lg shadow p-4 md:p-6 mb-6'>
+        <h1 className='text-2xl font-bold mb-2 text-foreground'>
+          {course.title}
+        </h1>
         <div className='flex flex-wrap gap-2 items-center text-sm text-muted-foreground mb-4'>
           <div className='flex items-center gap-1'>
             <Tag className='h-4 w-4' />
@@ -122,26 +167,28 @@ export default function CourseDetailPage() {
             />
           </div>
         </div>
-        <div className='text-base mb-4 whitespace-pre-wrap'>
+        <div className='text-base mb-4 whitespace-pre-wrap text-foreground'>
           {course.description}
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-2 mb-4'>
           <div>
-            <div className='font-medium'>Giá</div>
+            <div className='font-medium text-foreground'>Giá</div>
             <div>{course.price?.toLocaleString()}₫</div>
           </div>
           <div>
-            <div className='font-medium'>Số buổi</div>
+            <div className='font-medium text-foreground'>Số buổi</div>
             <div>{course.session_number}</div>
           </div>
           <div>
-            <div className='font-medium'>Thời lượng/buổi</div>
+            <div className='font-medium text-foreground'>Thời lượng/buổi</div>
             <div>{course.session_number_duration}</div>
           </div>
         </div>
         {Array.isArray(course.detail) && course.detail.length > 0 && (
           <div className='mt-2'>
-            <div className='font-medium mb-1'>Nội dung khoá học:</div>
+            <div className='font-medium mb-1 text-foreground'>
+              Nội dung khoá học:
+            </div>
             <ul className='list-disc pl-5 space-y-1'>
               {course.detail.map((item: any, idx: number) => (
                 <li key={idx}>{item.title}</li>

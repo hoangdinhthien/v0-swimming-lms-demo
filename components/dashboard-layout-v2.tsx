@@ -39,6 +39,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -257,6 +258,8 @@ export default function DashboardLayout({
                 Xin chào, {userName || getRoleDisplayName()}
               </span>
               <div className='h-6 w-px bg-muted'></div>
+              {/* Add ThemeToggle button here */}
+              <ThemeToggle />
               <AlertDialog
                 open={logoutDialogOpen}
                 onOpenChange={setLogoutDialogOpen}

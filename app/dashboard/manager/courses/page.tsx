@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { fetchCourses } from "@/api/courses-api";
+import { fetchCourses, fetchCourseCategories } from "@/api/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,16 +72,7 @@ export default function CoursesPage() {
       try {
         const tenantId = getSelectedTenant();
         if (!tenantId) throw new Error("Thiếu thông tin tenant");
-        const res = await fetch(
-          "https://capstone.caucalamdev.io.vn/api/v1/workflow-process/public/course-categories",
-          {
-            headers: { "x-tenant-id": tenantId },
-            cache: "no-store",
-          }
-        );
-        if (!res.ok) throw new Error("Không thể tải danh mục trình độ");
-        const data = await res.json();
-        const arr = data?.data?.[0]?.[0]?.data || [];
+        const arr = await fetchCourseCategories({ tenantId });
         setCategories(arr);
       } catch (e: any) {
         setCategoriesError(e.message || "Lỗi không xác định");

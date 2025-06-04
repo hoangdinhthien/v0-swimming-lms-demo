@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export default function SiteHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -115,6 +116,7 @@ export default function SiteHeader() {
           </Link>
         </nav>
         <div className='flex items-center gap-4'>
+          <ThemeToggle />
           {isLoggedIn ? (
             <div className='flex items-center gap-2'>
               <DropdownMenu>
