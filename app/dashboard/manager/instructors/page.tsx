@@ -466,17 +466,17 @@ export default function InstructorsPage() {
                                   : "Ngừng hoạt động"}
                               </Badge>
                             </TableCell>
-                            <TableCell className='text-right space-x-2'>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => {
-                                  setSelectedInstructorId(id);
-                                  setDetailModalOpen(true);
-                                }}
+                            <TableCell className='text-right'>
+                              <Link
+                                href={`/dashboard/manager/instructors/${id}`}
                               >
-                                Xem
-                              </Button>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                >
+                                  Xem
+                                </Button>
+                              </Link>
                               <Link
                                 href={`/dashboard/manager/instructors/${id}/schedule`}
                               >

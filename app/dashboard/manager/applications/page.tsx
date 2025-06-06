@@ -12,13 +12,29 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Mail, User } from "lucide-react";
-import { getApplications, Application } from "@/api/applications-api";
+import {
+  getApplications,
+  getApplicationDetail,
+  Application,
+} from "@/api/applications-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import Link from "next/link";
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchApplications() {
@@ -37,6 +53,22 @@ export default function ApplicationsPage() {
     }
     fetchApplications();
   }, []);
+
+  async function handleShowDetail(id: string) {
+    setDetailLoading(true);
+    setDialogOpen(true);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+      const detail = await getApplicationDetail(id, tenantId, token);
+      setSelectedApp(detail);
+    } catch {
+      setSelectedApp(null);
+    }
+    setDetailLoading(false);
+  }
 
   return (
     <div className='space-y-6'>
@@ -65,6 +97,7 @@ export default function ApplicationsPage() {
                   <TableHead>Ngày gửi</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Phản hồi</TableHead>
+                  <TableHead>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -107,6 +140,16 @@ export default function ApplicationsPage() {
                           Chưa phản hồi
                         </span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Link href={`/dashboard/manager/applications/${app._id}`}>
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}

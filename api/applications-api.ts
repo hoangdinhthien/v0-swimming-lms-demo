@@ -51,3 +51,29 @@ export async function getApplications(
       : [];
   return Array.isArray(arr) ? arr : [];
 }
+
+export async function getApplicationDetail(
+  id: string,
+  tenantId: string,
+  token: string
+): Promise<Application | null> {
+  const response = await apiGet(
+    `${config.API}/v1/workflow-process/application?id=${id}`,
+    {
+      requireAuth: true,
+      includeTenant: false,
+      headers: {
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  if (!response.ok) {
+    return null;
+  }
+  const data = await response.json();
+  // Defensive: unwrap the nested structure to get the application object
+  const arr = data.data?.[0]?.[0];
+  const app = Array.isArray(arr) ? arr[0] : arr;
+  return app || null;
+}
