@@ -3,23 +3,40 @@ import config from "@/api/config.json";
 export async function fetchCourses({
   tenantId,
   token,
+  page = 1,
+  limit = 20,
 }: {
   tenantId?: string;
   token?: string;
+  page?: number;
+  limit?: number;
 } = {}) {
-  if (!tenantId || !token) return [];
-  const res = await fetch(`${config.API}/v1/workflow-process/public/courses`, {
-    headers: {
-      "x-tenant-id": tenantId,
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  if (!tenantId || !token) return { data: [], total: 0 };
+  const res = await fetch(
+    `${config.API}/v1/workflow-process/manager/courses?page=${page}&limit=${limit}`,
+    {
+      headers: {
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
   if (!res.ok) throw new Error("Failed to fetch courses");
   const data = await res.json();
-  // Defensive: unwrap the nested structure to get the array of courses
+  // Defensive: unwrap the nested structure to get the array of courses and total
   const obj = data.data?.[0]?.[0];
-  return obj && typeof obj === "object" && "data" in obj ? obj.data : [];
+  const courseData =
+    obj && typeof obj === "object" && "data" in obj ? obj.data : [];
+  // meta_data.count is the total number of courses
+  const total =
+    obj && obj.meta_data && typeof obj.meta_data.count === "number"
+      ? obj.meta_data.count
+      : courseData.length;
+  return {
+    data: courseData,
+    total,
+  };
 }
 
 export async function fetchCourseCategories({
@@ -50,7 +67,7 @@ export async function fetchCourseById({
 }) {
   if (!tenantId || !token) throw new Error("Thiếu thông tin tenant hoặc token");
   const res = await fetch(
-    `${config.API}/v1/workflow-process/public/course?id=${courseId}`,
+    `${config.API}/v1/workflow-process/manager/course?id=${courseId}`,
     {
       headers: {
         "x-tenant-id": tenantId,
@@ -66,4 +83,46 @@ export async function fetchCourseById({
   const arr = data.data?.[0]?.[0];
   const course = Array.isArray(arr) ? arr[0] : arr;
   return course;
+}
+
+// Interface for course creation
+export interface CreateCourseData {
+  title: string;
+  description: string;
+  session_number: number;
+  session_number_duration: string;
+  detail: Array<{ title: string }>;
+  media?: string[];
+  is_active: boolean;
+  price: number;
+}
+
+// Function to create a new course
+export async function createCourse({
+  courseData,
+  tenantId,
+  token,
+}: {
+  courseData: CreateCourseData;
+  tenantId: string;
+  token: string;
+}) {
+  const res = await fetch(`${config.API}/v1/workflow-process/manager/course`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(
+      errorData.message || `Failed to create course: ${res.status}`
+    );
+  }
+
+  return await res.json();
 }

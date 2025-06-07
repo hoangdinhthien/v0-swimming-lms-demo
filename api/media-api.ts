@@ -26,6 +26,27 @@ export interface MediaResponse {
   statusCode: number;
 }
 
+// Interface for uploaded media response
+export interface UploadMediaResponse {
+  data: {
+    filename: string;
+    disk: string;
+    mime: string;
+    size: number;
+    title: string;
+    alt: string;
+    tenant_id: string;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+    is_draft: boolean;
+    _id: string;
+    __v: number;
+  };
+  message: string;
+  statusCode: number;
+}
+
 // Function to fetch media details by ID
 export async function getMediaDetails(mediaId: string): Promise<string | null> {
   try {
@@ -44,5 +65,46 @@ export async function getMediaDetails(mediaId: string): Promise<string | null> {
   } catch (error) {
     console.error("Error fetching media details:", error);
     return null;
+  }
+}
+
+// Function to upload media file(s)
+export async function uploadMedia({
+  file,
+  title,
+  alt,
+  tenantId,
+  token,
+}: {
+  file: File;
+  title?: string;
+  alt?: string;
+  tenantId: string;
+  token: string;
+}): Promise<UploadMediaResponse> {
+  try {
+    const formData = new FormData();
+    formData.append("media[0][title]", title || file.name);
+    formData.append("media[0][alt]", alt || file.name);
+    formData.append("media[0][file]", file);
+
+    const response = await fetch(`${config.API}/v1/media`, {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${response.status} ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading media:", error);
+    throw error;
   }
 }

@@ -74,8 +74,8 @@ function ManagerDashboardPage() {
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
-        const data = await fetchCourses({ tenantId, token });
-        setCourses(data);
+        const res = await fetchCourses({ tenantId, token });
+        setCourses(res.data || []);
       } catch (e: any) {
         setCoursesError(e.message || "Lỗi không xác định");
         setCourses([]);

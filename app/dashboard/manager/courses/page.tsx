@@ -33,17 +33,29 @@ import { fetchCourses, fetchCourseCategories } from "@/api/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
 
 export default function CoursesPage() {
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [courses, setCourses] = useState<any[]>([]);
+  const [allCourses, setAllCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10); // Default page size
+  const [total, setTotal] = useState(0); // Total courses from API
 
   useEffect(() => {
     async function fetchData() {
@@ -54,8 +66,13 @@ export default function CoursesPage() {
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
-        const data = await fetchCourses({ tenantId, token });
-        setCourses(data);
+        // Use the fetchCourses API with pagination
+        const res = await fetchCourses({ tenantId, token, page, limit });
+        // fetchCourses returns only the data array, but we need total for pagination
+        // So, fetchCourses should return { data, total } or you need to fetch total from the API response
+        // Let's fix fetchCourses to return both data and total
+        setCourses(res.data || []);
+        setTotal(res.total || 0);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setCourses([]);
@@ -63,7 +80,7 @@ export default function CoursesPage() {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [page, limit]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -83,33 +100,32 @@ export default function CoursesPage() {
     fetchCategories();
   }, []);
 
-  // Filter courses based on filters and search
-  const filteredCourses = courses.filter((course) => {
-    // Filter by level
-    const levelMatch =
-      levelFilter === "all" ||
-      (Array.isArray(course.category)
-        ? course.category.some((cat: any) => cat.title === levelFilter)
-        : course.level === levelFilter);
+  // Fetch all courses for summary cards
+  useEffect(() => {
+    async function fetchAll() {
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+        if (!tenantId || !token) return;
+        // Fetch all courses (no pagination)
+        const res = await fetchCourses({
+          tenantId,
+          token,
+          page: 1,
+          limit: 1000,
+        });
+        setAllCourses(res.data || []);
+      } catch {
+        setAllCourses([]);
+      }
+    }
+    fetchAll();
+  }, []);
 
-    // Filter by status (use is_active for now)
-    const statusMatch =
-      statusFilter === "all" ||
-      (statusFilter === "Active" && course.is_active) ||
-      (statusFilter === "Completed" && course.is_active === false) ||
-      (statusFilter === "Upcoming" && false); // No upcoming info in API
-
-    // Filter by search query
-    const searchMatch =
-      searchQuery === "" ||
-      course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (Array.isArray(course.category) &&
-        course.category.some((cat: any) =>
-          cat.title?.toLowerCase().includes(searchQuery.toLowerCase())
-        ));
-
-    return levelMatch && statusMatch && searchMatch;
-  });
+  // Remove this line:
+  // const filteredCourses = courses.filter((course) => { ... });
+  // Instead, use the paginated API data directly:
+  const displayedCourses = courses;
 
   if (loading) {
     return (
@@ -222,7 +238,7 @@ export default function CoursesPage() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                {courses.filter((c) => c.is_active).length}
+                {allCourses.filter((c) => c.is_active).length}
               </div>
               <p className='text-xs text-muted-foreground'>Đang diễn ra</p>
             </CardContent>
@@ -236,7 +252,7 @@ export default function CoursesPage() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                {courses.reduce((sum, course) => {
+                {allCourses.reduce((sum, course) => {
                   const students =
                     typeof course.students === "number" ? course.students : 0;
                   return sum + students;
@@ -270,15 +286,15 @@ export default function CoursesPage() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                {courses.length > 0
+                {allCourses.length > 0
                   ? Math.round(
-                      courses.reduce((sum, course) => {
+                      allCourses.reduce((sum, course) => {
                         const students =
                           typeof course.students === "number"
                             ? course.students
                             : 0;
                         return sum + students;
-                      }, 0) / courses.length
+                      }, 0) / allCourses.length
                     )
                   : 0}
               </div>
@@ -315,14 +331,14 @@ export default function CoursesPage() {
                     <SelectItem value='all'>Tất cả trình độ</SelectItem>
                     {loadingCategories ? (
                       <SelectItem
-                        value=''
+                        value='loading'
                         disabled
                       >
                         Đang tải...
                       </SelectItem>
                     ) : categoriesError ? (
                       <SelectItem
-                        value=''
+                        value='error'
                         disabled
                       >
                         Lỗi tải trình độ
@@ -338,7 +354,7 @@ export default function CoursesPage() {
                       ))
                     ) : (
                       <SelectItem
-                        value=''
+                        value='none'
                         disabled
                       >
                         Không có trình độ
@@ -395,8 +411,8 @@ export default function CoursesPage() {
                         {error}
                       </TableCell>
                     </TableRow>
-                  ) : filteredCourses.length > 0 ? (
-                    filteredCourses.map((course: any) => (
+                  ) : displayedCourses.length > 0 ? (
+                    displayedCourses.map((course: any) => (
                       <TableRow key={course._id}>
                         <TableCell className='font-medium'>
                           {course.title}
@@ -455,6 +471,48 @@ export default function CoursesPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className='flex justify-center mt-6'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href='#'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page > 1) setPage(page - 1);
+                      }}
+                      aria-disabled={page === 1}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.ceil(total / limit) }, (_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        href='#'
+                        isActive={page === i + 1}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(i + 1);
+                        }}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href='#'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page < Math.ceil(total / limit)) setPage(page + 1);
+                      }}
+                      aria-disabled={page === Math.ceil(total / limit)}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
             </div>
           </CardContent>
         </Card>
