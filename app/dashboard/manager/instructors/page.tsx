@@ -168,7 +168,12 @@ export default function InstructorsPage() {
               students: 0, // API does not provide
               classes: 0, // API does not provide
               joinDate: item.user?.created_at
-                ? new Date(item.user.created_at).toLocaleDateString()
+                ? new Date(item.user.created_at).toLocaleString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    timeZone: "UTC", // Use UTC timezone for consistency
+                  })
                 : "-",
               rating: 0, // API does not provide
               avatar: avatarUrl,

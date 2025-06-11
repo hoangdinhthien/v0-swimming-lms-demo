@@ -176,7 +176,20 @@ export default function InstructorDetailPage() {
                     <p className='text-sm text-muted-foreground'>Ngày tạo</p>
                     <p className='font-medium'>
                       {detail.user?.created_at
-                        ? new Date(detail.user.created_at).toLocaleString()
+                        ? (() => {
+                            // Parse the UTC date string
+                            const utcDate = new Date(detail.user.created_at);
+                            // Format as UTC (not local Vietnam time)
+                            return utcDate.toLocaleString("vi-VN", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                              timeZone: "UTC", // Show as UTC, not Vietnam time
+                            });
+                          })()
                         : "-"}
                     </p>
                   </div>

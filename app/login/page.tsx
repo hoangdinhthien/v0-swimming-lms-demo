@@ -17,11 +17,13 @@ import { Label } from "@/components/ui/label";
 import { Waves } from "lucide-react";
 import { login } from "@/api/login-api";
 import { setAuthCookies } from "@/api/auth-utils";
+import { LoadingScreen } from "@/components/loading-screen";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,14 +42,21 @@ export default function LoginPage() {
       } // Debug: log user data
       console.log("Login response:", data);
 
+      // Show loading screen while redirecting
+      setRedirecting(true);
+
       // Redirect to tenant selection page
       router.push("/tenant-selection");
     } catch (err: any) {
       setError(err.message || "Đăng nhập thất bại");
-    } finally {
       setLoading(false);
     }
   };
+
+  // If redirecting, show the loading screen
+  if (redirecting) {
+    return <LoadingScreen message='Đang đăng nhập vào hệ thống...' />;
+  }
 
   return (
     <div className='min-h-screen flex flex-col'>

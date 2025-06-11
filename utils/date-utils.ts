@@ -1,0 +1,171 @@
+/**
+ * Utility functions for date and time formatting
+ * Version 1.0.2 - Enhanced with better timezone handling, error management, and WebSocket compatibility
+ */
+
+/**
+ * Format a timestamp (Date, string or number) into a user-friendly string
+ * based on when the message was sent (today, yesterday, or older)
+ *
+ * @param timestamp - The timestamp to format (Date object, ISO string, or epoch milliseconds)
+ * @returns Formatted time string (e.g. "12:34", "Yesterday, 12:34", or "01/01/2025, 12:34")
+ */
+/**
+ * Standardizes a timestamp input to ensure consistent handling
+ * Handles both ISO strings from API and numeric timestamps from WebSockets
+ *
+ * @param timestamp - The timestamp to standardize
+ * @returns A Date object
+ */
+export function standardizeTimestamp(timestamp: string | number | Date): Date {
+  if (!timestamp) {
+    return new Date(); // Default to current time if no timestamp
+  }
+
+  try {
+    // If it's already a Date object
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    // If it's a numeric timestamp (milliseconds since epoch)
+    if (typeof timestamp === "number") {
+      return new Date(timestamp);
+    }
+
+    // If it's a string (ISO format or other string format)
+    return new Date(timestamp);
+  } catch (error) {
+    console.error("Error standardizing timestamp:", error);
+    return new Date(); // Return current date as fallback
+  }
+}
+
+/**
+ * Format a timestamp (Date, string or number) into a user-friendly string
+ * based on when the message was sent (today, yesterday, or older)
+ *
+ * @param timestamp - The timestamp to format (Date object, ISO string, or epoch milliseconds)
+ * @returns Formatted time string (e.g. "12:34", "Yesterday, 12:34", or "01/01/2025, 12:34")
+ */
+export function formatMessageTime(timestamp: string | number | Date): string {
+  if (!timestamp) return "";
+
+  try {
+    // Convert input to Date object using our standardization function
+    const messageDate = standardizeTimestamp(timestamp);
+
+    // Handle invalid dates
+    if (isNaN(messageDate.getTime())) {
+      console.error("Invalid date input:", timestamp);
+      return String(timestamp);
+    }
+
+    // Always use Vietnam timezone for display
+    const timeZone = "Asia/Ho_Chi_Minh";
+    const locale = "vi-VN";
+
+    // Create a date object for today at midnight in Vietnam time
+    const now = new Date();
+    const today = new Date(now.toLocaleString(locale, { timeZone }));
+    today.setHours(0, 0, 0, 0);
+
+    // Create a date object for yesterday at midnight in Vietnam time
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Create a date object for the message date at midnight in Vietnam time
+    const messageDay = new Date(
+      messageDate.toLocaleString(locale, { timeZone })
+    );
+    messageDay.setHours(0, 0, 0, 0);
+
+    // Format time based on when the message was sent
+    if (messageDay.getTime() === today.getTime()) {
+      // Today: show only time
+      return messageDate.toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone,
+      });
+    } else if (messageDay.getTime() === yesterday.getTime()) {
+      // Yesterday: show "Yesterday, [time]"
+      return `Hôm qua, ${messageDate.toLocaleTimeString(locale, {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone,
+      })}`;
+    } else {
+      // Older: show date and time
+      return messageDate.toLocaleString(locale, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone,
+      });
+    }
+  } catch (error) {
+    console.error("Error formatting message time:", error);
+    return String(timestamp);
+  }
+}
+
+/**
+ * Log detailed information about a timestamp for debugging purposes
+ *
+ * @param label - A label to identify the log
+ * @param timestamp - The timestamp to log information about
+ */
+/**
+ * Log detailed information about a timestamp for debugging purposes
+ *
+ * @param label - A label to identify the log
+ * @param timestamp - The timestamp to log information about
+ * @param showFormatted - Whether to show the formatted output using formatMessageTime
+ */
+export function logTimestampDebugInfo(
+  label: string,
+  timestamp: any,
+  showFormatted: boolean = true
+): void {
+  try {
+    const date = new Date(timestamp);
+    console.group(`Timestamp Debug: ${label}`);
+    console.log(`- Original value: ${timestamp}`);
+    console.log(`- Type: ${typeof timestamp}`);
+
+    if (!isNaN(date.getTime())) {
+      console.log(`- Parsed local date: ${date.toString()}`);
+      console.log(`- ISO string: ${date.toISOString()}`);
+      console.log(`- Locale string: ${date.toLocaleString()}`);
+      console.log(`- UTC string: ${date.toUTCString()}`);
+      console.log(`- Timezone offset: ${date.getTimezoneOffset()} minutes`);
+      console.log(
+        `- Browser timezone: ${
+          Intl.DateTimeFormat().resolvedOptions().timeZone
+        }`
+      );
+      console.log(`- Time components:`, {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        hours: date.getHours(),
+        minutes: date.getMinutes(),
+        seconds: date.getSeconds(),
+      });
+
+      if (showFormatted) {
+        console.log(
+          `- Formatted with formatMessageTime: ${formatMessageTime(date)}`
+        );
+      }
+    } else {
+      console.warn(`- Invalid date value`);
+    }
+    console.groupEnd();
+  } catch (error) {
+    console.error("Error logging timestamp debug info:", error);
+  }
+}

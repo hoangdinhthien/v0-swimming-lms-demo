@@ -1,5 +1,42 @@
 import config from "@/api/config.json";
 
+export interface CreateInstructorData {
+  username: string;
+  email: string;
+  password: string;
+  role: string[];
+}
+
+export async function createInstructor({
+  data,
+  tenantId,
+  token,
+}: {
+  data: CreateInstructorData;
+  tenantId: string;
+  token: string;
+}) {
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/user`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "x-tenant-id": tenantId,
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to create instructor");
+  }
+
+  return await response.json();
+}
+
 export async function fetchInstructors({
   tenantId,
   token,

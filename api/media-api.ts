@@ -56,8 +56,15 @@ export async function getMediaDetails(mediaId: string): Promise<string | null> {
       includeTenant: true,
     });
 
+    // Just return null for 404 responses instead of throwing an error
+    if (response.status === 404) {
+      console.warn(`Media not found (404): ${mediaId}`);
+      return null;
+    }
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch media details: ${response.status}`);
+      console.error(`Failed to fetch media details: ${response.status}`);
+      return null;
     }
 
     const data: MediaResponse = await response.json();

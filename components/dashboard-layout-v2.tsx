@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { LoadingScreen } from "@/components/loading-screen";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -53,6 +54,7 @@ export default function DashboardLayout({
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState<string>(propUserRole || "");
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   // Get the current user's name and role from localStorage on component mount
   useEffect(() => {
@@ -65,6 +67,13 @@ export default function DashboardLayout({
       // For this version of the app, we always use manager role
       setUserRole("manager");
     }
+
+    // Simulate loading delay
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500); // Adjust the delay as needed
+
+    return () => clearTimeout(timer);
   }, []);
   // For this version of the app, we only have manager role
   const getRoleDisplayName = () => {
@@ -102,6 +111,11 @@ export default function DashboardLayout({
         icon: <MessageSquare className='h-4 w-4 mr-2' />,
       },
       {
+        name: "Đơn từ",
+        href: "/dashboard/manager/applications",
+        icon: <Building className='h-4 w-4 mr-2' />,
+      },
+      {
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
         icon: <CreditCard className='h-4 w-4 mr-2' />,
@@ -115,11 +129,6 @@ export default function DashboardLayout({
         name: "Khuyến Mãi",
         href: "/dashboard/manager/promotions",
         icon: <Percent className='h-4 w-4 mr-2' />,
-      },
-      {
-        name: "Đơn từ",
-        href: "/dashboard/manager/applications",
-        icon: <Building className='h-4 w-4 mr-2' />,
       },
       {
         name: "Cài Đặt Tài Khoản",
@@ -325,7 +334,7 @@ export default function DashboardLayout({
           </div>
         </nav>
         <main className='flex flex-1 flex-col p-4 md:gap-8 md:p-6 md:ml-[220px] mt-16'>
-          {children}
+          {loading ? <LoadingScreen /> : children}
         </main>
       </div>
     </div>

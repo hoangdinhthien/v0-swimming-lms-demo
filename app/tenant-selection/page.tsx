@@ -27,6 +27,7 @@ import {
   type Tenant,
 } from "@/api/tenant-api";
 import { useTenant } from "@/components/tenant-provider";
+import { LoadingScreen } from "@/components/loading-screen";
 
 export default function TenantSelectionPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -34,6 +35,7 @@ export default function TenantSelectionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const router = useRouter();
   const { setSelectedTenant } = useTenant();
 
@@ -73,14 +75,21 @@ export default function TenantSelectionPage() {
       // Save the selected tenant using context
       setSelectedTenant(selectedTenantId);
 
+      // Show loading screen while redirecting
+      setRedirecting(true);
+
       // Redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Không thể truy cập bảng điều khiển chi nhánh");
-    } finally {
       setSubmitting(false);
     }
   };
+
+  // If redirecting, show the loading screen
+  if (redirecting) {
+    return <LoadingScreen message='Đang chuẩn bị bảng điều khiển...' />;
+  }
 
   if (loading) {
     return (

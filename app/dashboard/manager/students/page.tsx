@@ -213,9 +213,9 @@ export default function StudentsPage() {
                               </div>
                             </div>
                           </div>
-                        </TableCell>
+                        </TableCell>{" "}
                         <TableCell>-</TableCell>
-                        <TableCell>-</TableCell>{" "}
+                        <TableCell>-</TableCell>
                         <TableCell>
                           <Badge
                             variant='outline'
