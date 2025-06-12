@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   WifiOff,
   Loader2,
 } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,9 +31,20 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { useSocket, ChatMessage } from "@/utils/socket-utils";
+import {
+  useSocket,
+  ChatMessage as SocketChatMessage,
+} from "@/utils/socket-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { useAuthStatus } from "@/utils/auth-reconnection";
+import { formatMessageTime, standardizeTimestamp } from "@/utils/date-utils";
+import {
+  fetchConversationsWithUserDetails,
+  ConversationWithUserDetails,
+  fetchConversationMessages,
+  ChatMessage as ApiChatMessage,
+} from "@/api/messages-api";
+import { getMediaDetails } from "@/api/media-api";
 
 const MessagesPageContent = () => {
   const [activeConversation, setActiveConversation] = useState<string | null>(
@@ -39,9 +52,20 @@ const MessagesPageContent = () => {
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<SocketChatMessage[]>([]);
+  const [apiMessages, setApiMessages] = useState<ApiChatMessage[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [reconnecting, setReconnecting] = useState(false);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [conversationError, setConversationError] = useState<string | null>(
+    null
+  );
+  // Add loading state for sending messages
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   // Use auth status hook
   const { isAuthenticated, isCheckingAuth } = useAuthStatus();
@@ -117,84 +141,194 @@ const MessagesPageContent = () => {
       joinConversation(activeConversation);
     }
   }, [activeConversation, isConnected, joinConversation]);
+  // Fetch conversations with user details
+  useEffect(() => {
+    const fetchConversationsData = async () => {
+      setLoadingConversations(true);
+      setConversationError(null);
 
-  // Mock conversations data - in a real app, this would come from an API and be updated by WebSocket
-  const conversations = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      avatar: "/placeholder.svg",
-      lastMessage: "Xin chào, tôi muốn hỏi về lịch học",
-      unread: 2,
-      time: "14:30",
-      isStudent: true,
-    },
-    {
-      id: "2",
-      name: "Trần Thị B",
-      avatar: "/placeholder.svg",
-      lastMessage: "Cảm ơn thầy cô đã giúp đỡ",
-      unread: 0,
-      time: "Hôm qua",
-      isStudent: true,
-    },
-    {
-      id: "3",
-      name: "Huấn luyện viên Hồ Văn C",
-      avatar: "/placeholder.svg",
-      lastMessage: "Lịch dạy tuần sau đã được cập nhật",
-      unread: 1,
-      time: "10:15",
-      isStudent: false,
-    },
-  ];
+      try {
+        const token = getAuthToken();
+        const tenantId = localStorage.getItem("selectedTenantId");
 
-  // Handle sending a message
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !activeConversation) return;
+        if (!token || !tenantId) {
+          setConversationError("Thiếu thông tin xác thực");
+          return;
+        }
+        const conversationsData = await fetchConversationsWithUserDetails({
+          tenantId,
+          token,
+        });
+
+        // Transform API data to match UI format
+        const transformedConversations = conversationsData.map((conv) => {
+          const userDetails = conv.userDetails[0] || {};
+          // The username is nested inside the user object based on the API response structure
+          const userName = userDetails.user?.username || "Người dùng";
+
+          // Use the avatarUrl field that was added in the API function
+          const avatarUrl = userDetails.avatarUrl || "/placeholder.svg";
+
+          return {
+            id: conv._id,
+            name: userName,
+            avatar: avatarUrl,
+            lastMessage: "Bắt đầu cuộc trò chuyện",
+            unread: 0,
+            time: formatDistanceToNow(new Date(conv.updated_at), {
+              addSuffix: true,
+              locale: vi,
+            }),
+            updatedAt: new Date(conv.updated_at),
+            isStudent:
+              userDetails.user?.role_front?.includes("student") || false,
+            userDetails: conv.userDetails,
+          };
+        });
+
+        // Sort by updated time, newest first
+        transformedConversations.sort(
+          (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+        );
+
+        setConversations(transformedConversations);
+        console.log("Fetched conversations:", transformedConversations);
+      } catch (error) {
+        console.error("Error fetching conversations:", error);
+        setConversationError("Không thể tải cuộc trò chuyện");
+      } finally {
+        setLoadingConversations(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchConversationsData();
+    }
+  }, [isAuthenticated]);
+  // Fetch messages for the active conversation
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!activeConversation) return;
+
+      setLoadingMessages(true);
+      setMessagesError(null);
+
+      try {
+        const token = getAuthToken();
+        const tenantId = localStorage.getItem("selectedTenantId");
+        // Get current user ID to determine message positioning
+        const currentUser = localStorage.getItem("userId");
+        setCurrentUserId(currentUser || null);
+
+        if (!token || !tenantId) {
+          setMessagesError("Thiếu thông tin xác thực");
+          return;
+        }
+
+        // Fetch messages from API - avatars are now processed in the API function
+        const messagesData = await fetchConversationMessages({
+          conversationId: activeConversation,
+          tenantId,
+          token,
+        });
+
+        // Sort messages by creation date, oldest first
+        const sortedMessages = [...messagesData].sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+
+        setApiMessages(sortedMessages);
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+        setMessagesError("Không thể tải tin nhắn");
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+  }, [activeConversation, isAuthenticated]); // Enhanced message sending with loading feedback
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeConversation || sendingMessage) return;
 
     const currentConversation = conversations.find(
       (c) => c.id === activeConversation
     );
     if (!currentConversation) return;
 
-    const messageToSend = {
-      content: newMessage,
-      sender: {
-        id: "current-user-id", // In a real app, get this from auth
-        name: "Current User Name", // In a real app, get this from auth
-        avatar: "/placeholder.svg",
-      },
-      receiver: {
-        id: currentConversation.id,
-        name: currentConversation.name,
-      },
-      conversationId: activeConversation,
-    };
+    setSendingMessage(true);
 
-    // Send message through WebSocket
-    const sent = sendMessage(messageToSend);
-
-    if (sent) {
-      // Add message to local state (for optimistic updates)
-      const sentMessage = {
-        ...messageToSend,
-        id: `temp-${Date.now()}`, // In a real app, the server would assign a real ID
-        timestamp: Date.now(),
-        read: false,
+    try {
+      // Get current user info from localStorage and conversation data
+      const currentUserInfo = {
+        id:
+          currentUserId || localStorage.getItem("userId") || "current-user-id",
+        name:
+          localStorage.getItem("username") ||
+          localStorage.getItem("userFullName") ||
+          "Current User",
+        avatar: localStorage.getItem("userAvatar") || "/placeholder.svg",
       };
 
-      setMessages((prev) => [...prev, sentMessage]);
-      setNewMessage(""); // Clear input
+      const messageToSend = {
+        content: newMessage.trim(),
+        sender: currentUserInfo,
+        receiver: {
+          id: currentConversation.id,
+          name: currentConversation.name,
+        },
+        conversationId: activeConversation,
+      };
+
+      // Send message through WebSocket
+      const sent = sendMessage(messageToSend);
+
+      if (sent) {
+        // Add message to local state (for optimistic updates)
+        const sentMessage = {
+          ...messageToSend,
+          id: `temp-${Date.now()}`, // Temporary ID for optimistic update
+          timestamp: Date.now(),
+          read: false,
+        };
+
+        setMessages((prev) => [...prev, sentMessage]);
+        setNewMessage(""); // Clear input
+
+        // Scroll to bottom after sending
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      // Could add a toast notification here in the future
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+  // Handle Enter key press for sending messages
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   // Filter conversations by search query
-  const filteredConversations = conversations.filter(
-    (conversation) =>
-      conversation.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conversation.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations.filter((conversation) => {
+    if (!conversation) return false;
+
+    const nameMatch = conversation.name
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const messageMatch = conversation.lastMessage
+      ?.toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    return nameMatch || messageMatch;
+  });
 
   return (
     <>
@@ -321,52 +455,79 @@ const MessagesPageContent = () => {
               >
                 <ScrollArea className='h-[500px]'>
                   <div className='space-y-2'>
-                    {filteredConversations.map((conversation) => (
-                      <div
-                        key={conversation.id}
-                        className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted ${
-                          activeConversation === conversation.id
-                            ? "bg-muted"
-                            : ""
-                        }`}
-                        onClick={() => setActiveConversation(conversation.id)}
-                      >
-                        <Avatar>
-                          <AvatarImage
-                            src={conversation.avatar}
-                            alt={conversation.name}
-                          />
-                          <AvatarFallback>
-                            {conversation.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className='flex-1 min-w-0'>
-                          <div className='flex items-center justify-between'>
-                            <p className='font-medium truncate'>
-                              {conversation.name}
-                            </p>
-                            <span className='text-xs text-muted-foreground'>
-                              {conversation.time}
-                            </span>
-                          </div>
-                          <p className='text-sm text-muted-foreground truncate'>
-                            {conversation.lastMessage}
-                          </p>
-                        </div>
-                        {conversation.unread > 0 && (
-                          <Badge className='ml-auto'>
-                            {conversation.unread}
-                          </Badge>
-                        )}
-                      </div>
-                    ))}
-
-                    {filteredConversations.length === 0 && (
-                      <div className='py-12 text-center text-muted-foreground'>
-                        <MessageSquare className='mx-auto h-8 w-8 mb-2 opacity-50' />
-                        <p>Không tìm thấy tin nhắn nào</p>
+                    {loadingConversations && (
+                      <div className='py-12 text-center'>
+                        <Loader2 className='mx-auto h-8 w-8 mb-2 animate-spin opacity-50' />
+                        <p className='text-muted-foreground'>
+                          Đang tải tin nhắn...
+                        </p>
                       </div>
                     )}
+
+                    {conversationError && (
+                      <div className='py-12 text-center text-red-500'>
+                        <AlertCircle className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                        <p>{conversationError}</p>
+                      </div>
+                    )}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations.map((conversation) => (
+                        <div
+                          key={conversation.id}
+                          className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted transition-colors duration-200 ${
+                            activeConversation === conversation.id
+                              ? "bg-muted border-l-4 border-primary pl-2"
+                              : ""
+                          }`}
+                          onClick={() => setActiveConversation(conversation.id)}
+                        >
+                          <div className='relative'>
+                            <Avatar className='h-10 w-10 border border-border'>
+                              <AvatarImage
+                                src={conversation.avatar}
+                                alt={conversation.name}
+                              />
+                              <AvatarFallback className='bg-primary/10 text-primary font-medium'>
+                                {conversation.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {conversation.isStudent ? (
+                              <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background'></div>
+                            ) : (
+                              <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-blue-500 border-2 border-background'></div>
+                            )}
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex items-center justify-between'>
+                              <p className='font-medium truncate'>
+                                {conversation.name}
+                              </p>
+                              <span className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
+                                {conversation.time}
+                              </span>
+                            </div>
+                            <p className='text-sm text-muted-foreground truncate'>
+                              {conversation.lastMessage}
+                            </p>
+                          </div>
+                          {conversation.unread > 0 && (
+                            <Badge className='ml-auto bg-primary hover:bg-primary rounded-full px-1.5'>
+                              {conversation.unread}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations.length === 0 && (
+                        <div className='py-12 text-center text-muted-foreground'>
+                          <MessageSquare className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                          <p>Không tìm thấy tin nhắn nào</p>
+                        </div>
+                      )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -377,47 +538,80 @@ const MessagesPageContent = () => {
               >
                 <ScrollArea className='h-[500px]'>
                   <div className='space-y-2'>
-                    {filteredConversations
-                      .filter((c) => c.isStudent)
-                      .map((conversation) => (
-                        <div
-                          key={conversation.id}
-                          className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted ${
-                            activeConversation === conversation.id
-                              ? "bg-muted"
-                              : ""
-                          }`}
-                          onClick={() => setActiveConversation(conversation.id)}
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={conversation.avatar}
-                              alt={conversation.name}
-                            />
-                            <AvatarFallback>
-                              {conversation.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-center justify-between'>
-                              <p className='font-medium truncate'>
-                                {conversation.name}
-                              </p>
-                              <span className='text-xs text-muted-foreground'>
-                                {conversation.time}
-                              </span>
+                    {loadingConversations && (
+                      <div className='py-12 text-center'>
+                        <Loader2 className='mx-auto h-8 w-8 mb-2 animate-spin opacity-50' />
+                        <p className='text-muted-foreground'>
+                          Đang tải tin nhắn...
+                        </p>
+                      </div>
+                    )}
+
+                    {conversationError && (
+                      <div className='py-12 text-center text-red-500'>
+                        <AlertCircle className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                        <p>{conversationError}</p>
+                      </div>
+                    )}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations
+                        .filter((c) => c.isStudent)
+                        .map((conversation) => (
+                          <div
+                            key={conversation.id}
+                            className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted transition-colors duration-200 ${
+                              activeConversation === conversation.id
+                                ? "bg-muted border-l-4 border-primary pl-2"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setActiveConversation(conversation.id)
+                            }
+                          >
+                            <div className='relative'>
+                              <Avatar className='h-10 w-10 border border-border'>
+                                <AvatarImage
+                                  src={conversation.avatar}
+                                  alt={conversation.name}
+                                />
+                                <AvatarFallback className='bg-primary/10 text-primary font-medium'>
+                                  {conversation.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background'></div>
                             </div>
-                            <p className='text-sm text-muted-foreground truncate'>
-                              {conversation.lastMessage}
-                            </p>
+                            <div className='flex-1 min-w-0'>
+                              <div className='flex items-center justify-between'>
+                                <p className='font-medium truncate'>
+                                  {conversation.name}
+                                </p>
+                                <span className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
+                                  {conversation.time}
+                                </span>
+                              </div>
+                              <p className='text-sm text-muted-foreground truncate'>
+                                {conversation.lastMessage}
+                              </p>
+                            </div>
+                            {conversation.unread > 0 && (
+                              <Badge className='ml-auto bg-primary hover:bg-primary rounded-full px-1.5'>
+                                {conversation.unread}
+                              </Badge>
+                            )}
                           </div>
-                          {conversation.unread > 0 && (
-                            <Badge className='ml-auto'>
-                              {conversation.unread}
-                            </Badge>
-                          )}
+                        ))}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations.filter((c) => c.isStudent)
+                        .length === 0 && (
+                        <div className='py-12 text-center text-muted-foreground'>
+                          <MessageSquare className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                          <p>Không tìm thấy cuộc trò chuyện nào với học viên</p>
                         </div>
-                      ))}
+                      )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -428,47 +622,82 @@ const MessagesPageContent = () => {
               >
                 <ScrollArea className='h-[500px]'>
                   <div className='space-y-2'>
-                    {filteredConversations
-                      .filter((c) => !c.isStudent)
-                      .map((conversation) => (
-                        <div
-                          key={conversation.id}
-                          className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted ${
-                            activeConversation === conversation.id
-                              ? "bg-muted"
-                              : ""
-                          }`}
-                          onClick={() => setActiveConversation(conversation.id)}
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={conversation.avatar}
-                              alt={conversation.name}
-                            />
-                            <AvatarFallback>
-                              {conversation.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-center justify-between'>
-                              <p className='font-medium truncate'>
-                                {conversation.name}
-                              </p>
-                              <span className='text-xs text-muted-foreground'>
-                                {conversation.time}
-                              </span>
+                    {loadingConversations && (
+                      <div className='py-12 text-center'>
+                        <Loader2 className='mx-auto h-8 w-8 mb-2 animate-spin opacity-50' />
+                        <p className='text-muted-foreground'>
+                          Đang tải tin nhắn...
+                        </p>
+                      </div>
+                    )}
+
+                    {conversationError && (
+                      <div className='py-12 text-center text-red-500'>
+                        <AlertCircle className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                        <p>{conversationError}</p>
+                      </div>
+                    )}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations
+                        .filter((c) => !c.isStudent)
+                        .map((conversation) => (
+                          <div
+                            key={conversation.id}
+                            className={`flex items-center gap-3 rounded-lg p-3 cursor-pointer hover:bg-muted transition-colors duration-200 ${
+                              activeConversation === conversation.id
+                                ? "bg-muted border-l-4 border-primary pl-2"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setActiveConversation(conversation.id)
+                            }
+                          >
+                            <div className='relative'>
+                              <Avatar className='h-10 w-10 border border-border'>
+                                <AvatarImage
+                                  src={conversation.avatar}
+                                  alt={conversation.name}
+                                />
+                                <AvatarFallback className='bg-primary/10 text-primary font-medium'>
+                                  {conversation.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-blue-500 border-2 border-background'></div>
                             </div>
-                            <p className='text-sm text-muted-foreground truncate'>
-                              {conversation.lastMessage}
-                            </p>
+                            <div className='flex-1 min-w-0'>
+                              <div className='flex items-center justify-between'>
+                                <p className='font-medium truncate'>
+                                  {conversation.name}
+                                </p>
+                                <span className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
+                                  {conversation.time}
+                                </span>
+                              </div>
+                              <p className='text-sm text-muted-foreground truncate'>
+                                {conversation.lastMessage}
+                              </p>
+                            </div>
+                            {conversation.unread > 0 && (
+                              <Badge className='ml-auto bg-primary hover:bg-primary rounded-full px-1.5'>
+                                {conversation.unread}
+                              </Badge>
+                            )}
                           </div>
-                          {conversation.unread > 0 && (
-                            <Badge className='ml-auto'>
-                              {conversation.unread}
-                            </Badge>
-                          )}
+                        ))}
+
+                    {!loadingConversations &&
+                      !conversationError &&
+                      filteredConversations.filter((c) => !c.isStudent)
+                        .length === 0 && (
+                        <div className='py-12 text-center text-muted-foreground'>
+                          <MessageSquare className='mx-auto h-8 w-8 mb-2 opacity-50' />
+                          <p>
+                            Không tìm thấy cuộc trò chuyện nào với giáo viên
+                          </p>
                         </div>
-                      ))}
+                      )}
                   </div>
                 </ScrollArea>
               </TabsContent>
@@ -480,196 +709,407 @@ const MessagesPageContent = () => {
           {activeConversation ? (
             <>
               <CardHeader className='border-b'>
-                <div className='flex items-center gap-3'>
-                  <Avatar>
-                    <AvatarImage
-                      src={
-                        conversations.find((c) => c.id === activeConversation)
-                          ?.avatar || "/placeholder.svg"
-                      }
-                      alt={
-                        conversations.find((c) => c.id === activeConversation)
-                          ?.name || "User"
-                      }
-                    />
-                    <AvatarFallback>
-                      <User className='h-4 w-4' />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle className='text-lg'>
-                      {
-                        conversations.find((c) => c.id === activeConversation)
-                          ?.name
-                      }
-                    </CardTitle>
-                    <p className='text-sm text-muted-foreground'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className='relative'>
+                      <Avatar>
+                        <AvatarImage
+                          src={
+                            conversations.find(
+                              (c) => c.id === activeConversation
+                            )?.avatar || "/placeholder.svg"
+                          }
+                          alt={
+                            conversations.find(
+                              (c) => c.id === activeConversation
+                            )?.name || "User"
+                          }
+                        />
+                        <AvatarFallback>
+                          <User className='h-4 w-4' />
+                        </AvatarFallback>
+                      </Avatar>
                       {conversations.find((c) => c.id === activeConversation)
-                        ?.isStudent
-                        ? "Học viên"
-                        : "Giáo viên"}
-                    </p>
+                        ?.isStudent ? (
+                        <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-background'></div>
+                      ) : (
+                        <div className='absolute bottom-0 right-0 h-3 w-3 rounded-full bg-blue-500 border-2 border-background'></div>
+                      )}
+                    </div>
+                    <div>
+                      <CardTitle className='text-lg'>
+                        {
+                          conversations.find((c) => c.id === activeConversation)
+                            ?.name
+                        }
+                      </CardTitle>
+                      <p className='text-xs text-muted-foreground'>
+                        {conversations.find((c) => c.id === activeConversation)
+                          ?.isStudent
+                          ? "Học viên • Đang hoạt động"
+                          : "Giáo viên • Đang hoạt động"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='rounded-full hover:bg-muted'
+                    >
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        width='20'
+                        height='20'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      >
+                        <path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'></path>
+                      </svg>
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='rounded-full hover:bg-muted'
+                    >
+                      <svg
+                        xmlns='http://www.w3.org/2000/svg'
+                        width='20'
+                        height='20'
+                        viewBox='0 0 24 24'
+                        fill='none'
+                        stroke='currentColor'
+                        strokeWidth='2'
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      >
+                        <path d='M15 10l5 5-5 5'></path>
+                        <path d='M4 4v7a4 4 0 0 0 4 4h12'></path>
+                      </svg>
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className='p-0'>
-                <div className='h-[500px] flex flex-col'>
-                  <ScrollArea className='flex-1 p-4'>
-                    <div className='space-y-4'>
-                      {/* Initial conversation messages */}
-                      <div className='flex items-start gap-2'>
-                        <Avatar className='h-8 w-8'>
-                          <AvatarImage
-                            src={
-                              conversations.find(
-                                (c) => c.id === activeConversation
-                              )?.avatar
-                            }
-                            alt={
-                              conversations.find(
-                                (c) => c.id === activeConversation
-                              )?.name
-                            }
-                          />
-                          <AvatarFallback>
-                            {conversations
-                              .find((c) => c.id === activeConversation)
-                              ?.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className='rounded-lg bg-muted p-3'>
+              <CardContent className='p-0 flex flex-col h-[500px]'>
+                <ScrollArea className='flex-1 p-4'>
+                  <div className='space-y-4'>
+                    {loadingMessages && (
+                      <div className='py-12 text-center'>
+                        <Loader2 className='mx-auto h-8 w-8 mb-2 animate-spin opacity-50' />
+                        <p className='text-muted-foreground'>
+                          Đang tải tin nhắn...
+                        </p>
+                      </div>
+                    )}
+                    {messagesError && (
+                      <div className='py-4 text-center text-red-500'>
+                        <AlertCircle className='mx-auto h-6 w-6 mb-1 opacity-70' />
+                        <p className='text-sm'>{messagesError}</p>
+                      </div>
+                    )}
+                    {!loadingMessages &&
+                      !messagesError &&
+                      apiMessages.length === 0 && (
+                        <div className='py-8 text-center text-muted-foreground'>
+                          <MessageSquare className='mx-auto h-6 w-6 mb-2 opacity-50' />
                           <p>
-                            {
-                              conversations.find(
-                                (c) => c.id === activeConversation
-                              )?.lastMessage
-                            }
+                            Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
                           </p>
-                          <span className='text-xs text-muted-foreground mt-1 block'>
-                            14:30
-                          </span>
                         </div>
-                      </div>
-
-                      <div className='flex items-start gap-2 justify-end'>
-                        <div className='rounded-lg bg-primary p-3 text-primary-foreground'>
-                          <p>Xin chào, tôi có thể giúp gì cho bạn?</p>
-                          <span className='text-xs text-primary-foreground/80 mt-1 block'>
-                            14:31
-                          </span>
-                        </div>
-                        <Avatar className='h-8 w-8'>
-                          <AvatarImage src='/placeholder.svg' />
-                          <AvatarFallback>Q</AvatarFallback>
-                        </Avatar>
-                      </div>
-
-                      {/* Dynamic messages from state */}
-                      {messages.map((message) => {
+                      )}{" "}
+                    {/* API messages */}
+                    {!loadingMessages &&
+                      apiMessages.map((message, index) => {
                         const isCurrentUser =
-                          message.sender.id === "current-user-id";
-                        const time = new Date(
-                          message.timestamp
-                        ).toLocaleTimeString([], {
+                          message.created_by._id === currentUserId;
+
+                        // Create a proper UTC Date object from the message timestamp
+                        const utcDate = new Date(message.created_at);
+
+                        // Format time as HH:mm with Vietnam timezone
+                        const time = utcDate.toLocaleTimeString("vi-VN", {
                           hour: "2-digit",
                           minute: "2-digit",
+                          timeZone: "Asia/Ho_Chi_Minh",
                         });
 
+                        // Format date as dd/MM/yyyy with Vietnam timezone
+                        const date = utcDate.toLocaleDateString("vi-VN", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          timeZone: "Asia/Ho_Chi_Minh",
+                        });
+
+                        // Check if we should show date separator (first message or new date)
+                        const previousMessage =
+                          index > 0 ? apiMessages[index - 1] : null;
+                        let prevDate = "";
+
+                        if (previousMessage) {
+                          // Get previous message date with the same timezone handling
+                          const prevUtcDate = new Date(
+                            previousMessage.created_at
+                          );
+                          prevDate = prevUtcDate.toLocaleDateString("vi-VN", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            timeZone: "Asia/Ho_Chi_Minh",
+                          });
+                        }
+
+                        const showDateSeparator =
+                          !previousMessage || prevDate !== date;
+
+                        // Check if the message is from the same sender as the previous one
+                        const isConsecutiveMessage =
+                          previousMessage &&
+                          previousMessage.created_by._id ===
+                            message.created_by._id &&
+                          !showDateSeparator;
+                        const avatarUrl =
+                          message.avatarUrl || "/placeholder.svg";
+
                         return (
+                          <React.Fragment key={message._id}>
+                            {" "}
+                            {showDateSeparator && (
+                              <div className='flex items-center justify-center my-4'>
+                                <div className='bg-muted/30 text-xs rounded-full px-3 py-1 text-muted-foreground'>
+                                  {utcDate.toLocaleDateString("vi-VN", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    timeZone: "Asia/Ho_Chi_Minh",
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                            <div
+                              className={`flex items-end ${
+                                isConsecutiveMessage ? "mt-1" : "mt-3"
+                              } ${
+                                isCurrentUser ? "justify-end" : "justify-start"
+                              }`}
+                            >
+                              {!isCurrentUser && !isConsecutiveMessage && (
+                                <Avatar className='h-8 w-8 mr-2 mb-1'>
+                                  <AvatarImage
+                                    src={avatarUrl}
+                                    alt={message.created_by.username}
+                                  />
+                                  <AvatarFallback className='bg-primary/10 text-primary uppercase font-medium'>
+                                    {message.created_by.username.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              {!isCurrentUser && isConsecutiveMessage && (
+                                <div className='w-8 mr-2'></div>
+                              )}
+                              <div
+                                className={`max-w-[80%] ${
+                                  isCurrentUser
+                                    ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                                    : "bg-muted rounded-2xl rounded-tl-sm"
+                                } px-4 py-2`}
+                              >
+                                <p className='break-words'>{message.content}</p>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        className={`text-xs mt-1 inline-block ${
+                                          isCurrentUser
+                                            ? "text-primary-foreground/80"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        {time}
+                                      </span>
+                                    </TooltipTrigger>{" "}
+                                    <TooltipContent>
+                                      {utcDate.toLocaleString("vi-VN", {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        second: "2-digit",
+                                        timeZone: "Asia/Ho_Chi_Minh",
+                                      })}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                              {isCurrentUser && !isConsecutiveMessage && (
+                                <Avatar className='h-8 w-8 ml-2 mb-1'>
+                                  <AvatarImage
+                                    src={avatarUrl}
+                                    alt={message.created_by.username}
+                                  />
+                                  <AvatarFallback className='bg-primary/10 text-primary uppercase font-medium'>
+                                    {message.created_by.username.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              {isCurrentUser && isConsecutiveMessage && (
+                                <div className='w-8 ml-2'></div>
+                              )}
+                            </div>
+                          </React.Fragment>
+                        );
+                      })}
+                    {/* Socket messages (for newly sent messages) */}
+                    {messages.map((message) => {
+                      // Only show socket messages that aren't duplicates of API messages
+                      const isDuplicate = apiMessages.some(
+                        (apiMsg) => apiMsg._id === message.id
+                      );
+
+                      if (isDuplicate) return null;
+
+                      const isCurrentUser = message.sender.id === currentUserId;
+                      const time = formatMessageTime(message.timestamp);
+                      const date = format(
+                        new Date(message.timestamp),
+                        "dd/MM/yyyy"
+                      );
+
+                      return (
+                        <React.Fragment key={message.id}>
                           <div
-                            key={message.id}
-                            className={`flex items-start gap-2 ${
-                              isCurrentUser ? "justify-end" : ""
+                            className={`flex items-end mt-3 ${
+                              isCurrentUser ? "justify-end" : "justify-start"
                             }`}
                           >
                             {!isCurrentUser && (
-                              <Avatar className='h-8 w-8'>
+                              <Avatar className='h-8 w-8 mr-2 mb-1'>
                                 <AvatarImage
                                   src={
                                     message.sender.avatar || "/placeholder.svg"
                                   }
+                                  alt={message.sender.name}
                                 />
                                 <AvatarFallback>
-                                  {message.sender.name.charAt(0)}
+                                  {message.sender.name.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                            )}
-
+                            )}{" "}
                             <div
-                              className={`rounded-lg p-3 ${
+                              className={`max-w-[80%] ${
                                 isCurrentUser
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted"
-                              }`}
+                                  ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                                  : "bg-muted rounded-2xl rounded-tl-sm"
+                              } px-4 py-2`}
                             >
-                              <p>{message.content}</p>
-                              <div className='flex items-center justify-between gap-2 mt-1'>
-                                <span
-                                  className={`text-xs ${
-                                    isCurrentUser
-                                      ? "text-primary-foreground/80"
-                                      : "text-muted-foreground"
-                                  }`}
-                                >
-                                  {time}
-                                </span>
+                              <p className='break-words'>{message.content}</p>
+                              <div className='flex items-center gap-2 mt-1'>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        className={`text-xs ${
+                                          isCurrentUser
+                                            ? "text-primary-foreground/80"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        {time}
+                                      </span>
+                                    </TooltipTrigger>{" "}
+                                    <TooltipContent>
+                                      {new Date(
+                                        message.timestamp
+                                      ).toLocaleString("vi-VN", {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        second: "2-digit",
+                                        timeZone: "Asia/Ho_Chi_Minh",
+                                      })}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                                 {isCurrentUser && (
-                                  <span className='text-xs text-primary-foreground/80'>
+                                  <span
+                                    className={`text-xs ${
+                                      isCurrentUser
+                                        ? "text-primary-foreground/70"
+                                        : "text-muted-foreground/70"
+                                    }`}
+                                  >
                                     {message.read ? "Đã đọc" : "Đã gửi"}
                                   </span>
                                 )}
                               </div>
                             </div>
-
                             {isCurrentUser && (
-                              <Avatar className='h-8 w-8'>
-                                <AvatarImage src='/placeholder.svg' />
-                                <AvatarFallback>Q</AvatarFallback>
+                              <Avatar className='h-8 w-8 ml-2 mb-1'>
+                                <AvatarImage
+                                  src={
+                                    message.sender.avatar || "/placeholder.svg"
+                                  }
+                                  alt={message.sender.name}
+                                />
+                                <AvatarFallback>
+                                  {message.sender.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
                               </Avatar>
                             )}
                           </div>
-                        );
-                      })}
-
-                      {/* Reference element for auto-scrolling */}
-                      <div ref={messagesEndRef} />
+                        </React.Fragment>
+                      );
+                    })}
+                    {/* Reference element for auto-scrolling */}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+                <div className='border-t p-4 mt-0'>
+                  {!isConnected && !useMockSocket && (
+                    <div className='flex items-center justify-center gap-2 mb-2 text-xs text-amber-500'>
+                      {reconnecting ? (
+                        <>
+                          <Loader2 className='h-3 w-3 animate-spin' />
+                          <span>Đang kết nối lại...</span>
+                        </>
+                      ) : (
+                        <>
+                          <WifiOff className='h-3 w-3' />
+                          <span>
+                            Mất kết nối - tin nhắn của bạn sẽ được gửi khi kết
+                            nối lại
+                          </span>
+                        </>
+                      )}
                     </div>
-                  </ScrollArea>
-                  <div className='border-t p-4'>
-                    {!isConnected && !useMockSocket && (
-                      <div className='flex items-center justify-center gap-2 mb-2 text-xs text-amber-500'>
-                        {reconnecting ? (
-                          <>
-                            <Loader2 className='h-3 w-3 animate-spin' />
-                            <span>Đang kết nối lại...</span>
-                          </>
-                        ) : (
-                          <>
-                            <WifiOff className='h-3 w-3' />
-                            <span>
-                              Mất kết nối - tin nhắn của bạn sẽ được gửi khi kết
-                              nối lại
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    <form
-                      className='flex items-center gap-2'
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }}
+                  )}
+                  <form
+                    className='flex items-center gap-2'
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }}
+                  >
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      className='shrink-0 hover:bg-muted/50 text-muted-foreground hover:text-foreground'
                     >
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='icon'
-                        className='shrink-0'
-                      >
-                        <Paperclip className='h-4 w-4' />
-                        <span className='sr-only'>Đính kèm file</span>
-                      </Button>
+                      <Paperclip className='h-5 w-5' />
+                      <span className='sr-only'>Đính kèm file</span>
+                    </Button>
+                    <div className='relative flex-1'>
                       <Input
                         placeholder={
                           !isAuthenticated
@@ -678,9 +1118,10 @@ const MessagesPageContent = () => {
                             ? "Đang kết nối lại..."
                             : "Nhập tin nhắn..."
                         }
-                        className='flex-1'
+                        className='flex-1 py-6 pl-4 pr-12 rounded-full bg-muted/30 hover:bg-muted/50 focus-visible:bg-background border border-input'
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
                         disabled={
                           !isConnected ||
                           !activeConversation ||
@@ -690,7 +1131,7 @@ const MessagesPageContent = () => {
                       <Button
                         type='submit'
                         size='icon'
-                        className='shrink-0'
+                        className='shrink-0 absolute right-1 top-1 bottom-1 rounded-full bg-primary hover:bg-primary/90'
                         disabled={
                           !isConnected ||
                           !activeConversation ||
@@ -700,20 +1141,43 @@ const MessagesPageContent = () => {
                         <Send className='h-4 w-4' />
                         <span className='sr-only'>Gửi</span>
                       </Button>
-                    </form>
-                  </div>
+                    </div>
+                  </form>
                 </div>
               </CardContent>
             </>
           ) : (
             <div className='h-full flex items-center justify-center flex-col p-8 text-center'>
-              <MessageSquare className='h-12 w-12 text-muted-foreground/50 mb-4' />
+              <div className='bg-primary/10 rounded-full p-5 mb-5'>
+                <MessageSquare className='h-12 w-12 text-primary/70' />
+              </div>
               <h3 className='text-xl font-medium mb-2'>
-                Chưa có cuộc trò chuyện nào được chọn
+                Chào mừng đến với tin nhắn
               </h3>
-              <p className='text-muted-foreground'>
-                Chọn một cuộc trò chuyện từ danh sách để bắt đầu nhắn tin
+              <p className='text-muted-foreground max-w-[300px]'>
+                Chọn một cuộc trò chuyện từ danh sách để bắt đầu nhắn tin hoặc
+                tạo cuộc trò chuyện mới
               </p>
+              <Button
+                variant='outline'
+                className='mt-4 rounded-full'
+              >
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='18'
+                  height='18'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='mr-2'
+                >
+                  <path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'></path>
+                </svg>
+                Tạo cuộc trò chuyện mới
+              </Button>
             </div>
           )}
         </Card>
