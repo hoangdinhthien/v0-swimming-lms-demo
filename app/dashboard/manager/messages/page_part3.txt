@@ -1,347 +1,4 @@
-"use client";
-
-import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  MessageSquare,
-  Search,
-  Filter,
-  Send,
-  Paperclip,
-  User,
-  AlertCircle,
-  Wifi,
-  WifiOff,
-  Loader2,
-} from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
-import {
-  useSocket,
-  ChatMessage as SocketChatMessage,
-} from "@/utils/socket-utils";
-import { getAuthToken } from "@/api/auth-utils";
-import { useAuthStatus } from "@/utils/auth-reconnection";
-import {
-  formatMessageTime,
-  standardizeTimestamp,
-  formatUtcDate,
-} from "@/utils/date-utils";
-import {
-  fetchConversationsWithUserDetails,
-  ConversationWithUserDetails,
-  fetchConversationMessages,
-  ChatMessage as ApiChatMessage,
-} from "@/api/messages-api";
-import { getMediaDetails } from "@/api/media-api";
-
-const MessagesPageContent = () => {
-  const [activeConversation, setActiveConversation] = useState<string | null>(
-    null
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<SocketChatMessage[]>([]);
-  const [apiMessages, setApiMessages] = useState<ApiChatMessage[]>([]);
-  const [loadingMessages, setLoadingMessages] = useState(false);
-  const [messagesError, setMessagesError] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [reconnecting, setReconnecting] = useState(false);
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [loadingConversations, setLoadingConversations] = useState(false);
-  const [conversationError, setConversationError] = useState<string | null>(
-    null
-  );
-  // Add loading state for sending messages
-  const [sendingMessage, setSendingMessage] = useState(false);
-
-  // Use auth status hook
-  const { isAuthenticated, isCheckingAuth } = useAuthStatus();
-
-  // Get WebSocket functionality from our custom hook
-  const {
-    isConnected,
-    lastMessage,
-    lastNotification,
-    connectionError,
-    initializeSocket,
-    sendMessage,
-    joinConversation,
-    simulateReceiveMessage,
-    useMockSocket,
-    offlineMessages,
-  } = useSocket();
-
-  // Initialize socket connection when component mounts
-  useEffect(() => {
-    if (isAuthenticated && !isCheckingAuth) {
-      initializeSocket();
-    }
-
-    // Setup reconnection logic
-    const reconnectInterval = setInterval(() => {
-      if (!isConnected && !useMockSocket && isAuthenticated) {
-        console.log("Attempting to reconnect to WebSocket server...");
-        setReconnecting(true);
-        initializeSocket();
-      } else {
-        setReconnecting(false);
-      }
-    }, 10000); // Try to reconnect every 10 seconds
-
-    // Cleanup on component unmount
-    return () => {
-      clearInterval(reconnectInterval);
-    };
-  }, [
-    initializeSocket,
-    isConnected,
-    useMockSocket,
-    isAuthenticated,
-    isCheckingAuth,
-  ]);
-
-  // Handle incoming messages
-  useEffect(() => {
-    if (lastMessage) {
-      // Check for duplicates before adding
-      const isDuplicate = messages.some((msg) => msg.id === lastMessage.id);
-
-      if (!isDuplicate) {
-        setMessages((prev) => [...prev, lastMessage]);
-
-        // If the message belongs to the active conversation, mark it as read
-        if (lastMessage.conversationId === activeConversation) {
-          // In a real implementation, you'd call markAsRead here
-        }
-      }
-    }
-  }, [lastMessage, activeConversation, messages]);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Join conversation room when active conversation changes
-  useEffect(() => {
-    if (activeConversation && isConnected) {
-      joinConversation(activeConversation);
-    }
-  }, [activeConversation, isConnected, joinConversation]);
-  // Fetch conversations with user details
-  useEffect(() => {
-    const fetchConversationsData = async () => {
-      setLoadingConversations(true);
-      setConversationError(null);
-
-      try {
-        const token = getAuthToken();
-        const tenantId = localStorage.getItem("selectedTenantId");
-
-        if (!token || !tenantId) {
-          setConversationError("Thiếu thông tin xác thực");
-          return;
-        }
-        const conversationsData = await fetchConversationsWithUserDetails({
-          tenantId,
-          token,
-        });
-
-        // Transform API data to match UI format
-        const transformedConversations = conversationsData.map((conv) => {
-          const userDetails = conv.userDetails[0] || {};
-          // The username is nested inside the user object based on the API response structure
-          const userName = userDetails.user?.username || "Người dùng";
-
-          // Use the avatarUrl field that was added in the API function
-          const avatarUrl = userDetails.avatarUrl || "/placeholder.svg";
-
-          return {
-            id: conv._id,
-            name: userName,
-            avatar: avatarUrl,
-            lastMessage: "Bắt đầu cuộc trò chuyện",
-            unread: 0, // Format using UTC time instead of relative time
-            time: formatUtcDate(conv.updated_at),
-            updatedAt: new Date(conv.updated_at),
-            isStudent:
-              userDetails.user?.role_front?.includes("student") || false,
-            userDetails: conv.userDetails,
-          };
-        });
-
-        // Sort by updated time, newest first
-        transformedConversations.sort(
-          (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-        );
-
-        setConversations(transformedConversations);
-        console.log("Fetched conversations:", transformedConversations);
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-        setConversationError("Không thể tải cuộc trò chuyện");
-      } finally {
-        setLoadingConversations(false);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchConversationsData();
-    }
-  }, [isAuthenticated]);
-  // Fetch messages for the active conversation
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!activeConversation) return;
-
-      setLoadingMessages(true);
-      setMessagesError(null);
-
-      try {
-        const token = getAuthToken();
-        const tenantId = localStorage.getItem("selectedTenantId");
-        // Get current user ID to determine message positioning
-        const currentUser = localStorage.getItem("userId");
-        setCurrentUserId(currentUser || null);
-
-        if (!token || !tenantId) {
-          setMessagesError("Thiếu thông tin xác thực");
-          return;
-        }
-
-        // Fetch messages from API - avatars are now processed in the API function
-        const messagesData = await fetchConversationMessages({
-          conversationId: activeConversation,
-          tenantId,
-          token,
-        });
-
-        // Sort messages by creation date, oldest first
-        const sortedMessages = [...messagesData].sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-
-        setApiMessages(sortedMessages);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-        setMessagesError("Không thể tải tin nhắn");
-      } finally {
-        setLoadingMessages(false);
-      }
-    };
-
-    fetchMessages();
-  }, [activeConversation, isAuthenticated]); // Enhanced message sending with loading feedback
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !activeConversation || sendingMessage) return;
-
-    const currentConversation = conversations.find(
-      (c) => c.id === activeConversation
-    );
-    if (!currentConversation) return;
-
-    setSendingMessage(true);
-
-    try {
-      // Get current user info from localStorage and conversation data
-      const currentUserInfo = {
-        id:
-          currentUserId || localStorage.getItem("userId") || "current-user-id",
-        name:
-          localStorage.getItem("username") ||
-          localStorage.getItem("userFullName") ||
-          "Current User",
-        avatar: localStorage.getItem("userAvatar") || "/placeholder.svg",
-      };
-
-      const messageToSend = {
-        content: newMessage.trim(),
-        sender: currentUserInfo,
-        receiver: {
-          id: currentConversation.id,
-          name: currentConversation.name,
-        },
-        conversationId: activeConversation,
-      };
-
-      // Send message through WebSocket
-      const sent = sendMessage(messageToSend);
-
-      if (sent) {
-        // Add message to local state (for optimistic updates)
-        const sentMessage = {
-          ...messageToSend,
-          id: `temp-${Date.now()}`, // Temporary ID for optimistic update
-          timestamp: Date.now(),
-          read: false,
-        };
-
-        setMessages((prev) => [...prev, sentMessage]);
-        setNewMessage(""); // Clear input
-
-        // Scroll to bottom after sending
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // Could add a toast notification here in the future
-    } finally {
-      setSendingMessage(false);
-    }
-  };
-  // Handle Enter key press for sending messages
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  // Filter conversations by search query
-  const filteredConversations = conversations.filter((conversation) => {
-    if (!conversation) return false;
-
-    const nameMatch = conversation.name
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const messageMatch = conversation.lastMessage
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
-
-    return nameMatch || messageMatch;
-  });
-
-  return (
-    <>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' />
-          Quay về trang quản lý
-        </Link>
-      </div>
-      <div className='flex flex-col gap-2'>
+﻿      <div className='flex flex-col gap-2'>
         <h1 className='text-3xl font-bold'>Tin nhắn</h1>
         <p className='text-muted-foreground'>
           Quản lý tin nhắn và liên lạc với học viên, phụ huynh và giáo viên
@@ -823,27 +480,37 @@ const MessagesPageContent = () => {
                       )}{" "}
                     {/* API messages */}
                     {!loadingMessages &&
-                      !messagesError &&
-                      apiMessages.length > 0 &&
-                      apiMessages.map((message, index) => {
-                        const isCurrentUser =
+                      apiMessages.map((message, index) => {                        const isCurrentUser =
                           message.created_by._id === currentUserId;
+                        // Create a proper UTC Date object from the message timestamp
                         const utcDate = new Date(message.created_at);
+
+                        // Format using our UTC formatter without timezone conversion
                         const formattedUtcDate = formatUtcDate(utcDate);
+                        
+                        // Extract time and date components from the formatted string
                         const time = formattedUtcDate.substring(0, 5); // "HH:MM"
                         const date = formattedUtcDate.substring(6); // "DD/MM/YYYY"
+
+                        // Check if we should show date separator (first message or new date)
                         const previousMessage =
                           index > 0 ? apiMessages[index - 1] : null;
                         let prevDate = "";
+
                         if (previousMessage) {
-                          const prevUtcDate = new Date(
+                          // Get previous message date with the same timezone handling                          const prevUtcDate = new Date(
                             previousMessage.created_at
                           );
+                          // Use the same formatUtcDate function to get consistent UTC formatting
                           const prevFormattedDate = formatUtcDate(prevUtcDate);
+                          // Extract just the date part (DD/MM/YYYY)
                           prevDate = prevFormattedDate.substring(6);
                         }
+
                         const showDateSeparator =
                           !previousMessage || prevDate !== date;
+
+                        // Check if the message is from the same sender as the previous one
                         const isConsecutiveMessage =
                           previousMessage &&
                           previousMessage.created_by._id ===
@@ -851,13 +518,13 @@ const MessagesPageContent = () => {
                           !showDateSeparator;
                         const avatarUrl =
                           message.avatarUrl || "/placeholder.svg";
+
                         return (
                           <React.Fragment key={message._id}>
+                            {" "}
                             {showDateSeparator && (
                               <div className='flex items-center justify-center my-4'>
-                                <div className='bg-muted/30 text-xs rounded-full px-3 py-1 text-muted-foreground'>
-                                  {date}{" "}
-                                  {/* Show only date part in DD/MM/YYYY format */}
+                                <div className='bg-muted/30 text-xs rounded-full px-3 py-1 text-muted-foreground'>                                  {formatUtcDate(utcDate).substring(6)} {/* Show only date part in DD/MM/YYYY format */}
                                 </div>
                               </div>
                             )}
@@ -902,8 +569,7 @@ const MessagesPageContent = () => {
                                       >
                                         {time}
                                       </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
+                                    </TooltipTrigger>{" "}                                    <TooltipContent>
                                       {formatUtcDate(utcDate)} (UTC)
                                     </TooltipContent>
                                   </Tooltip>
@@ -934,11 +600,10 @@ const MessagesPageContent = () => {
                         (apiMsg) => apiMsg._id === message.id
                       );
 
-                      if (isDuplicate) return null;
-                      const isCurrentUser = message.sender.id === currentUserId;
+                      if (isDuplicate) return null;                      const isCurrentUser = message.sender.id === currentUserId;
                       // Format using our UTC formatter without timezone conversion
                       const formattedUtcDate = formatUtcDate(message.timestamp);
-
+                      
                       // Extract time and date components from the formatted string
                       const time = formattedUtcDate.substring(0, 5); // "HH:MM"
                       const date = formattedUtcDate.substring(6); // "DD/MM/YYYY"
@@ -984,8 +649,7 @@ const MessagesPageContent = () => {
                                       >
                                         {time}
                                       </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
+                                    </TooltipTrigger>{" "}                                    <TooltipContent>
                                       {formatUtcDate(message.timestamp)} (UTC)
                                     </TooltipContent>
                                   </Tooltip>

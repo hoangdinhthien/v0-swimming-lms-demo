@@ -36,11 +36,7 @@ import {
 } from "@/utils/socket-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { useAuthStatus } from "@/utils/auth-reconnection";
-import {
-  formatMessageTime,
-  standardizeTimestamp,
-  formatUtcDate,
-} from "@/utils/date-utils";
+import { formatMessageTime, standardizeTimestamp, formatUtcDate } from "@/utils/date-utils";
 import {
   fetchConversationsWithUserDetails,
   ConversationWithUserDetails,
@@ -177,7 +173,7 @@ const MessagesPageContent = () => {
             name: userName,
             avatar: avatarUrl,
             lastMessage: "Bắt đầu cuộc trò chuyện",
-            unread: 0, // Format using UTC time instead of relative time
+            unread: 0,            // Format using UTC time instead of relative time
             time: formatUtcDate(conv.updated_at),
             updatedAt: new Date(conv.updated_at),
             isStudent:
@@ -823,27 +819,37 @@ const MessagesPageContent = () => {
                       )}{" "}
                     {/* API messages */}
                     {!loadingMessages &&
-                      !messagesError &&
-                      apiMessages.length > 0 &&
-                      apiMessages.map((message, index) => {
-                        const isCurrentUser =
+                      apiMessages.map((message, index) => {                        const isCurrentUser =
                           message.created_by._id === currentUserId;
+                        // Create a proper UTC Date object from the message timestamp
                         const utcDate = new Date(message.created_at);
+
+                        // Format using our UTC formatter without timezone conversion
                         const formattedUtcDate = formatUtcDate(utcDate);
+                        
+                        // Extract time and date components from the formatted string
                         const time = formattedUtcDate.substring(0, 5); // "HH:MM"
                         const date = formattedUtcDate.substring(6); // "DD/MM/YYYY"
+
+                        // Check if we should show date separator (first message or new date)
                         const previousMessage =
                           index > 0 ? apiMessages[index - 1] : null;
                         let prevDate = "";
+
                         if (previousMessage) {
-                          const prevUtcDate = new Date(
+                          // Get previous message date with the same timezone handling                          const prevUtcDate = new Date(
                             previousMessage.created_at
                           );
+                          // Use the same formatUtcDate function to get consistent UTC formatting
                           const prevFormattedDate = formatUtcDate(prevUtcDate);
+                          // Extract just the date part (DD/MM/YYYY)
                           prevDate = prevFormattedDate.substring(6);
                         }
+
                         const showDateSeparator =
                           !previousMessage || prevDate !== date;
+
+                        // Check if the message is from the same sender as the previous one
                         const isConsecutiveMessage =
                           previousMessage &&
                           previousMessage.created_by._id ===
@@ -851,13 +857,13 @@ const MessagesPageContent = () => {
                           !showDateSeparator;
                         const avatarUrl =
                           message.avatarUrl || "/placeholder.svg";
+
                         return (
                           <React.Fragment key={message._id}>
+                            {" "}
                             {showDateSeparator && (
                               <div className='flex items-center justify-center my-4'>
-                                <div className='bg-muted/30 text-xs rounded-full px-3 py-1 text-muted-foreground'>
-                                  {date}{" "}
-                                  {/* Show only date part in DD/MM/YYYY format */}
+                                <div className='bg-muted/30 text-xs rounded-full px-3 py-1 text-muted-foreground'>                                  {formatUtcDate(utcDate).substring(6)} {/* Show only date part in DD/MM/YYYY format */}
                                 </div>
                               </div>
                             )}
@@ -902,8 +908,7 @@ const MessagesPageContent = () => {
                                       >
                                         {time}
                                       </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
+                                    </TooltipTrigger>{" "}                                    <TooltipContent>
                                       {formatUtcDate(utcDate)} (UTC)
                                     </TooltipContent>
                                   </Tooltip>
@@ -934,11 +939,10 @@ const MessagesPageContent = () => {
                         (apiMsg) => apiMsg._id === message.id
                       );
 
-                      if (isDuplicate) return null;
-                      const isCurrentUser = message.sender.id === currentUserId;
+                      if (isDuplicate) return null;                      const isCurrentUser = message.sender.id === currentUserId;
                       // Format using our UTC formatter without timezone conversion
                       const formattedUtcDate = formatUtcDate(message.timestamp);
-
+                      
                       // Extract time and date components from the formatted string
                       const time = formattedUtcDate.substring(0, 5); // "HH:MM"
                       const date = formattedUtcDate.substring(6); // "DD/MM/YYYY"
@@ -984,8 +988,7 @@ const MessagesPageContent = () => {
                                       >
                                         {time}
                                       </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
+                                    </TooltipTrigger>{" "}                                    <TooltipContent>
                                       {formatUtcDate(message.timestamp)} (UTC)
                                     </TooltipContent>
                                   </Tooltip>

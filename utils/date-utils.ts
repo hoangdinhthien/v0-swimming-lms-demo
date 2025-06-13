@@ -42,6 +42,41 @@ export function standardizeTimestamp(timestamp: string | number | Date): Date {
 }
 
 /**
+ * Format a timestamp (Date, string or number) to show the UTC time directly
+ * without converting to local timezone. Used for displaying UTC timestamps as they are.
+ *
+ * @param timestamp - The timestamp to format (Date object, ISO string, or epoch milliseconds)
+ * @returns Formatted time string showing UTC time (e.g. "21:08 12/06/2025")
+ */
+export function formatUtcDate(timestamp: string | number | Date): string {
+  if (!timestamp) return "";
+
+  try {
+    // Convert input to Date object using our standardization function
+    const messageDate = standardizeTimestamp(timestamp);
+
+    // Handle invalid dates
+    if (isNaN(messageDate.getTime())) {
+      console.error("Invalid date input:", timestamp);
+      return String(timestamp);
+    }
+
+    // Format using UTC methods instead of locale methods with timezone
+    const hours = messageDate.getUTCHours().toString().padStart(2, "0");
+    const minutes = messageDate.getUTCMinutes().toString().padStart(2, "0");
+    const day = messageDate.getUTCDate().toString().padStart(2, "0");
+    const month = (messageDate.getUTCMonth() + 1).toString().padStart(2, "0");
+    const year = messageDate.getUTCFullYear();
+
+    // Return in format "HH:MM DD/MM/YYYY"
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
+  } catch (error) {
+    console.error("Error formatting UTC date:", error);
+    return String(timestamp);
+  }
+}
+
+/**
  * Format a timestamp (Date, string or number) into a user-friendly string
  * based on when the message was sent (today, yesterday, or older)
  *
@@ -108,6 +143,57 @@ export function formatMessageTime(timestamp: string | number | Date): string {
     }
   } catch (error) {
     console.error("Error formatting message time:", error);
+    return String(timestamp);
+  }
+}
+
+/**
+ * Format a timestamp to Vietnam time (UTC+7)
+ * This is used specifically in the datetime-demo and kept for reference
+ *
+ * @param timestamp - The timestamp to format (Date object, ISO string, or epoch milliseconds)
+ * @param showSeconds - Whether to include seconds in the formatted time
+ * @returns Formatted time string in Vietnam timezone (e.g. "04:08 13/06/2025")
+ */
+export function formatVietnamDate(
+  timestamp: string | number | Date,
+  showSeconds: boolean = false
+): string {
+  if (!timestamp) return "";
+
+  try {
+    // Convert input to Date object using our standardization function
+    const messageDate = standardizeTimestamp(timestamp);
+
+    // Handle invalid dates
+    if (isNaN(messageDate.getTime())) {
+      console.error("Invalid date input:", timestamp);
+      return String(timestamp);
+    }
+
+    // Format using Vietnam timezone (UTC+7)
+    const timeZone = "Asia/Ho_Chi_Minh";
+    const locale = "vi-VN";
+
+    // Format options
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    };
+
+    // Add seconds if requested
+    if (showSeconds) {
+      options.second = "2-digit";
+    }
+
+    // Return formatted date
+    return messageDate.toLocaleString(locale, options);
+  } catch (error) {
+    console.error("Error formatting Vietnam date:", error);
     return String(timestamp);
   }
 }

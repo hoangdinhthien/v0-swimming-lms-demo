@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -8,6 +8,8 @@ import {
   Filter,
   Download,
   CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,160 +34,319 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "../../../../hooks/use-auth";
+import {
+  fetchOrders,
+  formatPrice,
+  getStatusName,
+  getStatusClass,
+  getOrderUserName,
+  getOrderUserContact,
+  updateOrderStatus,
+  Order,
+} from "../../../../api/orders-api";
+import { fetchCourseById } from "../../../../api/courses-api";
+
+interface CourseInfo {
+  title: string;
+  price?: number;
+}
 
 export default function TransactionsPage() {
+  const { toast } = useToast();
+  const { token, tenantId, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [courseInfo, setCourseInfo] = useState<Record<string, CourseInfo>>({});
+  const [loadingCourses, setLoadingCourses] = useState<Record<string, boolean>>(
+    {}
+  );
 
-  // Mock transaction data
-  const transactions = [
-    {
-      id: "TRX-001",
-      studentName: "Emma Wilson",
-      studentId: "STU12345",
-      course: "Beginner Swimming",
-      amount: "$120.00",
-      date: "May 22, 2025",
-      paymentMethod: "Credit Card",
-      status: "Completed",
-      createdBy: "Online",
-      avatar: "/placeholder.svg?height=40&width=40&text=EW",
-    },
-    {
-      id: "TRX-002",
-      studentName: "Noah Martinez",
-      studentId: "STU12346",
-      course: "Beginner Swimming",
-      amount: "$120.00",
-      date: "May 21, 2025",
-      paymentMethod: "Cash",
-      status: "Completed",
-      createdBy: "Sarah Johnson",
-      avatar: "/placeholder.svg?height=40&width=40&text=NM",
-    },
-    {
-      id: "TRX-003",
-      studentName: "Olivia Johnson",
-      studentId: "STU12348",
-      course: "Intermediate Techniques",
-      amount: "$150.00",
-      date: "May 20, 2025",
-      paymentMethod: "Bank Transfer",
-      status: "Completed",
-      createdBy: "Online",
-      avatar: "/placeholder.svg?height=40&width=40&text=OJ",
-    },
-    {
-      id: "TRX-004",
-      studentName: "Liam Thompson",
-      studentId: "STU12350",
-      course: "Beginner Swimming",
-      amount: "$120.00",
-      date: "May 18, 2025",
-      paymentMethod: "Credit Card",
-      status: "Pending",
-      createdBy: "Online",
-      avatar: "/placeholder.svg?height=40&width=40&text=LT",
-    },
-    {
-      id: "TRX-005",
-      studentName: "Sophia Garcia",
-      studentId: "STU12347",
-      course: "Intermediate Techniques",
-      amount: "$150.00",
-      date: "May 15, 2025",
-      paymentMethod: "Credit Card",
-      status: "Completed",
-      createdBy: "Online",
-      avatar: "/placeholder.svg?height=40&width=40&text=SG",
-    },
-    {
-      id: "TRX-006",
-      studentName: "Jackson Brown",
-      studentId: "STU12355",
-      course: "Water Safety",
-      amount: "$80.00",
-      date: "May 15, 2025",
-      paymentMethod: "Cash",
-      status: "Completed",
-      createdBy: "Emma Rodriguez",
-      avatar: "/placeholder.svg?height=40&width=40&text=JB",
-    },
-    {
-      id: "TRX-007",
-      studentName: "Ava Davis",
-      studentId: "STU12357",
-      course: "Advanced Performance",
-      amount: "$200.00",
-      date: "May 12, 2025",
-      paymentMethod: "Credit Card",
-      status: "Failed",
-      createdBy: "Online",
-      avatar: "/placeholder.svg?height=40&width=40&text=AD",
-    },
-    {
-      id: "TRX-008",
-      studentName: "Lucas Miller",
-      studentId: "STU12360",
-      course: "Beginner Swimming",
-      amount: "$120.00",
-      date: "May 10, 2025",
-      paymentMethod: "Bank Transfer",
-      status: "Refunded",
-      createdBy: "Admin",
-      avatar: "/placeholder.svg?height=40&width=40&text=LM",
-    },
-  ];
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [limit, setLimit] = useState(10);
+
+  // Status update states
+  const [statusUpdateDialogOpen, setStatusUpdateDialogOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Fetch orders from API
+  useEffect(() => {
+    // Wait for auth to complete
+    if (authLoading) return;
+
+    async function getOrders() {
+      console.log("[Transactions] Auth state:", { token, tenantId });
+      if (!token || !tenantId) {
+        console.error(
+          "[Transactions] Missing token or tenantId - cannot fetch orders"
+        );
+        setError("Thiếu thông tin xác thực. Vui lòng đăng nhập lại.");
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        console.log("[Transactions] Fetching orders with:", {
+          tenantId,
+          tokenLength: token?.length,
+          currentPage,
+          limit,
+        });
+
+        const ordersData = await fetchOrders({
+          tenantId,
+          token,
+          page: currentPage,
+          limit,
+        });
+
+        console.log("[Transactions] Orders data received:", {
+          count: ordersData?.orders?.length || 0,
+          total: ordersData?.total || 0,
+        });
+
+        if (!ordersData || !ordersData.orders) {
+          throw new Error("API returned invalid data format");
+        }
+
+        setOrders(ordersData.orders);
+        setTotalOrders(ordersData.total);
+
+        // Prepare for course fetching
+        const courseIds = [
+          ...new Set(ordersData.orders.map((order) => order.course)),
+        ];
+        console.log("[Transactions] Found course IDs:", courseIds);
+
+        const initialLoadingState = courseIds.reduce((acc, id) => {
+          acc[id] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+        setLoadingCourses(initialLoadingState);
+
+        // Fetch course details for each unique course ID
+        courseIds.forEach((courseId) => {
+          fetchCourseDetails(courseId);
+        });
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(`Không thể tải danh sách giao dịch: ${errorMessage}`);
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    getOrders();
+  }, [token, tenantId, currentPage, limit, authLoading]);
+
+  // Fetch course details for a given course ID
+  const fetchCourseDetails = async (courseId: string) => {
+    if (!token || !tenantId) return;
+
+    try {
+      const course = await fetchCourseById({ courseId, tenantId, token });
+      setCourseInfo((prev) => ({
+        ...prev,
+        [courseId]: {
+          title: course.title || "Không xác định",
+          price: course.price,
+        },
+      }));
+    } catch (err) {
+      console.error(`Error fetching course ${courseId}:`, err);
+      setCourseInfo((prev) => ({
+        ...prev,
+        [courseId]: {
+          title: "Không thể tải thông tin",
+          price: 0,
+        },
+      }));
+    } finally {
+      setLoadingCourses((prev) => ({
+        ...prev,
+        [courseId]: false,
+      }));
+    }
+  };
+
+  // Handle status update
+  const handleStatusUpdate = async () => {
+    if (!selectedOrderId || !newStatus || !token || !tenantId) return;
+
+    try {
+      setUpdatingStatus(true);
+      await updateOrderStatus({
+        orderId: selectedOrderId,
+        status: newStatus,
+        tenantId,
+        token,
+      });
+
+      // Update the local order data
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === selectedOrderId
+            ? { ...order, status: [newStatus] }
+            : order
+        )
+      );
+
+      toast({
+        title: "Cập nhật thành công",
+        description: "Trạng thái giao dịch đã được cập nhật",
+      });
+
+      // Close dialog
+      setStatusUpdateDialogOpen(false);
+    } catch (err) {
+      console.error("Error updating order status:", err);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể cập nhật trạng thái giao dịch",
+      });
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  // Open status update dialog
+  const openStatusUpdateDialog = (orderId: string, currentStatus: string[]) => {
+    setSelectedOrderId(orderId);
+    setNewStatus(currentStatus[0] || "");
+    setStatusUpdateDialogOpen(true);
+  };
 
   // Get unique courses for filter
-  const courses = Array.from(new Set(transactions.map((t) => t.course)));
+  const courses = Array.from(
+    new Set(
+      orders.map((order) => {
+        return courseInfo[order.course]?.title || order.course;
+      })
+    )
+  );
 
   // Calculate totals
-  const totalTransactions = transactions.length;
-  const totalCompleted = transactions.filter(
-    (t) => t.status === "Completed"
+  const totalTransactions = totalOrders;
+  const totalCompleted = orders.filter(
+    (order) => order.status && order.status[0] === "paid"
   ).length;
-  const totalAmount = transactions.reduce((sum, t) => {
-    if (t.status === "Completed") {
-      return sum + parseFloat(t.amount.replace("$", ""));
+  const totalAmount = orders.reduce((sum, order) => {
+    if (order.status && order.status[0] === "paid") {
+      return sum + (order.price || 0);
     }
     return sum;
   }, 0);
-  const totalPending = transactions.filter(
-    (t) => t.status === "Pending"
+  const totalPending = orders.filter(
+    (order) => order.status && order.status[0] === "pending"
   ).length;
 
   // Filter transactions based on search and filters
-  const filteredTransactions = transactions.filter((transaction) => {
+  const filteredTransactions = orders.filter((order) => {
+    const orderDate = new Date(order.created_at);
+    const formattedDate = format(orderDate, "MMM d, yyyy");
+    const courseName = courseInfo[order.course]?.title || order.course;
+    const userName = getOrderUserName(order);
+    const userContact = getOrderUserContact(order);
+
     // Filter by status
     const statusMatch =
       statusFilter === "all" ||
-      transaction.status.toLowerCase() === statusFilter.toLowerCase();
+      (order.status &&
+        order.status[0].toLowerCase() === statusFilter.toLowerCase());
 
     // Filter by course
-    const courseMatch =
-      courseFilter === "all" || transaction.course === courseFilter;
+    const courseMatch = courseFilter === "all" || courseName === courseFilter;
 
     // Filter by date (if a date is selected)
     const dateMatch =
-      !dateFilter || transaction.date === format(dateFilter, "MMM d, yyyy");
+      !dateFilter || formattedDate === format(dateFilter, "MMM d, yyyy");
 
     // Filter by search query
     const searchMatch =
       searchQuery === "" ||
-      transaction.studentName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      transaction.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      transaction.id.toLowerCase().includes(searchQuery.toLowerCase());
+      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      userContact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order._id.toLowerCase().includes(searchQuery.toLowerCase());
 
     return statusMatch && courseMatch && dateMatch && searchMatch;
   });
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(totalOrders / limit);
+  const canGoPrevious = currentPage > 1;
+  const canGoNext = currentPage < totalPages;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, courseFilter, dateFilter, searchQuery]);
+
+  if (loading && orders.length === 0) {
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <p>Đang tải dữ liệu giao dịch...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64'>
+        <p className='text-red-500'>{error}</p>
+        <Button
+          variant='outline'
+          className='mt-4'
+          onClick={() => window.location.reload()}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  if (!authLoading && (!token || !tenantId)) {
+    return (
+      <div className='flex flex-col items-center justify-center h-64'>
+        <p className='text-red-500 text-lg font-semibold mb-2'>
+          Thiếu thông tin xác thực hoặc chi nhánh.
+        </p>
+        <p className='text-muted-foreground mb-4'>
+          Vui lòng đăng nhập lại hoặc chọn chi nhánh để tiếp tục.
+        </p>
+        <div className='flex gap-4'>
+          <Link href='/login'>
+            <Button variant='outline'>Đăng nhập lại</Button>
+          </Link>
+          <Link href='/tenant-selection'>
+            <Button variant='default'>Chọn chi nhánh</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -195,24 +356,24 @@ export default function TransactionsPage() {
           className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
           <ArrowLeft className='mr-1 h-4 w-4' />
-          Back to Dashboard
+          Quay lại Dashboard
         </Link>
       </div>
 
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Transactions & Payments</h1>
+          <h1 className='text-3xl font-bold'>Giao dịch & Thanh toán</h1>
           <p className='text-muted-foreground'>
-            Manage all financial transactions at your swimming center
+            Quản lý tất cả các giao dịch tài chính tại trung tâm bơi lội
           </p>
         </div>
         <div className='flex gap-2'>
           <Button variant='outline'>
             <Download className='mr-2 h-4 w-4' />
-            Export
+            Xuất dữ liệu
           </Button>
           <Link href='/dashboard/manager/transactions/new'>
-            <Button>Record Payment</Button>
+            <Button>Ghi nhận thanh toán</Button>
           </Link>
         </div>
       </div>
@@ -221,7 +382,7 @@ export default function TransactionsPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Total Transactions
+              Tổng số giao dịch
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -231,9 +392,7 @@ export default function TransactionsPage() {
 
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Completed Payments
-            </CardTitle>
+            <CardTitle className='text-sm font-medium'>Đã thanh toán</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{totalCompleted}</div>
@@ -242,17 +401,19 @@ export default function TransactionsPage() {
 
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Total Revenue</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Tổng doanh thu
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>${totalAmount.toFixed(2)}</div>
+            <div className='text-2xl font-bold'>{formatPrice(totalAmount)}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Pending Payments
+              Đang chờ thanh toán
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -263,14 +424,14 @@ export default function TransactionsPage() {
 
       <Card className='mt-8'>
         <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
+          <CardTitle>Lịch sử giao dịch</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
             <div className='flex-1 relative'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
-                placeholder='Search by transaction ID, student name, or student ID...'
+                placeholder='Tìm kiếm theo mã giao dịch, tên học viên hoặc ID học viên...'
                 className='pl-8'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -283,14 +444,15 @@ export default function TransactionsPage() {
                 onValueChange={setStatusFilter}
               >
                 <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Status' />
+                  <SelectValue placeholder='Trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='all'>All Statuses</SelectItem>
-                  <SelectItem value='completed'>Completed</SelectItem>
-                  <SelectItem value='pending'>Pending</SelectItem>
-                  <SelectItem value='failed'>Failed</SelectItem>
-                  <SelectItem value='refunded'>Refunded</SelectItem>
+                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
+                  <SelectItem value='paid'>Đã thanh toán</SelectItem>
+                  <SelectItem value='pending'>Đang chờ</SelectItem>
+                  <SelectItem value='expired'>Đã hết hạn</SelectItem>
+                  <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                  <SelectItem value='refunded'>Đã hoàn tiền</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -299,10 +461,10 @@ export default function TransactionsPage() {
                 onValueChange={setCourseFilter}
               >
                 <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Course' />
+                  <SelectValue placeholder='Khóa học' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='all'>All Courses</SelectItem>
+                  <SelectItem value='all'>Tất cả khóa học</SelectItem>
                   {courses.map((course) => (
                     <SelectItem
                       key={course}
@@ -321,7 +483,7 @@ export default function TransactionsPage() {
                     className='w-full justify-start text-left font-normal'
                   >
                     <CalendarIcon className='mr-2 h-4 w-4' />
-                    {dateFilter ? format(dateFilter, "PPP") : "Pick a date"}
+                    {dateFilter ? format(dateFilter, "PPP") : "Chọn ngày"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className='w-auto p-0'>
@@ -340,87 +502,222 @@ export default function TransactionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className='text-right'>Actions</TableHead>
+                  <TableHead>Mã giao dịch</TableHead>
+                  <TableHead>Học viên</TableHead>
+                  <TableHead>Khóa học</TableHead>
+                  <TableHead>Số tiền</TableHead>
+                  <TableHead>Ngày</TableHead>
+                  <TableHead>Loại</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell className='font-medium'>
-                        {transaction.id}
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          <img
-                            src={transaction.avatar}
-                            alt={transaction.studentName}
-                            className='h-8 w-8 rounded-full'
-                          />
-                          <div>
-                            <div>{transaction.studentName}</div>
+                {loading && orders.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className='text-center py-10'
+                    >
+                      <div className='flex justify-center'>
+                        <div className='animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full'></div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((order) => {
+                    const orderDate = new Date(order.created_at);
+                    const formattedDate = format(orderDate, "dd/MM/yyyy");
+                    const userName = getOrderUserName(order);
+                    const userContact = getOrderUserContact(order);
+                    const isLoadingCourse =
+                      loadingCourses[order.course] || false;
+                    const courseName =
+                      courseInfo[order.course]?.title || "Đang tải...";
+
+                    return (
+                      <TableRow key={order._id}>
+                        <TableCell className='font-medium'>
+                          {order._id.substring(0, 8)}...
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex items-start flex-col'>
+                            <div className='font-medium'>{userName}</div>
                             <div className='text-xs text-muted-foreground'>
-                              {transaction.studentId}
+                              {userContact}
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{transaction.course}</TableCell>
-                      <TableCell>{transaction.amount}</TableCell>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.paymentMethod}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant='outline'
-                          className={
-                            transaction.status === "Completed"
-                              ? "bg-green-50 text-green-700 border-green-200"
-                              : transaction.status === "Pending"
-                              ? "bg-amber-50 text-amber-700 border-amber-200"
-                              : transaction.status === "Failed"
-                              ? "bg-red-50 text-red-700 border-red-200"
-                              : "bg-gray-50 text-gray-700 border-gray-200"
-                          }
-                        >
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <Link
-                          href={`/dashboard/manager/transactions/${transaction.id}`}
-                        >
-                          <Button
-                            variant='ghost'
-                            size='sm'
+                        </TableCell>
+                        <TableCell>
+                          {isLoadingCourse ? (
+                            <div className='flex items-center'>
+                              <span className='animate-pulse bg-muted rounded h-4 w-24 block'></span>
+                            </div>
+                          ) : (
+                            courseName
+                          )}
+                        </TableCell>
+                        <TableCell>{formatPrice(order.price)}</TableCell>
+                        <TableCell>{formattedDate}</TableCell>
+                        <TableCell>
+                          {order.type === "guest"
+                            ? "Khách"
+                            : order.type === "member"
+                            ? "Thành viên"
+                            : Array.isArray(order.type)
+                            ? order.type[0]
+                            : order.type}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant='outline'
+                            className={getStatusClass(order.status)}
                           >
-                            View
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {getStatusName(order.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <div className='flex justify-end gap-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() =>
+                                openStatusUpdateDialog(order._id, order.status)
+                              }
+                            >
+                              Cập nhật
+                            </Button>
+                            <Link
+                              href={`/dashboard/manager/transactions/${order._id}`}
+                            >
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                              >
+                                Xem chi tiết
+                              </Button>
+                            </Link>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell
                       colSpan={8}
                       className='text-center py-8 text-muted-foreground'
                     >
-                      No transactions found matching the current filters.
+                      Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
+
+          {!loading && totalPages > 1 && (
+            <div className='flex items-center justify-between mt-4'>
+              <div className='text-sm text-muted-foreground'>
+                Hiển thị {Math.min((currentPage - 1) * limit + 1, totalOrders)}{" "}
+                - {Math.min(currentPage * limit, totalOrders)} trong tổng số{" "}
+                {totalOrders} giao dịch
+              </div>
+              <div className='flex items-center space-x-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={!canGoPrevious}
+                >
+                  <ChevronLeft className='h-4 w-4' />
+                  <span className='sr-only'>Trang trước</span>
+                </Button>
+                <div className='text-sm'>
+                  Trang {currentPage} / {totalPages}
+                </div>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={!canGoNext}
+                >
+                  <ChevronRight className='h-4 w-4' />
+                  <span className='sr-only'>Trang sau</span>
+                </Button>
+              </div>
+              <Select
+                value={String(limit)}
+                onValueChange={(value) => {
+                  setLimit(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className='w-[120px]'>
+                  <SelectValue placeholder='Hiển thị' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='10'>10 mỗi trang</SelectItem>
+                  <SelectItem value='25'>25 mỗi trang</SelectItem>
+                  <SelectItem value='50'>50 mỗi trang</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Status Update Dialog */}
+      <Dialog
+        open={statusUpdateDialogOpen}
+        onOpenChange={setStatusUpdateDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cập nhật trạng thái giao dịch</DialogTitle>
+            <DialogDescription>
+              Chọn trạng thái mới cho giao dịch này.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='py-4'>
+            <Select
+              value={newStatus}
+              onValueChange={setNewStatus}
+              disabled={updatingStatus}
+            >
+              <SelectTrigger className='w-full'>
+                <SelectValue placeholder='Chọn trạng thái' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='paid'>Đã thanh toán</SelectItem>
+                <SelectItem value='pending'>Đang chờ</SelectItem>
+                <SelectItem value='expired'>Đã hết hạn</SelectItem>
+                <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                <SelectItem value='refunded'>Đã hoàn tiền</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setStatusUpdateDialogOpen(false)}
+              disabled={updatingStatus}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={updatingStatus || !newStatus}
+            >
+              {updatingStatus ? "Đang xử lý..." : "Cập nhật"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
