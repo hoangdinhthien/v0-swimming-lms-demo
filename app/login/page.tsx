@@ -14,10 +14,33 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Waves } from "lucide-react";
+import { Waves, Loader2 } from "lucide-react";
 import { login } from "@/api/login-api";
 import { setAuthCookies, isAuthenticated } from "@/api/auth-utils";
-import { LoadingScreen } from "@/components/loading-screen";
+
+// Simple loading component to avoid circular dependencies
+function SimpleLoadingScreen({ message }: { message: string }) {
+  return (
+    <div className='fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/95 dark:bg-black/95'>
+      <Link
+        href='/'
+        className='flex items-center gap-2 mb-8'
+      >
+        <Waves className='h-8 w-8 text-sky-500' />
+        <span className='font-bold text-2xl'>AquaLearn</span>
+      </Link>
+      <div className='flex flex-col items-center justify-center gap-4'>
+        <div className='relative'>
+          <div className='h-16 w-16 rounded-full border-4 border-sky-100 border-t-sky-500 animate-spin'></div>
+          <Waves className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-sky-500' />
+        </div>
+        <p className='text-lg font-medium text-gray-700 dark:text-gray-300'>
+          {message}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -51,7 +74,8 @@ export default function LoginPage() {
       // Save token/user info using auth utility for consistency
       if (token && user) {
         setAuthCookies(token, user);
-      } // Debug: log user data
+      }
+      // Debug: log user data
       console.log("Login response:", data);
 
       // Show loading screen while redirecting
@@ -68,7 +92,7 @@ export default function LoginPage() {
   // If checking authentication or redirecting, show the loading screen
   if (checkingAuth || redirecting) {
     return (
-      <LoadingScreen
+      <SimpleLoadingScreen
         message={
           checkingAuth
             ? "Đang kiểm tra phiên đăng nhập..."
@@ -141,7 +165,14 @@ export default function LoginPage() {
                 type='submit'
                 disabled={loading}
               >
-                {loading ? "Đang đăng nhập..." : "Đăng Nhập"}
+                {loading ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Đang đăng nhập...
+                  </>
+                ) : (
+                  "Đăng Nhập"
+                )}
               </Button>
               <div className='text-center text-sm'>
                 Bạn chưa có tài khoản?{" "}

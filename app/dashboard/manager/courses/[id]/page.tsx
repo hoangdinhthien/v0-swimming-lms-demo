@@ -37,7 +37,8 @@ export default function CourseDetailPage() {
         // If not found, try to resolve slug to id
         if (!courseData || courseData.slug === courseId) {
           // If the param is a slug, fetch all courses and find the id
-          const allCourses = await fetchCourses({ tenantId, token });
+          const coursesResponse = await fetchCourses({ tenantId, token });
+          const allCourses = coursesResponse.data || [];
           const found = allCourses.find((c: any) => c.slug === courseId);
           if (found) {
             realCourseId = found._id;
