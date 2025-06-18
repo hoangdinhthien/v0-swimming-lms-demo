@@ -1,9 +1,17 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileQuestion, Home, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function NotFound() {
+  const handleGoBack = () => {
+    if (typeof window !== "undefined") {
+      window.history.back();
+    }
+  };
+
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50'>
       <Card className='w-full max-w-md'>
@@ -32,7 +40,7 @@ export default function NotFound() {
             <Button
               variant='outline'
               className='w-full'
-              onClick={() => window.history.back()}
+              onClick={handleGoBack}
             >
               <ArrowLeft className='mr-2 h-4 w-4' />
               Go back
