@@ -44,6 +44,7 @@ import { LoadingScreen } from "@/components/loading-screen";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getTenantInfo } from "@/api/tenant-api";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-session-provider";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -62,6 +63,13 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  // Use the auth context for session monitoring
+  const {
+    isAuthenticated: isAuthFromContext,
+    checkAuth,
+    forceLogout,
+  } = useAuth();
+
   // Handle tenant switching
   const handleTenantSwitch = () => {
     router.push("/tenant-selection");
@@ -69,6 +77,13 @@ export default function DashboardLayout({
 
   // Get the current user's name and role from localStorage on component mount
   useEffect(() => {
+    // Check authentication status first
+    const authStatus = checkAuth();
+    if (!authStatus) {
+      // If not authenticated, the AuthProvider will handle redirect
+      return;
+    }
+
     const user = getAuthenticatedUser();
 
     if (user) {
@@ -101,14 +116,14 @@ export default function DashboardLayout({
     }, 500); // Adjust the delay as needed
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [checkAuth]);
   // For this version of the app, we only have manager role
   const getRoleDisplayName = () => {
     return "Quản Lý";
   };
 
   const handleLogout = () => {
-    logout();
+    forceLogout(); // Use the auth context logout function
   }; // Navigation items - for this version, we only have manager role
   const navItems = {
     manager: [

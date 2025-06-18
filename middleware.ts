@@ -42,6 +42,17 @@ export function middleware(request: NextRequest) {
     request.cookies.get("token")?.value ||
     request.headers.get("authorization")?.split(" ")[1];
 
+  // Handle root path - redirect based on authentication status
+  if (request.nextUrl.pathname === "/") {
+    if (!token || isTokenExpiredServerSide(token)) {
+      // Not authenticated, redirect to login
+      return NextResponse.redirect(new URL("/login", request.url));
+    } else {
+      // Authenticated, redirect to dashboard
+      return NextResponse.redirect(new URL("/dashboard/manager", request.url));
+    }
+  }
+
   // Check if the user is accessing tenant selection page
   if (request.nextUrl.pathname === "/tenant-selection") {
     // If there's no token or token is expired, redirect to login
@@ -88,23 +99,23 @@ export function middleware(request: NextRequest) {
           path.startsWith("/dashboard/student") &&
           frontendRole !== "student"
         ) {
-          return NextResponse.redirect(new URL("/", request.url));
+          return NextResponse.redirect(new URL("/login", request.url));
         }
         if (
           path.startsWith("/dashboard/instructor") &&
           frontendRole !== "instructor"
         ) {
-          return NextResponse.redirect(new URL("/", request.url));
+          return NextResponse.redirect(new URL("/login", request.url));
         }
         if (
           path.startsWith("/dashboard/manager") &&
           frontendRole !== "manager" &&
           frontendRole !== "admin"
         ) {
-          return NextResponse.redirect(new URL("/", request.url));
+          return NextResponse.redirect(new URL("/login", request.url));
         }
         if (path.startsWith("/dashboard/admin") && frontendRole !== "admin") {
-          return NextResponse.redirect(new URL("/", request.url));
+          return NextResponse.redirect(new URL("/login", request.url));
         }
       } catch (e) {
         console.error("Failed to parse user data from cookie", e);
@@ -117,5 +128,5 @@ export function middleware(request: NextRequest) {
 
 // Matching paths for middleware to run on
 export const config = {
-  matcher: ["/dashboard/:path*", "/tenant-selection"],
+  matcher: ["/", "/dashboard/:path*", "/tenant-selection"],
 };

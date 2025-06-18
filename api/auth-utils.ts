@@ -4,6 +4,15 @@ import Cookies from "js-cookie";
 // Set cookie expiry to 1 day for more frequent authentication
 const COOKIE_EXPIRY_DAYS = 1;
 
+// Session check interval (in milliseconds) - check every 30 seconds
+const SESSION_CHECK_INTERVAL = 30 * 1000;
+
+// Warning time before token expires (in seconds) - warn 5 minutes before expiry
+const TOKEN_WARNING_TIME = 5 * 60;
+
+let sessionCheckInterval: NodeJS.Timeout | null = null;
+let warningShown = false;
+
 export function setAuthCookies(token: string, user: any) {
   // Store the token in a cookie
   Cookies.set("token", token, {
@@ -21,11 +30,17 @@ export function setAuthCookies(token: string, user: any) {
   if (typeof window !== "undefined") {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
+
+    // Start session monitoring after successful login
+    startSessionMonitoring();
   }
 }
 
 export function logout() {
   if (typeof window !== "undefined") {
+    // Stop session monitoring
+    stopSessionMonitoring();
+
     // Clear authentication cookies
     Cookies.remove("token");
     Cookies.remove("user");
@@ -34,7 +49,8 @@ export function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    // Any other cleanup needed
+    // Reset warning flag
+    warningShown = false;
 
     // Return to login page
     window.location.href = "/login";
@@ -76,8 +92,25 @@ export function isTokenExpired(token: string): boolean {
   }
 }
 
+export function getTokenExpiryTime(token: string): number | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return decoded.exp || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export function isAuthenticated() {
-  if (typeof window !== "undefined") {
+  // Ensure we're on the client side and properly hydrated
+  if (typeof window === "undefined") return false;
+
+  // Add a small delay to ensure DOM is ready
+  try {
     // Check cookies first, then localStorage as fallback
     const tokenCookie = Cookies.get("token");
     const tokenLocal = localStorage.getItem("token");
@@ -88,8 +121,94 @@ export function isAuthenticated() {
       return false;
     }
     return true;
+  } catch (error) {
+    // Handle any potential errors during hydration
+    console.warn("Authentication check failed during hydration:", error);
+    return false;
   }
-  return false;
+}
+
+export function startSessionMonitoring() {
+  if (typeof window === "undefined") return;
+
+  // Clear any existing interval
+  stopSessionMonitoring();
+
+  sessionCheckInterval = setInterval(() => {
+    const token = getAuthToken();
+
+    if (!token) {
+      console.log("No token found - redirecting to login");
+      logout();
+      return;
+    }
+
+    if (isTokenExpired(token)) {
+      console.log("Token expired - redirecting to login");
+      logout();
+      return;
+    }
+
+    // Check if token is about to expire and show warning
+    const expiryTime = getTokenExpiryTime(token);
+    if (expiryTime) {
+      const now = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = expiryTime - now;
+
+      if (timeUntilExpiry <= TOKEN_WARNING_TIME && !warningShown) {
+        warningShown = true;
+        const minutes = Math.floor(timeUntilExpiry / 60);
+        if (minutes > 0) {
+          alert(
+            `Your session will expire in ${minutes} minute(s). Please save your work.`
+          );
+        } else {
+          alert("Your session is about to expire. Please save your work.");
+        }
+      }
+    }
+  }, SESSION_CHECK_INTERVAL);
+}
+
+export function stopSessionMonitoring() {
+  if (sessionCheckInterval) {
+    clearInterval(sessionCheckInterval);
+    sessionCheckInterval = null;
+  }
+  warningShown = false;
+}
+
+// Function to check session on page load/focus
+export function checkSessionOnPageLoad() {
+  if (typeof window === "undefined") return;
+
+  // Wait for next tick to ensure hydration is complete
+  setTimeout(() => {
+    // Check authentication immediately
+    if (!isAuthenticated()) {
+      return;
+    }
+
+    // Start monitoring
+    startSessionMonitoring();
+
+    // Add event listeners for page visibility changes
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        // Page became visible, check session immediately
+        if (!isAuthenticated()) {
+          return;
+        }
+      }
+    });
+
+    // Add event listener for window focus
+    window.addEventListener("focus", () => {
+      if (!isAuthenticated()) {
+        return;
+      }
+    });
+  }, 0);
 }
 
 export function getAuthenticatedUser() {

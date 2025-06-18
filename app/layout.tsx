@@ -2,8 +2,9 @@ import React from "react";
 import "@/app/globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import AuthProvider from "@/components/auth-provider";
+import { AuthProvider } from "@/components/auth-session-provider";
 import { TenantProvider } from "@/components/tenant-provider";
+import { HydrationBoundary } from "@/components/hydration-boundary";
 import { Loader2 } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -39,13 +40,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <TenantProvider>
-              <React.Suspense fallback={<GlobalLoading />}>
-                {children}
-              </React.Suspense>
-            </TenantProvider>
-          </AuthProvider>
+          <HydrationBoundary fallback={<GlobalLoading />}>
+            <AuthProvider>
+              <TenantProvider>
+                <React.Suspense fallback={<GlobalLoading />}>
+                  {children}
+                </React.Suspense>
+              </TenantProvider>
+            </AuthProvider>
+          </HydrationBoundary>
         </ThemeProvider>
       </body>
     </html>

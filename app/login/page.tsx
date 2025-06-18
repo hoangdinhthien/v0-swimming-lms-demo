@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Waves } from "lucide-react";
 import { login } from "@/api/login-api";
-import { setAuthCookies } from "@/api/auth-utils";
+import { setAuthCookies, isAuthenticated } from "@/api/auth-utils";
 import { LoadingScreen } from "@/components/loading-screen";
 
 export default function LoginPage() {
@@ -25,7 +25,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const router = useRouter();
+
+  // Check if user is already authenticated on page load
+  useEffect(() => {
+    if (isAuthenticated()) {
+      setRedirecting(true);
+      router.push("/dashboard/manager");
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -53,9 +65,17 @@ export default function LoginPage() {
     }
   };
 
-  // If redirecting, show the loading screen
-  if (redirecting) {
-    return <LoadingScreen message='Đang đăng nhập vào hệ thống...' />;
+  // If checking authentication or redirecting, show the loading screen
+  if (checkingAuth || redirecting) {
+    return (
+      <LoadingScreen
+        message={
+          checkingAuth
+            ? "Đang kiểm tra phiên đăng nhập..."
+            : "Đang đăng nhập vào hệ thống..."
+        }
+      />
+    );
   }
 
   return (

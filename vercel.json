@@ -3,16 +3,10 @@
     "app/dashboard/[...slug]/page.tsx": {
       "maxDuration": 30
     },
-    "app/courses/[id]/page.tsx": {
-      "maxDuration": 30
-    },
     "app/login/page.tsx": {
       "maxDuration": 30
     },
     "app/register/page.tsx": {
-      "maxDuration": 30
-    },
-    "app/page.tsx": {
       "maxDuration": 30
     }
   },
