@@ -1,15 +1,4 @@
 {
-  "functions": {
-    "app/dashboard/[...slug]/page.tsx": {
-      "maxDuration": 30
-    },
-    "app/login/page.tsx": {
-      "maxDuration": 30
-    },
-    "app/register/page.tsx": {
-      "maxDuration": 30
-    }
-  },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
