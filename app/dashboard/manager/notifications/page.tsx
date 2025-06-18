@@ -67,40 +67,46 @@ export default function NotificationsListPage() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className='mb-6'>
         <Link
-          href="/dashboard/manager"
-          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
+          href='/dashboard/manager'
+          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className='mr-1 h-4 w-4' />
           Back to Dashboard
         </Link>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className='flex items-center justify-between mb-6'>
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">
+          <h1 className='text-3xl font-bold'>Notifications</h1>
+          <p className='text-muted-foreground'>
             Stay updated with the latest activities and alerts
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
+        <Badge
+          variant='secondary'
+          className='text-sm'
+        >
           {unreadCount} unread
         </Badge>
       </div>
 
-      <Tabs defaultValue="all" className="space-y-6">
+      <Tabs
+        defaultValue='all'
+        className='space-y-6'
+      >
         <TabsList>
-          <TabsTrigger value="all">All Notifications</TabsTrigger>
-          <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
-          <TabsTrigger value="read">Read</TabsTrigger>
+          <TabsTrigger value='all'>All Notifications</TabsTrigger>
+          <TabsTrigger value='unread'>Unread ({unreadCount})</TabsTrigger>
+          <TabsTrigger value='read'>Read</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all">
+        <TabsContent value='all'>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
+              <CardTitle className='flex items-center gap-2'>
+                <Bell className='h-5 w-5' />
                 All Notifications
               </CardTitle>
             </CardHeader>
@@ -121,10 +127,10 @@ export default function NotificationsListPage() {
                     <TableRow key={notification._id}>
                       <TableCell>
                         {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                          <div className='w-2 h-2 bg-blue-500 rounded-full' />
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className='font-medium'>
                         {notification.title}
                       </TableCell>
                       <TableCell>{notification.content}</TableCell>
@@ -139,15 +145,24 @@ export default function NotificationsListPage() {
                         {formatRelativeTime(notification.created_at)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
+                        <div className='flex items-center gap-2'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                          >
+                            <Eye className='h-4 w-4' />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <Check className="h-4 w-4" />
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                          >
+                            <Check className='h-4 w-4' />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                          >
+                            <Trash2 className='h-4 w-4' />
                           </Button>
                         </div>
                       </TableCell>
@@ -159,7 +174,7 @@ export default function NotificationsListPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="unread">
+        <TabsContent value='unread'>
           <Card>
             <CardHeader>
               <CardTitle>Unread Notifications</CardTitle>
@@ -180,7 +195,7 @@ export default function NotificationsListPage() {
                     .filter((n) => !n.read)
                     .map((notification) => (
                       <TableRow key={notification._id}>
-                        <TableCell className="font-medium">
+                        <TableCell className='font-medium'>
                           {notification.title}
                         </TableCell>
                         <TableCell>{notification.content}</TableCell>
@@ -195,12 +210,18 @@ export default function NotificationsListPage() {
                           {formatRelativeTime(notification.created_at)}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
+                          <div className='flex items-center gap-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                            >
+                              <Eye className='h-4 w-4' />
                             </Button>
-                            <Button variant="ghost" size="sm">
-                              <Check className="h-4 w-4" />
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                            >
+                              <Check className='h-4 w-4' />
                             </Button>
                           </div>
                         </TableCell>
@@ -212,7 +233,7 @@ export default function NotificationsListPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="read">
+        <TabsContent value='read'>
           <Card>
             <CardHeader>
               <CardTitle>Read Notifications</CardTitle>
@@ -233,7 +254,7 @@ export default function NotificationsListPage() {
                     .filter((n) => n.read)
                     .map((notification) => (
                       <TableRow key={notification._id}>
-                        <TableCell className="font-medium">
+                        <TableCell className='font-medium'>
                           {notification.title}
                         </TableCell>
                         <TableCell>{notification.content}</TableCell>
@@ -248,8 +269,11 @@ export default function NotificationsListPage() {
                           {formatRelativeTime(notification.created_at)}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                          >
+                            <Trash2 className='h-4 w-4' />
                           </Button>
                         </TableCell>
                       </TableRow>
