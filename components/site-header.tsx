@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Waves, User } from "lucide-react";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   isAuthenticated,
   getAuthenticatedUser,
@@ -16,11 +17,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getTenantInfo } from "@/api/tenant-api";
 
 export default function SiteHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
   const [userName, setUserName] = useState("");
+  const [tenantName, setTenantName] = useState("");
+  const pathname = usePathname();
+
+  // Check if we're in a dashboard route
+  const isDashboardRoute = pathname?.startsWith("/dashboard");
+
   useEffect(() => {
     // This function will check auth status on mount and periodically
     const checkAuth = async () => {
@@ -71,10 +80,31 @@ export default function SiteHeader() {
     };
   }, []);
 
+  // Fetch tenant info when in dashboard
+  useEffect(() => {
+    const fetchTenantName = async () => {
+      if (isDashboardRoute && isLoggedIn) {
+        try {
+          const selectedTenantId = getSelectedTenant();
+          if (selectedTenantId) {
+            const tenantInfo = await getTenantInfo(selectedTenantId);
+            setTenantName(tenantInfo.title);
+          }
+        } catch (error) {
+          console.error("Error fetching tenant info:", error);
+          setTenantName("");
+        }
+      } else {
+        setTenantName("");
+      }
+    };
+
+    fetchTenantName();
+  }, [isDashboardRoute, isLoggedIn]);
+
   return (
     <header className='sticky top-0 z-10 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'>
       <div className='container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between'>
-        {" "}
         <div className='flex items-center gap-2 font-bold text-xl'>
           <Link
             href='/'
@@ -89,6 +119,15 @@ export default function SiteHeader() {
             <span>AquaLearn Manager</span>
           </Link>
         </div>
+
+        {/* Display tenant name in the center of header when in dashboard */}
+        {isDashboardRoute && tenantName && (
+          <div className='flex items-center gap-2 text-sm font-medium text-muted-foreground'>
+            <span className='hidden md:inline'>Chi nhánh:</span>
+            <span className='font-semibold text-foreground'>{tenantName}</span>
+          </div>
+        )}
+
         <nav className='hidden md:flex items-center gap-6'>
           <Link
             href='/'

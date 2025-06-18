@@ -41,6 +41,9 @@ import {
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LoadingScreen } from "@/components/loading-screen";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getTenantInfo } from "@/api/tenant-api";
+import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -55,7 +58,15 @@ export default function DashboardLayout({
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState<string>(propUserRole || "");
   const [loading, setLoading] = useState(true);
+  const [tenantName, setTenantName] = useState("");
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Handle tenant switching
+  const handleTenantSwitch = () => {
+    router.push("/tenant-selection");
+  };
+
   // Get the current user's name and role from localStorage on component mount
   useEffect(() => {
     const user = getAuthenticatedUser();
@@ -67,6 +78,22 @@ export default function DashboardLayout({
       // For this version of the app, we always use manager role
       setUserRole("manager");
     }
+
+    // Load tenant info
+    const loadTenantInfo = async () => {
+      try {
+        const selectedTenantId = getSelectedTenant();
+        if (selectedTenantId) {
+          const tenantInfo = await getTenantInfo(selectedTenantId);
+          setTenantName(tenantInfo.title);
+        }
+      } catch (error) {
+        console.error("Error fetching tenant info:", error);
+        setTenantName("");
+      }
+    };
+
+    loadTenantInfo();
 
     // Simulate loading delay
     const timer = setTimeout(() => {
@@ -193,7 +220,7 @@ export default function DashboardLayout({
             className='flex items-center gap-2 font-semibold'
           >
             <Waves className='h-6 w-6 text-sky-500' />
-            <span className='hidden md:inline-block'>AquaLearn</span>
+            <span className='hidden md:inline-block'>AquaLearn Manager</span>
           </Link>
         </nav>
         <Sheet>
@@ -266,6 +293,21 @@ export default function DashboardLayout({
           </SheetContent>
         </Sheet>
         <div className='flex flex-1 items-center gap-4 md:gap-2 lg:gap-4'>
+          {/* Display tenant name in the center - clickable to switch tenants */}
+          {tenantName && (
+            <button
+              onClick={handleTenantSwitch}
+              className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md px-2 py-1 hover:bg-muted'
+              title='Click to switch tenant'
+            >
+              <Building className='h-4 w-4' />
+              <span className='hidden md:inline'>Chi nhánh:</span>
+              <span className='font-semibold text-foreground'>
+                {tenantName}
+              </span>
+            </button>
+          )}
+
           <div className='ml-auto flex items-center gap-2'>
             <div className='hidden items-center gap-2 md:flex'>
               <span className='text-sm text-muted-foreground'>
