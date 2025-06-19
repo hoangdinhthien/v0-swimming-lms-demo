@@ -155,7 +155,7 @@ export default function CoursesPage() {
                     Trạng thái
                   </th>
                   <th className='py-3 px-4 text-right font-medium text-sm'>
-                    Thao tác
+                    Thao Tác
                   </th>
                 </tr>
               </thead>
