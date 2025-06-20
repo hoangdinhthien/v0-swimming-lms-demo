@@ -11,9 +11,13 @@ import { Calendar, Tag } from "lucide-react";
 import { fetchCourseById, fetchCourses } from "@/api/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
 
-export default function CourseDetailPage() {
-  const params = useParams();
-  const courseId = params?.id as string;
+interface CourseDetailPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function CourseDetailPage({ params }: CourseDetailPageProps) {
+  const routeParams = useParams();
+  const courseId = routeParams?.id as string;
   const [course, setCourse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
