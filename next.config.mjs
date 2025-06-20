@@ -13,13 +13,18 @@ const nextConfig = {
     // This helps reduce function count by optimizing builds
     optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
   },
-  // Enable static exports for pages that don't need server-side rendering
+  // Ensure proper trailing slash handling
   trailingSlash: false,
-  // Optimize for fewer functions
-  async generateStaticParams() {
-    return [];
-  },
+  // Optimize webpack configuration
   webpack: (config, { isServer }) => {
+    // Fix for potential module resolution issues
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+    };
+
     if (isServer) {
       // Optimize server bundle to reduce function splitting
       config.optimization = {
@@ -39,6 +44,8 @@ const nextConfig = {
     }
     return config;
   },
+  // Better build output configuration
+  output: "standalone",
 };
 
 export default nextConfig;
