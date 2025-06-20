@@ -95,13 +95,13 @@ export function getUserDashboardPath(): string {
 
   switch (role) {
     case "admin":
-      return "/dashboard/admin";
+      return "/dashboard/manager"; // Admin uses manager dashboard
     case "manager":
       return "/dashboard/manager";
     case "instructor":
-      return "/dashboard/instructor";
+      return "/dashboard/manager"; // Instructor uses manager dashboard
     case "student":
-      return "/dashboard/student";
+      return "/dashboard/manager"; // Student uses manager dashboard
     default:
       return "/";
   }

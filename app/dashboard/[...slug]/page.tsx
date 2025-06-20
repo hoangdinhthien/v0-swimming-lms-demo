@@ -5,25 +5,21 @@ import { useEffect, useState } from "react";
 import { getAuthenticatedUser } from "@/api/auth-utils";
 import { getUserFrontendRole } from "@/api/role-utils";
 
-// Import all dashboard components
-import ManagerDashboard from "./manager/page";
-import InstructorDashboard from "./instructor/page";
-import StudentDashboard from "./student/page";
-
-// Import all manager pages
-import ManagerStudentsPage from "./manager/students/page";
-import ManagerStudentDetailPage from "./manager/students/[id]/page";
-import ManagerInstructorsPage from "./manager/instructors/page";
-import ManagerInstructorDetailPage from "./manager/instructors/[id]/page";
-import ManagerCoursesPage from "./manager/courses/page";
-import ManagerApplicationsPage from "./manager/applications/page";
-import ManagerApplicationDetailPage from "./manager/applications/[id]/page";
-import ManagerAnalyticsPage from "./manager/analytics/page";
-import ManagerPromotionsPage from "./manager/promotions/page";
-import ManagerSettingsPage from "./manager/settings/page";
-import ManagerNotificationsPage from "./manager/notifications/page";
-import ManagerNotificationDetailPage from "./manager/notifications/[id]/page";
-import ManagerReportsPage from "./manager/reports/page";
+// Import manager dashboard components (these exist)
+import ManagerDashboard from "../manager/page";
+import ManagerStudentsPage from "../manager/students/page";
+import ManagerStudentDetailPage from "../manager/students/[id]/page";
+import ManagerInstructorsPage from "../manager/instructors/page";
+import ManagerInstructorDetailPage from "../manager/instructors/[id]/page";
+import ManagerCoursesPage from "../manager/courses/page";
+import ManagerApplicationsPage from "../manager/applications/page";
+import ManagerApplicationDetailPage from "../manager/applications/[id]/page";
+import ManagerAnalyticsPage from "../manager/analytics/page";
+import ManagerPromotionsPage from "../manager/promotions/page";
+import ManagerSettingsPage from "../manager/settings/page";
+import ManagerNotificationsPage from "../manager/notifications/page";
+import ManagerNotificationDetailPage from "../manager/notifications/[id]/page";
+import ManagerReportsPage from "../manager/reports/page";
 
 export default function DashboardCatchAllPage() {
   const params = useParams();
@@ -47,18 +43,8 @@ export default function DashboardCatchAllPage() {
     const slug = params?.slug as string[];
 
     if (!slug || slug.length === 0) {
-      // Default dashboard based on role
-      switch (role) {
-        case "instructor":
-          setComponent(() => InstructorDashboard);
-          break;
-        case "student":
-          setComponent(() => StudentDashboard);
-          break;
-        default:
-          setComponent(() => ManagerDashboard);
-          break;
-      }
+      // All users go to manager dashboard
+      setComponent(() => ManagerDashboard);
       setLoading(false);
       return;
     }
@@ -70,18 +56,8 @@ export default function DashboardCatchAllPage() {
       const dashboardRole = roleOrSection;
 
       if (!section) {
-        // Dashboard home page
-        switch (dashboardRole) {
-          case "instructor":
-            setComponent(() => InstructorDashboard);
-            break;
-          case "student":
-            setComponent(() => StudentDashboard);
-            break;
-          default:
-            setComponent(() => ManagerDashboard);
-            break;
-        }
+        // All users go to manager dashboard
+        setComponent(() => ManagerDashboard);
       } else if (dashboardRole === "manager") {
         // Manager sections
         switch (section) {
@@ -133,12 +109,8 @@ export default function DashboardCatchAllPage() {
             break;
         }
       } else {
-        // For instructor and student, default to their dashboard
-        setComponent(() =>
-          dashboardRole === "instructor"
-            ? InstructorDashboard
-            : StudentDashboard
-        );
+        // For instructor and student, redirect to manager dashboard
+        setComponent(() => ManagerDashboard);
       }
     } else {
       // Legacy routing - treat first param as section for manager

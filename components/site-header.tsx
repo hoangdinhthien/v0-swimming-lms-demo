@@ -136,7 +136,7 @@ export default function SiteHeader() {
             Trang Chủ
           </Link>
           <Link
-            href='/courses'
+            href='/dashboard/manager/courses'
             className='text-sm font-medium'
           >
             Khóa Học
@@ -193,7 +193,7 @@ export default function SiteHeader() {
               <Link href='/login'>
                 <Button variant='outline'>Đăng Nhập</Button>
               </Link>
-              <Link href='/signup'>
+              <Link href='/login'>
                 <Button>Đăng Ký</Button>
               </Link>
             </>

@@ -125,12 +125,7 @@ export default function LoginPage() {
               </Button>
               <div className='text-center text-sm'>
                 Bạn chưa có tài khoản?{" "}
-                <Link
-                  href='/signup'
-                  className='text-sky-600 hover:underline'
-                >
-                  Đăng ký
-                </Link>
+                <span className='text-gray-500'>Liên hệ admin để đăng ký</span>
               </div>
             </CardFooter>
           </form>
