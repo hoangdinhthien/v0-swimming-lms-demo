@@ -142,7 +142,7 @@ export default function SiteHeader() {
             Khóa Học
           </Link>
           <Link
-            href='/instructors'
+            href='/dashboard/manager/instructors'
             className='text-sm font-medium'
           >
             Giáo Viên
