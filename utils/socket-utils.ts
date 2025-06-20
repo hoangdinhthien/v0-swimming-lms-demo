@@ -62,10 +62,22 @@ export const useSocket = () => {
     try {
       // Use mock socket to avoid connection errors in development
       if (USE_MOCK_SOCKET) {
-        console.log("Using mock WebSocket connection");
+        console.log(
+          "Using mock WebSocket connection - ideal for development or when WebSocket server is unavailable"
+        );
         setTimeout(() => {
           setIsConnected(true);
           setConnectionError(null);
+
+          // Show a user-friendly message about mock mode
+          if (
+            typeof window !== "undefined" &&
+            window.location.hostname !== "localhost"
+          ) {
+            console.warn(
+              "Note: Using mock WebSocket mode. Real-time features are simulated. For production, configure NEXT_PUBLIC_SOCKET_SERVER_URL with a valid WebSocket server."
+            );
+          }
         }, 500);
         return;
       } // Only try real connection if mock is disabled

@@ -25,6 +25,29 @@ import ReportsPage from "../reports/page";
 // Import the main manager dashboard
 import ManagerDashboard from "../page";
 
+// Create wrapper components that don't require props
+const StudentDetailWrapper = () => {
+  return <StudentDetailPage />;
+};
+
+const InstructorDetailWrapper = () => {
+  return <InstructorDetailPage />;
+};
+
+const CourseDetailWrapper = () => {
+  const params = useParams();
+  const id = params?.slug?.[1] as string;
+  return <CourseDetailPage params={Promise.resolve({ id })} />;
+};
+
+const ApplicationDetailWrapper = () => {
+  return <ApplicationDetailPage />;
+};
+
+const NotificationDetailWrapper = () => {
+  return <NotificationDetailPage />;
+};
+
 export default function ManagerCatchAllPage() {
   const params = useParams();
   const [Component, setComponent] = useState<React.ComponentType | null>(null);
@@ -37,13 +60,11 @@ export default function ManagerCatchAllPage() {
       return;
     }
 
-    const [section, id, subsection] = slug;
-
-    // Route mapping
+    const [section, id, subsection] = slug; // Route mapping
     switch (section) {
       case "students":
         if (id && !subsection) {
-          setComponent(() => StudentDetailPage);
+          setComponent(() => StudentDetailWrapper);
         } else {
           setComponent(() => StudentsPage);
         }
@@ -51,7 +72,7 @@ export default function ManagerCatchAllPage() {
 
       case "instructors":
         if (id && !subsection) {
-          setComponent(() => InstructorDetailPage);
+          setComponent(() => InstructorDetailWrapper);
         } else {
           setComponent(() => InstructorsPage);
         }
@@ -59,7 +80,7 @@ export default function ManagerCatchAllPage() {
 
       case "courses":
         if (id && !subsection) {
-          setComponent(() => CourseDetailPage);
+          setComponent(() => CourseDetailWrapper);
         } else {
           setComponent(() => CoursesPage);
         }
@@ -71,7 +92,7 @@ export default function ManagerCatchAllPage() {
 
       case "applications":
         if (id && !subsection) {
-          setComponent(() => ApplicationDetailPage);
+          setComponent(() => ApplicationDetailWrapper);
         } else {
           setComponent(() => ApplicationsPage);
         }
@@ -95,7 +116,7 @@ export default function ManagerCatchAllPage() {
 
       case "notifications":
         if (id && !subsection) {
-          setComponent(() => NotificationDetailPage);
+          setComponent(() => NotificationDetailWrapper);
         } else {
           setComponent(() => NotificationsPage);
         }

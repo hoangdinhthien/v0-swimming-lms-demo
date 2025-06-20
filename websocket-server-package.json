@@ -1,0 +1,23 @@
+{
+  "name": "swimming-lms-websocket-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for Swimming LMS real-time features",
+  "main": "websocket-server-example.js",
+  "scripts": {
+    "start": "node websocket-server-example.js",
+    "dev": "nodemon websocket-server-example.js",
+    "test": "echo \"No tests specified\""
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["websocket", "socket.io", "real-time", "lms"],
+  "author": "Swimming LMS Team",
+  "license": "MIT"
+}
