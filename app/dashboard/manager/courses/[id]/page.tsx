@@ -3,11 +3,22 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getSelectedTenant } from "@/utils/tenant-utils";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Calendar,
+  Tag,
+  Clock,
+  DollarSign,
+  Users,
+  BookOpen,
+  Star,
+  Info,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Calendar, Tag } from "lucide-react";
 import { fetchCourseById, fetchCourses } from "@/api/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -86,123 +97,306 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       }
     }
   }, [course, courseId]);
-
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <div>Đang tải chi tiết khoá học...</div>
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
+            Đang tải chi tiết khoá học...
+          </p>
+          <p className='text-sm text-muted-foreground mt-2'>
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
       </div>
     );
   }
-
   if (error) {
-    return <div className='text-red-500 p-8'>{error}</div>;
-  }
-
-  if (!course) {
-    return <div className='p-8'>Không tìm thấy khoá học.</div>;
-  }
-
-  return (
-    <>
-      <div className='container mx-auto mb-4 pt-6'>
-        <Link
-          href='/dashboard/manager/courses'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách khoá học
-        </Link>
-      </div>
-
-      <div className='container mx-auto bg-card rounded-lg shadow p-4 md:p-6 mb-6'>
-        <h1 className='text-2xl font-bold mb-2 text-foreground'>
-          {course.title}
-        </h1>
-        <div className='flex flex-wrap gap-2 items-center text-sm text-muted-foreground mb-4'>
-          <div className='flex items-center gap-1'>
-            <Tag className='h-4 w-4' />
-            {Array.isArray(course.category) &&
-              course.category.map((cat: any) => (
-                <span
-                  key={cat._id}
-                  className='mr-2'
-                >
-                  {cat.title}
-                </span>
-              ))}
-          </div>
-          <Badge
-            variant='outline'
-            className={
-              course.is_active
-                ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-gray-50 text-gray-700 border-gray-200"
-            }
-          >
-            {course.is_active ? "Đang hoạt động" : "Đã kết thúc"}
-          </Badge>
-          <div className='flex items-center gap-1'>
-            <Calendar className='h-4 w-4' />
-            <span>
-              Ngày tạo:{" "}
-              {course.created_at
-                ? new Date(course.created_at).toLocaleDateString("vi-VN")
-                : "-"}
-            </span>
-            {course.updated_at && course.updated_at !== course.created_at && (
-              <span className='ml-2'>
-                (Cập nhật:{" "}
-                {new Date(course.updated_at).toLocaleDateString("vi-VN")})
-              </span>
-            )}
-          </div>
-        </div>
-        <div className='flex justify-center mb-4'>
-          <div className='w-full max-w-xl aspect-video bg-muted rounded-md flex items-center justify-center'>
-            <img
-              src={`/placeholder.svg?height=400&width=800&text=${encodeURIComponent(
-                course.title
-              )}`}
-              alt={course.title}
-              className='object-contain w-full h-full rounded-md'
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/placeholder.svg";
-              }}
-            />
-          </div>
-        </div>
-        <div className='text-base mb-4 whitespace-pre-wrap text-foreground'>
-          {course.description}
-        </div>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-2 mb-4'>
-          <div>
-            <div className='font-medium text-foreground'>Giá</div>
-            <div>{course.price?.toLocaleString()}₫</div>
-          </div>
-          <div>
-            <div className='font-medium text-foreground'>Số buổi</div>
-            <div>{course.session_number}</div>
-          </div>
-          <div>
-            <div className='font-medium text-foreground'>Thời lượng/buổi</div>
-            <div>{course.session_number_duration}</div>
-          </div>
-        </div>
-        {Array.isArray(course.detail) && course.detail.length > 0 && (
-          <div className='mt-2'>
-            <div className='font-medium mb-1 text-foreground'>
-              Nội dung khoá học:
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-background'>
+        <Card className='max-w-md mx-auto shadow-lg'>
+          <CardContent className='p-8 text-center'>
+            <div className='w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4'>
+              <Info className='h-8 w-8 text-destructive' />
             </div>
-            <ul className='list-disc pl-5 space-y-1'>
-              {course.detail.map((item: any, idx: number) => (
-                <li key={idx}>{item.title}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+            <h3 className='text-lg font-semibold text-foreground mb-2'>
+              Có lỗi xảy ra
+            </h3>
+            <p className='text-destructive mb-4'>{error}</p>
+            <Link
+              href='/dashboard/manager/courses'
+              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors'
+            >
+              <ArrowLeft className='mr-2 h-4 w-4' />
+              Quay về danh sách
+            </Link>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    );
+  }
+  if (!course) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-background'>
+        <Card className='max-w-md mx-auto shadow-lg'>
+          <CardContent className='p-8 text-center'>
+            <div className='w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4'>
+              <BookOpen className='h-8 w-8 text-muted-foreground' />
+            </div>
+            <h3 className='text-lg font-semibold text-foreground mb-2'>
+              Không tìm thấy khoá học
+            </h3>
+            <p className='text-muted-foreground mb-4'>
+              Khoá học bạn tìm kiếm không tồn tại hoặc đã bị xoá.
+            </p>
+            <Link
+              href='/dashboard/manager/courses'
+              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors'
+            >
+              <ArrowLeft className='mr-2 h-4 w-4' />
+              Quay về danh sách
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  return (
+    <div className='min-h-screen bg-background'>
+      {/* Header Section */}
+      <div className='bg-card shadow-sm border-b border-border'>
+        <div className='container mx-auto px-4 py-6'>
+          <Link
+            href='/dashboard/manager/courses'
+            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-4'
+          >
+            <ArrowLeft className='mr-2 h-4 w-4' />
+            Quay về danh sách khoá học
+          </Link>
+
+          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+            <div>
+              <h1 className='text-3xl font-bold text-foreground mb-2'>
+                {course.title}
+              </h1>
+              <div className='flex flex-wrap items-center gap-3'>
+                <Badge
+                  variant='outline'
+                  className={
+                    course.is_active
+                      ? "bg-green-50 text-green-700 border-green-200 font-medium dark:bg-green-950 dark:text-green-400 dark:border-green-800"
+                      : "bg-muted text-muted-foreground border-border font-medium"
+                  }
+                >
+                  {course.is_active ? "🟢 Đang hoạt động" : "⚫ Đã kết thúc"}
+                </Badge>
+                {Array.isArray(course.category) &&
+                  course.category.map((cat: any) => (
+                    <Badge
+                      key={cat._id}
+                      variant='secondary'
+                      className='font-medium'
+                    >
+                      <Tag className='mr-1 h-3 w-3' />
+                      {cat.title}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+
+            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+              <Calendar className='h-4 w-4' />
+              <span>
+                Tạo:{" "}
+                {course.created_at
+                  ? new Date(course.created_at).toLocaleDateString("vi-VN")
+                  : "-"}
+              </span>
+              {course.updated_at && course.updated_at !== course.created_at && (
+                <span className='text-muted-foreground/70'>
+                  • Cập nhật:{" "}
+                  {new Date(course.updated_at).toLocaleDateString("vi-VN")}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>{" "}
+      {/* Main Content */}
+      <div className='container mx-auto px-4 py-8'>
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+          {/* Course Image and Description */}
+          <div className='lg:col-span-2 space-y-6'>
+            {/* Course Image */}
+            <Card className='overflow-hidden shadow-lg border'>
+              <div className='aspect-video bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative'>
+                <img
+                  src={`/placeholder.svg?height=400&width=800&text=${encodeURIComponent(
+                    course.title
+                  )}`}
+                  alt={course.title}
+                  className='object-cover w-full h-full'
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+                <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
+                <div className='absolute bottom-4 left-4 right-4'>
+                  <div className='flex items-center gap-2 text-white'>
+                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                    <Star className='h-5 w-5 fill-gray-300 text-gray-300' />
+                    <span className='text-sm font-medium ml-1'>4.0/5</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Description */}
+            <Card className='shadow-lg border'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Info className='h-5 w-5 text-primary' />
+                  Mô tả khoá học
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className='text-foreground leading-relaxed whitespace-pre-wrap'>
+                  {course.description || "Chưa có mô tả cho khoá học này."}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Course Details */}
+            {Array.isArray(course.detail) && course.detail.length > 0 && (
+              <Card className='shadow-lg border'>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <BookOpen className='h-5 w-5 text-primary' />
+                    Nội dung khoá học
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className='space-y-3'>
+                    {course.detail.map((item: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className='flex items-start gap-3 p-3 bg-muted/50 rounded-lg border'
+                      >
+                        <div className='w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 mt-0.5'>
+                          {idx + 1}
+                        </div>
+                        <div className='flex-1'>
+                          <h4 className='font-medium text-foreground'>
+                            {item.title}
+                          </h4>
+                          {item.description && (
+                            <p className='text-sm text-muted-foreground mt-1'>
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>{" "}
+          {/* Sidebar */}
+          <div className='space-y-6'>
+            {/* Quick Stats */}
+            <Card className='shadow-lg border'>
+              <CardHeader>
+                <CardTitle className='text-lg'>Thông tin khoá học</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='flex items-center justify-between p-3 bg-green-50 rounded-lg border dark:bg-green-950/50 dark:border-green-800'>
+                  <div className='flex items-center gap-2'>
+                    <DollarSign className='h-5 w-5 text-green-600 dark:text-green-400' />
+                    <span className='font-medium text-green-900 dark:text-green-200'>
+                      Giá
+                    </span>
+                  </div>
+                  <span className='text-lg font-bold text-green-700 dark:text-green-400'>
+                    {course.price?.toLocaleString() || 0}₫
+                  </span>
+                </div>
+
+                <Separator />
+
+                <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg border dark:bg-blue-950/50 dark:border-blue-800'>
+                  <div className='flex items-center gap-2'>
+                    <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                    <span className='font-medium text-blue-900 dark:text-blue-200'>
+                      Số buổi
+                    </span>
+                  </div>
+                  <span className='text-lg font-bold text-blue-700 dark:text-blue-400'>
+                    {course.session_number || 0} buổi
+                  </span>
+                </div>
+
+                <Separator />
+
+                <div className='flex items-center justify-between p-3 bg-purple-50 rounded-lg border dark:bg-purple-950/50 dark:border-purple-800'>
+                  <div className='flex items-center gap-2'>
+                    <Clock className='h-5 w-5 text-purple-600 dark:text-purple-400' />
+                    <span className='font-medium text-purple-900 dark:text-purple-200'>
+                      Thời lượng/buổi
+                    </span>
+                  </div>
+                  <span className='text-lg font-bold text-purple-700 dark:text-purple-400'>
+                    {course.session_number_duration || "-"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Info */}
+            <Card className='shadow-lg border'>
+              <CardHeader>
+                <CardTitle className='text-lg'>Thống kê</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <Users className='h-4 w-4 text-muted-foreground' />
+                    <span className='text-sm font-medium'>
+                      Học viên đăng ký
+                    </span>
+                  </div>
+                  <span className='text-sm font-bold text-foreground'>--</span>
+                </div>
+
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <BookOpen className='h-4 w-4 text-muted-foreground' />
+                    <span className='text-sm font-medium'>Bài học</span>
+                  </div>
+                  <span className='text-sm font-bold text-foreground'>
+                    {Array.isArray(course.detail) ? course.detail.length : 0}
+                  </span>
+                </div>
+
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <Star className='h-4 w-4 text-muted-foreground' />
+                    <span className='text-sm font-medium'>Đánh giá</span>
+                  </div>
+                  <span className='text-sm font-bold text-foreground'>
+                    4.0/5
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

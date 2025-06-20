@@ -41,9 +41,18 @@ import {
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LoadingScreen } from "@/components/loading-screen";
-import { getSelectedTenant } from "@/utils/tenant-utils";
-import { getTenantInfo } from "@/api/tenant-api";
+import { getSelectedTenant, setSelectedTenant } from "@/utils/tenant-utils";
+import { getTenantInfo, getAvailableTenants } from "@/api/tenant-api";
 import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Check } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -59,12 +68,25 @@ export default function DashboardLayout({
   const [userRole, setUserRole] = useState<string>(propUserRole || "");
   const [loading, setLoading] = useState(true);
   const [tenantName, setTenantName] = useState("");
+  const [availableTenants, setAvailableTenants] = useState<any[]>([]);
+  const [selectedTenantId, setSelectedTenantIdState] = useState<string>("");
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useRouter(); // Handle tenant switching
+  const handleTenantSwitch = async (newTenantId: string) => {
+    try {
+      // Set the new tenant ID
+      setSelectedTenant(newTenantId);
+      setSelectedTenantIdState(newTenantId);
 
-  // Handle tenant switching
-  const handleTenantSwitch = () => {
-    router.push("/tenant-selection");
+      // Update the tenant name
+      const tenantInfo = await getTenantInfo(newTenantId);
+      setTenantName(tenantInfo.title);
+
+      // Refresh the page to reload data with new tenant
+      window.location.reload();
+    } catch (error) {
+      console.error("Error switching tenant:", error);
+    }
   };
 
   // Get the current user's name and role from localStorage on component mount
@@ -77,19 +99,24 @@ export default function DashboardLayout({
 
       // For this version of the app, we always use manager role
       setUserRole("manager");
-    }
-
-    // Load tenant info
+    } // Load tenant info and available tenants
     const loadTenantInfo = async () => {
       try {
         const selectedTenantId = getSelectedTenant();
         if (selectedTenantId) {
+          setSelectedTenantIdState(selectedTenantId);
+
+          // Load current tenant info
           const tenantInfo = await getTenantInfo(selectedTenantId);
           setTenantName(tenantInfo.title);
+          // Load all available tenants
+          const tenants = await getAvailableTenants();
+          setAvailableTenants(tenants);
         }
       } catch (error) {
         console.error("Error fetching tenant info:", error);
         setTenantName("");
+        setAvailableTenants([]);
       }
     };
 
@@ -291,21 +318,48 @@ export default function DashboardLayout({
               </AlertDialog>
             </div>
           </SheetContent>
-        </Sheet>
+        </Sheet>{" "}
         <div className='flex flex-1 items-center gap-4 md:gap-2 lg:gap-4'>
-          {/* Display tenant name in the center - clickable to switch tenants */}
-          {tenantName && (
-            <button
-              onClick={handleTenantSwitch}
-              className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md px-2 py-1 hover:bg-muted'
-              title='Click to switch tenant'
-            >
-              <Building className='h-4 w-4' />
-              <span className='hidden md:inline'>Chi nhánh:</span>
-              <span className='font-semibold text-foreground'>
-                {tenantName}
-              </span>
-            </button>
+          {/* Tenant Dropdown */}
+          {tenantName && availableTenants.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md px-2 py-1 hover:bg-muted'
+                  title='Switch tenant'
+                >
+                  <Building className='h-4 w-4' />
+                  <span className='hidden md:inline'>Chi nhánh:</span>
+                  <span className='font-semibold text-foreground'>
+                    {tenantName}
+                  </span>
+                  <ChevronDown className='h-4 w-4' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='start'
+                className='w-64'
+              >
+                <DropdownMenuLabel>Chọn Chi Nhánh</DropdownMenuLabel>
+                <DropdownMenuSeparator />{" "}
+                {availableTenants.map((tenant) => (
+                  <DropdownMenuItem
+                    key={tenant.tenant_id._id}
+                    onClick={() => handleTenantSwitch(tenant.tenant_id._id)}
+                    className='flex items-center justify-between cursor-pointer'
+                  >
+                    <div className='flex flex-col'>
+                      <span className='font-medium'>
+                        {tenant.tenant_id.title}
+                      </span>
+                    </div>
+                    {selectedTenantId === tenant.tenant_id._id && (
+                      <Check className='h-4 w-4 text-primary' />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           <div className='ml-auto flex items-center gap-2'>
