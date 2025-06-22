@@ -38,6 +38,7 @@ import {
   updateOrderStatus,
 } from "../../../../../api/orders-api";
 import { fetchCourseById } from "../../../../../api/courses-api";
+import ManagerNotFound from "@/components/manager/not-found";
 
 export default function TransactionDetailPage() {
   const params = useParams();
@@ -73,8 +74,11 @@ export default function TransactionDetailPage() {
             cache: "no-store",
           }
         );
-
         if (!response.ok) {
+          // Check if it's a 404 error
+          if (response.status === 404) {
+            throw new Error("404");
+          }
           throw new Error("Không thể tải thông tin giao dịch");
         }
 
@@ -100,7 +104,18 @@ export default function TransactionDetailPage() {
         }
       } catch (err) {
         console.error("Error fetching order details:", err);
-        setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+        // Check if it's a 404 error
+        if (
+          err instanceof Error &&
+          (err.message === "404" ||
+            err.message.includes("404") ||
+            err.message.includes("không tìm thấy") ||
+            err.message.includes("not found"))
+        ) {
+          setError("404");
+        } else {
+          setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
+        }
       } finally {
         setLoading(false);
       }
@@ -151,6 +166,10 @@ export default function TransactionDetailPage() {
         <p>Đang tải thông tin giao dịch...</p>
       </div>
     );
+  }
+
+  if (error === "404" || (!order && !loading)) {
+    return <ManagerNotFound />;
   }
 
   if (error || !order) {

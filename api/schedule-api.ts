@@ -1,0 +1,316 @@
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getAuthToken } from "@/api/auth-utils";
+
+// Define types for the schedule API response
+export interface Slot {
+  _id: string;
+  title: string;
+  start_time: number;
+  end_time: number;
+  duration: string;
+  start_minute: number;
+  end_minute: number;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
+export interface Classroom {
+  _id: string;
+  name: string;
+  course: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
+export interface ScheduleEvent {
+  _id: string;
+  date: string;
+  day_of_week: number;
+  slot: Slot[];
+  classroom: Classroom[];
+  course: string[];
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
+export interface ScheduleApiResponse {
+  data: ScheduleEvent[][][];
+  message: string;
+  statusCode: number;
+}
+
+// Parameters for fetching schedule data
+export interface FetchScheduleParams {
+  startDate: Date;
+  endDate: Date;
+  tenantId?: string;
+  token?: string;
+}
+
+/**
+ * Fetch schedule data from the API
+ * @param params - The parameters for fetching schedule data
+ * @returns Promise with the flattened schedule events
+ */
+export const fetchScheduleData = async (
+  params: FetchScheduleParams
+): Promise<ScheduleEvent[]> => {
+  const { startDate, endDate, tenantId, token } = params;
+
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  // Format dates as YYYY-MM-DD for the API
+  const formatDate = (date: Date) => {
+    return date.toISOString().split("T")[0];
+  };
+
+  const startDateStr = formatDate(startDate);
+  const endDateStr = formatDate(endDate);
+
+  const response = await fetch(
+    `https://capstone.caucalamdev.io.vn/api/v1/workflow-process/schedule?startDate=${startDateStr}&endDate=${endDateStr}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch schedule: ${response.status}`);
+  }
+
+  const result: ScheduleApiResponse = await response.json();
+
+  // The API returns nested arrays, so we need to flatten them
+  const flattenedEvents: ScheduleEvent[] = [];
+  if (result.data && Array.isArray(result.data)) {
+    result.data.forEach((outerArray: any) => {
+      if (Array.isArray(outerArray)) {
+        outerArray.forEach((innerArray: any) => {
+          if (Array.isArray(innerArray)) {
+            flattenedEvents.push(...innerArray);
+          }
+        });
+      }
+    });
+  }
+
+  return flattenedEvents;
+};
+
+/**
+ * Fetch schedule data for a specific month
+ * @param date - Any date within the month to fetch
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with schedule events for the month
+ */
+export const fetchMonthSchedule = async (
+  date: Date,
+  tenantId?: string,
+  token?: string
+): Promise<ScheduleEvent[]> => {
+  // Get the first and last day of the month
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+  return fetchScheduleData({
+    startDate: firstDay,
+    endDate: lastDay,
+    tenantId,
+    token,
+  });
+};
+
+/**
+ * Fetch schedule data for a specific date range
+ * @param startDate - Start date
+ * @param endDate - End date
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with schedule events for the date range
+ */
+export const fetchDateRangeSchedule = async (
+  startDate: Date,
+  endDate: Date,
+  tenantId?: string,
+  token?: string
+): Promise<ScheduleEvent[]> => {
+  return fetchScheduleData({
+    startDate,
+    endDate,
+    tenantId,
+    token,
+  });
+};
+
+/**
+ * Get the start of week (Monday) for a given date
+ * @param date - Any date within the week
+ * @returns Date object representing the Monday of that week
+ */
+export const getWeekStart = (date: Date): Date => {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = result.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+  result.setDate(diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
+};
+
+/**
+ * Get the end of week (Sunday) for a given date
+ * @param date - Any date within the week
+ * @returns Date object representing the Sunday of that week
+ */
+export const getWeekEnd = (date: Date): Date => {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = result.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
+  result.setDate(diff);
+  result.setHours(23, 59, 59, 999);
+  return result;
+};
+
+/**
+ * Generate an array of weeks for a given month
+ * @param date - Any date within the month
+ * @returns Array of week objects with start and end dates
+ */
+export const getWeeksInMonth = (date: Date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+
+  const weeks = [];
+  let currentWeekStart = getWeekStart(firstDayOfMonth);
+
+  while (currentWeekStart <= lastDayOfMonth) {
+    const weekEnd = getWeekEnd(currentWeekStart);
+
+    weeks.push({
+      start: new Date(currentWeekStart),
+      end: new Date(weekEnd),
+      label: `${currentWeekStart.getDate()}/${
+        currentWeekStart.getMonth() + 1
+      } - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}`,
+      value: currentWeekStart.toISOString().split("T")[0], // Use start date as value
+    });
+
+    // Move to next week
+    currentWeekStart = new Date(currentWeekStart);
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  return weeks;
+};
+
+/**
+ * Generate an array of weeks for a given year
+ * @param date - Any date within the year
+ * @returns Array of week objects with start and end dates for the entire year
+ */
+export const getWeeksInYear = (date: Date) => {
+  const year = date.getFullYear();
+  // Always start from the first Monday of the year
+  let currentWeekStart = getWeekStart(new Date(year, 0, 1));
+  // If Jan 1 is not Monday, move to the next Monday
+  if (
+    currentWeekStart.getFullYear() < year ||
+    currentWeekStart.getMonth() > 0 ||
+    currentWeekStart.getDate() > 1
+  ) {
+    while (currentWeekStart.getDay() !== 1) {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 1);
+    }
+  }
+  const lastDayOfYear = new Date(year, 11, 31);
+
+  const weeks = [];
+  while (currentWeekStart <= lastDayOfYear) {
+    const weekEnd = getWeekEnd(currentWeekStart);
+
+    const monthNames = [
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T8",
+      "T9",
+      "T10",
+      "T11",
+      "T12",
+    ];
+
+    const startMonth = monthNames[currentWeekStart.getMonth()];
+    const endMonth = monthNames[weekEnd.getMonth()];
+
+    // Create a more descriptive label
+    let label;
+    if (currentWeekStart.getMonth() === weekEnd.getMonth()) {
+      // Same month
+      label = `${currentWeekStart.getDate()}-${weekEnd.getDate()} ${startMonth}`;
+    } else {
+      // Crosses months
+      label = `${currentWeekStart.getDate()} ${startMonth} - ${weekEnd.getDate()} ${endMonth}`;
+    }
+
+    weeks.push({
+      start: new Date(currentWeekStart),
+      end: new Date(weekEnd),
+      label: label,
+      value: currentWeekStart.toISOString().split("T")[0], // Use start date as value
+    });
+
+    // Move to next week
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  }
+
+  return weeks;
+};
+
+/**
+ * Fetch schedule data for a specific week
+ * @param date - Any date within the week to fetch
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with schedule events for the week
+ */
+export const fetchWeekSchedule = async (
+  date: Date,
+  tenantId?: string,
+  token?: string
+): Promise<ScheduleEvent[]> => {
+  const weekStart = getWeekStart(date);
+  const weekEnd = getWeekEnd(date);
+
+  return fetchScheduleData({
+    startDate: weekStart,
+    endDate: weekEnd,
+    tenantId,
+    token,
+  });
+};

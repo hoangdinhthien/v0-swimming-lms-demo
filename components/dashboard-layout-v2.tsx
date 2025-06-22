@@ -175,9 +175,9 @@ export default function DashboardLayout({
         icon: <CreditCard className='h-4 w-4 mr-2' />,
       },
       {
-        name: "Thống Kê",
-        href: "/dashboard/manager/analytics",
-        icon: <BarChart3 className='h-4 w-4 mr-2' />,
+        name: "Lịch",
+        href: "/dashboard/manager/calendar",
+        icon: <Calendar className='h-4 w-4 mr-2' />,
       },
       {
         name: "Khuyến Mãi",

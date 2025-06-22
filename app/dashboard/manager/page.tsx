@@ -230,11 +230,11 @@ function ManagerDashboardPage() {
             </Button>
           </Link>
         </div>
-      </div>
+      </div>{" "}
       <Tabs defaultValue='overview'>
         <TabsList className='grid w-full grid-cols-3 md:w-auto'>
           <TabsTrigger value='overview'>Tổng Quan</TabsTrigger>
-          <TabsTrigger value='analytics'>Phân Tích</TabsTrigger>
+          <TabsTrigger value='calendar'>Lịch</TabsTrigger>
           <TabsTrigger value='reports'>Báo Cáo</TabsTrigger>
         </TabsList>
         <TabsContent value='overview'>
@@ -550,26 +550,26 @@ function ManagerDashboardPage() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-        <TabsContent value='analytics'>
+        </TabsContent>{" "}
+        <TabsContent value='calendar'>
           <Card>
             <CardHeader>
-              <CardTitle>Phân Tích Doanh Thu</CardTitle>
+              <CardTitle>Lịch Học và Sự Kiện</CardTitle>
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
                 <div className='h-[300px] flex items-center justify-center border-2 border-dashed'>
                   <div className='text-center'>
-                    <BarChart2 className='mx-auto h-12 w-12 text-muted-foreground' />
+                    <Calendar className='mx-auto h-12 w-12 text-muted-foreground' />
                     <h3 className='mt-2 text-xl font-semibold'>
-                      Biểu Đồ Phân Tích
+                      Lịch Trình Học Tập
                     </h3>
                     <p className='mt-1 text-sm text-muted-foreground'>
-                      Trực quan hóa dữ liệu doanh thu và đăng ký
+                      Xem và quản lý lịch trình các khóa học và sự kiện
                     </p>
-                    <Link href='/dashboard/manager/analytics'>
+                    <Link href='/dashboard/manager/calendar'>
                       <Button className='mt-4'>
-                        Đến Trang Phân Tích
+                        Đến Trang Lịch
                         <ArrowRight className='ml-2 h-4 w-4' />
                       </Button>
                     </Link>

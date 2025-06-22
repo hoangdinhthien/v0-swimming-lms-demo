@@ -22,6 +22,8 @@ import Link from "next/link";
 import { fetchCourseById, fetchCourses } from "@/api/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
 
+import ManagerNotFound from "@/components/manager/not-found";
+
 interface CourseDetailPageProps {
   params: Promise<{ id: string }>;
 }
@@ -77,7 +79,17 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           }
         }
       } catch (e: any) {
-        setError(e.message || "Lỗi không xác định");
+        console.error("[DEBUG] Error fetching course detail:", e);
+        // Check if it's a 404 error (course not found)
+        if (
+          e.message?.includes("404") ||
+          e.message?.includes("không tìm thấy") ||
+          e.message?.includes("not found")
+        ) {
+          setError("404");
+        } else {
+          setError(e.message || "Lỗi không xác định");
+        }
         setCourse(null);
       }
       setLoading(false);
@@ -112,6 +124,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       </div>
     );
   }
+  if (error === "404" || !course) {
+    return <ManagerNotFound />;
+  }
+
   if (error) {
     return (
       <div className='min-h-screen flex items-center justify-center bg-background'>
@@ -124,32 +140,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               Có lỗi xảy ra
             </h3>
             <p className='text-destructive mb-4'>{error}</p>
-            <Link
-              href='/dashboard/manager/courses'
-              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors'
-            >
-              <ArrowLeft className='mr-2 h-4 w-4' />
-              Quay về danh sách
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  if (!course) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-background'>
-        <Card className='max-w-md mx-auto shadow-lg'>
-          <CardContent className='p-8 text-center'>
-            <div className='w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4'>
-              <BookOpen className='h-8 w-8 text-muted-foreground' />
-            </div>
-            <h3 className='text-lg font-semibold text-foreground mb-2'>
-              Không tìm thấy khoá học
-            </h3>
-            <p className='text-muted-foreground mb-4'>
-              Khoá học bạn tìm kiếm không tồn tại hoặc đã bị xoá.
-            </p>
             <Link
               href='/dashboard/manager/courses'
               className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors'

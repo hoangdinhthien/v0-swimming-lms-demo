@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import ManagerNotFound from "@/components/manager/not-found";
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -196,13 +197,13 @@ export default function StudentDetailPage() {
     }
     if (studentId) fetchDetail();
   }, [studentId]);
-
-  // Effect to fetch tenant name when detail data is available
+  // Effect to fetch tenant name when component loads
   useEffect(() => {
-    if (detail?.tenant_id) {
-      fetchTenantName(detail.tenant_id);
+    const currentTenantId = getSelectedTenant();
+    if (currentTenantId) {
+      fetchTenantName(currentTenantId);
     }
-  }, [detail?.tenant_id]);
+  }, []); // Run once when component mounts
 
   // Populate form data when student detail is loaded
   useEffect(() => {
@@ -474,7 +475,18 @@ export default function StudentDetailPage() {
         }
       }
     } catch (e: any) {
-      setError(e.message || "Lỗi khi lấy thông tin học viên");
+      console.error("Error fetching student detail:", e);
+
+      // Check if it's a 404 error (student not found)
+      if (
+        e.message?.includes("404") ||
+        e.message?.includes("không tìm thấy") ||
+        e.message?.includes("not found")
+      ) {
+        setError("NOT_FOUND");
+      } else {
+        setError(e.message || "Lỗi khi lấy thông tin học viên");
+      }
     }
     setLoading(false);
   };
@@ -487,13 +499,30 @@ export default function StudentDetailPage() {
       </div>
     );
   }
-
-  if (error) {
-    return <div className='text-red-500 p-8'>{error}</div>;
+  if (error === "NOT_FOUND" || !detail) {
+    return <ManagerNotFound />;
   }
 
-  if (!detail) {
-    return <div className='p-8'>Không tìm thấy học viên.</div>;
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-lg font-medium text-foreground mb-2'>
+            Có lỗi xảy ra
+          </div>
+          <div className='text-sm text-muted-foreground mb-4'>{error}</div>
+          <Button
+            asChild
+            variant='outline'
+          >
+            <Link href='/dashboard/manager/students'>
+              <ArrowLeft className='mr-2 h-4 w-4' />
+              Quay về danh sách học viên
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -868,6 +897,7 @@ export default function StudentDetailPage() {
               </div>
 
               <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
+                {" "}
                 <h3 className='text-md font-semibold text-blue-800 dark:text-blue-300 mb-4 border-b pb-2'>
                   Thông tin học tập
                 </h3>
@@ -882,7 +912,6 @@ export default function StudentDetailPage() {
                     </p>
                   </div>
                 </div>
-
                 <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
                   <Building className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
@@ -899,9 +928,8 @@ export default function StudentDetailPage() {
                         tenantName || "Chi nhánh không xác định"
                       )}
                     </p>
-                  </div>
+                  </div>{" "}
                 </div>
-
                 <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
                   <CreditCard className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>

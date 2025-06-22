@@ -2,15 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, ArrowLeft, Home, LogIn } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Home, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function NotFound() {
+export default function ManagerNotFound() {
   const router = useRouter();
 
   return (
-    <div className='min-h-screen bg-background flex items-center justify-center p-4'>
+    <div className='flex items-center justify-center min-h-[60vh] p-6'>
       <Card className='w-full max-w-md text-center border-0 shadow-lg'>
         <CardContent className='pt-8 pb-8'>
           {/* Error Icon */}
@@ -32,7 +32,7 @@ export default function NotFound() {
             </h1>
             <p className='text-muted-foreground leading-relaxed'>
               Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển. Vui
-              lòng kiểm tra lại đường dẫn.
+              lòng kiểm tra lại đường dẫn hoặc quay về trang chính.
             </p>
           </div>
 
@@ -53,7 +53,7 @@ export default function NotFound() {
                 variant='outline'
                 className='flex-1'
               >
-                <Link href='/'>
+                <Link href='/dashboard/manager'>
                   <Home className='w-4 h-4 mr-2' />
                   Trang chủ
                 </Link>
@@ -64,19 +64,48 @@ export default function NotFound() {
                 variant='outline'
                 className='flex-1'
               >
-                <Link href='/login'>
-                  <LogIn className='w-4 h-4 mr-2' />
-                  Đăng nhập
+                <Link href='/dashboard/manager/students'>
+                  <Search className='w-4 h-4 mr-2' />
+                  Tìm kiếm
                 </Link>
               </Button>
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Helpful Links */}
           <div className='mt-8 pt-6 border-t'>
-            <p className='text-xs text-muted-foreground'>
-              Nếu bạn nghĩ đây là lỗi, vui lòng liên hệ với quản trị viên.
+            <p className='text-sm text-muted-foreground mb-3'>
+              Bạn có thể truy cập:
             </p>
+            <div className='flex flex-wrap gap-2 justify-center text-sm'>
+              <Link
+                href='/dashboard/manager/students'
+                className='text-primary hover:underline'
+              >
+                Học viên
+              </Link>
+              <span className='text-muted-foreground'>•</span>
+              <Link
+                href='/dashboard/manager/instructors'
+                className='text-primary hover:underline'
+              >
+                Giáo viên
+              </Link>
+              <span className='text-muted-foreground'>•</span>
+              <Link
+                href='/dashboard/manager/courses'
+                className='text-primary hover:underline'
+              >
+                Khóa học
+              </Link>
+              <span className='text-muted-foreground'>•</span>
+              <Link
+                href='/dashboard/manager/calendar'
+                className='text-primary hover:underline'
+              >
+                Lịch
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>

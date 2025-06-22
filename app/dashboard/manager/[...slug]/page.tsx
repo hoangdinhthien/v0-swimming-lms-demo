@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import DashboardLayout from "@/components/dashboard-layout-v2";
 
 // Import all your existing manager components
 import StudentsPage from "../students/page";
@@ -15,12 +14,13 @@ import MessagesPage from "../messages/page";
 import ApplicationsPage from "../applications/page";
 import ApplicationDetailPage from "../applications/[id]/page";
 import TransactionsPage from "../transactions/page";
-import AnalyticsPage from "../analytics/page";
+import CalendarPage from "../calendar/page";
 import PromotionsPage from "../promotions/page";
 import SettingsPage from "../settings/page";
 import NotificationsPage from "../notifications/page";
 import NotificationDetailPage from "../notifications/[id]/page";
 import ReportsPage from "../reports/page";
+import ManagerNotFound from "@/components/manager/not-found";
 
 // Import the main manager dashboard
 import ManagerDashboard from "../page";
@@ -60,7 +60,30 @@ export default function ManagerCatchAllPage() {
       return;
     }
 
-    const [section, id, subsection] = slug; // Route mapping
+    const [section, id, subsection] = slug;
+
+    // Define valid routes
+    const validRoutes = [
+      "students",
+      "instructors",
+      "courses",
+      "messages",
+      "applications",
+      "transactions",
+      "calendar",
+      "promotions",
+      "settings",
+      "notifications",
+      "reports",
+    ];
+
+    // Check if the section is valid
+    if (!validRoutes.includes(section)) {
+      setComponent(() => ManagerNotFound);
+      return;
+    }
+
+    // Route mapping
     switch (section) {
       case "students":
         if (id && !subsection) {
@@ -102,8 +125,8 @@ export default function ManagerCatchAllPage() {
         setComponent(() => TransactionsPage);
         break;
 
-      case "analytics":
-        setComponent(() => AnalyticsPage);
+      case "calendar":
+        setComponent(() => CalendarPage);
         break;
 
       case "promotions":
@@ -127,18 +150,14 @@ export default function ManagerCatchAllPage() {
         break;
 
       default:
-        setComponent(() => ManagerDashboard);
+        // This should never be reached due to the validRoutes check above
+        setComponent(() => ManagerNotFound);
         break;
     }
   }, [params]);
-
   if (!Component) {
     return <div>Loading...</div>;
   }
 
-  return (
-    <DashboardLayout userRole='manager'>
-      <Component />
-    </DashboardLayout>
-  );
+  return <Component />;
 }

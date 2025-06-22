@@ -66,6 +66,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import ManagerNotFound from "@/components/manager/not-found";
 
 const instructorFormSchema = z.object({
   username: z.string().min(1, { message: "Tên đăng nhập là bắt buộc" }),
@@ -93,7 +94,6 @@ export default function InstructorDetailPage() {
   // New state to track avatar upload for form submission
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-
   const form = useForm<z.infer<typeof instructorFormSchema>>({
     resolver: zodResolver(instructorFormSchema),
     defaultValues: {
@@ -102,7 +102,7 @@ export default function InstructorDetailPage() {
       phone: "",
       birthday: "",
       address: "",
-      is_active: true,
+      is_active: true, // Default to true for new instructors
       avatar: undefined,
     },
   });
@@ -192,31 +192,39 @@ export default function InstructorDetailPage() {
               console.error("Error fetching media details:", error);
             }
           }
-        }
-
-        // Set form default values
+        } // Set form default values
         form.reset({
           username: detailData.user?.username || "",
           email: detailData.user?.email || "",
           phone: detailData.user?.phone || "",
           birthday: detailData.user?.birthday || "",
           address: detailData.user?.address || "",
-          is_active: detailData.user?.is_active || true,
+          is_active: detailData.user?.is_active ?? true, // Use nullish coalescing to preserve false values
         });
       } catch (e: any) {
-        setError(e.message || "Lỗi khi lấy thông tin giáo viên");
+        console.error("[DEBUG] Error fetching instructor detail:", e);
+        // Check if it's a 404 error (instructor not found)
+        if (
+          e.message?.includes("404") ||
+          e.message?.includes("không tìm thấy") ||
+          e.message?.includes("not found")
+        ) {
+          setError("404");
+        } else {
+          setError(e.message || "Lỗi khi lấy thông tin giáo viên");
+        }
       }
       setLoading(false);
     }
     if (instructorId) fetchDetail();
   }, [instructorId]);
-
-  // Effect to fetch tenant name when detail data is available
+  // Effect to fetch tenant name when component loads
   useEffect(() => {
-    if (detail?.tenant_id) {
-      fetchTenantName(detail.tenant_id);
+    const currentTenantId = getSelectedTenant();
+    if (currentTenantId) {
+      fetchTenantName(currentTenantId);
     }
-  }, [detail?.tenant_id]);
+  }, []); // Run once when component mounts
 
   const onSubmit = async (data: z.infer<typeof instructorFormSchema>) => {
     const tenantId = getSelectedTenant();
@@ -329,16 +337,14 @@ export default function InstructorDetailPage() {
               console.error("Error fetching media details:", error);
             }
           }
-        }
-
-        // Reset form with new values
+        } // Reset form with new values
         form.reset({
           username: detailData.user?.username || "",
           email: detailData.user?.email || "",
           phone: detailData.user?.phone || "",
           birthday: detailData.user?.birthday || "",
           address: detailData.user?.address || "",
-          is_active: detailData.user?.is_active || true,
+          is_active: detailData.user?.is_active ?? true, // Use nullish coalescing to preserve false values
         });
 
         // Clear the uploaded avatar ID after successful update
@@ -440,13 +446,12 @@ export default function InstructorDetailPage() {
       </div>
     );
   }
+  if (error === "404" || !detail) {
+    return <ManagerNotFound />;
+  }
 
   if (error) {
     return <div className='text-red-500 p-8'>{error}</div>;
-  }
-
-  if (!detail) {
-    return <div className='p-8'>Không tìm thấy giáo viên.</div>;
   }
   return (
     <div className='container mx-auto py-8 px-4'>
@@ -727,7 +732,6 @@ export default function InstructorDetailPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name='email'
@@ -744,7 +748,6 @@ export default function InstructorDetailPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name='phone'
@@ -761,7 +764,6 @@ export default function InstructorDetailPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name='birthday'
@@ -779,7 +781,6 @@ export default function InstructorDetailPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name='address'
@@ -795,26 +796,32 @@ export default function InstructorDetailPage() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
-
+                />{" "}
                 <FormField
                   control={form.control}
                   name='is_active'
                   render={({ field }) => (
-                    <FormItem className='flex items-center gap-2'>
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base font-medium'>
+                          Trạng thái hoạt động
+                        </FormLabel>
+                        <FormDescription>
+                          {field.value
+                            ? "Giáo viên đang ở trạng thái hoạt động và có thể được phân công lớp học"
+                            : "Giáo viên đang ở trạng thái ngừng hoạt động và không thể được phân công lớp học mới"}
+                        </FormDescription>
+                      </div>
                       <FormControl>
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          aria-label='Toggle instructor active status'
                         />
                       </FormControl>
-                      <FormLabel className='font-normal'>
-                        {field.value ? "Đang hoạt động" : "Ngừng hoạt động"}
-                      </FormLabel>
                     </FormItem>
                   )}
                 />
-
                 {/* Avatar Upload Field */}
                 <FormField
                   control={form.control}

@@ -140,7 +140,8 @@ export default function ApplicationDetailPage() {
         icon: AlertCircle,
       };
     }
-  };  const statusStyle = getStatusStyle(application.status);
+  };
+  const statusStyle = getStatusStyle(application.status);
   const StatusIcon = statusStyle.icon;
   return (
     <div className='space-y-6 p-4 md:p-6 max-w-7xl mx-auto w-full animate-in fade-in duration-500'>
@@ -163,7 +164,9 @@ export default function ApplicationDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className='space-y-6'>        {/* Header Card */}
+      <div className='space-y-6'>
+        {" "}
+        {/* Header Card */}
         <Card className='border-0 shadow-xl bg-gradient-to-br from-background via-background to-muted/40 backdrop-blur-sm'>
           <CardHeader className='pb-6'>
             <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0'>
@@ -197,7 +200,8 @@ export default function ApplicationDetailPage() {
                             month: "long",
                             day: "numeric",
                           }
-                        )                      : "-"}
+                        )
+                      : "-"}
                   </span>
                 </div>
                 <div className='flex items-center space-x-2 justify-end'>
@@ -220,11 +224,12 @@ export default function ApplicationDetailPage() {
             </div>
           </CardHeader>
         </Card>
-
         {/* Two Column Layout */}
         <div className='grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 gap-6'>
           {/* Main Content */}
-          <div className='xl:col-span-3 lg:col-span-2 space-y-6'>            {/* Application Content */}
+          <div className='xl:col-span-3 lg:col-span-2 space-y-6'>
+            {" "}
+            {/* Application Content */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
               <CardHeader className='pb-3'>
                 <CardTitle className='flex items-center space-x-2 text-lg'>
@@ -242,7 +247,6 @@ export default function ApplicationDetailPage() {
                 </div>
               </CardContent>
             </Card>
-
             {/* Reply Section */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
               <CardHeader className='pb-3'>
@@ -253,7 +257,9 @@ export default function ApplicationDetailPage() {
                   <span>Phản hồi</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>                {application.reply_content ? (
+              <CardContent>
+                {" "}
+                {application.reply_content ? (
                   <div className='prose prose-sm max-w-none dark:prose-invert'>
                     <div className='whitespace-pre-wrap text-foreground leading-relaxed p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-xl border border-blue-200 dark:border-blue-800 text-base shadow-inner'>
                       {application.reply_content}
@@ -276,7 +282,8 @@ export default function ApplicationDetailPage() {
                 )}
               </CardContent>
             </Card>
-          </div>          {/* Sidebar */}
+          </div>{" "}
+          {/* Sidebar */}
           <div className='space-y-6'>
             {/* Applicant Information */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
@@ -302,8 +309,8 @@ export default function ApplicationDetailPage() {
                     </div>
                   </div>
                 </div>
-
-                <Separator />                <div className='space-y-4'>
+                <Separator />{" "}
+                <div className='space-y-4'>
                   <div className='flex items-center space-x-3 text-sm'>
                     <div className='h-8 w-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center'>
                       <Mail className='h-4 w-4 text-blue-600 dark:text-blue-400' />
@@ -312,7 +319,6 @@ export default function ApplicationDetailPage() {
                       {application.created_by?.email || "Không có email"}
                     </span>
                   </div>
-
                   {application.created_by?.phone && (
                     <div className='flex items-center space-x-3 text-sm'>
                       <div className='h-8 w-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center'>
@@ -322,7 +328,8 @@ export default function ApplicationDetailPage() {
                         {application.created_by.phone}
                       </span>
                     </div>
-                  )}                  {application.created_by?.role_front && (
+                  )}{" "}
+                  {application.created_by?.role_front && (
                     <div className='flex items-start space-x-3 text-sm'>
                       <div className='h-8 w-8 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mt-0.5'>
                         <Badge className='h-4 w-4 text-purple-600 dark:text-purple-400' />
@@ -344,7 +351,8 @@ export default function ApplicationDetailPage() {
                   )}
                 </div>
               </CardContent>
-            </Card>            {/* Application Metadata */}
+            </Card>{" "}
+            {/* Application Metadata */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
               <CardHeader className='pb-3'>
                 <CardTitle className='flex items-center space-x-2 text-lg'>
@@ -354,7 +362,8 @@ export default function ApplicationDetailPage() {
                   <span>Chi tiết đơn từ</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-4'><div className='flex justify-between items-center py-3 px-2'>
+              <CardContent className='space-y-4'>
+                <div className='flex justify-between items-center py-3 px-2'>
                   <span className='text-sm font-medium text-muted-foreground'>
                     ID đơn từ:
                   </span>
