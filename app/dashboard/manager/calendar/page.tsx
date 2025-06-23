@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -26,19 +27,46 @@ import {
 import {
   fetchMonthSchedule,
   fetchWeekSchedule,
+  fetchDateRangeSchedule,
   getWeeksInYear,
   type ScheduleEvent,
+  convertApiDayToJsDay,
+  convertJsDayToApiDay,
 } from "@/api/schedule-api";
 
 export default function CalendarPage() {
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week">("week");
   const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [availableWeeks, setAvailableWeeks] = useState<any[]>([]);
+
+  // Initialize with current week on component mount
+  useEffect(() => {
+    const today = new Date();
+    const weeks = getWeeksInYear(today);
+    setAvailableWeeks(weeks);
+
+    // Find and set the current week that contains today
+    const currentWeek = weeks.find((week) => {
+      if (week.start && week.end) {
+        return today >= week.start && today <= week.end;
+      }
+      return false;
+    });
+
+    if (currentWeek) {
+      setSelectedWeek(currentWeek.value);
+    } else if (weeks.length > 0) {
+      // Fallback to first week if no matching week found
+      setSelectedWeek(weeks[0].value);
+    }
+  }, []); // Run only on component mount
+
   // Effect to fetch data when component mounts or current date changes
   useEffect(() => {
     const loadScheduleData = async () => {
@@ -55,12 +83,19 @@ export default function CalendarPage() {
               selectedWeek,
               weekStart: weekObj.start,
               weekEnd: weekObj.end,
+              weekStartFormatted: weekObj.start.toISOString().split("T")[0],
+              weekEndFormatted: weekObj.end.toISOString().split("T")[0],
               weekDates: getCurrentWeekDates().map(
                 (d) => d.toISOString().split("T")[0]
               ),
             });
-            events = await fetchWeekSchedule(new Date(weekObj.start));
+            events = await fetchDateRangeSchedule(weekObj.start, weekObj.end);
           } else {
+            console.log("⚠️ Week object not found or missing start/end:", {
+              selectedWeek,
+              weekObj,
+              availableWeeksCount: availableWeeks.length,
+            });
             events = [];
           }
         } else {
@@ -104,15 +139,27 @@ export default function CalendarPage() {
         start: w.start?.toLocaleDateString("vi-VN"),
         end: w.end?.toLocaleDateString("vi-VN"),
       }))
-    );
-
-    // Set the first week as default if no week is selected or if the current selected week is not in the new year
+    ); // Set the current week as default if no week is selected or if the current selected week is not in the new year
     if (
       weeks.length > 0 &&
       (!selectedWeek || !weeks.find((w) => w.value === selectedWeek))
     ) {
-      console.log("🎯 Setting default week:", weeks[0].value);
-      setSelectedWeek(weeks[0].value);
+      // Try to find the current week that contains today
+      const today = new Date();
+      const currentWeek = weeks.find((week) => {
+        if (week.start && week.end) {
+          return today >= week.start && today <= week.end;
+        }
+        return false;
+      });
+
+      if (currentWeek) {
+        console.log("🎯 Setting current week:", currentWeek.value);
+        setSelectedWeek(currentWeek.value);
+      } else {
+        console.log("🎯 Setting default week (first):", weeks[0].value);
+        setSelectedWeek(weeks[0].value);
+      }
     }
   }, [currentDate, selectedWeek]);
   // Calendar utility functions
@@ -129,7 +176,9 @@ export default function CalendarPage() {
       month: "long",
       year: "numeric",
     });
-  }; // Debug function for week selection
+  };
+
+  // Debug function for week selection
   const handleWeekChange = (weekValue: string) => {
     console.log("📝 Week selection changed:", {
       previousWeek: selectedWeek,
@@ -137,6 +186,28 @@ export default function CalendarPage() {
       selectedWeekObject: availableWeeks.find((w) => w.value === weekValue),
     });
     setSelectedWeek(weekValue);
+  };
+
+  // Handle view mode change
+  const handleViewModeChange = (mode: "month" | "week") => {
+    setViewMode(mode);
+
+    // If switching to week view and no week is selected, set current week
+    if (mode === "week" && !selectedWeek && availableWeeks.length > 0) {
+      const today = new Date();
+      const currentWeek = availableWeeks.find((week) => {
+        if (week.start && week.end) {
+          return today >= week.start && today <= week.end;
+        }
+        return false;
+      });
+
+      if (currentWeek) {
+        setSelectedWeek(currentWeek.value);
+      } else {
+        setSelectedWeek(availableWeeks[0].value);
+      }
+    }
   };
 
   // Get current week dates for weekly view
@@ -153,158 +224,191 @@ export default function CalendarPage() {
         weekDates.push(new Date(current));
         current.setDate(current.getDate() + 1);
       }
+
+      // Debug log to see the week dates and their day_of_week values
+      console.log(
+        "[DEBUG] Week dates generated:",
+        weekDates.map((d) => ({
+          date: d.toISOString().split("T")[0],
+          dayOfWeek: d.getDay(), // 0=Sunday, 1=Monday, etc.
+          displayName: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][d.getDay()],
+        }))
+      );
+
+      console.log("[DEBUG] Selected week object:", weekObj);
+      console.log(
+        "[DEBUG] Available schedule events:",
+        scheduleEvents.map((e) => ({
+          date: e.date.split("T")[0],
+          day_of_week: e.day_of_week,
+          classroom: e.classroom[0]?.name,
+          slot: e.slot[0]?.title,
+        }))
+      );
+
       return weekDates;
     }
     return [];
-  };
-  // Get all unique slots from schedule events, or return default slots if no data
+  }; // Get all unique slots from schedule events, or return default slots if no data
   const getAllSlots = () => {
-    const slotsMap = new Map();
+    // Define all 11 default slots that should always be displayed
+    const defaultSlots = [
+      {
+        _id: "slot1",
+        title: "Slot 1",
+        start_time: 7,
+        start_minute: 0,
+        end_time: 7,
+        end_minute: 45,
+        sortOrder: 420,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot2",
+        title: "Slot 2",
+        start_time: 8,
+        start_minute: 0,
+        end_time: 8,
+        end_minute: 45,
+        sortOrder: 480,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot3",
+        title: "Slot 3",
+        start_time: 9,
+        start_minute: 0,
+        end_time: 9,
+        end_minute: 45,
+        sortOrder: 540,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot4",
+        title: "Slot 4",
+        start_time: 10,
+        start_minute: 0,
+        end_time: 10,
+        end_minute: 45,
+        sortOrder: 600,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot5",
+        title: "Slot 5",
+        start_time: 11,
+        start_minute: 0,
+        end_time: 11,
+        end_minute: 45,
+        sortOrder: 660,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot6",
+        title: "Slot 6",
+        start_time: 13,
+        start_minute: 0,
+        end_time: 13,
+        end_minute: 45,
+        sortOrder: 780,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot7",
+        title: "Slot 7",
+        start_time: 14,
+        start_minute: 0,
+        end_time: 14,
+        end_minute: 45,
+        sortOrder: 840,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot8",
+        title: "Slot 8",
+        start_time: 15,
+        start_minute: 0,
+        end_time: 15,
+        end_minute: 45,
+        sortOrder: 900,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot9",
+        title: "Slot 9",
+        start_time: 16,
+        start_minute: 0,
+        end_time: 16,
+        end_minute: 45,
+        sortOrder: 960,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot10",
+        title: "Slot 10",
+        start_time: 17,
+        start_minute: 0,
+        end_time: 17,
+        end_minute: 45,
+        sortOrder: 1020,
+        duration: "45 phút",
+      },
+      {
+        _id: "slot11",
+        title: "Slot 11",
+        start_time: 18,
+        start_minute: 0,
+        end_time: 18,
+        end_minute: 45,
+        sortOrder: 1080,
+        duration: "45 phút",
+      },
+    ];
 
+    // Create a map of actual slots from schedule events
+    const actualSlotsMap = new Map();
     scheduleEvents.forEach((event) => {
       event.slot.forEach((slot) => {
-        if (!slotsMap.has(slot._id)) {
-          slotsMap.set(slot._id, {
+        if (!actualSlotsMap.has(slot._id)) {
+          actualSlotsMap.set(slot._id, {
             ...slot,
             sortOrder: slot.start_time * 60 + slot.start_minute, // For sorting by time
           });
         }
       });
-    });
-
-    // Convert to array and sort by time, limit to 11 slots
-    const actualSlots = Array.from(slotsMap.values())
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .slice(0, 11);
-
-    // If no actual slots found, return default slots to always show the grid
-    if (actualSlots.length === 0) {
-      return [
-        {
-          _id: "slot1",
-          title: "Slot 1",
-          start_time: 7,
-          start_minute: 0,
-          end_time: 7,
-          end_minute: 45,
-          sortOrder: 420,
-        },
-        {
-          _id: "slot2",
-          title: "Slot 2",
-          start_time: 8,
-          start_minute: 0,
-          end_time: 8,
-          end_minute: 45,
-          sortOrder: 480,
-        },
-        {
-          _id: "slot3",
-          title: "Slot 3",
-          start_time: 9,
-          start_minute: 0,
-          end_time: 9,
-          end_minute: 45,
-          sortOrder: 540,
-        },
-        {
-          _id: "slot4",
-          title: "Slot 4",
-          start_time: 10,
-          start_minute: 0,
-          end_time: 10,
-          end_minute: 45,
-          sortOrder: 600,
-        },
-        {
-          _id: "slot5",
-          title: "Slot 5",
-          start_time: 11,
-          start_minute: 0,
-          end_time: 11,
-          end_minute: 45,
-          sortOrder: 660,
-        },
-        {
-          _id: "slot6",
-          title: "Slot 6",
-          start_time: 13,
-          start_minute: 0,
-          end_time: 13,
-          end_minute: 45,
-          sortOrder: 780,
-        },
-        {
-          _id: "slot7",
-          title: "Slot 7",
-          start_time: 14,
-          start_minute: 0,
-          end_time: 14,
-          end_minute: 45,
-          sortOrder: 840,
-        },
-        {
-          _id: "slot8",
-          title: "Slot 8",
-          start_time: 15,
-          start_minute: 0,
-          end_time: 15,
-          end_minute: 45,
-          sortOrder: 900,
-        },
-        {
-          _id: "slot9",
-          title: "Slot 9",
-          start_time: 16,
-          start_minute: 0,
-          end_time: 16,
-          end_minute: 45,
-          sortOrder: 960,
-        },
-        {
-          _id: "slot10",
-          title: "Slot 10",
-          start_time: 17,
-          start_minute: 0,
-          end_time: 17,
-          end_minute: 45,
-          sortOrder: 1020,
-        },
-        {
-          _id: "slot11",
-          title: "Slot 11",
-          start_time: 18,
-          start_minute: 0,
-          end_time: 18,
-          end_minute: 45,
-          sortOrder: 1080,
-        },
-      ];
-    }
-
-    return actualSlots;
-  };
-  // Get events for a specific date and slot
+    }); // Just return the default slots - since we always want to show all 11 slots
+    // The actual slot data from API will be used when rendering events, not for defining the grid
+    return defaultSlots.sort((a, b) => a.sortOrder - b.sortOrder);
+  }; // Get events for a specific date and slot
   const getEventsForDateAndSlot = (date: Date, slotId: string) => {
     // Compare only the date part (YYYY-MM-DD) to avoid timezone issues
     const targetDateStr = date.toISOString().split("T")[0];
     const filtered = scheduleEvents.filter((event) => {
       const eventDateStr = event.date.split("T")[0];
-      return (
-        eventDateStr === targetDateStr &&
-        event.slot.some((slot) => slot._id === slotId)
-      );
+      const hasMatchingSlot = event.slot.some((slot) => slot._id === slotId);
+
+      // Debug log for checking event matching
+      console.log("[DEBUG] Checking event:", {
+        eventDate: eventDateStr,
+        targetDate: targetDateStr,
+        dateMatch: eventDateStr === targetDateStr,
+        eventSlotIds: event.slot.map((s) => s._id),
+        targetSlotId: slotId,
+        slotMatch: hasMatchingSlot,
+        finalMatch: eventDateStr === targetDateStr && hasMatchingSlot,
+      });
+
+      return eventDateStr === targetDateStr && hasMatchingSlot;
     });
-    // Debug log for checking event matching
-    if (filtered.length > 0) {
-      console.log(
-        "[DEBUG] Events for date:",
-        targetDateStr,
-        "slot:",
-        slotId,
-        filtered
-      );
-    }
+
+    console.log(
+      "[DEBUG] Final filtered events for",
+      targetDateStr,
+      "slot",
+      slotId,
+      ":",
+      filtered.length
+    );
     return filtered;
   };
 
@@ -331,6 +435,54 @@ export default function CalendarPage() {
       return newDate;
     });
     // Data will be refetched automatically due to the useEffect dependency on currentDate
+  };
+
+  // Week navigation function
+  const navigateWeek = (direction: "prev" | "next") => {
+    if (!selectedWeek || availableWeeks.length === 0) return;
+
+    const currentWeekIndex = availableWeeks.findIndex(
+      (w) => w.value === selectedWeek
+    );
+    if (currentWeekIndex === -1) return;
+
+    let newWeekIndex;
+    if (direction === "prev") {
+      newWeekIndex = currentWeekIndex - 1;
+    } else {
+      newWeekIndex = currentWeekIndex + 1;
+    }
+
+    // Check if we need to navigate to a different year
+    if (newWeekIndex < 0) {
+      // Go to previous year, last week
+      const prevYear = new Date(currentDate.getFullYear() - 1, 0, 1);
+      const prevYearWeeks = getWeeksInYear(prevYear);
+      if (prevYearWeeks.length > 0) {
+        setCurrentDate(prevYear);
+        setSelectedWeek(prevYearWeeks[prevYearWeeks.length - 1].value);
+      }
+    } else if (newWeekIndex >= availableWeeks.length) {
+      // Go to next year, first week
+      const nextYear = new Date(currentDate.getFullYear() + 1, 0, 1);
+      const nextYearWeeks = getWeeksInYear(nextYear);
+      if (nextYearWeeks.length > 0) {
+        setCurrentDate(nextYear);
+        setSelectedWeek(nextYearWeeks[0].value);
+      }
+    } else {
+      // Stay in same year, just change week
+      setSelectedWeek(availableWeeks[newWeekIndex].value);
+    }
+  };
+
+  // Combined navigation function that works for both month and week views
+  const navigate = (direction: "prev" | "next") => {
+    if (viewMode === "week") {
+      navigateWeek(direction);
+    } else {
+      navigateMonth(direction);
+    }
   };
 
   const isToday = (date: Date) => {
@@ -480,13 +632,45 @@ export default function CalendarPage() {
     }
 
     return days;
-  };
-  // Render weekly slot-based calendar view
+  }; // Render weekly slot-based calendar view - FINAL: match by date only, weekDates = [start, ..., end]
   const renderWeeklySlotView = () => {
-    const weekDates = getCurrentWeekDates();
-    const slots = getAllSlots();
+    if (!selectedWeek || availableWeeks.length === 0) return null;
 
-    if (weekDates.length === 0) return null;
+    // Find the selected week object to get correct start/end dates
+    const weekObj = availableWeeks.find((w) => w.value === selectedWeek);
+    if (!weekObj || !weekObj.start || !weekObj.end) return null;
+
+    // Generate the 7 days of the week (from start to end, inclusive)
+    const weekDates: Date[] = [];
+    let d = new Date(weekObj.start);
+    while (d <= weekObj.end) {
+      weekDates.push(new Date(d));
+      d = new Date(d);
+      d.setDate(d.getDate() + 1);
+    }
+
+    // Get all unique slots from the schedule events
+    const slots = getAllSlots(); // Helper function: match events by date and slot time
+    const getEventsForCell = (date: Date, slotId: string) => {
+      const targetDateStr = date.toISOString().split("T")[0];
+
+      // Get the slot information from our default slots
+      const targetSlot = getAllSlots().find((s) => s._id === slotId);
+      if (!targetSlot) return [];
+
+      return scheduleEvents.filter((event) => {
+        const eventDateStr = event.date.split("T")[0];
+        // Match by time instead of ID since API slot IDs don't match our default IDs
+        const hasMatchingSlot = event.slot.some(
+          (slot) =>
+            slot.start_time === targetSlot.start_time &&
+            slot.start_minute === targetSlot.start_minute &&
+            slot.end_time === targetSlot.end_time &&
+            slot.end_minute === targetSlot.end_minute
+        );
+        return eventDateStr === targetDateStr && hasMatchingSlot;
+      });
+    };
 
     const dayNames = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]; // Monday to Sunday
 
@@ -497,7 +681,6 @@ export default function CalendarPage() {
           <thead>
             <tr>
               <th className='w-40 p-4 border-r bg-muted text-left font-bold text-muted-foreground'>
-                {" "}
                 <div className='flex items-center gap-2'>
                   <Clock className='h-4 w-4 text-muted-foreground' />
                   Khung Giờ
@@ -507,7 +690,6 @@ export default function CalendarPage() {
                 const isToday =
                   new Date().toDateString() === date.toDateString();
                 const isWeekend = index === 6; // Sunday
-
                 return (
                   <th
                     key={index}
@@ -526,7 +708,7 @@ export default function CalendarPage() {
                         }`}
                       >
                         {dayNames[index]}
-                      </span>{" "}
+                      </span>
                       <span
                         className={`text-xs ${
                           isToday
@@ -543,18 +725,16 @@ export default function CalendarPage() {
               })}
             </tr>
           </thead>
-
           {/* Slots Rows */}
           <tbody>
-            {slots.map((slot, slotIndex) => (
+            {slots.map((slot) => (
               <tr
                 key={slot._id}
                 className='hover:bg-muted/50 transition-colors duration-200'
               >
-                {/* Slot Info Column */}{" "}
+                {/* Slot Info Column */}
                 <td className='p-4 border-r border-b bg-muted/30'>
                   <div className='space-y-2'>
-                    {" "}
                     <div className='text-sm font-bold text-foreground'>
                       {slot.title}
                     </div>
@@ -566,11 +746,9 @@ export default function CalendarPage() {
                 </td>
                 {/* Days Columns */}
                 {weekDates.map((date, dayIndex) => {
-                  const eventsInSlot = getEventsForDateAndSlot(date, slot._id);
+                  const eventsInCell = getEventsForCell(date, slot._id);
                   const isToday =
                     new Date().toDateString() === date.toDateString();
-                  const isWeekend = dayIndex === 6;
-
                   return (
                     <td
                       key={dayIndex}
@@ -578,18 +756,23 @@ export default function CalendarPage() {
                         isToday ? "bg-muted/20" : "bg-background"
                       }`}
                     >
-                      {eventsInSlot.length > 0 ? (
+                      {eventsInCell.length > 0 ? (
                         <div className='space-y-2'>
-                          {eventsInSlot.map((event, eventIndex) => {
+                          {eventsInCell.map((event, eventIndex) => {
                             const classroom = event.classroom[0];
                             if (!classroom) return null;
-
                             return (
                               <div
                                 key={eventIndex}
                                 className='group cursor-pointer'
+                                onClick={() => {
+                                  // Navigate to class detail page
+                                  const classroomId = classroom._id;
+                                  if (classroomId) {
+                                    window.location.href = `/dashboard/manager/class/${classroomId}`;
+                                  }
+                                }}
                               >
-                                {" "}
                                 <div className='bg-primary/10 text-primary px-3 py-2 rounded-lg text-center border border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'>
                                   <div className='font-semibold text-sm'>
                                     {classroom.name}
@@ -612,7 +795,6 @@ export default function CalendarPage() {
                         </div>
                       ) : (
                         <div className='h-full flex items-center justify-center'>
-                          {" "}
                           <div className='text-center text-muted-foreground text-sm'>
                             <div className='w-8 h-8 mx-auto mb-1 rounded-full bg-muted flex items-center justify-center'>
                               <span className='text-xs'>—</span>
@@ -745,7 +927,7 @@ export default function CalendarPage() {
                 <Button
                   variant={viewMode === "month" ? "default" : "ghost"}
                   size='sm'
-                  onClick={() => setViewMode("month")}
+                  onClick={() => handleViewModeChange("month")}
                   className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
                     viewMode === "month"
                       ? "bg-background shadow-md text-foreground border"
@@ -754,11 +936,11 @@ export default function CalendarPage() {
                 >
                   <CalendarIcon className='mr-2 h-4 w-4' />
                   Tháng
-                </Button>
+                </Button>{" "}
                 <Button
                   variant={viewMode === "week" ? "default" : "ghost"}
                   size='sm'
-                  onClick={() => setViewMode("week")}
+                  onClick={() => handleViewModeChange("week")}
                   className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
                     viewMode === "week"
                       ? "bg-background shadow-md text-foreground border"
@@ -780,30 +962,60 @@ export default function CalendarPage() {
                   </svg>
                   Tuần
                 </Button>
-              </div>
-
+              </div>{" "}
               {/* Week Selector (only show in week mode) */}
               {viewMode === "week" && (
-                <Select
-                  value={selectedWeek}
-                  onValueChange={handleWeekChange}
-                >
-                  <SelectTrigger className='w-[280px] bg-background/90 backdrop-blur-sm border'>
-                    <SelectValue placeholder='Chọn tuần trong năm...' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableWeeks.map((week) => (
-                      <SelectItem
-                        key={week.value}
-                        value={week.value}
-                      >
-                        {week.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className='relative'>
+                  <Select
+                    value={selectedWeek}
+                    onValueChange={handleWeekChange}
+                  >
+                    <SelectTrigger className='w-[320px] bg-gradient-to-r from-background to-muted/20 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 shadow-lg hover:shadow-xl transition-all duration-300 text-foreground font-medium'>
+                      <div className='flex items-center gap-3'>
+                        <div className='p-1.5 bg-primary/10 rounded-md'>
+                          <CalendarIcon className='h-4 w-4 text-primary' />
+                        </div>
+                        <SelectValue
+                          placeholder='Chọn tuần trong năm...'
+                          className='text-sm font-medium'
+                        />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className='w-[320px] bg-background/95 backdrop-blur-md border-2 border-primary/20 shadow-2xl rounded-xl'>
+                      <div className='p-2 border-b border-border/50'>
+                        <p className='text-xs text-muted-foreground font-medium px-2 py-1'>
+                          Chọn tuần để xem lịch
+                        </p>
+                      </div>
+                      {availableWeeks.map((week, index) => (
+                        <SelectItem
+                          key={week.value}
+                          value={week.value}
+                          className='mx-1 my-0.5 rounded-lg hover:bg-primary/10 focus:bg-primary/10 transition-all duration-200 cursor-pointer'
+                        >
+                          <div className='flex items-center justify-between w-full gap-3'>
+                            <div className='flex items-center gap-2'>
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  selectedWeek === week.value
+                                    ? "bg-primary animate-pulse"
+                                    : "bg-muted-foreground/30"
+                                }`}
+                              />
+                              <span className='font-medium text-sm'>
+                                {week.label}
+                              </span>
+                            </div>
+                            <div className='text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md'>
+                              Tuần {index + 1}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
-
               <Button className='bg-foreground hover:bg-foreground/90 text-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'>
                 <Plus className='mr-2 h-4 w-4' />
                 Thêm Sự Kiện
@@ -841,7 +1053,7 @@ export default function CalendarPage() {
                     <Button
                       variant='outline'
                       size='sm'
-                      onClick={() => navigateMonth("prev")}
+                      onClick={() => navigate("prev")}
                       className='hover:bg-muted hover:border-border transition-all duration-200'
                     >
                       <ChevronLeft className='h-4 w-4' />
@@ -857,7 +1069,27 @@ export default function CalendarPage() {
                         setCurrentDate(today);
                         setSelectedDate(null);
 
-                        if (currentYear !== todayYear) {
+                        // If in week view, find and select the week that contains today
+                        if (viewMode === "week") {
+                          // Get weeks for the current year (today's year)
+                          const todayWeeks = getWeeksInYear(today);
+
+                          // Find the week that contains today
+                          const currentWeek = todayWeeks.find((week) => {
+                            if (week.start && week.end) {
+                              return today >= week.start && today <= week.end;
+                            }
+                            return false;
+                          });
+
+                          if (currentWeek) {
+                            setSelectedWeek(currentWeek.value);
+                          } else if (todayWeeks.length > 0) {
+                            // Fallback to first week if no matching week found
+                            setSelectedWeek(todayWeeks[0].value);
+                          }
+                        } else if (currentYear !== todayYear) {
+                          // For month view, only clear selected week if year changed
                           setSelectedWeek("");
                         }
                       }}
@@ -868,7 +1100,7 @@ export default function CalendarPage() {
                     <Button
                       variant='outline'
                       size='sm'
-                      onClick={() => navigateMonth("next")}
+                      onClick={() => navigate("next")}
                       className='hover:bg-muted hover:border-border transition-all duration-200'
                     >
                       <ChevronRight className='h-4 w-4' />

@@ -31,7 +31,7 @@ export interface Classroom {
 export interface ScheduleEvent {
   _id: string;
   date: string;
-  day_of_week: number;
+  day_of_week: number; // Monday-based: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
   slot: Slot[];
   classroom: Classroom[];
   course: string[];
@@ -169,11 +169,26 @@ export const fetchDateRangeSchedule = async (
  * @returns Date object representing the Monday of that week
  */
 export const getWeekStart = (date: Date): Date => {
-  const result = new Date(date);
-  const day = result.getDay();
-  const diff = result.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-  result.setDate(diff);
-  result.setHours(0, 0, 0, 0);
+  // Work with UTC to avoid timezone issues
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  // Create a new date in UTC
+  const result = new Date(Date.UTC(year, month, day));
+  const dayOfWeek = result.getUTCDay(); // 0=Sunday, 1=Monday, 2=Tuesday, etc.
+
+  // Calculate days to subtract to get to Monday
+  let daysToSubtract;
+  if (dayOfWeek === 0) {
+    // Sunday
+    daysToSubtract = 6; // Go back 6 days to Monday
+  } else {
+    // Monday=1, Tuesday=2, etc.
+    daysToSubtract = dayOfWeek - 1; // Go back (day-1) days to Monday
+  }
+
+  result.setUTCDate(result.getUTCDate() - daysToSubtract);
   return result;
 };
 
@@ -183,11 +198,27 @@ export const getWeekStart = (date: Date): Date => {
  * @returns Date object representing the Sunday of that week
  */
 export const getWeekEnd = (date: Date): Date => {
-  const result = new Date(date);
-  const day = result.getDay();
-  const diff = result.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
-  result.setDate(diff);
-  result.setHours(23, 59, 59, 999);
+  // Work with UTC to avoid timezone issues
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  // Create a new date in UTC
+  const result = new Date(Date.UTC(year, month, day));
+  const dayOfWeek = result.getUTCDay(); // 0=Sunday, 1=Monday, 2=Tuesday, etc.
+
+  // Calculate days to add to get to Sunday
+  let daysToAdd;
+  if (dayOfWeek === 0) {
+    // Already Sunday
+    daysToAdd = 0;
+  } else {
+    // Monday=1, Tuesday=2, etc.
+    daysToAdd = 7 - dayOfWeek; // Add (7-day) days to get to Sunday
+  }
+
+  result.setUTCDate(result.getUTCDate() + daysToAdd);
+  result.setUTCHours(23, 59, 59, 999);
   return result;
 };
 
@@ -232,23 +263,22 @@ export const getWeeksInMonth = (date: Date) => {
  */
 export const getWeeksInYear = (date: Date) => {
   const year = date.getFullYear();
-  // Always start from the first Monday of the year
+  // Start from the first Monday of the year
   let currentWeekStart = getWeekStart(new Date(year, 0, 1));
-  // If Jan 1 is not Monday, move to the next Monday
-  if (
-    currentWeekStart.getFullYear() < year ||
-    currentWeekStart.getMonth() > 0 ||
-    currentWeekStart.getDate() > 1
-  ) {
-    while (currentWeekStart.getDay() !== 1) {
-      currentWeekStart.setDate(currentWeekStart.getDate() + 1);
-    }
+
+  // Ensure we're in the correct year
+  if (currentWeekStart.getFullYear() < year) {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
   }
+
   const lastDayOfYear = new Date(year, 11, 31);
 
   const weeks = [];
-  while (currentWeekStart <= lastDayOfYear) {
-    const weekEnd = getWeekEnd(currentWeekStart);
+  while (currentWeekStart.getFullYear() === year) {
+    // Calculate the end of this week (Sunday)
+    const weekEnd = new Date(currentWeekStart);
+    weekEnd.setDate(currentWeekStart.getDate() + 6); // Monday + 6 days = Sunday
+    weekEnd.setHours(23, 59, 59, 999);
 
     const monthNames = [
       "T1",
@@ -285,7 +315,8 @@ export const getWeeksInYear = (date: Date) => {
       value: currentWeekStart.toISOString().split("T")[0], // Use start date as value
     });
 
-    // Move to next week
+    // Move to next week (add 7 days)
+    currentWeekStart = new Date(currentWeekStart);
     currentWeekStart.setDate(currentWeekStart.getDate() + 7);
   }
 
@@ -306,11 +337,32 @@ export const fetchWeekSchedule = async (
 ): Promise<ScheduleEvent[]> => {
   const weekStart = getWeekStart(date);
   const weekEnd = getWeekEnd(date);
-
   return fetchScheduleData({
     startDate: weekStart,
     endDate: weekEnd,
     tenantId,
     token,
   });
+};
+
+/**
+ * Convert API day_of_week (Monday-based) to JavaScript Date.getDay() (Sunday-based)
+ * @param apiDayOfWeek - API day_of_week value (0=Monday, 1=Tuesday, etc.)
+ * @returns JavaScript day value (0=Sunday, 1=Monday, etc.)
+ */
+export const convertApiDayToJsDay = (apiDayOfWeek: number): number => {
+  // API: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+  // JS:  0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  return apiDayOfWeek === 6 ? 0 : apiDayOfWeek + 1;
+};
+
+/**
+ * Convert JavaScript Date.getDay() (Sunday-based) to API day_of_week (Monday-based)
+ * @param jsDay - JavaScript day value (0=Sunday, 1=Monday, etc.)
+ * @returns API day_of_week value (0=Monday, 1=Tuesday, etc.)
+ */
+export const convertJsDayToApiDay = (jsDay: number): number => {
+  // JS:  0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  // API: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+  return jsDay === 0 ? 6 : jsDay - 1;
 };
