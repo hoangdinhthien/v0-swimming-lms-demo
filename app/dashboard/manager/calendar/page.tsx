@@ -1016,10 +1016,6 @@ export default function CalendarPage() {
                   </Select>
                 </div>
               )}
-              <Button className='bg-foreground hover:bg-foreground/90 text-background shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'>
-                <Plus className='mr-2 h-4 w-4' />
-                Thêm Sự Kiện
-              </Button>
             </div>
           </div>
         </div>{" "}

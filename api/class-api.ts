@@ -1,5 +1,6 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import config from "./config.json";
 
 // Define types for the class API response
 export interface Course {
@@ -83,7 +84,7 @@ export const fetchClassDetails = async (
   }
 
   const response = await fetch(
-    `https://capstone.caucalamdev.io.vn/api/v1/workflow-process/manager/class?id=${classroomId}`,
+    `${config.API}/v1/workflow-process/manager/class?id=${classroomId}`,
     {
       method: "GET",
       headers: {

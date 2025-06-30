@@ -1,5 +1,6 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import config from "./config.json";
 
 // Define types for the schedule API response
 export interface Slot {
@@ -83,7 +84,7 @@ export const fetchScheduleData = async (
   const endDateStr = formatDate(endDate);
 
   const response = await fetch(
-    `https://capstone.caucalamdev.io.vn/api/v1/workflow-process/schedule?startDate=${startDateStr}&endDate=${endDateStr}`,
+    `${config.API}/v1/workflow-process/schedule?startDate=${startDateStr}&endDate=${endDateStr}`,
     {
       method: "GET",
       headers: {
