@@ -84,7 +84,7 @@ export const fetchScheduleData = async (
   const endDateStr = formatDate(endDate);
 
   const response = await fetch(
-    `${config.API}/v1/workflow-process/schedule?startDate=${startDateStr}&endDate=${endDateStr}`,
+    `${config.API}/v1/workflow-process/schedules?startDate=${startDateStr}&endDate=${endDateStr}`,
     {
       method: "GET",
       headers: {

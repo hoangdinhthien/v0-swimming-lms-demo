@@ -13,10 +13,26 @@ import {
   Users,
   MapPin,
   Loader2,
+  Settings,
+  Edit,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -752,57 +768,136 @@ export default function CalendarPage() {
                   return (
                     <td
                       key={dayIndex}
-                      className={`p-3 border-r border-b h-20 align-top transition-all duration-200 hover:bg-muted/30 ${
+                      className={`p-2 border-r border-b h-28 align-top transition-all duration-200 hover:bg-muted/30 ${
                         isToday ? "bg-muted/20" : "bg-background"
                       }`}
                     >
-                      {eventsInCell.length > 0 ? (
-                        <div className='space-y-2'>
-                          {eventsInCell.map((event, eventIndex) => {
-                            const classroom = event.classroom[0];
-                            if (!classroom) return null;
-                            return (
-                              <div
-                                key={eventIndex}
-                                className='group cursor-pointer'
-                                onClick={() => {
-                                  // Navigate to class detail page
-                                  const classroomId = classroom._id;
-                                  if (classroomId) {
-                                    window.location.href = `/dashboard/manager/class/${classroomId}`;
-                                  }
+                      <div className='h-full flex flex-col relative'>
+                        {/* Settings Icon - Top Right */}
+                        <div className='absolute top-0 right-0 z-10'>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Handle add class logic here
+                                  console.log(
+                                    "Add class for date:",
+                                    date.toISOString().split("T")[0],
+                                    "slot:",
+                                    slot.title
+                                  );
+                                  // You can navigate to add class page or open a modal
+                                  // Example: router.push(`/dashboard/manager/class/add?date=${date.toISOString().split('T')[0]}&slot=${slot._id}`);
                                 }}
+                                className='w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100'
                               >
-                                <div className='bg-primary/10 text-primary px-3 py-2 rounded-lg text-center border border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'>
-                                  <div className='font-semibold text-sm'>
-                                    {classroom.name}
-                                  </div>
-                                  <div className='text-xs bg-background text-primary/80 px-2 py-1 rounded-full mt-1 border border-primary/30'>
-                                    {formatSlotTime(
-                                      slot.start_time,
-                                      slot.start_minute
-                                    )}{" "}
-                                    -{" "}
-                                    {formatSlotTime(
-                                      slot.end_time,
-                                      slot.end_minute
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+                                <Edit className='h-3 w-3' />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Thêm lớp học</p>
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
-                      ) : (
-                        <div className='h-full flex items-center justify-center'>
-                          <div className='text-center text-muted-foreground text-sm'>
-                            <div className='w-8 h-8 mx-auto mb-1 rounded-full bg-muted flex items-center justify-center'>
-                              <span className='text-xs'>—</span>
+
+                        {/* Content Area */}
+                        <div className='flex-1 flex items-center justify-center ml-6 mr-8'>
+                          {eventsInCell.length > 0 ? (
+                            <div className='w-full max-w-full flex items-center justify-center'>
+                              {eventsInCell.map((event, eventIndex) => {
+                                const classroom = event.classroom[0];
+                                if (!classroom) return null;
+                                return (
+                                  <div
+                                    key={eventIndex}
+                                    className='w-full max-w-full'
+                                  >
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <div className='group/trigger bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:hover:from-slate-700 dark:hover:via-slate-600 dark:hover:to-slate-700 text-blue-700 hover:text-blue-800 dark:text-gray-200 dark:hover:text-gray-100 px-3 py-2.5 rounded-xl text-center border border-blue-200/60 hover:border-blue-300/80 dark:border-slate-600/60 dark:hover:border-slate-500/80 shadow-sm hover:shadow-lg dark:shadow-slate-900/20 dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-105 w-full cursor-pointer backdrop-blur-sm relative overflow-hidden'>
+                                          <div className='font-semibold text-xs truncate relative z-10'>
+                                            {classroom.name}
+                                          </div>
+                                          {/* Shimmer effect */}
+                                          <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 -translate-x-full group-hover/trigger:translate-x-full transition-transform duration-1000 ease-out'></div>
+                                          {/* Corner accent */}
+                                          <div className='absolute top-0 right-0 w-0 h-0 border-l-8 border-l-transparent border-t-8 border-t-blue-300/50 dark:border-t-slate-500/50 opacity-0 group-hover/trigger:opacity-100 transition-opacity duration-300'></div>
+                                        </div>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent className='w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-slate-200/60 dark:border-slate-700/60 shadow-2xl rounded-2xl p-2 animate-in fade-in-0 zoom-in-95 duration-200'>
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            // Navigate to class detail page
+                                            const classroomId = classroom._id;
+                                            if (classroomId) {
+                                              router.push(
+                                                `/dashboard/manager/class/${classroomId}`
+                                              );
+                                            }
+                                          }}
+                                          className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-800/50 dark:hover:to-slate-700/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 dark:focus:from-slate-800/50 dark:focus:to-slate-700/50'
+                                        >
+                                          <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                            <Eye className='w-4 h-4 text-white' />
+                                          </div>
+                                          <div className='flex flex-col'>
+                                            <span className='font-semibold text-gray-700 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-gray-100 transition-colors duration-200'>
+                                              Xem lớp học
+                                            </span>
+                                            <span className='text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-gray-300'>
+                                              Chi tiết thông tin lớp
+                                            </span>
+                                          </div>
+                                        </DropdownMenuItem>
+
+                                        <div className='h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent my-2'></div>
+
+                                        <DropdownMenuItem
+                                          onClick={() => {
+                                            // Handle remove class logic here
+                                            console.log(
+                                              "Remove class:",
+                                              classroom._id,
+                                              "from date:",
+                                              date.toISOString().split("T")[0],
+                                              "slot:",
+                                              slot.title
+                                            );
+                                            // You can add remove class API call here
+                                          }}
+                                          className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50'
+                                        >
+                                          <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                            <Trash2 className='w-4 h-4 text-white' />
+                                          </div>
+                                          <div className='flex flex-col'>
+                                            <span className='font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-200'>
+                                              Gỡ lớp học
+                                            </span>
+                                            <span className='text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'>
+                                              Xóa khỏi lịch học
+                                            </span>
+                                          </div>
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                );
+                              })}
                             </div>
-                            <span className='text-xs'>Trống</span>
-                          </div>
+                          ) : (
+                            <div className='text-center text-muted-foreground w-full flex flex-col items-center justify-center'>
+                              <div className='w-8 h-8 mx-auto mb-1 rounded-full bg-muted/50 flex items-center justify-center'>
+                                <span className='text-xs font-medium'>—</span>
+                              </div>
+                              <span className='text-xs font-medium'>Trống</span>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </td>
                   );
                 })}
@@ -897,418 +992,422 @@ export default function CalendarPage() {
     );
   }
   return (
-    <div className='min-h-screen bg-background'>
-      <div className='max-w-none mx-auto px-6 py-6 space-y-8'>
-        {/* Breadcrumb */}
-        <div className='flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity'>
-          <Link
-            href='/dashboard/manager'
-            className='inline-flex items-center text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/10 px-2 py-1 rounded-md'
-          >
-            <ArrowLeft className='mr-1 h-4 w-4' />
-            Quay về Dashboard
-          </Link>
-        </div>{" "}
-        {/* Header */}
-        <div className='relative'>
-          <div className='absolute inset-0 bg-muted/5 rounded-3xl blur-3xl'></div>
-          <div className='relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between p-8 bg-card/80 backdrop-blur-sm border rounded-2xl shadow-xl'>
-            <div className='space-y-2'>
-              <h1 className='text-4xl font-bold text-foreground'>
-                Lịch Quản Lý
-              </h1>
-              <p className='text-muted-foreground text-lg'>
-                Quản lý lịch học, lịch họp và các sự kiện một cách hiệu quả
-              </p>
-            </div>
-            <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
-              {/* View Mode Toggle */}
-              <div className='flex items-center gap-1 p-1 bg-muted rounded-xl'>
-                <Button
-                  variant={viewMode === "month" ? "default" : "ghost"}
-                  size='sm'
-                  onClick={() => handleViewModeChange("month")}
-                  className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
-                    viewMode === "month"
-                      ? "bg-background shadow-md text-foreground border"
-                      : "hover:bg-background/50"
-                  }`}
-                >
-                  <CalendarIcon className='mr-2 h-4 w-4' />
-                  Tháng
-                </Button>{" "}
-                <Button
-                  variant={viewMode === "week" ? "default" : "ghost"}
-                  size='sm'
-                  onClick={() => handleViewModeChange("week")}
-                  className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
-                    viewMode === "week"
-                      ? "bg-background shadow-md text-foreground border"
-                      : "hover:bg-background/50"
-                  }`}
-                >
-                  <svg
-                    className='mr-2 h-4 w-4'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
+    <TooltipProvider>
+      <div className='min-h-screen bg-background'>
+        <div className='max-w-none mx-auto px-6 py-6 space-y-8'>
+          {/* Breadcrumb */}
+          <div className='flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity'>
+            <Link
+              href='/dashboard/manager'
+              className='inline-flex items-center text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/10 px-2 py-1 rounded-md'
+            >
+              <ArrowLeft className='mr-1 h-4 w-4' />
+              Quay về Dashboard
+            </Link>
+          </div>{" "}
+          {/* Header */}
+          <div className='relative'>
+            <div className='absolute inset-0 bg-muted/5 rounded-3xl blur-3xl'></div>
+            <div className='relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between p-8 bg-card/80 backdrop-blur-sm border rounded-2xl shadow-xl'>
+              <div className='space-y-2'>
+                <h1 className='text-4xl font-bold text-foreground'>
+                  Lịch Quản Lý
+                </h1>
+                <p className='text-muted-foreground text-lg'>
+                  Quản lý lịch học, lịch họp và các sự kiện một cách hiệu quả
+                </p>
+              </div>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+                {/* View Mode Toggle */}
+                <div className='flex items-center gap-1 p-1 bg-muted rounded-xl'>
+                  <Button
+                    variant={viewMode === "month" ? "default" : "ghost"}
+                    size='sm'
+                    onClick={() => handleViewModeChange("month")}
+                    className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
+                      viewMode === "month"
+                        ? "bg-background shadow-md text-foreground border"
+                        : "hover:bg-background/50"
+                    }`}
                   >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
-                    />
-                  </svg>
-                  Tuần
-                </Button>
-              </div>{" "}
-              {/* Week Selector (only show in week mode) */}
-              {viewMode === "week" && (
-                <div className='relative'>
-                  <Select
-                    value={selectedWeek}
-                    onValueChange={handleWeekChange}
+                    <CalendarIcon className='mr-2 h-4 w-4' />
+                    Tháng
+                  </Button>{" "}
+                  <Button
+                    variant={viewMode === "week" ? "default" : "ghost"}
+                    size='sm'
+                    onClick={() => handleViewModeChange("week")}
+                    className={`relative px-6 py-2 rounded-lg transition-all duration-200 ${
+                      viewMode === "week"
+                        ? "bg-background shadow-md text-foreground border"
+                        : "hover:bg-background/50"
+                    }`}
                   >
-                    <SelectTrigger className='w-[320px] bg-gradient-to-r from-background to-muted/20 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 shadow-lg hover:shadow-xl transition-all duration-300 text-foreground font-medium'>
-                      <div className='flex items-center gap-3'>
-                        <div className='p-1.5 bg-primary/10 rounded-md'>
-                          <CalendarIcon className='h-4 w-4 text-primary' />
-                        </div>
-                        <SelectValue
-                          placeholder='Chọn tuần trong năm...'
-                          className='text-sm font-medium'
-                        />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent className='w-[320px] bg-background/95 backdrop-blur-md border-2 border-primary/20 shadow-2xl rounded-xl'>
-                      <div className='p-2 border-b border-border/50'>
-                        <p className='text-xs text-muted-foreground font-medium px-2 py-1'>
-                          Chọn tuần để xem lịch
-                        </p>
-                      </div>
-                      {availableWeeks.map((week, index) => (
-                        <SelectItem
-                          key={week.value}
-                          value={week.value}
-                          className='mx-1 my-0.5 rounded-lg hover:bg-primary/10 focus:bg-primary/10 transition-all duration-200 cursor-pointer'
-                        >
-                          <div className='flex items-center justify-between w-full gap-3'>
-                            <div className='flex items-center gap-2'>
-                              <div
-                                className={`w-2 h-2 rounded-full ${
-                                  selectedWeek === week.value
-                                    ? "bg-primary animate-pulse"
-                                    : "bg-muted-foreground/30"
-                                }`}
-                              />
-                              <span className='font-medium text-sm'>
-                                {week.label}
-                              </span>
-                            </div>
-                            <div className='text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md'>
-                              Tuần {index + 1}
-                            </div>
+                    <svg
+                      className='mr-2 h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+                      />
+                    </svg>
+                    Tuần
+                  </Button>
+                </div>{" "}
+                {/* Week Selector (only show in week mode) */}
+                {viewMode === "week" && (
+                  <div className='relative'>
+                    <Select
+                      value={selectedWeek}
+                      onValueChange={handleWeekChange}
+                    >
+                      <SelectTrigger className='w-[320px] bg-gradient-to-r from-background to-muted/20 backdrop-blur-sm border-2 border-primary/20 hover:border-primary/40 shadow-lg hover:shadow-xl transition-all duration-300 text-foreground font-medium'>
+                        <div className='flex items-center gap-3'>
+                          <div className='p-1.5 bg-primary/10 rounded-md'>
+                            <CalendarIcon className='h-4 w-4 text-primary' />
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>{" "}
-        {/* Main Content Grid */}
-        <div
-          className={`grid gap-8 ${
-            viewMode === "week" ? "grid-cols-1" : "grid-cols-1 xl:grid-cols-4"
-          }`}
-        >
-          {" "}
-          {/* Calendar */}
-          <div className={viewMode === "week" ? "col-span-1" : "xl:col-span-3"}>
-            <Card className='bg-card/80 backdrop-blur-sm border shadow-xl hover:shadow-2xl transition-all duration-300'>
-              <CardHeader className='pb-4'>
-                <div className='flex items-center justify-between'>
-                  <CardTitle className='flex items-center gap-3 text-xl'>
-                    <div className='p-2 bg-primary rounded-lg'>
-                      <CalendarIcon className='h-5 w-5 text-primary-foreground' />
-                    </div>
-                    <span className='text-foreground'>
-                      {viewMode === "week" && selectedWeek
-                        ? `Tuần từ ${getCurrentWeekDates()[0]?.toLocaleDateString(
-                            "vi-VN"
-                          )} - ${getCurrentWeekDates()[6]?.toLocaleDateString(
-                            "vi-VN"
-                          )}`
-                        : formatMonthYear(currentDate)}
-                    </span>
-                  </CardTitle>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => navigate("prev")}
-                      className='hover:bg-muted hover:border-border transition-all duration-200'
-                    >
-                      <ChevronLeft className='h-4 w-4' />
-                    </Button>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => {
-                        const today = new Date();
-                        const currentYear = currentDate.getFullYear();
-                        const todayYear = today.getFullYear();
-
-                        setCurrentDate(today);
-                        setSelectedDate(null);
-
-                        // If in week view, find and select the week that contains today
-                        if (viewMode === "week") {
-                          // Get weeks for the current year (today's year)
-                          const todayWeeks = getWeeksInYear(today);
-
-                          // Find the week that contains today
-                          const currentWeek = todayWeeks.find((week) => {
-                            if (week.start && week.end) {
-                              return today >= week.start && today <= week.end;
-                            }
-                            return false;
-                          });
-
-                          if (currentWeek) {
-                            setSelectedWeek(currentWeek.value);
-                          } else if (todayWeeks.length > 0) {
-                            // Fallback to first week if no matching week found
-                            setSelectedWeek(todayWeeks[0].value);
-                          }
-                        } else if (currentYear !== todayYear) {
-                          // For month view, only clear selected week if year changed
-                          setSelectedWeek("");
-                        }
-                      }}
-                      className='hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-700 transition-all duration-200 text-emerald-600 dark:text-emerald-400'
-                    >
-                      Hôm nay
-                    </Button>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => navigate("next")}
-                      className='hover:bg-muted hover:border-border transition-all duration-200'
-                    >
-                      <ChevronRight className='h-4 w-4' />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                {viewMode === "week" ? (
-                  renderWeeklySlotView()
-                ) : (
-                  <div className='grid grid-cols-7 gap-0 border rounded-xl overflow-hidden shadow-inner'>
-                    {" "}
-                    {["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map(
-                      (day, index) => (
-                        <div
-                          key={day}
-                          className={`p-4 text-center text-sm font-semibold border-b ${
-                            index === 0 || index === 6
-                              ? "bg-destructive/10 text-destructive"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {day}
+                          <SelectValue
+                            placeholder='Chọn tuần trong năm...'
+                            className='text-sm font-medium'
+                          />
                         </div>
-                      )
-                    )}
-                    {renderCalendarDays()}
+                      </SelectTrigger>
+                      <SelectContent className='w-[320px] bg-background/95 backdrop-blur-md border-2 border-primary/20 shadow-2xl rounded-xl'>
+                        <div className='p-2 border-b border-border/50'>
+                          <p className='text-xs text-muted-foreground font-medium px-2 py-1'>
+                            Chọn tuần để xem lịch
+                          </p>
+                        </div>
+                        {availableWeeks.map((week, index) => (
+                          <SelectItem
+                            key={week.value}
+                            value={week.value}
+                            className='mx-1 my-0.5 rounded-lg hover:bg-primary/10 focus:bg-primary/10 transition-all duration-200 cursor-pointer'
+                          >
+                            <div className='flex items-center justify-between w-full gap-3'>
+                              <div className='flex items-center gap-2'>
+                                <div
+                                  className={`w-2 h-2 rounded-full ${
+                                    selectedWeek === week.value
+                                      ? "bg-primary animate-pulse"
+                                      : "bg-muted-foreground/30"
+                                  }`}
+                                />
+                                <span className='font-medium text-sm'>
+                                  {week.label}
+                                </span>
+                              </div>
+                              <div className='text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-md'>
+                                Tuần {index + 1}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>{" "}
-          {/* Sidebar */}
-          {viewMode === "month" && (
-            <div className='space-y-6'>
+          {/* Main Content Grid */}
+          <div
+            className={`grid gap-8 ${
+              viewMode === "week" ? "grid-cols-1" : "grid-cols-1 xl:grid-cols-4"
+            }`}
+          >
+            {" "}
+            {/* Calendar */}
+            <div
+              className={viewMode === "week" ? "col-span-1" : "xl:col-span-3"}
+            >
               <Card className='bg-card/80 backdrop-blur-sm border shadow-xl hover:shadow-2xl transition-all duration-300'>
                 <CardHeader className='pb-4'>
-                  <CardTitle className='flex items-center gap-3'>
-                    <div className='p-2 bg-primary rounded-lg'>
-                      <CalendarIcon className='h-4 w-4 text-primary-foreground' />
+                  <div className='flex items-center justify-between'>
+                    <CardTitle className='flex items-center gap-3 text-xl'>
+                      <div className='p-2 bg-primary rounded-lg'>
+                        <CalendarIcon className='h-5 w-5 text-primary-foreground' />
+                      </div>
+                      <span className='text-foreground'>
+                        {viewMode === "week" && selectedWeek
+                          ? `Tuần từ ${getCurrentWeekDates()[0]?.toLocaleDateString(
+                              "vi-VN"
+                            )} - ${getCurrentWeekDates()[6]?.toLocaleDateString(
+                              "vi-VN"
+                            )}`
+                          : formatMonthYear(currentDate)}
+                      </span>
+                    </CardTitle>
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => navigate("prev")}
+                        className='hover:bg-muted hover:border-border transition-all duration-200'
+                      >
+                        <ChevronLeft className='h-4 w-4' />
+                      </Button>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          const today = new Date();
+                          const currentYear = currentDate.getFullYear();
+                          const todayYear = today.getFullYear();
+
+                          setCurrentDate(today);
+                          setSelectedDate(null);
+
+                          // If in week view, find and select the week that contains today
+                          if (viewMode === "week") {
+                            // Get weeks for the current year (today's year)
+                            const todayWeeks = getWeeksInYear(today);
+
+                            // Find the week that contains today
+                            const currentWeek = todayWeeks.find((week) => {
+                              if (week.start && week.end) {
+                                return today >= week.start && today <= week.end;
+                              }
+                              return false;
+                            });
+
+                            if (currentWeek) {
+                              setSelectedWeek(currentWeek.value);
+                            } else if (todayWeeks.length > 0) {
+                              // Fallback to first week if no matching week found
+                              setSelectedWeek(todayWeeks[0].value);
+                            }
+                          } else if (currentYear !== todayYear) {
+                            // For month view, only clear selected week if year changed
+                            setSelectedWeek("");
+                          }
+                        }}
+                        className='hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-700 transition-all duration-200 text-emerald-600 dark:text-emerald-400'
+                      >
+                        Hôm nay
+                      </Button>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => navigate("next")}
+                        className='hover:bg-muted hover:border-border transition-all duration-200'
+                      >
+                        <ChevronRight className='h-4 w-4' />
+                      </Button>
                     </div>
-                    <span className='text-lg text-foreground'>
-                      {selectedDate
-                        ? `Sự kiện ngày ${selectedDate.getDate()}/${
-                            selectedDate.getMonth() + 1
-                          }`
-                        : "Chọn ngày để xem sự kiện"}
-                    </span>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
 
                 <CardContent>
-                  {selectedDateEvents.length > 0 ? (
-                    <div className='space-y-4'>
-                      {selectedDateEvents.map((event, index) => {
-                        const formattedEvent = formatScheduleEvent(event);
-                        if (!formattedEvent) return null;
-
-                        return (
-                          <div
-                            key={formattedEvent.id}
-                            className='group p-4 border rounded-xl hover:bg-muted/50 transition-all duration-300 hover:shadow-lg bg-card'
-                          >
-                            <div className='flex items-start justify-between mb-3'>
-                              <h4 className='font-semibold text-base text-foreground group-hover:text-foreground/80 transition-colors'>
-                                {formattedEvent.title}
-                              </h4>
-                              <Badge
-                                variant='default'
-                                className='bg-primary text-primary-foreground border-0 shadow-sm'
-                              >
-                                Lớp học
-                              </Badge>
-                            </div>{" "}
-                            <div className='space-y-3 text-sm'>
-                              <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
-                                <div className='p-1 bg-foreground rounded'>
-                                  <Clock className='h-3 w-3 text-background' />
-                                </div>
-                                <span className='text-foreground font-medium'>
-                                  {formattedEvent.time}
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
-                                <div className='p-1 bg-foreground rounded'>
-                                  <Users className='h-3 w-3 text-background' />
-                                </div>
-                                <span className='text-foreground font-medium'>
-                                  {formattedEvent.slotTitle}
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-3 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg'>
-                                <div className='p-1 bg-emerald-600 dark:bg-emerald-500 rounded'>
-                                  <MapPin className='h-3 w-3 text-white' />
-                                </div>
-                                <span className='text-emerald-700 dark:text-emerald-300 font-medium'>
-                                  {formattedEvent.classroom}
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
-                                <div className='p-1 bg-foreground rounded'>
-                                  <Clock className='h-3 w-3 text-background' />
-                                </div>
-                                <span className='text-foreground font-medium'>
-                                  Thời lượng: {formattedEvent.duration}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : selectedDate ? (
-                    <div className='text-center py-12 space-y-4'>
-                      <div className='relative'>
-                        <div className='absolute inset-0 bg-muted/20 rounded-full blur-xl'></div>
-                        <div className='relative w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center'>
-                          <CalendarIcon className='h-8 w-8 text-muted-foreground' />
-                        </div>
-                      </div>
-                      <div className='space-y-2'>
-                        <h3 className='text-lg font-semibold text-foreground'>
-                          Ngày trống
-                        </h3>
-                        <p className='text-muted-foreground'>
-                          Không có sự kiện nào trong ngày này
-                        </p>
-                      </div>
-                    </div>
+                  {viewMode === "week" ? (
+                    renderWeeklySlotView()
                   ) : (
-                    <div className='text-center py-12 space-y-4'>
-                      <div className='relative'>
-                        <div className='absolute inset-0 bg-muted/20 rounded-full blur-xl'></div>
-                        <div className='relative w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center'>
-                          <CalendarIcon className='h-8 w-8 text-muted-foreground' />
-                        </div>
-                      </div>
-                      <div className='space-y-2'>
-                        <h3 className='text-lg font-semibold text-foreground'>
-                          Chọn ngày
-                        </h3>
-                        <p className='text-muted-foreground'>
-                          Nhấp vào một ngày để xem chi tiết sự kiện
-                        </p>
-                      </div>
+                    <div className='grid grid-cols-7 gap-0 border rounded-xl overflow-hidden shadow-inner'>
+                      {" "}
+                      {["CN", "T2", "T3", "T4", "T5", "T6", "T7"].map(
+                        (day, index) => (
+                          <div
+                            key={day}
+                            className={`p-4 text-center text-sm font-semibold border-b ${
+                              index === 0 || index === 6
+                                ? "bg-destructive/10 text-destructive"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {day}
+                          </div>
+                        )
+                      )}
+                      {renderCalendarDays()}
                     </div>
                   )}
                 </CardContent>
-              </Card>{" "}
-              {/* Quick Stats */}
-              <Card className='bg-card/80 backdrop-blur-sm border shadow-xl hover:shadow-2xl transition-all duration-300'>
-                <CardHeader className='pb-4'>
-                  <CardTitle className='flex items-center gap-3'>
-                    <div className='p-2 bg-primary rounded-lg'>
-                      <svg
-                        className='h-4 w-4 text-primary-foreground'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
-                        />
-                      </svg>
-                    </div>{" "}
-                    <span className='text-lg text-foreground'>
-                      Thống Kê Nhanh
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-
-                <CardContent className='space-y-4'>
-                  <div className='flex justify-between items-center p-3 bg-muted/50 rounded-lg border'>
-                    <span className='text-sm font-medium text-foreground'>
-                      {" "}
-                      Tổng sự kiện tháng này
-                    </span>
-                    <span className='font-bold text-xl text-foreground bg-background px-3 py-1 rounded-full'>
-                      {scheduleEvents.length}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700'>
-                    <span className='text-sm font-medium text-emerald-700 dark:text-emerald-300'>
-                      Lớp học
-                    </span>
-                    <span className='font-bold text-xl text-emerald-600 dark:text-emerald-400 bg-background px-3 py-1 rounded-full'>
-                      {scheduleEvents.length}
-                    </span>
-                  </div>
-                  <div className='flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700'>
-                    <span className='text-sm font-medium text-amber-700 dark:text-amber-300'>
-                      {" "}
-                      Số slot
-                    </span>
-                    <span className='font-bold text-xl text-amber-600 dark:text-amber-400 bg-background px-3 py-1 rounded-full'>
-                      {scheduleEvents.reduce(
-                        (total, event) => total + event.slot.length,
-                        0
-                      )}
-                    </span>
-                  </div>
-                </CardContent>
               </Card>
-            </div>
-          )}
+            </div>{" "}
+            {/* Sidebar */}
+            {viewMode === "month" && (
+              <div className='space-y-6'>
+                <Card className='bg-card/80 backdrop-blur-sm border shadow-xl hover:shadow-2xl transition-all duration-300'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='p-2 bg-primary rounded-lg'>
+                        <CalendarIcon className='h-4 w-4 text-primary-foreground' />
+                      </div>
+                      <span className='text-lg text-foreground'>
+                        {selectedDate
+                          ? `Sự kiện ngày ${selectedDate.getDate()}/${
+                              selectedDate.getMonth() + 1
+                            }`
+                          : "Chọn ngày để xem sự kiện"}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent>
+                    {selectedDateEvents.length > 0 ? (
+                      <div className='space-y-4'>
+                        {selectedDateEvents.map((event, index) => {
+                          const formattedEvent = formatScheduleEvent(event);
+                          if (!formattedEvent) return null;
+
+                          return (
+                            <div
+                              key={formattedEvent.id}
+                              className='group p-4 border rounded-xl hover:bg-muted/50 transition-all duration-300 hover:shadow-lg bg-card'
+                            >
+                              <div className='flex items-start justify-between mb-3'>
+                                <h4 className='font-semibold text-base text-foreground group-hover:text-foreground/80 transition-colors'>
+                                  {formattedEvent.title}
+                                </h4>
+                                <Badge
+                                  variant='default'
+                                  className='bg-primary text-primary-foreground border-0 shadow-sm'
+                                >
+                                  Lớp học
+                                </Badge>
+                              </div>{" "}
+                              <div className='space-y-3 text-sm'>
+                                <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
+                                  <div className='p-1 bg-foreground rounded'>
+                                    <Clock className='h-3 w-3 text-background' />
+                                  </div>
+                                  <span className='text-foreground font-medium'>
+                                    {formattedEvent.time}
+                                  </span>
+                                </div>
+                                <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
+                                  <div className='p-1 bg-foreground rounded'>
+                                    <Users className='h-3 w-3 text-background' />
+                                  </div>
+                                  <span className='text-foreground font-medium'>
+                                    {formattedEvent.slotTitle}
+                                  </span>
+                                </div>
+                                <div className='flex items-center gap-3 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg'>
+                                  <div className='p-1 bg-emerald-600 dark:bg-emerald-500 rounded'>
+                                    <MapPin className='h-3 w-3 text-white' />
+                                  </div>
+                                  <span className='text-emerald-700 dark:text-emerald-300 font-medium'>
+                                    {formattedEvent.classroom}
+                                  </span>
+                                </div>
+                                <div className='flex items-center gap-3 p-2 bg-muted/50 rounded-lg'>
+                                  <div className='p-1 bg-foreground rounded'>
+                                    <Clock className='h-3 w-3 text-background' />
+                                  </div>
+                                  <span className='text-foreground font-medium'>
+                                    Thời lượng: {formattedEvent.duration}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : selectedDate ? (
+                      <div className='text-center py-12 space-y-4'>
+                        <div className='relative'>
+                          <div className='absolute inset-0 bg-muted/20 rounded-full blur-xl'></div>
+                          <div className='relative w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center'>
+                            <CalendarIcon className='h-8 w-8 text-muted-foreground' />
+                          </div>
+                        </div>
+                        <div className='space-y-2'>
+                          <h3 className='text-lg font-semibold text-foreground'>
+                            Ngày trống
+                          </h3>
+                          <p className='text-muted-foreground'>
+                            Không có sự kiện nào trong ngày này
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className='text-center py-12 space-y-4'>
+                        <div className='relative'>
+                          <div className='absolute inset-0 bg-muted/20 rounded-full blur-xl'></div>
+                          <div className='relative w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center'>
+                            <CalendarIcon className='h-8 w-8 text-muted-foreground' />
+                          </div>
+                        </div>
+                        <div className='space-y-2'>
+                          <h3 className='text-lg font-semibold text-foreground'>
+                            Chọn ngày
+                          </h3>
+                          <p className='text-muted-foreground'>
+                            Nhấp vào một ngày để xem chi tiết sự kiện
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>{" "}
+                {/* Quick Stats */}
+                <Card className='bg-card/80 backdrop-blur-sm border shadow-xl hover:shadow-2xl transition-all duration-300'>
+                  <CardHeader className='pb-4'>
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='p-2 bg-primary rounded-lg'>
+                        <svg
+                          className='h-4 w-4 text-primary-foreground'
+                          fill='none'
+                          viewBox='0 0 24 24'
+                          stroke='currentColor'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+                          />
+                        </svg>
+                      </div>{" "}
+                      <span className='text-lg text-foreground'>
+                        Thống Kê Nhanh
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className='space-y-4'>
+                    <div className='flex justify-between items-center p-3 bg-muted/50 rounded-lg border'>
+                      <span className='text-sm font-medium text-foreground'>
+                        {" "}
+                        Tổng sự kiện tháng này
+                      </span>
+                      <span className='font-bold text-xl text-foreground bg-background px-3 py-1 rounded-full'>
+                        {scheduleEvents.length}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700'>
+                      <span className='text-sm font-medium text-emerald-700 dark:text-emerald-300'>
+                        Lớp học
+                      </span>
+                      <span className='font-bold text-xl text-emerald-600 dark:text-emerald-400 bg-background px-3 py-1 rounded-full'>
+                        {scheduleEvents.length}
+                      </span>
+                    </div>
+                    <div className='flex justify-between items-center p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700'>
+                      <span className='text-sm font-medium text-amber-700 dark:text-amber-300'>
+                        {" "}
+                        Số slot
+                      </span>
+                      <span className='font-bold text-xl text-amber-600 dark:text-amber-400 bg-background px-3 py-1 rounded-full'>
+                        {scheduleEvents.reduce(
+                          (total, event) => total + event.slot.length,
+                          0
+                        )}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
