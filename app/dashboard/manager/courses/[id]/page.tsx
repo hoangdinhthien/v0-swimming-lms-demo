@@ -157,13 +157,42 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       {/* Header Section */}
       <div className='bg-card shadow-sm border-b border-border'>
         <div className='container mx-auto px-4 py-6'>
-          <Link
-            href='/dashboard/manager/courses'
-            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-4'
-          >
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Quay về danh sách khoá học
-          </Link>
+          {/* Breadcrumb */}
+          <div className='flex items-center space-x-2 text-sm mb-4'>
+            <div className='flex items-center space-x-2 bg-muted/20 px-3 py-1.5 rounded-lg border border-muted/30'>
+              <Link
+                href='/dashboard'
+                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+              >
+                Dashboard
+              </Link>
+              <span className='text-muted-foreground/50'>→</span>
+              <Link
+                href='/dashboard/manager'
+                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+              >
+                Manager
+              </Link>
+              <span className='text-muted-foreground/50'>→</span>
+              <Link
+                href='/dashboard/manager/courses'
+                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+              >
+                Khoá học
+              </Link>
+              <span className='text-muted-foreground/50'>→</span>
+              <span className='text-foreground font-medium'>
+                Chi tiết khoá học
+              </span>
+            </div>
+            <Link
+              href='/dashboard/manager/courses'
+              className='ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
+            >
+              <ArrowLeft className='h-4 w-4' />
+              Quay về danh sách
+            </Link>
+          </div>
 
           <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
             <div>

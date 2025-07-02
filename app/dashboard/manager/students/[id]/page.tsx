@@ -527,14 +527,43 @@ export default function StudentDetailPage() {
 
   return (
     <div className='container mx-auto py-8 px-4'>
-      <div className='mb-8'>
+      {/* Breadcrumb */}
+      <div className='flex items-center space-x-2 text-sm mb-8'>
+        <div className='flex items-center space-x-2 bg-muted/20 px-3 py-1.5 rounded-lg border border-muted/30'>
+          <Link
+            href='/dashboard'
+            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+          >
+            Dashboard
+          </Link>
+          <span className='text-muted-foreground/50'>→</span>
+          <Link
+            href='/dashboard/manager'
+            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+          >
+            Manager
+          </Link>
+          <span className='text-muted-foreground/50'>→</span>
+          <Link
+            href='/dashboard/manager/students'
+            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
+          >
+            Học viên
+          </Link>
+          <span className='text-muted-foreground/50'>→</span>
+          <span className='text-foreground font-medium'>Chi tiết học viên</span>
+        </div>
         <Link
           href='/dashboard/manager/students'
-          className='inline-flex items-center text-sm font-medium text-primary hover:text-primary/90 transition-colors'
+          className='ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
         >
-          <ArrowLeft className='mr-1.5 h-4 w-4' /> Quay về danh sách học viên
+          <ArrowLeft className='h-4 w-4' />
+          Quay về danh sách
         </Link>
-        <h1 className='text-3xl font-bold mt-4'>Hồ sơ học viên</h1>
+      </div>
+
+      <div className='mb-6'>
+        <h1 className='text-3xl font-bold'>Hồ sơ học viên</h1>
         <p className='text-muted-foreground mt-1'>
           Thông tin chi tiết và lịch sử học tập của học viên
         </p>
