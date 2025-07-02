@@ -125,8 +125,12 @@ export default function CalendarPage() {
             id: e._id,
             date: e.date,
             day_of_week: e.day_of_week,
-            classroom: e.classroom.map((c) => c.name),
-            slot: e.slot.map((s) => s.title),
+            classroom: Array.isArray(e.classroom)
+              ? e.classroom.map((c) => c.name)
+              : [(e.classroom as any)?.name || "Unknown"],
+            slot: Array.isArray(e.slot)
+              ? e.slot.map((s) => s.title)
+              : [(e.slot as any)?.title || "Unknown"],
           })),
         });
 
@@ -384,8 +388,9 @@ export default function CalendarPage() {
     // Create a map of actual slots from schedule events
     const actualSlotsMap = new Map();
     scheduleEvents.forEach((event) => {
-      event.slot.forEach((slot) => {
-        if (!actualSlotsMap.has(slot._id)) {
+      const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
+      slots.forEach((slot) => {
+        if (slot && !actualSlotsMap.has(slot._id)) {
           actualSlotsMap.set(slot._id, {
             ...slot,
             sortOrder: slot.start_time * 60 + slot.start_minute, // For sorting by time
@@ -401,14 +406,15 @@ export default function CalendarPage() {
     const targetDateStr = date.toISOString().split("T")[0];
     const filtered = scheduleEvents.filter((event) => {
       const eventDateStr = event.date.split("T")[0];
-      const hasMatchingSlot = event.slot.some((slot) => slot._id === slotId);
+      const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
+      const hasMatchingSlot = slots.some((slot) => slot && slot._id === slotId);
 
       // Debug log for checking event matching
       console.log("[DEBUG] Checking event:", {
         eventDate: eventDateStr,
         targetDate: targetDateStr,
         dateMatch: eventDateStr === targetDateStr,
-        eventSlotIds: event.slot.map((s) => s._id),
+        eventSlotIds: slots.map((s) => s?._id).filter(Boolean),
         targetSlotId: slotId,
         slotMatch: hasMatchingSlot,
         finalMatch: eventDateStr === targetDateStr && hasMatchingSlot,
@@ -518,8 +524,16 @@ export default function CalendarPage() {
 
   // Transform schedule event to display format
   const formatScheduleEvent = (scheduleEvent: ScheduleEvent) => {
-    const slot = scheduleEvent.slot[0]; // Assuming one slot per event for now
-    const classroom = scheduleEvent.classroom[0]; // Assuming one classroom per event
+    // Handle both array and single object cases
+    const slots = Array.isArray(scheduleEvent.slot)
+      ? scheduleEvent.slot
+      : [scheduleEvent.slot];
+    const classrooms = Array.isArray(scheduleEvent.classroom)
+      ? scheduleEvent.classroom
+      : [scheduleEvent.classroom];
+
+    const slot = slots[0]; // Assuming one slot per event for now
+    const classroom = classrooms[0]; // Assuming one classroom per event
 
     if (!slot || !classroom) return null;
 
@@ -677,8 +691,10 @@ export default function CalendarPage() {
       return scheduleEvents.filter((event) => {
         const eventDateStr = event.date.split("T")[0];
         // Match by time instead of ID since API slot IDs don't match our default IDs
-        const hasMatchingSlot = event.slot.some(
+        const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
+        const hasMatchingSlot = slots.some(
           (slot) =>
+            slot &&
             slot.start_time === targetSlot.start_time &&
             slot.start_minute === targetSlot.start_minute &&
             slot.end_time === targetSlot.end_time &&
@@ -775,11 +791,78 @@ export default function CalendarPage() {
                       <div className='h-full flex flex-col relative'>
                         {/* Settings Icon - Top Right */}
                         <div className='absolute top-0 right-0 z-10'>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
                               <Button
                                 size='sm'
                                 variant='outline'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                                className='w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100'
+                              >
+                                <Edit className='h-3 w-3' />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className='w-48 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-slate-200/60 dark:border-slate-700/60 shadow-2xl rounded-2xl p-2 animate-in fade-in-0 zoom-in-95 duration-200'>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Find schedule events for this date and slot
+                                  const scheduleDate = date
+                                    .toISOString()
+                                    .split("T")[0];
+                                  const eventsForThisSlot = getEventsForCell(
+                                    date,
+                                    slot._id
+                                  );
+
+                                  if (eventsForThisSlot.length > 0) {
+                                    // If there are events, use the first event's ID
+                                    const scheduleId = eventsForThisSlot[0]._id;
+                                    console.log(
+                                      "Navigating to schedule details with ID:",
+                                      scheduleId
+                                    );
+                                    router.push(
+                                      `/dashboard/manager/schedule/slot-details?scheduleId=${scheduleId}&slotId=${
+                                        slot._id
+                                      }&date=${scheduleDate}&slotTitle=${encodeURIComponent(
+                                        slot.title
+                                      )}`
+                                    );
+                                  } else {
+                                    // If no events, navigate with slot information only
+                                    console.log(
+                                      "No events found for this slot, showing slot info only"
+                                    );
+                                    router.push(
+                                      `/dashboard/manager/schedule/slot-details?slotId=${
+                                        slot._id
+                                      }&date=${scheduleDate}&slotTitle=${encodeURIComponent(
+                                        slot.title
+                                      )}`
+                                    );
+                                  }
+                                }}
+                                className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50'
+                              >
+                                <div className='w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                  <Clock className='w-4 h-4 text-slate-600 dark:text-slate-300' />
+                                </div>
+                                <div className='flex flex-col'>
+                                  <span className='font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200'>
+                                    Chi tiết slot
+                                  </span>
+                                  <span className='text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'>
+                                    Xem thông tin khung giờ
+                                  </span>
+                                </div>
+                              </DropdownMenuItem>
+
+                              <div className='h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent my-2'></div>
+
+                              <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   // Handle add class logic here
@@ -792,15 +875,22 @@ export default function CalendarPage() {
                                   // You can navigate to add class page or open a modal
                                   // Example: router.push(`/dashboard/manager/class/add?date=${date.toISOString().split('T')[0]}&slot=${slot._id}`);
                                 }}
-                                className='w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100'
+                                className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50'
                               >
-                                <Edit className='h-3 w-3' />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Thêm lớp học</p>
-                            </TooltipContent>
-                          </Tooltip>
+                                <div className='w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                  <Plus className='w-4 h-4 text-slate-600 dark:text-slate-300' />
+                                </div>
+                                <div className='flex flex-col'>
+                                  <span className='font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200'>
+                                    Thêm lớp học
+                                  </span>
+                                  <span className='text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'>
+                                    Tạo lớp học mới
+                                  </span>
+                                </div>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
 
                         {/* Content Area */}
@@ -808,7 +898,12 @@ export default function CalendarPage() {
                           {eventsInCell.length > 0 ? (
                             <div className='w-full max-w-full flex items-center justify-center'>
                               {eventsInCell.map((event, eventIndex) => {
-                                const classroom = event.classroom[0];
+                                const classrooms = Array.isArray(
+                                  event.classroom
+                                )
+                                  ? event.classroom
+                                  : [event.classroom];
+                                const classroom = classrooms[0];
                                 if (!classroom) return null;
                                 return (
                                   <div

@@ -27,6 +27,22 @@ export interface Classroom {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
+  member?: string[]; // Optional member array
+}
+
+export interface Pool {
+  _id: string;
+  title: string;
+  type: string;
+  dimensions: string;
+  depth: string;
+  capacity: number;
+  maintance_status: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
 }
 
 export interface ScheduleEvent {
@@ -41,6 +57,7 @@ export interface ScheduleEvent {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
+  pool?: Pool[]; // Pool information - optional since it might not always be present
 }
 
 export interface ScheduleApiResponse {
@@ -366,4 +383,59 @@ export const convertJsDayToApiDay = (jsDay: number): number => {
   // JS:  0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
   // API: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
   return jsDay === 0 ? 6 : jsDay - 1;
+};
+
+/**
+ * Fetch detailed schedule information by schedule ID
+ * @param scheduleId - The ID of the schedule to fetch details for
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with detailed schedule information
+ */
+export const fetchScheduleById = async (
+  scheduleId: string,
+  tenantId?: string,
+  token?: string
+): Promise<ScheduleEvent[]> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/schedule?id=${scheduleId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch schedule details: ${response.status}`);
+  }
+
+  const result: ScheduleApiResponse = await response.json();
+
+  // The API returns nested arrays, so we need to flatten them
+  const flattenedEvents: ScheduleEvent[] = [];
+  if (result.data && Array.isArray(result.data)) {
+    result.data.forEach((outerArray: any) => {
+      if (Array.isArray(outerArray)) {
+        outerArray.forEach((innerArray: any) => {
+          if (Array.isArray(innerArray)) {
+            flattenedEvents.push(...innerArray);
+          }
+        });
+      }
+    });
+  }
+
+  return flattenedEvents;
 };
