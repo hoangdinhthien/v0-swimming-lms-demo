@@ -1268,7 +1268,7 @@ export default function CalendarPage() {
                                             const classroomId = classroom._id;
                                             if (classroomId) {
                                               router.push(
-                                                `/dashboard/manager/class/${classroomId}`
+                                                `/dashboard/manager/class/${classroomId}?from=calendar`
                                               );
                                             }
                                           }}

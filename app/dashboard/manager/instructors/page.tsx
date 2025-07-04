@@ -537,7 +537,6 @@ export default function InstructorsPage() {
                       <TableHead>Lớp học</TableHead>
                       <TableHead>Đánh giá</TableHead>
                       <TableHead>Trạng thái</TableHead>
-                      <TableHead className='text-right'>Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -566,15 +565,12 @@ export default function InstructorsPage() {
                                   className='h-8 w-8 rounded-full'
                                 />
                                 <div>
-                                  <div
-                                    className='font-medium cursor-pointer hover:text-primary transition-colors'
-                                    onClick={() => {
-                                      setSelectedInstructorId(id);
-                                      setDetailModalOpen(true);
-                                    }}
+                                  <Link
+                                    href={`/dashboard/manager/instructors/${id}`}
+                                    className='font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
                                   >
                                     {name}
-                                  </div>
+                                  </Link>
                                   <div className='text-xs text-muted-foreground'>
                                     {email}
                                   </div>
@@ -621,35 +617,13 @@ export default function InstructorsPage() {
                                   : "Ngừng hoạt động"}
                               </Badge>
                             </TableCell>
-                            <TableCell className='text-right'>
-                              <Link
-                                href={`/dashboard/manager/instructors/${id}`}
-                              >
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                >
-                                  Xem
-                                </Button>
-                              </Link>
-                              <Link
-                                href={`/dashboard/manager/instructors/${id}/schedule`}
-                              >
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                >
-                                  Lịch dạy
-                                </Button>
-                              </Link>
-                            </TableCell>
                           </TableRow>
                         );
                       })
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={7}
+                          colSpan={6}
                           className='text-center py-8 text-muted-foreground'
                         >
                           Không tìm thấy giáo viên phù hợp với bộ lọc hiện tại.

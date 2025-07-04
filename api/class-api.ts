@@ -53,8 +53,48 @@ export interface ClassDetails {
   sessions_remaining: number;
 }
 
+// New interfaces for classes list
+export interface ClassItem {
+  _id: string;
+  name: string;
+  course: Course;
+  member?: string[];
+  instructor?: string | string[];
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
+export interface ClassesResponse {
+  data: ClassItem[];
+  meta_data: {
+    count: number;
+    page: number;
+    limit: number;
+  };
+}
+
 export interface ClassApiResponse {
   data: ClassDetails[][][];
+  message: string;
+  statusCode: number;
+}
+
+export interface ClassesApiResponse {
+  data: [
+    [
+      {
+        data: ClassItem[];
+        meta_data: {
+          count: number;
+          page: number;
+          limit: number;
+        };
+      }
+    ]
+  ];
   message: string;
   statusCode: number;
 }
@@ -116,4 +156,67 @@ export const fetchClassDetails = async (
   }
 
   return classDetails;
+};
+
+/**
+ * Fetch all classes
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @param page - Page number for pagination
+ * @param limit - Number of items per page
+ * @returns Promise with classes data
+ */
+export const fetchClasses = async (
+  tenantId?: string,
+  token?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<ClassesResponse> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/classes?page=${page}&limit=${limit}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch classes: ${response.status}`);
+  }
+
+  const result: ClassesApiResponse = await response.json();
+
+  // The API returns nested arrays, so we need to flatten them
+  let classes: ClassItem[] = [];
+  let meta_data = { count: 0, page: 1, limit: 10 };
+
+  if (result.data && Array.isArray(result.data)) {
+    result.data.forEach((outerArray: any) => {
+      if (Array.isArray(outerArray)) {
+        outerArray.forEach((innerArray: any) => {
+          if (innerArray && innerArray.data && Array.isArray(innerArray.data)) {
+            classes = innerArray.data;
+            meta_data = innerArray.meta_data || meta_data;
+          }
+        });
+      }
+    });
+  }
+
+  return {
+    data: classes,
+    meta_data: meta_data,
+  };
 };

@@ -245,14 +245,13 @@ export default function StudentsPage() {
                   <TableHead>Khoá học đã đăng ký</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Phụ Huynh</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow key='loading-row'>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Đang tải dữ liệu học viên...
@@ -261,7 +260,7 @@ export default function StudentsPage() {
                 ) : error ? (
                   <TableRow key='error-row'>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className='text-center py-8 text-red-500'
                     >
                       {error}
@@ -280,7 +279,12 @@ export default function StudentsPage() {
                               className='h-8 w-8 rounded-full'
                             />
                             <div>
-                              <div className='font-medium'>{user.username}</div>
+                              <Link
+                                href={`/dashboard/manager/students/${user._id}`}
+                                className='font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+                              >
+                                {user.username}
+                              </Link>
                               <div className='text-xs text-muted-foreground'>
                                 {user.email}
                               </div>
@@ -318,25 +322,13 @@ export default function StudentsPage() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className='text-right'>
-                          <Link
-                            href={`/dashboard/manager/students/${user._id}`}
-                          >
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                            >
-                              Xem
-                            </Button>
-                          </Link>
-                        </TableCell>
                       </TableRow>
                     );
                   })
                 ) : (
                   <TableRow key='empty-row'>
                     <TableCell
-                      colSpan={6}
+                      colSpan={5}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Không tìm thấy học viên phù hợp với bộ lọc hiện tại.

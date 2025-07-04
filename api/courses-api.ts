@@ -67,7 +67,7 @@ export async function fetchCourseById({
 }) {
   if (!tenantId || !token) throw new Error("Thiếu thông tin tenant hoặc token");
   const res = await fetch(
-    `${config.API}/v1/workflow-process/public/course?id=${courseId}`,
+    `${config.API}/v1/workflow-process/manager/course?id=${courseId}`,
     {
       headers: {
         "x-tenant-id": tenantId,

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -21,11 +21,36 @@ import { fetchClassDetails, type ClassDetails } from "@/api/class-api";
 
 export default function ClassDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const classroomId = params?.id as string;
+  const from = searchParams.get("from"); // Get the 'from' parameter
 
   const [classData, setClassData] = useState<ClassDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Determine the back link and text based on 'from' parameter
+  const getBackLink = () => {
+    switch (from) {
+      case "classes":
+        return {
+          href: "/dashboard/manager/classes",
+          text: "Quay về danh sách lớp học",
+        };
+      case "calendar":
+        return {
+          href: "/dashboard/manager/calendar",
+          text: "Quay về lịch",
+        };
+      default:
+        return {
+          href: "/dashboard/manager/calendar",
+          text: "Quay về lịch",
+        };
+    }
+  };
+
+  const backLink = getBackLink();
 
   useEffect(() => {
     const loadClassDetails = async () => {
@@ -121,10 +146,10 @@ export default function ClassDetailPage() {
             <p className='text-muted-foreground'>
               Lớp học với ID {classroomId} không tồn tại.
             </p>
-            <Link href='/dashboard/manager/calendar'>
+            <Link href={backLink.href}>
               <Button>
                 <ArrowLeft className='mr-2 h-4 w-4' />
-                Quay về lịch
+                {backLink.text}
               </Button>
             </Link>
           </div>
@@ -153,12 +178,31 @@ export default function ClassDetailPage() {
         {/* Back Button */}
         <div className='flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity'>
           <Link
-            href='/dashboard/manager/calendar'
+            href={backLink.href}
             className='inline-flex items-center text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/10 px-2 py-1 rounded-md'
           >
             <ArrowLeft className='mr-1 h-4 w-4' />
-            Quay về lịch
+            {backLink.text}
           </Link>
+        </div>
+
+        {/* Breadcrumb Navigation */}
+        <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+          <Link
+            href='/dashboard/manager'
+            className='hover:text-foreground transition-colors'
+          >
+            Dashboard
+          </Link>
+          <span>/</span>
+          <Link
+            href={backLink.href}
+            className='hover:text-foreground transition-colors'
+          >
+            {from === "classes" ? "Lớp học" : "Lịch quản lý"}
+          </Link>
+          <span>/</span>
+          <span className='text-foreground font-medium'>{classData.name}</span>
         </div>
 
         {/* Header */}

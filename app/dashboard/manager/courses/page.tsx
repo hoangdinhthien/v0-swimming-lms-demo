@@ -389,14 +389,13 @@ export default function CoursesPage() {
                     <TableHead>Số buổi</TableHead>
                     <TableHead>Thời lượng/buổi</TableHead>
                     <TableHead>Trạng thái</TableHead>
-                    <TableHead className='text-right'>Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={6}
                         className='text-center py-8 text-muted-foreground'
                       >
                         Đang tải dữ liệu...
@@ -405,7 +404,7 @@ export default function CoursesPage() {
                   ) : error ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={6}
                         className='text-center py-8 text-red-500'
                       >
                         {error}
@@ -415,7 +414,12 @@ export default function CoursesPage() {
                     displayedCourses.map((course: any) => (
                       <TableRow key={course._id}>
                         <TableCell className='font-medium'>
-                          {course.title}
+                          <Link
+                            href={`/dashboard/manager/courses/${course._id}`}
+                            className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+                          >
+                            {course.title}
+                          </Link>
                         </TableCell>
                         <TableCell>
                           {Array.isArray(course.category)
@@ -445,24 +449,12 @@ export default function CoursesPage() {
                               : "Đã kết thúc"}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-right space-x-2'>
-                          <Link
-                            href={`/dashboard/manager/courses/${course._id}`}
-                          >
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                            >
-                              Xem chi tiết
-                            </Button>
-                          </Link>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={6}
                         className='text-center py-8 text-muted-foreground'
                       >
                         Không tìm thấy khóa học phù hợp với bộ lọc hiện tại.

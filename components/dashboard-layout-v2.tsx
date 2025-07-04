@@ -160,6 +160,11 @@ export default function DashboardLayout({
         icon: <Award className='h-4 w-4 mr-2' />,
       },
       {
+        name: "Lớp Học",
+        href: "/dashboard/manager/classes",
+        icon: <Users className='h-4 w-4 mr-2' />,
+      },
+      {
         name: "Lịch",
         href: "/dashboard/manager/calendar",
         icon: <Calendar className='h-4 w-4 mr-2' />,
