@@ -404,10 +404,34 @@ export default function CalendarPage() {
   const getEventsForDateAndSlot = (date: Date, slotId: string) => {
     // Compare only the date part (YYYY-MM-DD) to avoid timezone issues
     const targetDateStr = date.toISOString().split("T")[0];
+
+    // For default slot IDs like "slot1", we need to match by slot title
+    const isDefaultSlotId = slotId.startsWith("slot");
+    const slotNumber = isDefaultSlotId
+      ? parseInt(slotId.replace("slot", ""))
+      : null;
+    const slotTitle = slotNumber ? `Slot ${slotNumber}` : null;
+
+    console.log(
+      `[DEBUG] Looking for events on date ${targetDateStr} for slot ${
+        isDefaultSlotId ? `${slotTitle} (${slotId})` : slotId
+      }`
+    );
+
     const filtered = scheduleEvents.filter((event) => {
       const eventDateStr = event.date.split("T")[0];
       const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
-      const hasMatchingSlot = slots.some((slot) => slot && slot._id === slotId);
+
+      // Match either by slot ID or by slot title if it's a default slot
+      const hasMatchingSlot = slots.some((slot) => {
+        if (!slot) return false;
+
+        if (isDefaultSlotId && slotTitle) {
+          return slot.title === slotTitle;
+        } else {
+          return slot._id === slotId;
+        }
+      });
 
       // Debug log for checking event matching
       console.log("[DEBUG] Checking event:", {
@@ -415,7 +439,10 @@ export default function CalendarPage() {
         targetDate: targetDateStr,
         dateMatch: eventDateStr === targetDateStr,
         eventSlotIds: slots.map((s) => s?._id).filter(Boolean),
+        eventSlotTitles: slots.map((s) => s?.title).filter(Boolean),
         targetSlotId: slotId,
+        isDefaultSlot: isDefaultSlotId,
+        slotTitle: slotTitle,
         slotMatch: hasMatchingSlot,
         finalMatch: eventDateStr === targetDateStr && hasMatchingSlot,
       });
@@ -429,7 +456,17 @@ export default function CalendarPage() {
       "slot",
       slotId,
       ":",
-      filtered.length
+      filtered.length,
+      filtered.map((e) => ({
+        id: e._id,
+        date: e.date,
+        slotIds: Array.isArray(e.slot)
+          ? e.slot.map((s) => (s ? s._id : "undefined"))
+          : [(e.slot as any)?._id || "undefined"],
+        slotTitles: Array.isArray(e.slot)
+          ? e.slot.map((s) => (s ? s.title : "undefined"))
+          : [(e.slot as any)?.title || "undefined"],
+      }))
     );
     return filtered;
   };
@@ -688,20 +725,46 @@ export default function CalendarPage() {
       const targetSlot = getAllSlots().find((s) => s._id === slotId);
       if (!targetSlot) return [];
 
-      return scheduleEvents.filter((event) => {
+      const matchedEvents = scheduleEvents.filter((event) => {
         const eventDateStr = event.date.split("T")[0];
-        // Match by time instead of ID since API slot IDs don't match our default IDs
+        // Match by time and/or title since API slot IDs don't match our default IDs
         const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
-        const hasMatchingSlot = slots.some(
-          (slot) =>
-            slot &&
+        const hasMatchingSlot = slots.some((slot) => {
+          if (!slot) return false;
+
+          // Match by exact time values
+          const timeMatch =
             slot.start_time === targetSlot.start_time &&
             slot.start_minute === targetSlot.start_minute &&
             slot.end_time === targetSlot.end_time &&
-            slot.end_minute === targetSlot.end_minute
-        );
+            slot.end_minute === targetSlot.end_minute;
+
+          // Also try to match by slot title (Slot 1, Slot 2, etc.)
+          const titleMatch =
+            targetSlot.title &&
+            slot.title &&
+            slot.title.toLowerCase() === targetSlot.title.toLowerCase();
+
+          return (timeMatch || titleMatch) && eventDateStr === targetDateStr;
+        });
         return eventDateStr === targetDateStr && hasMatchingSlot;
       });
+
+      // Log what was found for debugging
+      if (matchedEvents.length > 0) {
+        console.log(
+          `[DEBUG] Found ${matchedEvents.length} events for cell on ${targetDateStr}, slot ${targetSlot.title}`,
+          matchedEvents.map((e) => ({
+            eventId: e._id,
+            date: e.date,
+            slotInfo: Array.isArray(e.slot) ? e.slot[0] : e.slot,
+            actualSlotId:
+              Array.isArray(e.slot) && e.slot[0] ? e.slot[0]._id : "unknown",
+          }))
+        );
+      }
+
+      return matchedEvents;
     };
 
     const dayNames = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]; // Monday to Sunday
@@ -784,7 +847,7 @@ export default function CalendarPage() {
                   return (
                     <td
                       key={dayIndex}
-                      className={`p-2 border-r border-b h-28 align-top transition-all duration-200 hover:bg-muted/30 ${
+                      className={`p-2 border-r border-b h-40 align-top transition-all duration-200 hover:bg-muted/30 ${
                         isToday ? "bg-muted/20" : "bg-background"
                       }`}
                     >
@@ -865,15 +928,149 @@ export default function CalendarPage() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Handle add class logic here
+                                  // Get formatted date for URL
+                                  const formattedDate = date
+                                    .toISOString()
+                                    .split("T")[0];
+
+                                  // Find the real slot ID from schedule events for this date and slot
+                                  // We need to match by slot title since our default slot IDs don't match the API
+                                  const targetSlotTitle = slot.title; // e.g., "Slot 1"
+
                                   console.log(
-                                    "Add class for date:",
-                                    date.toISOString().split("T")[0],
-                                    "slot:",
-                                    slot.title
+                                    `Looking for slot "${targetSlotTitle}" on date ${formattedDate}`
                                   );
-                                  // You can navigate to add class page or open a modal
-                                  // Example: router.push(`/dashboard/manager/class/add?date=${date.toISOString().split('T')[0]}&slot=${slot._id}`);
+                                  console.log(
+                                    `Available schedule events: ${scheduleEvents.length}`
+                                  );
+
+                                  // Find events for this specific date
+                                  const eventsForDate = scheduleEvents.filter(
+                                    (event) => {
+                                      const eventDateStr =
+                                        event.date.split("T")[0];
+                                      return eventDateStr === formattedDate;
+                                    }
+                                  );
+
+                                  console.log(
+                                    `Found ${eventsForDate.length} events for date ${formattedDate}`
+                                  );
+
+                                  // Find the event that matches our slot title
+                                  const matchingEvent = eventsForDate.find(
+                                    (event) => {
+                                      const slots = Array.isArray(event.slot)
+                                        ? event.slot
+                                        : [event.slot];
+                                      return slots.some(
+                                        (eventSlot) =>
+                                          eventSlot &&
+                                          eventSlot.title === targetSlotTitle
+                                      );
+                                    }
+                                  );
+
+                                  let actualSlotId = slot._id; // Default fallback
+
+                                  if (matchingEvent) {
+                                    // Get the actual slot ID from the matching event
+                                    const slots = Array.isArray(
+                                      matchingEvent.slot
+                                    )
+                                      ? matchingEvent.slot
+                                      : [matchingEvent.slot];
+                                    const matchingSlot = slots.find(
+                                      (eventSlot) =>
+                                        eventSlot &&
+                                        eventSlot.title === targetSlotTitle
+                                    );
+
+                                    if (matchingSlot && matchingSlot._id) {
+                                      actualSlotId = matchingSlot._id;
+                                      console.log(
+                                        `✅ Found real slot ID: ${actualSlotId} for slot "${targetSlotTitle}"`
+                                      );
+                                    } else {
+                                      console.warn(
+                                        `⚠️ Matching event found but no valid slot ID for "${targetSlotTitle}"`
+                                      );
+                                    }
+                                  } else {
+                                    console.warn(
+                                      `⚠️ No matching event found for slot "${targetSlotTitle}" on ${formattedDate}`
+                                    );
+                                    console.log(
+                                      "Available events:",
+                                      eventsForDate.map((e) => ({
+                                        id: e._id,
+                                        date: e.date,
+                                        slots: Array.isArray(e.slot)
+                                          ? e.slot.map((s) =>
+                                              s ? s.title : "undefined"
+                                            )
+                                          : [
+                                              (e.slot as any)?.title ||
+                                                "undefined",
+                                            ],
+                                      }))
+                                    );
+
+                                    // Try to find a slot ID from ANY event on ANY date that matches this slot title
+                                    // This is a fallback when there's no event for this specific date/slot combination
+                                    const anyEventWithMatchingSlot =
+                                      scheduleEvents.find((event) => {
+                                        const slots = Array.isArray(event.slot)
+                                          ? event.slot
+                                          : [event.slot];
+                                        return slots.some(
+                                          (eventSlot) =>
+                                            eventSlot &&
+                                            eventSlot.title === targetSlotTitle
+                                        );
+                                      });
+
+                                    if (anyEventWithMatchingSlot) {
+                                      const slots = Array.isArray(
+                                        anyEventWithMatchingSlot.slot
+                                      )
+                                        ? anyEventWithMatchingSlot.slot
+                                        : [anyEventWithMatchingSlot.slot];
+                                      const matchingSlot = slots.find(
+                                        (eventSlot) =>
+                                          eventSlot &&
+                                          eventSlot.title === targetSlotTitle
+                                      );
+
+                                      if (matchingSlot && matchingSlot._id) {
+                                        actualSlotId = matchingSlot._id;
+                                        console.log(
+                                          `✅ Found slot ID from other date: ${actualSlotId} for slot "${targetSlotTitle}"`
+                                        );
+                                      }
+                                    } else {
+                                      console.error(
+                                        `❌ No slot ID found anywhere for "${targetSlotTitle}". The add-class API call may fail.`
+                                      );
+                                    }
+                                  }
+
+                                  // Navigate to the class selection page with the actual slot ID
+                                  router.push(
+                                    `/dashboard/manager/schedule/add-class?date=${formattedDate}&slotId=${actualSlotId}&slotKey=${
+                                      slot._id
+                                    }&slotTitle=${encodeURIComponent(
+                                      slot.title
+                                    )}&time=${encodeURIComponent(
+                                      `${formatSlotTime(
+                                        slot.start_time,
+                                        slot.start_minute
+                                      )} - ${formatSlotTime(
+                                        slot.end_time,
+                                        slot.end_minute
+                                      )}`
+                                    )}`
+                                  );
                                 }}
                                 className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50'
                               >
@@ -894,9 +1091,9 @@ export default function CalendarPage() {
                         </div>
 
                         {/* Content Area */}
-                        <div className='flex-1 flex items-center justify-center ml-6 mr-8'>
+                        <div className='flex-1 flex items-start justify-center ml-4 mr-4 mt-6'>
                           {eventsInCell.length > 0 ? (
-                            <div className='w-full max-w-full flex items-center justify-center'>
+                            <div className='w-full max-w-full flex flex-col items-center justify-start gap-2'>
                               {eventsInCell.map((event, eventIndex) => {
                                 const classrooms = Array.isArray(
                                   event.classroom
@@ -908,11 +1105,11 @@ export default function CalendarPage() {
                                 return (
                                   <div
                                     key={eventIndex}
-                                    className='w-full max-w-full'
+                                    className='w-full'
                                   >
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <div className='group/trigger bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:hover:from-slate-700 dark:hover:via-slate-600 dark:hover:to-slate-700 text-blue-700 hover:text-blue-800 dark:text-gray-200 dark:hover:text-gray-100 px-3 py-2.5 rounded-xl text-center border border-blue-200/60 hover:border-blue-300/80 dark:border-slate-600/60 dark:hover:border-slate-500/80 shadow-sm hover:shadow-lg dark:shadow-slate-900/20 dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-105 w-full cursor-pointer backdrop-blur-sm relative overflow-hidden'>
+                                        <div className='group/trigger bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:hover:from-slate-700 dark:hover:via-slate-600 dark:hover:to-slate-700 text-blue-700 hover:text-blue-800 dark:text-gray-200 dark:hover:text-gray-100 px-2 py-1.5 rounded-xl text-center border border-blue-200/60 hover:border-blue-300/80 dark:border-slate-600/60 dark:hover:border-slate-500/80 shadow-sm hover:shadow-lg dark:shadow-slate-900/20 dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-105 w-full cursor-pointer backdrop-blur-sm relative overflow-hidden'>
                                           <div className='font-semibold text-xs truncate relative z-10'>
                                             {classroom.name}
                                           </div>
@@ -984,7 +1181,7 @@ export default function CalendarPage() {
                               })}
                             </div>
                           ) : (
-                            <div className='text-center text-muted-foreground w-full flex flex-col items-center justify-center'>
+                            <div className='text-center text-muted-foreground w-full h-full flex flex-col items-center justify-center'>
                               <div className='w-8 h-8 mx-auto mb-1 rounded-full bg-muted/50 flex items-center justify-center'>
                                 <span className='text-xs font-medium'>—</span>
                               </div>

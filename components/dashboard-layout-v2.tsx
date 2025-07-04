@@ -160,6 +160,11 @@ export default function DashboardLayout({
         icon: <Award className='h-4 w-4 mr-2' />,
       },
       {
+        name: "Lịch",
+        href: "/dashboard/manager/calendar",
+        icon: <Calendar className='h-4 w-4 mr-2' />,
+      },
+      {
         name: "Tin nhắn",
         href: "/dashboard/manager/messages",
         icon: <MessageSquare className='h-4 w-4 mr-2' />,
@@ -173,11 +178,6 @@ export default function DashboardLayout({
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
         icon: <CreditCard className='h-4 w-4 mr-2' />,
-      },
-      {
-        name: "Lịch",
-        href: "/dashboard/manager/calendar",
-        icon: <Calendar className='h-4 w-4 mr-2' />,
       },
       {
         name: "Khuyến Mãi",
