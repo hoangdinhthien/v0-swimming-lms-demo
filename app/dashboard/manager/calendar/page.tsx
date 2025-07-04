@@ -41,10 +41,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   fetchMonthSchedule,
   fetchWeekSchedule,
   fetchDateRangeSchedule,
   getWeeksInYear,
+  deleteScheduleEvent,
   type ScheduleEvent,
   convertApiDayToJsDay,
   convertJsDayToApiDay,
@@ -60,6 +72,14 @@ export default function CalendarPage() {
   const [viewMode, setViewMode] = useState<"month" | "week">("week");
   const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [availableWeeks, setAvailableWeeks] = useState<any[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<{
+    scheduleId: string;
+    className: string;
+    date: string;
+    slotTitle: string;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Initialize with current week on component mount
   useEffect(() => {
@@ -227,6 +247,64 @@ export default function CalendarPage() {
       } else {
         setSelectedWeek(availableWeeks[0].value);
       }
+    }
+  };
+
+  // Handle delete schedule event
+  const handleDeleteScheduleEvent = async () => {
+    if (!scheduleToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      console.log("🗑️ Deleting schedule event:", scheduleToDelete.scheduleId);
+
+      await deleteScheduleEvent(scheduleToDelete.scheduleId);
+
+      console.log("✅ Schedule event deleted successfully");
+
+      // Refresh the calendar data
+      setLoading(true);
+      const refreshData = async () => {
+        try {
+          let events: ScheduleEvent[] = [];
+
+          if (viewMode === "month") {
+            events = await fetchMonthSchedule(currentDate);
+          } else if (viewMode === "week" && selectedWeek) {
+            const weekObj = availableWeeks.find(
+              (w) => w.value === selectedWeek
+            );
+            if (weekObj && weekObj.start && weekObj.end) {
+              events = await fetchDateRangeSchedule(weekObj.start, weekObj.end);
+            }
+          }
+
+          setScheduleEvents(events);
+          console.log("📅 Calendar data refreshed after deletion");
+        } catch (err) {
+          console.error("Error refreshing calendar data:", err);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to refresh calendar data"
+          );
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      await refreshData();
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setScheduleToDelete(null);
+    } catch (err) {
+      console.error("❌ Error deleting schedule event:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to delete schedule event"
+      );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -557,6 +635,70 @@ export default function CalendarPage() {
       const eventDate = new Date(event.date);
       return isSameDay(eventDate, date);
     });
+  };
+
+  // Function to handle remove class action
+  const handleRemoveClass = async (
+    scheduleId: string,
+    className: string,
+    date: string,
+    slotTitle: string
+  ) => {
+    setScheduleToDelete({
+      scheduleId,
+      className,
+      date,
+      slotTitle,
+    });
+    setDeleteDialogOpen(true);
+  };
+
+  // Function to confirm remove class
+  const confirmRemoveClass = async () => {
+    if (!scheduleToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteScheduleEvent(scheduleToDelete.scheduleId);
+
+      // Refresh calendar data after successful deletion
+      const loadScheduleData = async () => {
+        setLoading(true);
+        try {
+          let events: ScheduleEvent[];
+          if (viewMode === "week" && selectedWeek) {
+            const weekObj = availableWeeks.find(
+              (w) => w.value === selectedWeek
+            );
+            if (weekObj && weekObj.start && weekObj.end) {
+              events = await fetchDateRangeSchedule(weekObj.start, weekObj.end);
+            } else {
+              events = [];
+            }
+          } else {
+            events = await fetchMonthSchedule(currentDate);
+          }
+          setScheduleEvents(events);
+        } catch (err) {
+          console.error("Error refreshing schedule:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      await loadScheduleData();
+
+      console.log(
+        `✅ Successfully removed class "${scheduleToDelete.className}" from ${scheduleToDelete.date} at ${scheduleToDelete.slotTitle}`
+      );
+    } catch (err) {
+      console.error("Error removing class:", err);
+      setError(err instanceof Error ? err.message : "Failed to remove class");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setScheduleToDelete(null);
+    }
   };
 
   // Transform schedule event to display format
@@ -1151,14 +1293,26 @@ export default function CalendarPage() {
                                           onClick={() => {
                                             // Handle remove class logic here
                                             console.log(
-                                              "Remove class:",
+                                              "Preparing to remove class:",
                                               classroom._id,
                                               "from date:",
                                               date.toISOString().split("T")[0],
                                               "slot:",
-                                              slot.title
+                                              slot.title,
+                                              "schedule event ID:",
+                                              event._id
                                             );
-                                            // You can add remove class API call here
+
+                                            // Set up the delete confirmation dialog
+                                            setScheduleToDelete({
+                                              scheduleId: event._id,
+                                              className: classroom.name,
+                                              date: date.toLocaleDateString(
+                                                "vi-VN"
+                                              ),
+                                              slotTitle: slot.title,
+                                            });
+                                            setDeleteDialogOpen(true);
                                           }}
                                           className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50'
                                         >
@@ -1700,6 +1854,76 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent className='bg-background border-2 border-destructive/20 shadow-2xl'>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='text-xl font-bold text-destructive flex items-center gap-2'>
+              <Trash2 className='h-5 w-5' />
+              Xác nhận gỡ lớp học
+            </AlertDialogTitle>
+            <AlertDialogDescription className='text-muted-foreground'>
+              Bạn có chắc chắn muốn gỡ lớp học này khỏi lịch không? Hành động
+              này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {scheduleToDelete && (
+            <div className='bg-muted/50 p-4 rounded-lg border space-y-2'>
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-foreground'>Lớp học:</span>
+                <span className='text-muted-foreground'>
+                  {scheduleToDelete.className}
+                </span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-foreground'>Ngày:</span>
+                <span className='text-muted-foreground'>
+                  {scheduleToDelete.date}
+                </span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <span className='font-semibold text-foreground'>
+                  Khung giờ:
+                </span>
+                <span className='text-muted-foreground'>
+                  {scheduleToDelete.slotTitle}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className='bg-muted hover:bg-muted/80'
+            >
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteScheduleEvent}
+              disabled={isDeleting}
+              className='bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Đang xóa...
+                </>
+              ) : (
+                <>
+                  <Trash2 className='mr-2 h-4 w-4' />
+                  Gỡ lớp học
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

@@ -439,3 +439,37 @@ export const fetchScheduleById = async (
 
   return flattenedEvents;
 };
+
+/**
+ * Delete a schedule event by ID
+ * @param scheduleId - The ID of the schedule event to delete
+ * @returns Promise with the deletion result
+ */
+export const deleteScheduleEvent = async (
+  scheduleId: string
+): Promise<{ message: string; statusCode: number }> => {
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/schedule?id=${scheduleId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete schedule event: ${response.status}`);
+  }
+
+  const result = await response.json();
+  return result;
+};
