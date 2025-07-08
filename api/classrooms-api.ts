@@ -127,6 +127,19 @@ export async function addClassToSchedule(
     throw new Error("Missing authentication or tenant information");
   }
 
+  // Client-side date validation: check if the date is in the past
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+  const requestDate = new Date(request.date);
+  requestDate.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+  if (requestDate < today) {
+    throw new Error(
+      "Không thể thêm lớp học vào ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi."
+    );
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class/schedule`,
     {
@@ -141,10 +154,54 @@ export async function addClassToSchedule(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Failed to add class to schedule: ${response.status}, ${errorText}`
-    );
+    let errorMessage = `Failed to add class to schedule: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+
+      console.log("🚨 Backend error response:", errorData);
+
+      // Handle specific backend validation errors
+      if (response.status === 400 && errorData.message) {
+        if (
+          errorData.message.includes("Create date validate") ||
+          errorData.message.includes("Validates failed: [Create date validate]")
+        ) {
+          errorMessage =
+            "Không thể thêm lớp học vào ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi.";
+        } else if (
+          errorData.message.includes("slot") ||
+          errorData.message.includes("time")
+        ) {
+          errorMessage =
+            "Khung giờ đã được sử dụng hoặc không hợp lệ. Vui lòng chọn khung giờ khác.";
+        } else if (
+          errorData.message.includes("classroom") ||
+          errorData.message.includes("class")
+        ) {
+          errorMessage =
+            "Lớp học không hợp lệ hoặc đã được lên lịch. Vui lòng chọn lớp học khác.";
+        } else if (errorData.message.includes("pool")) {
+          errorMessage =
+            "Hồ bơi không hợp lệ hoặc không khả dụng. Vui lòng chọn hồ bơi khác.";
+        } else {
+          errorMessage = `Lỗi xác thực: ${errorData.message}`;
+        }
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      // If JSON parsing fails, fall back to text
+      try {
+        const errorText = await response.text();
+        console.log("🚨 Backend error text:", errorText);
+        errorMessage = `Failed to add class to schedule: ${response.status}, ${errorText}`;
+      } catch (textError) {
+        errorMessage = `Failed to add class to schedule: ${response.status}`;
+      }
+    }
+
+    throw new Error(errorMessage);
   }
 
   return response.json();

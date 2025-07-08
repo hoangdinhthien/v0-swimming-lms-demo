@@ -61,12 +61,14 @@ import {
   convertApiDayToJsDay,
   convertJsDayToApiDay,
 } from "@/api/schedule-api";
+import { fetchAllSlots, type SlotDetail } from "@/api/slot-api";
 
 export default function CalendarPage() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [allSlots, setAllSlots] = useState<SlotDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week">("week");
@@ -110,6 +112,15 @@ export default function CalendarPage() {
       setError(null);
 
       try {
+        // Fetch all slots first
+        const slots = await fetchAllSlots();
+        setAllSlots(slots);
+
+        console.log(
+          "🎯 All slots fetched:",
+          slots.map((s) => ({ id: s._id, title: s.title }))
+        );
+
         let events: ScheduleEvent[];
         if (viewMode === "week" && selectedWeek) {
           // Use the selected week object for correct start/end
@@ -349,10 +360,27 @@ export default function CalendarPage() {
     return [];
   }; // Get all unique slots from schedule events, or return default slots if no data
   const getAllSlots = () => {
-    // Define all 11 default slots that should always be displayed
+    // Use the real slot data fetched from API
+    if (allSlots.length > 0) {
+      console.log(
+        "🎯 Using real slots from API:",
+        allSlots.map((s) => ({ id: s._id, title: s.title }))
+      );
+      return allSlots
+        .map((slot) => ({
+          ...slot,
+          sortOrder: slot.start_time * 60 + slot.start_minute, // For sorting by time
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+
+    console.log("⚠️ Falling back to default slots because allSlots is empty");
+
+    // Fallback to default slots ONLY if API data is not available yet
+    // These use fake IDs and should be replaced with real IDs from the API
     const defaultSlots = [
       {
-        _id: "slot1",
+        _id: "681f0b4c0e90714dae7a5d2d", // Use real slot ID from API
         title: "Slot 1",
         start_time: 7,
         start_minute: 0,
@@ -362,7 +390,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot2",
+        _id: "681f0b6f0e90714dae7a5d42", // Use real slot ID from API
         title: "Slot 2",
         start_time: 8,
         start_minute: 0,
@@ -372,7 +400,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot3",
+        _id: "681f0cfb0e90714dae7a5db0", // Use real slot ID from API
         title: "Slot 3",
         start_time: 9,
         start_minute: 0,
@@ -382,7 +410,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot4",
+        _id: "681f0d110e90714dae7a5dc5", // Use real slot ID from API
         title: "Slot 4",
         start_time: 10,
         start_minute: 0,
@@ -392,7 +420,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot5",
+        _id: "681f0d450e90714dae7a5dda", // Use real slot ID from API
         title: "Slot 5",
         start_time: 11,
         start_minute: 0,
@@ -402,7 +430,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot6",
+        _id: "681f0d630e90714dae7a5def", // Use real slot ID from API
         title: "Slot 6",
         start_time: 13,
         start_minute: 0,
@@ -412,7 +440,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot7",
+        _id: "681f0d7c0e90714dae7a5e1e", // Use real slot ID from API
         title: "Slot 7",
         start_time: 14,
         start_minute: 0,
@@ -422,7 +450,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot8",
+        _id: "681f0de10e90714dae7a5e7c", // Use real slot ID from API
         title: "Slot 8",
         start_time: 15,
         start_minute: 0,
@@ -432,7 +460,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot9",
+        _id: "681f0dfb0e90714dae7a5e91", // Use real slot ID from API
         title: "Slot 9",
         start_time: 16,
         start_minute: 0,
@@ -442,7 +470,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot10",
+        _id: "681f0ef50e90714dae7a5ece", // Use real slot ID from API
         title: "Slot 10",
         start_time: 17,
         start_minute: 0,
@@ -452,7 +480,7 @@ export default function CalendarPage() {
         duration: "45 phút",
       },
       {
-        _id: "slot11",
+        _id: "681f0f080e90714dae7a5ee3", // Use real slot ID from API
         title: "Slot 11",
         start_time: 18,
         start_minute: 0,
@@ -463,20 +491,6 @@ export default function CalendarPage() {
       },
     ];
 
-    // Create a map of actual slots from schedule events
-    const actualSlotsMap = new Map();
-    scheduleEvents.forEach((event) => {
-      const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
-      slots.forEach((slot) => {
-        if (slot && !actualSlotsMap.has(slot._id)) {
-          actualSlotsMap.set(slot._id, {
-            ...slot,
-            sortOrder: slot.start_time * 60 + slot.start_minute, // For sorting by time
-          });
-        }
-      });
-    }); // Just return the default slots - since we always want to show all 11 slots
-    // The actual slot data from API will be used when rendering events, not for defining the grid
     return defaultSlots.sort((a, b) => a.sortOrder - b.sortOrder);
   }; // Get events for a specific date and slot
   const getEventsForDateAndSlot = (date: Date, slotId: string) => {
@@ -1068,100 +1082,98 @@ export default function CalendarPage() {
                               <div className='h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent my-2'></div>
 
                               <DropdownMenuItem
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                   e.stopPropagation();
+
+                                  // Check if the date is in the past
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const selectedDate = new Date(date);
+                                  selectedDate.setHours(0, 0, 0, 0);
+
+                                  if (selectedDate < today) {
+                                    setError(
+                                      "Không thể thêm lớp học vào ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi."
+                                    );
+                                    return;
+                                  }
+
+                                  // Ensure slots are loaded before proceeding
+                                  if (allSlots.length === 0) {
+                                    console.log(
+                                      "⏳ Slots not loaded yet, fetching them..."
+                                    );
+                                    try {
+                                      const slots = await fetchAllSlots();
+                                      setAllSlots(slots);
+                                      console.log(
+                                        "✅ Slots loaded successfully:",
+                                        slots.map((s) => ({
+                                          id: s._id,
+                                          title: s.title,
+                                        }))
+                                      );
+                                    } catch (error) {
+                                      console.error(
+                                        "❌ Failed to fetch slots:",
+                                        error
+                                      );
+                                      // Continue with fallback values
+                                    }
+                                  }
+
                                   // Get formatted date for URL
                                   const formattedDate = date
                                     .toISOString()
                                     .split("T")[0];
 
-                                  // Find the real slot ID from schedule events for this date and slot
-                                  // We need to match by slot title since our default slot IDs don't match the API
+                                  // Find the real slot ID from our fetched slots data
                                   const targetSlotTitle = slot.title; // e.g., "Slot 1"
 
                                   console.log(
-                                    `Looking for slot "${targetSlotTitle}" on date ${formattedDate}`
+                                    `🔍 Looking for slot "${targetSlotTitle}" on date ${formattedDate}`
                                   );
                                   console.log(
-                                    `Available schedule events: ${scheduleEvents.length}`
-                                  );
-
-                                  // Find events for this specific date
-                                  const eventsForDate = scheduleEvents.filter(
-                                    (event) => {
-                                      const eventDateStr =
-                                        event.date.split("T")[0];
-                                      return eventDateStr === formattedDate;
-                                    }
-                                  );
-
-                                  console.log(
-                                    `Found ${eventsForDate.length} events for date ${formattedDate}`
-                                  );
-
-                                  // Find the event that matches our slot title
-                                  const matchingEvent = eventsForDate.find(
-                                    (event) => {
-                                      const slots = Array.isArray(event.slot)
-                                        ? event.slot
-                                        : [event.slot];
-                                      return slots.some(
-                                        (eventSlot) =>
-                                          eventSlot &&
-                                          eventSlot.title === targetSlotTitle
-                                      );
-                                    }
+                                    `📊 Available allSlots: ${allSlots.length}`,
+                                    allSlots.map((s) => ({
+                                      id: s._id,
+                                      title: s.title,
+                                    }))
                                   );
 
                                   let actualSlotId = slot._id; // Default fallback
 
-                                  if (matchingEvent) {
-                                    // Get the actual slot ID from the matching event
-                                    const slots = Array.isArray(
-                                      matchingEvent.slot
-                                    )
-                                      ? matchingEvent.slot
-                                      : [matchingEvent.slot];
-                                    const matchingSlot = slots.find(
-                                      (eventSlot) =>
-                                        eventSlot &&
-                                        eventSlot.title === targetSlotTitle
-                                    );
+                                  // First priority: find the slot from our fetched slots data (this should always work)
+                                  const realSlot = allSlots.find(
+                                    (s) => s.title === targetSlotTitle
+                                  );
 
-                                    if (matchingSlot && matchingSlot._id) {
-                                      actualSlotId = matchingSlot._id;
-                                      console.log(
-                                        `✅ Found real slot ID: ${actualSlotId} for slot "${targetSlotTitle}"`
-                                      );
-                                    } else {
-                                      console.warn(
-                                        `⚠️ Matching event found but no valid slot ID for "${targetSlotTitle}"`
-                                      );
-                                    }
-                                  } else {
-                                    console.warn(
-                                      `⚠️ No matching event found for slot "${targetSlotTitle}" on ${formattedDate}`
-                                    );
+                                  if (realSlot && realSlot._id) {
+                                    actualSlotId = realSlot._id;
                                     console.log(
-                                      "Available events:",
-                                      eventsForDate.map((e) => ({
-                                        id: e._id,
-                                        date: e.date,
-                                        slots: Array.isArray(e.slot)
-                                          ? e.slot.map((s) =>
-                                              s ? s.title : "undefined"
-                                            )
-                                          : [
-                                              (e.slot as any)?.title ||
-                                                "undefined",
-                                            ],
+                                      `✅ Found real slot ID from API: ${actualSlotId} for slot "${targetSlotTitle}"`
+                                    );
+                                  } else {
+                                    // This should not happen if fetchAllSlots is working correctly
+                                    console.error(
+                                      `❌ No slot found in allSlots for "${targetSlotTitle}". Available slots:`,
+                                      allSlots.map((s) => ({
+                                        id: s._id,
+                                        title: s.title,
                                       }))
                                     );
 
-                                    // Try to find a slot ID from ANY event on ANY date that matches this slot title
-                                    // This is a fallback when there's no event for this specific date/slot combination
-                                    const anyEventWithMatchingSlot =
-                                      scheduleEvents.find((event) => {
+                                    // Fallback: try to find from schedule events
+                                    const eventsForDate = scheduleEvents.filter(
+                                      (event) => {
+                                        const eventDateStr =
+                                          event.date.split("T")[0];
+                                        return eventDateStr === formattedDate;
+                                      }
+                                    );
+
+                                    const matchingEvent = eventsForDate.find(
+                                      (event) => {
                                         const slots = Array.isArray(event.slot)
                                           ? event.slot
                                           : [event.slot];
@@ -1170,14 +1182,15 @@ export default function CalendarPage() {
                                             eventSlot &&
                                             eventSlot.title === targetSlotTitle
                                         );
-                                      });
+                                      }
+                                    );
 
-                                    if (anyEventWithMatchingSlot) {
+                                    if (matchingEvent) {
                                       const slots = Array.isArray(
-                                        anyEventWithMatchingSlot.slot
+                                        matchingEvent.slot
                                       )
-                                        ? anyEventWithMatchingSlot.slot
-                                        : [anyEventWithMatchingSlot.slot];
+                                        ? matchingEvent.slot
+                                        : [matchingEvent.slot];
                                       const matchingSlot = slots.find(
                                         (eventSlot) =>
                                           eventSlot &&
@@ -1187,13 +1200,9 @@ export default function CalendarPage() {
                                       if (matchingSlot && matchingSlot._id) {
                                         actualSlotId = matchingSlot._id;
                                         console.log(
-                                          `✅ Found slot ID from other date: ${actualSlotId} for slot "${targetSlotTitle}"`
+                                          `✅ Found slot ID from event: ${actualSlotId} for slot "${targetSlotTitle}"`
                                         );
                                       }
-                                    } else {
-                                      console.error(
-                                        `❌ No slot ID found anywhere for "${targetSlotTitle}". The add-class API call may fail.`
-                                      );
                                     }
                                   }
 
@@ -1214,17 +1223,95 @@ export default function CalendarPage() {
                                     )}`
                                   );
                                 }}
-                                className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50'
+                                disabled={(() => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const selectedDate = new Date(date);
+                                  selectedDate.setHours(0, 0, 0, 0);
+                                  return selectedDate < today;
+                                })()}
+                                className={`cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50 ${(() => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  const selectedDate = new Date(date);
+                                  selectedDate.setHours(0, 0, 0, 0);
+                                  const isPast = selectedDate < today;
+                                  return isPast
+                                    ? "opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-900"
+                                    : "hover:bg-slate-100 dark:hover:bg-slate-800/50";
+                                })()}`}
                               >
-                                <div className='w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
-                                  <Plus className='w-4 h-4 text-slate-600 dark:text-slate-300' />
+                                <div
+                                  className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm transition-all duration-300 ${(() => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const selectedDate = new Date(date);
+                                    selectedDate.setHours(0, 0, 0, 0);
+                                    const isPast = selectedDate < today;
+                                    return isPast
+                                      ? "bg-slate-100 dark:bg-slate-800"
+                                      : "bg-slate-200 dark:bg-slate-700 group-hover:shadow-md group-hover:scale-110";
+                                  })()}`}
+                                >
+                                  <Plus
+                                    className={`w-4 h-4 ${(() => {
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const selectedDate = new Date(date);
+                                      selectedDate.setHours(0, 0, 0, 0);
+                                      const isPast = selectedDate < today;
+                                      return isPast
+                                        ? "text-slate-400 dark:text-slate-600"
+                                        : "text-slate-600 dark:text-slate-300";
+                                    })()}`}
+                                  />
                                 </div>
                                 <div className='flex flex-col'>
-                                  <span className='font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200'>
-                                    Thêm lớp học
+                                  <span
+                                    className={`font-semibold transition-colors duration-200 ${(() => {
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const selectedDate = new Date(date);
+                                      selectedDate.setHours(0, 0, 0, 0);
+                                      const isPast = selectedDate < today;
+                                      return isPast
+                                        ? "text-slate-400 dark:text-slate-600"
+                                        : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100";
+                                    })()}`}
+                                  >
+                                    {(() => {
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const selectedDate = new Date(date);
+                                      selectedDate.setHours(0, 0, 0, 0);
+                                      const isPast = selectedDate < today;
+                                      return isPast
+                                        ? "Không thể thêm"
+                                        : "Thêm lớp học";
+                                    })()}
                                   </span>
-                                  <span className='text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'>
-                                    Tạo lớp học mới
+                                  <span
+                                    className={`text-xs transition-colors ${(() => {
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const selectedDate = new Date(date);
+                                      selectedDate.setHours(0, 0, 0, 0);
+                                      const isPast = selectedDate < today;
+                                      return isPast
+                                        ? "text-slate-400 dark:text-slate-600"
+                                        : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300";
+                                    })()}`}
+                                  >
+                                    {(() => {
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
+                                      const selectedDate = new Date(date);
+                                      selectedDate.setHours(0, 0, 0, 0);
+                                      const isPast = selectedDate < today;
+                                      return isPast
+                                        ? "Ngày đã qua"
+                                        : "Tạo lớp học mới";
+                                    })()}
                                   </span>
                                 </div>
                               </DropdownMenuItem>
