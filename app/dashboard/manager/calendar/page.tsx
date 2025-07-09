@@ -1212,11 +1212,11 @@ export default function CalendarPage() {
                                     }
                                   }
 
-                                  // Navigate to the class selection page with the actual slot ID
+                                  // Navigate to the slot-details page with add-class mode
                                   router.push(
-                                    `/dashboard/manager/schedule/add-class?date=${formattedDate}&slotId=${actualSlotId}&slotKey=${
+                                    `/dashboard/manager/schedule/slot-details?slotId=${actualSlotId}&slotKey=${
                                       slot._id
-                                    }&slotTitle=${encodeURIComponent(
+                                    }&date=${formattedDate}&slotTitle=${encodeURIComponent(
                                       slot.title
                                     )}&time=${encodeURIComponent(
                                       `${formatSlotTime(
@@ -1226,7 +1226,7 @@ export default function CalendarPage() {
                                         slot.end_time,
                                         slot.end_minute
                                       )}`
-                                    )}`
+                                    )}&mode=add-class`
                                   );
                                 }}
                                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${

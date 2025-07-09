@@ -60,14 +60,6 @@ import {
 } from "@/components/ui/tooltip";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 
 export default function AddClassToSchedulePage() {
   const router = useRouter();
@@ -284,45 +276,6 @@ export default function AddClassToSchedulePage() {
   return (
     <div className='min-h-screen'>
       <div className='container mx-auto py-8 space-y-8'>
-        {/* Breadcrumb Navigation */}
-        <div className='flex items-center justify-between'>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  href='/dashboard'
-                  className='text-muted-foreground hover:text-foreground transition-colors'
-                >
-                  Dashboard
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className='text-muted-foreground/50' />
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  href='/dashboard/manager'
-                  className='text-muted-foreground hover:text-foreground transition-colors'
-                >
-                  Quản lý
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className='text-muted-foreground/50' />
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  href='/dashboard/manager/calendar'
-                  className='text-muted-foreground hover:text-foreground transition-colors'
-                >
-                  Lịch học
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className='text-muted-foreground/50' />
-              <BreadcrumbItem>
-                <BreadcrumbPage className='text-foreground font-medium'>
-                  Thêm lớp học
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
         {/* Header section */}
         <div className='flex flex-col md:flex-row md:items-center justify-between gap-6'>
           <div className='space-y-4'>
