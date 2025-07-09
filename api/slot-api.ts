@@ -163,3 +163,65 @@ export const getSlotTimeRange = (slotDetail: SlotDetail): string => {
   const endTime = formatTime(slotDetail.end_time, slotDetail.end_minute);
   return `${startTime} - ${endTime}`;
 };
+
+/**
+ * Fetch all slots from the API
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with array of all slots
+ */
+export const fetchAllSlots = async (
+  tenantId?: string,
+  token?: string
+): Promise<SlotDetail[]> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(`${config.API}/v1/workflow-process/slots`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "x-tenant-id": finalTenantId,
+      Authorization: `Bearer ${finalToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch slots: ${response.status}`);
+  }
+
+  const result: SlotDetailApiResponse = await response.json();
+
+  console.log("📊 Raw API response for fetchAllSlots:", result);
+
+  // The API returns nested arrays, so we need to flatten them
+  let slots: SlotDetail[] = [];
+  if (result.data && Array.isArray(result.data)) {
+    result.data.forEach((outerArray: any) => {
+      if (Array.isArray(outerArray)) {
+        outerArray.forEach((innerArray: any) => {
+          if (Array.isArray(innerArray)) {
+            slots = slots.concat(innerArray);
+          }
+        });
+      }
+    });
+  }
+
+  console.log(
+    "📊 Parsed slots from API:",
+    slots.map((s) => ({ id: s._id, title: s.title }))
+  );
+
+  // Sort slots by start time
+  return slots.sort((a, b) => {
+    const timeA = a.start_time * 60 + a.start_minute;
+    const timeB = b.start_time * 60 + b.start_minute;
+    return timeA - timeB;
+  });
+};

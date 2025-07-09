@@ -54,6 +54,7 @@ import {
   getStatusClass,
   getOrderUserName,
   getOrderUserContact,
+  getOrderTypeDisplayName,
   updateOrderStatus,
   Order,
 } from "../../../../api/orders-api";
@@ -559,15 +560,7 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell>{formatPrice(order.price)}</TableCell>
                         <TableCell>{formattedDate}</TableCell>
-                        <TableCell>
-                          {order.type === "guest"
-                            ? "Khách"
-                            : order.type === "member"
-                            ? "Thành viên"
-                            : Array.isArray(order.type)
-                            ? order.type[0]
-                            : order.type}
-                        </TableCell>
+                        <TableCell>{getOrderTypeDisplayName(order)}</TableCell>
                         <TableCell>
                           <Badge
                             variant='outline'

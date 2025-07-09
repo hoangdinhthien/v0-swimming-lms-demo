@@ -9,37 +9,42 @@ export interface OrderGuest {
 
 export interface OrderUser {
   _id: string;
-  email: string;
   username: string;
+  email: string;
   password: string;
-  role_system: string;
-  role: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
   role_front: string[];
   parent_id: string[];
-  featured_image?: string[];
+  phone: string;
+  is_active: boolean;
+  birthday: string;
+  address: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  featured_image?: string;
 }
 
 export interface OrderPayment {
   url: string;
   app_trans_id: string;
-  zp_trans_id?: number;
+  zp_trans_id?: string;
 }
 
 export interface Order {
   _id: string;
-  type: "guest" | "member";
+  type: string[]; // Changed from string to string[] to match API response
   course: string;
   price: number;
-  guest: OrderGuest | null;
+  guest?: OrderGuest; // Made optional since not all orders have guest data
   user?: OrderUser;
   created_at: string;
   created_by: string | null;
   tenant_id: string;
   status: string[];
-  payment: OrderPayment;
+  payment?: OrderPayment; // Made optional since not all orders have payment data
+  updated_at?: string; // Added optional updated_at field
+  updated_by?: string; // Added optional updated_by field
 }
 
 export interface OrdersResponse {
@@ -191,9 +196,11 @@ export function getStatusClass(status: string[]): string {
  * Get user display name from an order
  */
 export function getOrderUserName(order: Order): string {
-  if (order.type === "guest" && order.guest) {
+  const orderType = getOrderType(order);
+
+  if (orderType === "guest" && order.guest?.username) {
     return order.guest.username;
-  } else if (order.type === "member" && order.user) {
+  } else if (orderType === "member" && order.user?.username) {
     return order.user.username;
   }
   return "Không xác định";
@@ -203,10 +210,12 @@ export function getOrderUserName(order: Order): string {
  * Get user ID or contact info from an order
  */
 export function getOrderUserContact(order: Order): string {
-  if (order.type === "guest" && order.guest) {
-    return order.guest.phone || order.guest.email;
-  } else if (order.type === "member" && order.user) {
-    return order.user._id;
+  const orderType = getOrderType(order);
+
+  if (orderType === "guest" && order.guest) {
+    return order.guest.phone || order.guest.email || "N/A";
+  } else if (orderType === "member" && order.user) {
+    return order.user.phone || order.user.email || order.user._id || "N/A";
   }
   return "N/A";
 }
@@ -250,4 +259,26 @@ export async function updateOrderStatus({
 
   const data = await res.json();
   return data.data?.[0]?.[0]?.data || {};
+}
+
+/**
+ * Get the order type (guest or member) from an order
+ */
+export function getOrderType(order: Order): string {
+  return order.type && order.type.length > 0 ? order.type[0] : "unknown";
+}
+
+/**
+ * Get a user-friendly display name for the order type
+ */
+export function getOrderTypeDisplayName(order: Order): string {
+  const orderType = getOrderType(order);
+  switch (orderType) {
+    case "guest":
+      return "Khách";
+    case "member":
+      return "Thành viên";
+    default:
+      return orderType || "Không xác định";
+  }
 }

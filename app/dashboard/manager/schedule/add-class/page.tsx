@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Waves,
 } from "lucide-react";
 import { fetchClassrooms, addClassToSchedule } from "@/api/classrooms-api";
@@ -89,9 +90,33 @@ export default function AddClassToSchedulePage() {
   const [selectedPool, setSelectedPool] = useState<string>("");
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [formattedDate, setFormattedDate] = useState("");
+  const [isPastDate, setIsPastDate] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Helper function to check if a date is in the past
+  const isDateInPast = (dateString: string): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+    const targetDate = new Date(dateString);
+    targetDate.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+    return targetDate < today;
+  };
 
   useEffect(() => {
-    // Format the date for display
+    // Debug log the URL parameters
+    console.log("🔍 Add-class page URL parameters:", {
+      date,
+      slotId,
+      slotKey,
+      slotTitle,
+      timeRange,
+    });
+
+    // Format the date for display and check if it's in the past
     if (date) {
       const dateObj = new Date(date);
       setFormattedDate(
@@ -102,6 +127,18 @@ export default function AddClassToSchedulePage() {
           day: "numeric",
         })
       );
+
+      // Format the date for display and check if it's in the past
+      setIsPastDate(isDateInPast(date));
+
+      if (isDateInPast(date)) {
+        setErrorMessage(
+          "Không thể thêm lớp học vào ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi."
+        );
+      } else {
+        // Clear any previous past date error
+        setErrorMessage(null);
+      }
     }
 
     // Fetch classrooms and pools data
@@ -130,7 +167,7 @@ export default function AddClassToSchedulePage() {
     };
 
     fetchData();
-  }, [date]);
+  }, [date, slotId, slotKey, slotTitle, timeRange]);
 
   // Filter and search classes
   const filteredClasses = classes.filter((cls) => {
@@ -151,9 +188,6 @@ export default function AddClassToSchedulePage() {
     return matchesSearch;
   });
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const handleAddClass = async (classroomId: string) => {
     if (!selectedPool) {
       setErrorMessage("Vui lòng chọn hồ bơi trước khi thêm lớp học vào lịch");
@@ -162,6 +196,14 @@ export default function AddClassToSchedulePage() {
 
     if (!date) {
       setErrorMessage("Không có thông tin ngày được chọn");
+      return;
+    }
+
+    // Check if the date is in the past
+    if (isDateInPast(date)) {
+      setErrorMessage(
+        "Không thể thêm lớp học vào ngày trong quá khứ. Vui lòng chọn ngày từ hôm nay trở đi."
+      );
       return;
     }
 
@@ -315,17 +357,30 @@ export default function AddClassToSchedulePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
               <div className='space-y-3 p-4 rounded-lg border border-border/30 hover:border-border/60 transition-colors'>
                 <div className='flex items-center gap-3'>
-                  <div className='p-2 rounded-full bg-primary/10'>
-                    <Calendar className='h-5 w-5 text-primary' />
+                  <div
+                    className={`p-2 rounded-full ${
+                      isPastDate ? "bg-red-500/10" : "bg-primary/10"
+                    }`}
+                  >
+                    <Calendar
+                      className={`h-5 w-5 ${
+                        isPastDate ? "text-red-500" : "text-primary"
+                      }`}
+                    />
                   </div>
                   <div>
                     <p className='text-sm font-medium text-muted-foreground'>
                       Ngày
                     </p>
                     <p className='text-lg font-semibold'>{formattedDate}</p>
+                    {isPastDate && (
+                      <p className='text-xs text-red-600 dark:text-red-400 font-medium'>
+                        Ngày đã qua
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -620,6 +675,7 @@ export default function AddClassToSchedulePage() {
                               disabled={
                                 loading ||
                                 !selectedPool ||
+                                isPastDate ||
                                 (!!slotId && slotId.startsWith("slot"))
                               }
                               className='bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
@@ -629,6 +685,11 @@ export default function AddClassToSchedulePage() {
                                 <>
                                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                                   Đang xử lý...
+                                </>
+                              ) : isPastDate ? (
+                                <>
+                                  <Clock className='mr-2 h-4 w-4' />
+                                  Ngày đã qua
                                 </>
                               ) : (
                                 <>
@@ -652,14 +713,55 @@ export default function AddClassToSchedulePage() {
                 Hiển thị {filteredClasses.length} lớp học
               </p>
               {filteredClasses.length > 0 && (
-                <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                  <div className='w-2 h-2 rounded-full bg-green-500'></div>
-                  Sẵn sàng thêm vào lịch
+                <div className='flex items-center gap-2 text-xs'>
+                  {isPastDate ? (
+                    <>
+                      <div className='w-2 h-2 rounded-full bg-red-500'></div>
+                      <span className='text-red-600 dark:text-red-400 font-medium'>
+                        Không thể thêm vào ngày đã qua
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className='w-2 h-2 rounded-full bg-green-500'></div>
+                      <span className='text-muted-foreground'>
+                        Sẵn sàng thêm vào lịch
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
           </CardFooter>
         </Card>{" "}
+        {/* Past Date Warning */}
+        {isPastDate && (
+          <Alert className='border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/30 shadow-lg'>
+            <div className='flex items-center gap-2'>
+              <div className='p-1 rounded-full bg-yellow-500/20'>
+                <AlertTriangle className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+              </div>
+              <AlertTitle className='font-semibold text-yellow-800 dark:text-yellow-200'>
+                Cảnh báo: Ngày đã qua
+              </AlertTitle>
+            </div>
+            <AlertDescription className='mt-2 text-yellow-700 dark:text-yellow-300 font-medium'>
+              Ngày {formattedDate} đã qua. Bạn chỉ có thể thêm lớp học vào lịch
+              từ hôm nay trở đi. Vui lòng quay lại lịch và chọn một ngày khác.
+            </AlertDescription>
+            <div className='mt-3'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => router.push("/dashboard/manager/calendar")}
+                className='border-yellow-300 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-600 dark:text-yellow-300 dark:hover:bg-yellow-900/20'
+              >
+                <ArrowLeft className='mr-2 h-4 w-4' />
+                Quay lại lịch
+              </Button>
+            </div>
+          </Alert>
+        )}
         {/* Success and Error Messages */}
         {successMessage && (
           <Alert className='bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800 shadow-lg'>
