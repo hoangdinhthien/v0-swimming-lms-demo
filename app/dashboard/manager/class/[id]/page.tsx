@@ -186,25 +186,6 @@ export default function ClassDetailPage() {
           </Link>
         </div>
 
-        {/* Breadcrumb Navigation */}
-        <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-          <Link
-            href='/dashboard/manager'
-            className='hover:text-foreground transition-colors'
-          >
-            Dashboard
-          </Link>
-          <span>/</span>
-          <Link
-            href={backLink.href}
-            className='hover:text-foreground transition-colors'
-          >
-            {from === "classes" ? "Lớp học" : "Lịch quản lý"}
-          </Link>
-          <span>/</span>
-          <span className='text-foreground font-medium'>{classData.name}</span>
-        </div>
-
         {/* Header */}
         <div className='relative'>
           <div className='absolute inset-0 bg-muted/5 rounded-3xl blur-3xl'></div>

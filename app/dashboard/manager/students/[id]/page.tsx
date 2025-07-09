@@ -527,35 +527,11 @@ export default function StudentDetailPage() {
 
   return (
     <div className='container mx-auto py-8 px-4'>
-      {/* Breadcrumb */}
-      <div className='flex items-center space-x-2 text-sm mb-8'>
-        <div className='flex items-center space-x-2 bg-muted/20 px-3 py-1.5 rounded-lg border border-muted/30'>
-          <Link
-            href='/dashboard'
-            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-          >
-            Dashboard
-          </Link>
-          <span className='text-muted-foreground/50'>→</span>
-          <Link
-            href='/dashboard/manager'
-            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-          >
-            Manager
-          </Link>
-          <span className='text-muted-foreground/50'>→</span>
-          <Link
-            href='/dashboard/manager/students'
-            className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-          >
-            Học viên
-          </Link>
-          <span className='text-muted-foreground/50'>→</span>
-          <span className='text-foreground font-medium'>Chi tiết học viên</span>
-        </div>
+      {/* Back Button */}
+      <div className='mb-6'>
         <Link
           href='/dashboard/manager/students'
-          className='ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
+          className='inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
         >
           <ArrowLeft className='h-4 w-4' />
           Quay về danh sách

@@ -27,6 +27,45 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
 
+// Helper function to extract avatar URL from featured_image
+function extractAvatarUrl(featuredImage: any): string {
+  console.log("Extracting avatar from featured_image:", featuredImage);
+
+  if (!featuredImage) {
+    console.log("No featured_image provided");
+    return "/placeholder.svg";
+  }
+
+  // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
+  if (Array.isArray(featuredImage) && featuredImage.length > 0) {
+    console.log("Handling array format featured_image");
+    const firstImage = featuredImage[0];
+    if (firstImage?.path) {
+      if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
+        console.log("Found URL in array path:", firstImage.path[0]);
+        return firstImage.path[0];
+      } else if (typeof firstImage.path === "string") {
+        console.log("Found URL in string path:", firstImage.path);
+        return firstImage.path;
+      }
+    }
+  }
+  // Handle Object format: featured_image: { path: "url" } or { path: ["url"] }
+  else if (typeof featuredImage === "object" && featuredImage.path) {
+    console.log("Handling object format featured_image");
+    if (Array.isArray(featuredImage.path) && featuredImage.path.length > 0) {
+      console.log("Found URL in object array path:", featuredImage.path[0]);
+      return featuredImage.path[0];
+    } else if (typeof featuredImage.path === "string") {
+      console.log("Found URL in object string path:", featuredImage.path);
+      return featuredImage.path;
+    }
+  }
+
+  console.log("No valid avatar URL found, using placeholder");
+  return "/placeholder.svg";
+}
+
 // Helper function to calculate age from birthday
 function calculateAge(birthdayStr: string | null | undefined): number | null {
   if (!birthdayStr) return null;
@@ -75,41 +114,13 @@ export default function StudentsPage() {
         // Process each student to get their images and parent information
         const processedStudents = await Promise.all(
           data.map(async (item: any) => {
-            let avatarUrl = "/placeholder.svg";
+            // Extract avatar URL using helper function
+            const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+            console.log(
+              `Avatar for student ${item.user?.username}:`,
+              avatarUrl
+            );
             let parentName = null;
-
-            // Handle featured_image structure - Both formats are valid:
-            // - Array format: featured_image: [{ path: ["url"] }]
-            // - Object format: featured_image: { path: "url" }
-            if (item.user?.featured_image) {
-              if (
-                Array.isArray(item.user.featured_image) &&
-                item.user.featured_image.length > 0
-              ) {
-                // Array format: [{ path: ["url"] }]
-                const firstImage = item.user.featured_image[0];
-                if (firstImage?.path) {
-                  if (
-                    Array.isArray(firstImage.path) &&
-                    firstImage.path.length > 0
-                  ) {
-                    avatarUrl = firstImage.path[0];
-                  } else if (typeof firstImage.path === "string") {
-                    avatarUrl = firstImage.path;
-                  }
-                }
-              } else if (
-                typeof item.user.featured_image === "object" &&
-                item.user.featured_image.path
-              ) {
-                // Object format: { path: "url" } or { path: ["url"] }
-                if (Array.isArray(item.user.featured_image.path)) {
-                  avatarUrl = item.user.featured_image.path[0];
-                } else if (typeof item.user.featured_image.path === "string") {
-                  avatarUrl = item.user.featured_image.path;
-                }
-              }
-            }
 
             // Fetch parent information if parent_id exists
             if (item.user?.parent_id && item.user.parent_id.length > 0) {

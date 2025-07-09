@@ -26,8 +26,6 @@ import { fetchInstructors, fetchInstructorDetail } from "@/api/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
-
-// Add for instructor detail modal
 import React from "react";
 import {
   Dialog,
@@ -40,6 +38,45 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Book, Calendar, Key, Building } from "lucide-react";
+
+// Helper function to extract avatar URL from featured_image
+function extractAvatarUrl(featuredImage: any): string {
+  console.log("Extracting avatar from featured_image:", featuredImage);
+
+  if (!featuredImage) {
+    console.log("No featured_image provided");
+    return "/placeholder.svg";
+  }
+
+  // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
+  if (Array.isArray(featuredImage) && featuredImage.length > 0) {
+    console.log("Handling array format featured_image");
+    const firstImage = featuredImage[0];
+    if (firstImage?.path) {
+      if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
+        console.log("Found URL in array path:", firstImage.path[0]);
+        return firstImage.path[0];
+      } else if (typeof firstImage.path === "string") {
+        console.log("Found URL in string path:", firstImage.path);
+        return firstImage.path;
+      }
+    }
+  }
+  // Handle Object format: featured_image: { path: "url" } or { path: ["url"] }
+  else if (typeof featuredImage === "object" && featuredImage.path) {
+    console.log("Handling object format featured_image");
+    if (Array.isArray(featuredImage.path) && featuredImage.path.length > 0) {
+      console.log("Found URL in object array path:", featuredImage.path[0]);
+      return featuredImage.path[0];
+    } else if (typeof featuredImage.path === "string") {
+      console.log("Found URL in object string path:", featuredImage.path);
+      return featuredImage.path;
+    }
+  }
+
+  console.log("No valid avatar URL found, using placeholder");
+  return "/placeholder.svg";
+}
 
 function InstructorDetailModal({
   open,
@@ -71,10 +108,10 @@ function InstructorDetailModal({
         });
         setDetail(detailData);
 
-        // Try to get avatar if available - handle new featured_image structure
-        if (detailData.user?.featured_image?.[0]?.path?.[0]) {
-          setAvatarUrl(detailData.user.featured_image[0].path[0]);
-        }
+        // Extract avatar URL using helper function
+        const avatarUrl = extractAvatarUrl(detailData.user?.featured_image);
+        console.log("Setting avatar URL for instructor detail:", avatarUrl);
+        setAvatarUrl(avatarUrl);
       } catch (e: any) {
         setError(e.message || "Lỗi khi lấy thông tin giáo viên");
       }
@@ -266,40 +303,12 @@ export default function InstructorsPage() {
 
         // Process each instructor to get their images
         const processedInstructors = data.map((item: any) => {
-          let avatarUrl = "/placeholder.svg";
-
-          // Handle featured_image structure - Both formats are valid:
-          // - Array format: featured_image: [{ path: ["url"] }]
-          // - Object format: featured_image: { path: "url" }
-          if (item.user?.featured_image) {
-            if (
-              Array.isArray(item.user.featured_image) &&
-              item.user.featured_image.length > 0
-            ) {
-              // Array format: [{ path: ["url"] }]
-              const firstImage = item.user.featured_image[0];
-              if (firstImage?.path) {
-                if (
-                  Array.isArray(firstImage.path) &&
-                  firstImage.path.length > 0
-                ) {
-                  avatarUrl = firstImage.path[0];
-                } else if (typeof firstImage.path === "string") {
-                  avatarUrl = firstImage.path;
-                }
-              }
-            } else if (
-              typeof item.user.featured_image === "object" &&
-              item.user.featured_image.path
-            ) {
-              // Object format: { path: "url" } or { path: ["url"] }
-              if (Array.isArray(item.user.featured_image.path)) {
-                avatarUrl = item.user.featured_image.path[0];
-              } else if (typeof item.user.featured_image.path === "string") {
-                avatarUrl = item.user.featured_image.path;
-              }
-            }
-          }
+          // Extract avatar URL using helper function
+          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+          console.log(
+            `Avatar for instructor ${item.user?.username}:`,
+            avatarUrl
+          );
 
           return {
             id: item._id,
