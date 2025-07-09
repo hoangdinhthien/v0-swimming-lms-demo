@@ -627,6 +627,12 @@ export default function CalendarPage() {
     return date.toDateString() === today.toDateString();
   };
 
+  const isPastDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
+    return date < today;
+  };
+
   const isSameDay = (date1: Date, date2: Date) => {
     return date1.toDateString() === date2.toDateString();
   };
@@ -924,31 +930,38 @@ export default function CalendarPage() {
                 </div>
               </th>
               {weekDates.map((date, index) => {
-                const isToday =
-                  new Date().toDateString() === date.toDateString();
+                const isTodayCell = isToday(date);
+                const isPast = isPastDate(date);
                 const isWeekend = index === 6; // Sunday
                 return (
                   <th
                     key={index}
                     className={`p-4 border-r text-center font-semibold transition-all duration-200 ${
-                      isToday
+                      isTodayCell
                         ? "bg-accent text-accent-foreground"
                         : isWeekend
                         ? "bg-muted text-destructive"
                         : "bg-card text-card-foreground"
-                    }`}
+                    } ${isPast ? "relative" : ""}`}
                   >
-                    <div className='flex flex-col space-y-1'>
+                    {/* Past date indicator in header */}
+                    {isPast && (
+                      <div className='absolute inset-0 opacity-10 pointer-events-none'>
+                        <div className='absolute inset-0 bg-slate-500 pattern-diagonal-lines pattern-slate-600 pattern-bg-transparent pattern-size-2 pattern-opacity-100'></div>
+                      </div>
+                    )}
+
+                    <div className='flex flex-col space-y-1 relative'>
                       <span
                         className={`text-sm font-bold ${
-                          isToday ? "text-primary" : ""
+                          isTodayCell ? "text-primary" : ""
                         }`}
                       >
                         {dayNames[index]}
                       </span>
                       <span
                         className={`text-xs ${
-                          isToday
+                          isTodayCell
                             ? "bg-primary text-primary-foreground px-2 py-1 rounded-full font-bold"
                             : "text-muted-foreground"
                         }`}
@@ -956,6 +969,15 @@ export default function CalendarPage() {
                         {date.getDate().toString().padStart(2, "0")}/
                         {(date.getMonth() + 1).toString().padStart(2, "0")}
                       </span>
+
+                      {/* Past date indicator - fixed positioning */}
+                      {isPast && (
+                        <div className='text-center'>
+                          <span className='inline-block bg-slate-400 text-white rounded-md py-0.5 px-2 text-[10px] opacity-70 mt-1 whitespace-nowrap'>
+                            Đã qua
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </th>
                 );
@@ -984,15 +1006,22 @@ export default function CalendarPage() {
                 {/* Days Columns */}
                 {weekDates.map((date, dayIndex) => {
                   const eventsInCell = getEventsForCell(date, slot._id);
-                  const isToday =
-                    new Date().toDateString() === date.toDateString();
+                  const isTodayCell = isToday(date);
+                  const isPast = isPastDate(date);
                   return (
                     <td
                       key={dayIndex}
                       className={`p-2 border-r border-b h-40 align-top transition-all duration-200 hover:bg-muted/30 ${
-                        isToday ? "bg-muted/20" : "bg-background"
-                      }`}
+                        isTodayCell ? "bg-muted/20" : "bg-background"
+                      } ${isPast ? "relative" : ""}`}
                     >
+                      {/* Past date diagonal pattern overlay */}
+                      {isPast && (
+                        <div className='absolute inset-0 opacity-10 pointer-events-none overflow-hidden'>
+                          <div className='absolute inset-0 bg-slate-500 pattern-diagonal-lines pattern-slate-600 pattern-bg-transparent pattern-size-2 pattern-opacity-100'></div>
+                        </div>
+                      )}
+
                       <div className='h-full flex flex-col relative'>
                         {/* Settings Icon - Top Right */}
                         <div className='absolute top-0 right-0 z-10'>
@@ -1004,7 +1033,16 @@ export default function CalendarPage() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                 }}
-                                className='w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100'
+                                className={`w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100 ${
+                                  isPast
+                                    ? "!bg-opacity-50 !text-opacity-50"
+                                    : ""
+                                }`}
+                                title={
+                                  isPast
+                                    ? "Chỉ xem được lịch cho các ngày đã qua"
+                                    : "Tùy chọn slot"
+                                }
                               >
                                 <Edit className='h-3 w-3' />
                               </Button>
@@ -1070,6 +1108,12 @@ export default function CalendarPage() {
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
+
+                                  // Check if date is in the past - disable action
+                                  if (isPastDate(date)) {
+                                    return;
+                                  }
+
                                   // Get formatted date for URL
                                   const formattedDate = date
                                     .toISOString()
@@ -1214,17 +1258,49 @@ export default function CalendarPage() {
                                     )}`
                                   );
                                 }}
-                                className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-slate-100 dark:focus:bg-slate-800/50'
+                                className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${
+                                  isPastDate(date)
+                                    ? "bg-slate-50 dark:bg-slate-900/50 opacity-50 cursor-not-allowed"
+                                    : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:shadow-md focus:bg-slate-100 dark:focus:bg-slate-800/50"
+                                }`}
                               >
-                                <div className='w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
-                                  <Plus className='w-4 h-4 text-slate-600 dark:text-slate-300' />
+                                <div
+                                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                    isPastDate(date)
+                                      ? "bg-slate-200/50 dark:bg-slate-700/50"
+                                      : "bg-slate-200 dark:bg-slate-700 shadow-sm group-hover:shadow-md group-hover:scale-110"
+                                  }`}
+                                >
+                                  <Plus
+                                    className={`w-4 h-4 ${
+                                      isPastDate(date)
+                                        ? "text-slate-400 dark:text-slate-500"
+                                        : "text-slate-600 dark:text-slate-300"
+                                    }`}
+                                  />
                                 </div>
                                 <div className='flex flex-col'>
-                                  <span className='font-semibold text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200'>
-                                    Thêm lớp học
+                                  <span
+                                    className={`font-semibold ${
+                                      isPastDate(date)
+                                        ? "text-slate-400 dark:text-slate-500"
+                                        : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200"
+                                    }`}
+                                  >
+                                    {isPastDate(date)
+                                      ? "Không thể thêm lớp học"
+                                      : "Thêm lớp học"}
                                   </span>
-                                  <span className='text-xs text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'>
-                                    Tạo lớp học mới
+                                  <span
+                                    className={`text-xs ${
+                                      isPastDate(date)
+                                        ? "text-slate-400 dark:text-slate-600"
+                                        : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300"
+                                    }`}
+                                  >
+                                    {isPastDate(date)
+                                      ? "Ngày đã qua"
+                                      : "Tạo lớp học mới"}
                                   </span>
                                 </div>
                               </DropdownMenuItem>
@@ -1291,6 +1367,11 @@ export default function CalendarPage() {
 
                                         <DropdownMenuItem
                                           onClick={() => {
+                                            // Check if date is in the past - disable action
+                                            if (isPastDate(date)) {
+                                              return;
+                                            }
+
                                             // Handle remove class logic here
                                             console.log(
                                               "Preparing to remove class:",
@@ -1314,17 +1395,43 @@ export default function CalendarPage() {
                                             });
                                             setDeleteDialogOpen(true);
                                           }}
-                                          className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50'
+                                          className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${
+                                            isPastDate(date)
+                                              ? "bg-slate-50 dark:bg-slate-900/50 opacity-50 cursor-not-allowed"
+                                              : "cursor-pointer hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 hover:shadow-md focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50"
+                                          }`}
                                         >
-                                          <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                          <div
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                              isPastDate(date)
+                                                ? "bg-gradient-to-br from-red-300 to-pink-400 dark:from-red-600/30 dark:to-pink-700/30"
+                                                : "bg-gradient-to-br from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 shadow-sm group-hover:shadow-md group-hover:scale-110"
+                                            }`}
+                                          >
                                             <Trash2 className='w-4 h-4 text-white' />
                                           </div>
                                           <div className='flex flex-col'>
-                                            <span className='font-semibold text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-200'>
-                                              Gỡ lớp học
+                                            <span
+                                              className={`font-semibold ${
+                                                isPastDate(date)
+                                                  ? "text-gray-400 dark:text-gray-500"
+                                                  : "text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-200"
+                                              }`}
+                                            >
+                                              {isPastDate(date)
+                                                ? "Không thể xóa lớp học"
+                                                : "Gỡ lớp học"}
                                             </span>
-                                            <span className='text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'>
-                                              Xóa khỏi lịch học
+                                            <span
+                                              className={`text-xs ${
+                                                isPastDate(date)
+                                                  ? "text-gray-400 dark:text-gray-600"
+                                                  : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
+                                              }`}
+                                            >
+                                              {isPastDate(date)
+                                                ? "Ngày đã qua"
+                                                : "Xóa khỏi lịch học"}
                                             </span>
                                           </div>
                                         </DropdownMenuItem>

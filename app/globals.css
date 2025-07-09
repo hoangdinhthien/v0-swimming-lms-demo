@@ -8,6 +8,25 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Pattern styles for past days */
+  .pattern-diagonal-lines {
+    background-image: repeating-linear-gradient(
+      45deg,
+      currentColor,
+      currentColor 1px,
+      transparent 1px,
+      transparent 10px
+    );
+  }
+
+  .pattern-size-2 {
+    background-size: 10px 10px;
+  }
+
+  .pattern-bg-transparent {
+    background-color: transparent;
+  }
 }
 
 @layer base {
