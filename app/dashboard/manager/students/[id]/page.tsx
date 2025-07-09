@@ -804,6 +804,20 @@ export default function StudentDetailPage() {
                   {detail.user?.is_active ? "Hoạt động" : "Không hoạt động"}
                 </Badge>
               </div>
+
+              {/* Action Buttons */}
+              <div className='flex flex-col gap-3 mt-6'>
+                <Button
+                  variant='outline'
+                  className='w-full border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300'
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa
+                </Button>
+                <Button className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'>
+                  <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -950,26 +964,71 @@ export default function StudentDetailPage() {
             <div className='space-y-6'>
               <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2'>
                 <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
-                Khóa học đã đăng ký
+                Lớp học đang tham gia
               </h3>
-              <div className='bg-blue-50 border border-blue-100 rounded-md p-6 text-center dark:bg-blue-950/30 dark:border-blue-800'>
-                <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
-                  <Book className='h-8 w-8 text-blue-400' />
+              {detail.classesAsMember && detail.classesAsMember.length > 0 ? (
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {detail.classesAsMember.map(
+                    (classItem: any, index: number) => (
+                      <div
+                        key={index}
+                        className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-750 dark:border-slate-600'
+                      >
+                        <div className='flex items-start justify-between mb-3'>
+                          <div className='flex-1'>
+                            <h4 className='font-semibold text-blue-900 dark:text-slate-100 mb-1'>
+                              {classItem.name || "Lớp học"}
+                            </h4>
+                            {classItem.description && (
+                              <p className='text-sm text-blue-700/80 dark:text-slate-300 mb-2'>
+                                {classItem.description}
+                              </p>
+                            )}
+                          </div>
+                          <Badge
+                            variant='secondary'
+                            className='bg-blue-100 text-blue-800 border-blue-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600'
+                          >
+                            <GraduationCap className='h-3 w-3 mr-1' />
+                            Học viên
+                          </Badge>
+                        </div>
+
+                        <div className='mt-3 pt-3 border-t border-blue-200 dark:border-slate-600'>
+                          <Link
+                            href={`/dashboard/manager/classes/${
+                              classItem._id || classItem.id
+                            }`}
+                            className='inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors'
+                          >
+                            Xem chi tiết lớp học
+                            <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                          </Link>
+                        </div>
+                      </div>
+                    )
+                  )}
                 </div>
-                <p className='text-blue-900 dark:text-blue-200 font-medium mb-1'>
-                  Chưa có khóa học nào được đăng ký
-                </p>
-                <p className='text-blue-700/70 dark:text-blue-300/70 text-sm mb-4'>
-                  Học viên chưa tham gia khóa học nào
-                </p>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='bg-background hover:bg-blue-50 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-                >
-                  <span className='mr-1'>+</span> Đăng ký khóa học mới
-                </Button>
-              </div>
+              ) : (
+                <div className='bg-blue-50 border border-blue-100 rounded-md p-6 text-center dark:bg-blue-950/30 dark:border-blue-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <Book className='h-8 w-8 text-blue-400' />
+                  </div>
+                  <p className='text-blue-900 dark:text-blue-200 font-medium mb-1'>
+                    Chưa tham gia lớp học nào
+                  </p>
+                  <p className='text-blue-700/70 dark:text-blue-300/70 text-sm mb-4'>
+                    Học viên chưa tham gia lớp học nào
+                  </p>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='bg-background hover:bg-blue-50 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+                  >
+                    <span className='mr-1'>+</span> Thêm vào lớp học
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Parent Information Section - Show only when parent_id exists */}
@@ -1031,19 +1090,6 @@ export default function StudentDetailPage() {
             )}
 
             <Separator className='my-6' />
-
-            <div className='flex justify-end gap-4'>
-              <Button
-                variant='outline'
-                className='border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300 px-6'
-                onClick={() => setIsEditModalOpen(true)}
-              >
-                <User className='mr-2 h-4 w-4' /> Chỉnh sửa
-              </Button>
-              <Button className='bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm px-6'>
-                <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>

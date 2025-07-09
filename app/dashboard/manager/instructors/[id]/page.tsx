@@ -524,6 +524,20 @@ export default function InstructorDetailPage() {
                   {detail.user?.is_active ? "Hoạt động" : "Không hoạt động"}
                 </Badge>
               </div>
+
+              {/* Action Buttons */}
+              <div className='flex flex-col gap-3 mt-6'>
+                <Button
+                  variant='outline'
+                  className='w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300'
+                  onClick={() => setOpen(true)}
+                >
+                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa
+                </Button>
+                <Button className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'>
+                  <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -681,10 +695,13 @@ export default function InstructorDetailPage() {
                             </div>
                             <div>
                               <h4 className='font-semibold text-indigo-900 dark:text-indigo-200'>
-                                {classItem.name}
+                                {classItem.title || classItem.name || "Lớp học"}
                               </h4>
                               <p className='text-sm text-indigo-700 dark:text-indigo-400'>
-                                ID: {classItem._id.slice(-8)}
+                                ID:{" "}
+                                {classItem._id?.slice(-8) ||
+                                  classItem.id?.slice(-8) ||
+                                  "N/A"}
                               </p>
                             </div>
                           </div>
@@ -692,11 +709,18 @@ export default function InstructorDetailPage() {
                             variant='outline'
                             className='bg-green-50 border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300'
                           >
-                            Đang dạy
+                            <GraduationCap className='h-3 w-3 mr-1' />
+                            Giáo viên
                           </Badge>
                         </div>
 
                         <div className='space-y-2 text-sm'>
+                          {classItem.description && (
+                            <p className='text-indigo-700/80 dark:text-indigo-300/80 mb-3'>
+                              {classItem.description}
+                            </p>
+                          )}
+
                           <div className='flex items-center gap-2'>
                             <Users className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
                             <span className='text-muted-foreground'>
@@ -707,10 +731,22 @@ export default function InstructorDetailPage() {
                             </span>
                           </div>
 
+                          {classItem.max_members && (
+                            <div className='flex items-center gap-2'>
+                              <Users className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
+                                Sĩ số tối đa:
+                              </span>
+                              <span className='font-medium'>
+                                {classItem.max_members} người
+                              </span>
+                            </div>
+                          )}
+
                           <div className='flex items-center gap-2'>
                             <Calendar className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
                             <span className='text-muted-foreground'>
-                              Tạo lúc:
+                              Ngày tạo:
                             </span>
                             <span className='font-medium'>
                               {classItem.created_at
@@ -728,21 +764,37 @@ export default function InstructorDetailPage() {
                                 Khóa học:
                               </span>
                               <span className='font-medium'>
-                                {classItem.course.slice(-8)}
+                                {typeof classItem.course === "object" &&
+                                classItem.course.title
+                                  ? classItem.course.title
+                                  : classItem.course?.slice(-8) || "N/A"}
+                              </span>
+                            </div>
+                          )}
+
+                          {classItem.level && (
+                            <div className='flex items-center gap-2'>
+                              <Award className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
+                                Trình độ:
+                              </span>
+                              <span className='font-medium'>
+                                {classItem.level}
                               </span>
                             </div>
                           )}
                         </div>
 
                         <div className='mt-4 pt-3 border-t border-indigo-200 dark:border-indigo-800'>
-                          <Button
-                            size='sm'
-                            variant='outline'
-                            className='w-full bg-background hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                          <Link
+                            href={`/dashboard/manager/classes/${
+                              classItem._id || classItem.id
+                            }`}
+                            className='inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors w-full justify-center'
                           >
                             <Eye className='mr-2 h-3 w-3' />
-                            Xem chi tiết
-                          </Button>
+                            Xem chi tiết lớp học
+                          </Link>
                         </div>
                       </CardContent>
                     </Card>
@@ -771,19 +823,6 @@ export default function InstructorDetailPage() {
             </div>
 
             <Separator className='my-6' />
-
-            <div className='flex justify-end gap-4'>
-              <Button
-                variant='outline'
-                className='border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 px-6'
-                onClick={() => setOpen(true)}
-              >
-                <User className='mr-2 h-4 w-4' /> Chỉnh sửa
-              </Button>
-              <Button className='bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm px-6'>
-                <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>
