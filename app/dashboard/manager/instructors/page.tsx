@@ -541,7 +541,6 @@ export default function InstructorsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Giáo viên</TableHead>
-                      <TableHead>Chuyên môn</TableHead>
                       <TableHead>Học viên</TableHead>
                       <TableHead>Lớp học</TableHead>
                       <TableHead>Đánh giá</TableHead>
@@ -586,20 +585,6 @@ export default function InstructorsPage() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <div className='flex flex-col gap-1'>
-                                {specialty.map(
-                                  (spec: string, index: number) => (
-                                    <div
-                                      key={index}
-                                      className='text-sm'
-                                    >
-                                      {spec}
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </TableCell>
                             <TableCell>{students}</TableCell>
                             <TableCell>{classes}</TableCell>
                             <TableCell>
@@ -632,7 +617,7 @@ export default function InstructorsPage() {
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={6}
+                          colSpan={5}
                           className='text-center py-8 text-muted-foreground'
                         >
                           Không tìm thấy giáo viên phù hợp với bộ lọc hiện tại.

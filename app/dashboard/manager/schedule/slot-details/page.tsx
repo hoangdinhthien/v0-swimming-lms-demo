@@ -1583,7 +1583,7 @@ export default function SlotDetailsPage() {
                                     </div>
                                     <div className='text-sm font-bold text-foreground flex items-center gap-1'>
                                       <Users className='h-3 w-3' />
-                                      {(classroom as any).students?.length ||
+                                      {(classroom as any).member?.length ||
                                         0}{" "}
                                       người
                                     </div>

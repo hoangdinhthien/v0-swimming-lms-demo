@@ -24,6 +24,8 @@ import {
   X,
   Upload,
   Image as ImageIcon,
+  BookOpen,
+  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { getAuthToken } from "@/api/auth-utils";
@@ -663,24 +665,109 @@ export default function InstructorDetailPage() {
                 <Award className='h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400' />{" "}
                 Lớp học đang giảng dạy
               </h3>
-              <div className='bg-indigo-50 border border-indigo-100 rounded-md p-6 text-center dark:bg-indigo-950/30 dark:border-indigo-800'>
-                <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
-                  <Users className='h-8 w-8 text-indigo-400' />
+              {detail.classesAsInstructor &&
+              detail.classesAsInstructor.length > 0 ? (
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+                  {detail.classesAsInstructor.map((classItem: any) => (
+                    <Card
+                      key={classItem._id}
+                      className='border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 hover:shadow-md transition-shadow'
+                    >
+                      <CardContent className='p-5'>
+                        <div className='flex items-start justify-between mb-3'>
+                          <div className='flex items-center gap-2'>
+                            <div className='bg-indigo-100 dark:bg-indigo-900/50 rounded-full p-2'>
+                              <GraduationCap className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
+                            </div>
+                            <div>
+                              <h4 className='font-semibold text-indigo-900 dark:text-indigo-200'>
+                                {classItem.name}
+                              </h4>
+                              <p className='text-sm text-indigo-700 dark:text-indigo-400'>
+                                ID: {classItem._id.slice(-8)}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant='outline'
+                            className='bg-green-50 border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300'
+                          >
+                            Đang dạy
+                          </Badge>
+                        </div>
+
+                        <div className='space-y-2 text-sm'>
+                          <div className='flex items-center gap-2'>
+                            <Users className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                            <span className='text-muted-foreground'>
+                              Học viên:
+                            </span>
+                            <span className='font-medium'>
+                              {classItem.member?.length || 0} người
+                            </span>
+                          </div>
+
+                          <div className='flex items-center gap-2'>
+                            <Calendar className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                            <span className='text-muted-foreground'>
+                              Tạo lúc:
+                            </span>
+                            <span className='font-medium'>
+                              {classItem.created_at
+                                ? new Date(
+                                    classItem.created_at
+                                  ).toLocaleDateString("vi-VN")
+                                : "-"}
+                            </span>
+                          </div>
+
+                          {classItem.course && (
+                            <div className='flex items-center gap-2'>
+                              <BookOpen className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
+                                Khóa học:
+                              </span>
+                              <span className='font-medium'>
+                                {classItem.course.slice(-8)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className='mt-4 pt-3 border-t border-indigo-200 dark:border-indigo-800'>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            className='w-full bg-background hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                          >
+                            <Eye className='mr-2 h-3 w-3' />
+                            Xem chi tiết
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <p className='text-indigo-900 dark:text-indigo-200 font-medium mb-1'>
-                  Chưa có lớp học nào được phân công
-                </p>
-                <p className='text-indigo-700/70 dark:text-indigo-300/70 text-sm mb-4'>
-                  Giáo viên chưa được phân công giảng dạy lớp học nào
-                </p>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='bg-background hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
-                >
-                  <span className='mr-1'>+</span> Phân công lớp học mới
-                </Button>
-              </div>
+              ) : (
+                <div className='bg-indigo-50 border border-indigo-100 rounded-md p-6 text-center dark:bg-indigo-950/30 dark:border-indigo-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <Users className='h-8 w-8 text-indigo-400' />
+                  </div>
+                  <p className='text-indigo-900 dark:text-indigo-200 font-medium mb-1'>
+                    Chưa có lớp học nào được phân công
+                  </p>
+                  <p className='text-indigo-700/70 dark:text-indigo-300/70 text-sm mb-4'>
+                    Giáo viên chưa được phân công giảng dạy lớp học nào
+                  </p>
+                  <Button
+                    size='sm'
+                    variant='outline'
+                    className='bg-background hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300'
+                  >
+                    <span className='mr-1'>+</span> Phân công lớp học mới
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Separator className='my-6' />
