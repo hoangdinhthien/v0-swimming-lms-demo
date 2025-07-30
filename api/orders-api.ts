@@ -282,3 +282,66 @@ export function getOrderTypeDisplayName(order: Order): string {
       return orderType || "Không xác định";
   }
 }
+
+/**
+ * Fetch a single order by ID
+ */
+export async function fetchOrderById({
+  orderId,
+  tenantId,
+  token,
+}: {
+  orderId: string;
+  tenantId: string;
+  token: string;
+}): Promise<Order> {
+  console.log("[fetchOrderById] called with", { orderId, tenantId, token });
+  if (!tenantId || !token) {
+    console.error("[fetchOrderById] Missing tenantId or token", {
+      tenantId,
+      token,
+    });
+    throw new Error(
+      "Thiếu thông tin xác thực (token hoặc tenantId). Vui lòng đăng nhập lại hoặc chọn chi nhánh."
+    );
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/order?id=${orderId}`;
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  console.log("[fetchOrderById] URL:", url);
+  console.log("[fetchOrderById] Headers:", headers);
+
+  try {
+    const res = await fetch(url, {
+      headers,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[fetchOrderById] API error:", res.status, errorText);
+      if (res.status === 404) {
+        throw new Error("404");
+      }
+      throw new Error("Không thể lấy thông tin đơn hàng: " + errorText);
+    }
+
+    const data = await res.json();
+    console.log("[fetchOrderById] API Response:", data);
+
+    // Unwrap the nested structure to get the order
+    const order = data.data?.[0]?.[0]?.[0];
+    if (!order) {
+      throw new Error("Không tìm thấy đơn hàng");
+    }
+
+    return order;
+  } catch (error) {
+    console.error("[fetchOrderById] Exception:", error);
+    throw error;
+  }
+}

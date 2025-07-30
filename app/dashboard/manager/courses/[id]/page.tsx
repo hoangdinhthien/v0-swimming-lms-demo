@@ -14,13 +14,36 @@ import {
   BookOpen,
   Star,
   Info,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Plus,
+  Trash2,
+  Upload,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { fetchCourseById, fetchCourses } from "@/api/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
+import { getMediaDetails, uploadMedia, deleteMedia } from "@/api/media-api";
+import config from "@/api/config.json";
 
 import ManagerNotFound from "@/components/manager/not-found";
 
@@ -32,8 +55,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const routeParams = useParams();
   const courseId = routeParams?.id as string;
   const [course, setCourse] = useState<any>(null);
+  const [courseImages, setCourseImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal and form state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    session_number: 0,
+    session_number_duration: "",
+    detail: [{ title: "" }],
+    price: 0,
+    is_active: true,
+  });
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadedMediaIds, setUploadedMediaIds] = useState<string[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadCourse() {
@@ -68,6 +111,25 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           }
         }
         setCourse(courseData);
+
+        // Extract and set course images from media field
+        if (courseData?.media) {
+          let imagePaths: string[] = [];
+
+          // Check if media is an object with path field
+          if (courseData.media.path && courseData.media.path !== null) {
+            imagePaths = [courseData.media.path];
+          }
+          // Check if media is an array with images
+          else if (Array.isArray(courseData.media)) {
+            imagePaths = courseData.media
+              .filter((item: any) => item?.path && item.path !== null)
+              .map((item: any) => item.path);
+          }
+
+          setCourseImages(imagePaths);
+        }
+
         // If the URL param is the id, but the course has a slug, update the URL
         if (courseData && courseId === courseData._id && courseData.slug) {
           if (typeof window !== "undefined") {
@@ -97,6 +159,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     if (courseId) loadCourse();
   }, [courseId]);
 
+  // Navigation functions for image slider
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === courseImages.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? courseImages.length - 1 : prev - 1
+    );
+  };
+
   // Set slug in search bar when course is loaded
   useEffect(() => {
     if (course && course.slug) {
@@ -109,6 +184,204 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       }
     }
   }, [course, courseId]);
+
+  // Keyboard navigation for image slider
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (courseImages && courseImages.length > 1) {
+        if (event.key === "ArrowLeft") {
+          prevImage();
+        } else if (event.key === "ArrowRight") {
+          nextImage();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [courseImages, currentImageIndex]);
+
+  // Handle opening edit modal
+  const handleEditClick = () => {
+    if (course) {
+      setFormData({
+        title: course.title || "",
+        description: course.description || "",
+        session_number: course.session_number || 0,
+        session_number_duration: course.session_number_duration || "",
+        detail: course.detail?.length > 0 ? course.detail : [{ title: "" }],
+        price: course.price || 0,
+        is_active: course.is_active ?? true,
+      });
+      setUploadedMediaIds(
+        Array.isArray(course.media)
+          ? course.media.map((m: any) => m._id || m).filter(Boolean)
+          : course.media?._id
+          ? [course.media._id]
+          : []
+      );
+      setSelectedFiles([]);
+      setImagesToDelete([]);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Handle detail items
+  const addDetailItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      detail: [...prev.detail, { title: "" }],
+    }));
+  };
+
+  const removeDetailItem = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      detail: prev.detail.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateDetailItem = (index: number, title: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      detail: prev.detail.map((item, i) => (i === index ? { title } : item)),
+    }));
+  };
+
+  // Handle file selection
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+  // Remove selected file
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Mark current image for deletion
+  const markImageForDeletion = (mediaId: string) => {
+    setImagesToDelete((prev) => [...prev, mediaId]);
+  };
+
+  // Unmark image for deletion
+  const unmarkImageForDeletion = (mediaId: string) => {
+    setImagesToDelete((prev) => prev.filter((id) => id !== mediaId));
+  };
+
+  // Handle form submission
+  const handleSaveCourse = async () => {
+    try {
+      setIsSaving(true);
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      // Delete marked images first
+      if (imagesToDelete.length > 0) {
+        await deleteMedia({
+          mediaIds: imagesToDelete,
+          tenantId,
+          token,
+        });
+      }
+
+      // Remove deleted images from uploadedMediaIds
+      let remainingMediaIds = uploadedMediaIds.filter(
+        (id) => !imagesToDelete.includes(id)
+      );
+
+      // Upload new files
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const uploadResult = await uploadMedia({
+            file,
+            title: file.name,
+            alt: file.name,
+            tenantId,
+            token,
+          });
+          remainingMediaIds.push(uploadResult.data._id);
+        }
+      }
+
+      // Prepare update payload
+      const updatePayload = {
+        title: formData.title,
+        description: formData.description,
+        session_number: formData.session_number,
+        session_number_duration: formData.session_number_duration,
+        detail: formData.detail.filter((item) => item.title.trim() !== ""),
+        media: remainingMediaIds,
+        is_active: formData.is_active,
+        price: formData.price,
+      };
+
+      // Update course
+      const response = await fetch(
+        `${config.API}/v1/workflow-process/manager/course?id=${course._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-tenant-id": tenantId,
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatePayload),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Cập nhật thất bại: ${errorText}`);
+      }
+
+      // Refresh course data
+      const updatedCourse = await fetchCourseById({
+        courseId: course._id,
+        tenantId,
+        token,
+      });
+
+      setCourse(updatedCourse);
+
+      // Update images
+      if (updatedCourse?.media) {
+        let imagePaths: string[] = [];
+        if (updatedCourse.media.path && updatedCourse.media.path !== null) {
+          imagePaths = [updatedCourse.media.path];
+        } else if (Array.isArray(updatedCourse.media)) {
+          imagePaths = updatedCourse.media
+            .filter((item: any) => item?.path && item.path !== null)
+            .map((item: any) => item.path);
+        }
+        setCourseImages(imagePaths);
+      }
+
+      setIsEditModalOpen(false);
+      toast({
+        title: "Thành công",
+        description: "Khóa học đã được cập nhật thành công",
+      });
+    } catch (error: any) {
+      console.error("Error updating course:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật khóa học",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   if (loading) {
     return (
       <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
@@ -157,41 +430,22 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       {/* Header Section */}
       <div className='bg-card shadow-sm border-b border-border'>
         <div className='container mx-auto px-4 py-6'>
-          {/* Breadcrumb */}
-          <div className='flex items-center space-x-2 text-sm mb-4'>
-            <div className='flex items-center space-x-2 bg-muted/20 px-3 py-1.5 rounded-lg border border-muted/30'>
-              <Link
-                href='/dashboard'
-                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-              >
-                Dashboard
-              </Link>
-              <span className='text-muted-foreground/50'>→</span>
-              <Link
-                href='/dashboard/manager'
-                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-              >
-                Manager
-              </Link>
-              <span className='text-muted-foreground/50'>→</span>
-              <Link
-                href='/dashboard/manager/courses'
-                className='text-muted-foreground hover:text-foreground transition-colors duration-200'
-              >
-                Khoá học
-              </Link>
-              <span className='text-muted-foreground/50'>→</span>
-              <span className='text-foreground font-medium'>
-                Chi tiết khoá học
-              </span>
-            </div>
+          {/* Back Button and Edit Button */}
+          <div className='flex items-center justify-between mb-4'>
             <Link
               href='/dashboard/manager/courses'
-              className='ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
+              className='inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
             >
               <ArrowLeft className='h-4 w-4' />
               Quay về danh sách
             </Link>
+            <Button
+              onClick={handleEditClick}
+              className='inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
+            >
+              <Edit className='h-4 w-4' />
+              Chỉnh sửa khóa học
+            </Button>
           </div>
 
           <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
@@ -250,29 +504,119 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             {/* Course Image */}
             <Card className='overflow-hidden shadow-lg border'>
               <div className='aspect-video bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative'>
-                <img
-                  src={`/placeholder.svg?height=400&width=800&text=${encodeURIComponent(
-                    course.title
-                  )}`}
-                  alt={course.title}
-                  className='object-cover w-full h-full'
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "/placeholder.svg";
-                  }}
-                />
+                {courseImages && courseImages.length > 0 ? (
+                  <>
+                    <img
+                      src={courseImages[currentImageIndex]}
+                      alt={course.title}
+                      className='object-cover w-full h-full'
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/placeholder.svg";
+                      }}
+                    />
+                    {/* Navigation buttons - only show if more than 1 image */}
+                    {courseImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={prevImage}
+                          className='absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10'
+                          aria-label='Previous image'
+                        >
+                          <ChevronLeft className='h-5 w-5' />
+                        </button>
+                        <button
+                          onClick={nextImage}
+                          className='absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10'
+                          aria-label='Next image'
+                        >
+                          <ChevronRight className='h-5 w-5' />
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <img
+                    src={`/placeholder.svg?height=400&width=800&text=${encodeURIComponent(
+                      course.title
+                    )}`}
+                    alt={course.title}
+                    className='object-cover w-full h-full'
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/placeholder.svg";
+                    }}
+                  />
+                )}
                 <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
-                <div className='absolute bottom-4 left-4 right-4'>
-                  <div className='flex items-center gap-2 text-white'>
-                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                    <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                    <Star className='h-5 w-5 fill-gray-300 text-gray-300' />
-                    <span className='text-sm font-medium ml-1'>4.0/5</span>
+                <div className='absolute bottom-4 left-4 right-4 z-10'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2 text-white'>
+                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
+                      <Star className='h-5 w-5 fill-gray-300 text-gray-300' />
+                      <span className='text-sm font-medium ml-1'>4.0/5</span>
+                    </div>
+                    {courseImages && courseImages.length > 0 && (
+                      <div className='flex items-center gap-2'>
+                        <div className='bg-black/30 text-white text-xs px-2 py-1 rounded'>
+                          📷{" "}
+                          {courseImages.length > 1
+                            ? `${currentImageIndex + 1}/${courseImages.length}`
+                            : "Có hình ảnh"}
+                        </div>
+                        {courseImages.length > 1 && (
+                          <div className='flex gap-1'>
+                            {courseImages.map((_, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setCurrentImageIndex(index)}
+                                className={`w-2 h-2 rounded-full transition-colors ${
+                                  index === currentImageIndex
+                                    ? "bg-white"
+                                    : "bg-white/50"
+                                }`}
+                                aria-label={`Go to image ${index + 1}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Thumbnail strip for multiple images */}
+              {courseImages && courseImages.length > 1 && (
+                <div className='p-4 bg-muted/20 border-t'>
+                  <div className='flex gap-2 overflow-x-auto scrollbar-thin'>
+                    {courseImages.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`flex-shrink-0 w-16 h-12 rounded border-2 overflow-hidden transition-all ${
+                          index === currentImageIndex
+                            ? "border-primary ring-2 ring-primary/30"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`${course.title} - Image ${index + 1}`}
+                          className='w-full h-full object-cover'
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
 
             {/* Description */}
@@ -411,11 +755,332 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     4.0/5
                   </span>
                 </div>
+
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-4 w-4 text-muted-foreground'>📷</div>
+                    <span className='text-sm font-medium'>Hình ảnh</span>
+                  </div>
+                  <span
+                    className={`text-sm font-bold ${
+                      courseImages && courseImages.length > 0
+                        ? "text-green-600"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {courseImages && courseImages.length > 0
+                      ? `${courseImages.length} ảnh`
+                      : "Chưa có"}
+                  </span>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </div>
+      {/* Edit Course Modal */}
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      >
+        <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa khóa học</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin khóa học. Tất cả thay đổi sẽ được lưu ngay lập
+              tức.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-6'>
+            {/* Basic Information */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='title'>Tên khóa học *</Label>
+                <Input
+                  id='title'
+                  value={formData.title}
+                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  placeholder='Nhập tên khóa học'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='price'>Giá (VNĐ) *</Label>
+                <Input
+                  id='price'
+                  type='number'
+                  value={formData.price}
+                  onChange={(e) =>
+                    handleInputChange("price", parseInt(e.target.value) || 0)
+                  }
+                  placeholder='0'
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='description'>Mô tả</Label>
+              <Textarea
+                id='description'
+                value={formData.description}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                placeholder='Nhập mô tả khóa học'
+                rows={3}
+              />
+            </div>
+
+            {/* Session Information */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='session_number'>Số buổi học *</Label>
+                <Input
+                  id='session_number'
+                  type='number'
+                  value={formData.session_number}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "session_number",
+                      parseInt(e.target.value) || 0
+                    )
+                  }
+                  placeholder='0'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='session_duration'>Thời lượng mỗi buổi *</Label>
+                <Input
+                  id='session_duration'
+                  value={formData.session_number_duration}
+                  onChange={(e) =>
+                    handleInputChange("session_number_duration", e.target.value)
+                  }
+                  placeholder='VD: 2 giờ, 90 phút'
+                />
+              </div>
+            </div>
+
+            {/* Course Details */}
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between'>
+                <Label>Nội dung khóa học</Label>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={addDetailItem}
+                >
+                  <Plus className='h-4 w-4 mr-1' />
+                  Thêm mục
+                </Button>
+              </div>
+              <div className='space-y-2'>
+                {formData.detail.map((item, index) => (
+                  <div
+                    key={index}
+                    className='flex gap-2'
+                  >
+                    <Input
+                      value={item.title}
+                      onChange={(e) => updateDetailItem(index, e.target.value)}
+                      placeholder={`Nội dung ${index + 1}`}
+                    />
+                    {formData.detail.length > 1 && (
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='icon'
+                        onClick={() => removeDetailItem(index)}
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Media Upload */}
+            <div className='space-y-4'>
+              <Label>Hình ảnh khóa học</Label>
+
+              {/* Current Images */}
+              {courseImages.length > 0 && (
+                <div className='space-y-2'>
+                  <p className='text-sm text-muted-foreground'>
+                    Hình ảnh hiện tại:
+                  </p>
+                  <div className='flex gap-2 flex-wrap'>
+                    {course.media && Array.isArray(course.media)
+                      ? course.media.map((mediaItem: any, index: number) => {
+                          const mediaId = mediaItem._id || mediaItem;
+                          const imagePath = courseImages[index];
+                          const isMarkedForDeletion =
+                            imagesToDelete.includes(mediaId);
+
+                          return (
+                            <div
+                              key={mediaId}
+                              className={`relative w-20 h-20 rounded border overflow-hidden ${
+                                isMarkedForDeletion
+                                  ? "opacity-50 bg-red-100 border-red-300"
+                                  : ""
+                              }`}
+                            >
+                              <img
+                                src={imagePath}
+                                alt={`Current ${index + 1}`}
+                                className='w-full h-full object-cover'
+                              />
+                              {isMarkedForDeletion ? (
+                                <button
+                                  type='button'
+                                  onClick={() =>
+                                    unmarkImageForDeletion(mediaId)
+                                  }
+                                  className='absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-green-600'
+                                  title='Khôi phục hình ảnh'
+                                >
+                                  +
+                                </button>
+                              ) : (
+                                <button
+                                  type='button'
+                                  onClick={() => markImageForDeletion(mediaId)}
+                                  className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
+                                  title='Xóa hình ảnh'
+                                >
+                                  <X className='h-3 w-3' />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })
+                      : course.media &&
+                        courseImages[0] && (
+                          <div className='relative w-20 h-20 rounded border overflow-hidden'>
+                            <img
+                              src={courseImages[0]}
+                              alt='Current'
+                              className='w-full h-full object-cover'
+                            />
+                            <button
+                              type='button'
+                              onClick={() =>
+                                markImageForDeletion(
+                                  course.media._id || course.media
+                                )
+                              }
+                              className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
+                              title='Xóa hình ảnh'
+                            >
+                              <X className='h-3 w-3' />
+                            </button>
+                          </div>
+                        )}
+                  </div>
+                  {imagesToDelete.length > 0 && (
+                    <p className='text-sm text-red-600'>
+                      {imagesToDelete.length} hình ảnh sẽ bị xóa khi lưu thay
+                      đổi
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* File Upload */}
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2'>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    multiple
+                    onChange={handleFileSelect}
+                    className='hidden'
+                    id='media-upload'
+                  />
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() =>
+                      document.getElementById("media-upload")?.click()
+                    }
+                  >
+                    <Upload className='h-4 w-4 mr-2' />
+                    Thêm hình ảnh
+                  </Button>
+                </div>
+
+                {/* Selected Files Preview */}
+                {selectedFiles.length > 0 && (
+                  <div className='space-y-2'>
+                    <p className='text-sm text-muted-foreground'>
+                      Hình ảnh mới:
+                    </p>
+                    <div className='flex gap-2 flex-wrap'>
+                      {selectedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className='relative w-20 h-20 rounded border overflow-hidden'
+                        >
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`New ${index + 1}`}
+                            className='w-full h-full object-cover'
+                          />
+                          <button
+                            type='button'
+                            onClick={() => removeSelectedFile(index)}
+                            className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs'
+                          >
+                            <X className='h-3 w-3' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Active Status */}
+            <div className='flex items-center space-x-2'>
+              <Switch
+                id='is_active'
+                checked={formData.is_active}
+                onCheckedChange={(checked) =>
+                  handleInputChange("is_active", checked)
+                }
+              />
+              <Label htmlFor='is_active'>Khóa học đang hoạt động</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isSaving}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSaveCourse}
+              disabled={isSaving || !formData.title.trim()}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu thay đổi"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

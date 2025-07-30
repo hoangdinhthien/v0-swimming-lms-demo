@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Search,
@@ -66,6 +67,7 @@ interface CourseInfo {
 }
 
 export default function TransactionsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const { token, tenantId, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,9 +87,9 @@ export default function TransactionsPage() {
   const [totalOrders, setTotalOrders] = useState(0);
   const [limit, setLimit] = useState(10);
 
-  // Status update states
+  // Status Update Dialog states
   const [statusUpdateDialogOpen, setStatusUpdateDialogOpen] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
@@ -194,50 +196,48 @@ export default function TransactionsPage() {
 
   // Handle status update
   const handleStatusUpdate = async () => {
-    if (!selectedOrderId || !newStatus || !token || !tenantId) return;
+    if (!selectedOrder || !newStatus || !token || !tenantId) {
+      return;
+    }
 
+    setUpdatingStatus(true);
     try {
-      setUpdatingStatus(true);
       await updateOrderStatus({
-        orderId: selectedOrderId,
+        orderId: selectedOrder._id,
         status: newStatus,
         tenantId,
         token,
       });
 
-      // Update the local order data
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order._id === selectedOrderId
+      // Update the order in the local state
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id === selectedOrder._id
             ? { ...order, status: [newStatus] }
             : order
         )
       );
 
       toast({
-        title: "Cập nhật thành công",
-        description: "Trạng thái giao dịch đã được cập nhật",
+        title: "Thành công",
+        description: "Trạng thái giao dịch đã được cập nhật.",
       });
 
-      // Close dialog
+      // Close dialog and reset state
       setStatusUpdateDialogOpen(false);
-    } catch (err) {
-      console.error("Error updating order status:", err);
+      setSelectedOrder(null);
+      setNewStatus("");
+    } catch (error) {
+      console.error("Error updating order status:", error);
       toast({
-        variant: "destructive",
         title: "Lỗi",
-        description: "Không thể cập nhật trạng thái giao dịch",
+        description:
+          "Không thể cập nhật trạng thái giao dịch. Vui lòng thử lại.",
+        variant: "destructive",
       });
     } finally {
       setUpdatingStatus(false);
     }
-  };
-
-  // Open status update dialog
-  const openStatusUpdateDialog = (orderId: string, currentStatus: string[]) => {
-    setSelectedOrderId(orderId);
-    setNewStatus(currentStatus[0] || "");
-    setStatusUpdateDialogOpen(true);
   };
 
   // Get unique courses for filter
@@ -510,14 +510,13 @@ export default function TransactionsPage() {
                   <TableHead>Ngày</TableHead>
                   <TableHead>Loại</TableHead>
                   <TableHead>Trạng thái</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && orders.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={7}
                       className='text-center py-10'
                     >
                       <div className='flex justify-center'>
@@ -537,7 +536,15 @@ export default function TransactionsPage() {
                       courseInfo[order.course]?.title || "Đang tải...";
 
                     return (
-                      <TableRow key={order._id}>
+                      <TableRow
+                        key={order._id}
+                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/manager/transactions/${order._id}`
+                          )
+                        }
+                      >
                         <TableCell className='font-medium'>
                           {order._id.substring(0, 8)}...
                         </TableCell>
@@ -569,36 +576,13 @@ export default function TransactionsPage() {
                             {getStatusName(order.status)}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-right'>
-                          <div className='flex justify-end gap-2'>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() =>
-                                openStatusUpdateDialog(order._id, order.status)
-                              }
-                            >
-                              Cập nhật
-                            </Button>
-                            <Link
-                              href={`/dashboard/manager/transactions/${order._id}`}
-                            >
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                              >
-                                Xem chi tiết
-                              </Button>
-                            </Link>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     );
                   })
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={7}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.

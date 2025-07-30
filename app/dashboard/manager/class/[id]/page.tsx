@@ -13,11 +13,118 @@ import {
   User,
   GraduationCap,
   Loader2,
+  Edit,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fetchClassDetails, type ClassDetails } from "@/api/class-api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  fetchClassDetails,
+  updateClass,
+  type ClassDetails,
+  type UpdateClassData,
+} from "@/api/class-api";
+import { fetchCourses } from "@/api/courses-api";
+import { fetchInstructors } from "@/api/instructors-api";
+import { fetchStudents } from "@/api/students-api";
+import { getMediaDetails } from "@/api/media-api";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getAuthToken } from "@/api/auth-utils";
+
+// User Avatar Component with async image loading
+function UserAvatar({
+  user,
+  className = "h-6 w-6",
+}: {
+  user: any;
+  className?: string;
+}) {
+  const [avatarSrc, setAvatarSrc] = useState("/placeholder.svg");
+
+  useEffect(() => {
+    const loadAvatar = async () => {
+      // Handle different user data structures (user.user or direct user)
+      const userData = user?.user || user;
+      const featuredImage = userData?.featured_image;
+
+      if (featuredImage) {
+        let imagePath = null;
+
+        // Handle different featured_image structures
+        if (Array.isArray(featuredImage) && featuredImage.length > 0) {
+          // Case: [{"path": ["url"]}] or [{"path": "url"}] or ["media_id"]
+          const firstImage = featuredImage[0];
+          if (typeof firstImage === "string") {
+            // It's a media ID
+            imagePath = await getMediaDetails(firstImage);
+          } else if (firstImage?.path) {
+            if (Array.isArray(firstImage.path)) {
+              imagePath = firstImage.path[0]; // Get first URL from array
+            } else {
+              imagePath = firstImage.path; // Direct string URL
+            }
+          }
+        } else if (typeof featuredImage === "string") {
+          // Case: "media_id" or direct URL
+          if (featuredImage.startsWith("http")) {
+            imagePath = featuredImage;
+          } else {
+            // It's a media ID, fetch the path
+            imagePath = await getMediaDetails(featuredImage);
+          }
+        } else if (
+          featuredImage?.path &&
+          typeof featuredImage.path === "string"
+        ) {
+          // Case: {"path": "url"}
+          imagePath = featuredImage.path;
+        }
+
+        // If we found a valid image path, use it
+        if (imagePath && imagePath.startsWith("http")) {
+          setAvatarSrc(imagePath);
+        }
+      }
+    };
+    loadAvatar();
+  }, [user]);
+
+  return (
+    <Avatar className={className}>
+      <AvatarImage src={avatarSrc} />
+      <AvatarFallback>
+        {(user?.user?.username || user?.username)?.charAt(0)?.toUpperCase() ||
+          "U"}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -28,6 +135,28 @@ export default function ClassDetailPage() {
   const [classData, setClassData] = useState<ClassDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    course: "",
+    name: "",
+    instructor: "",
+    member: [] as string[],
+  });
+
+  // Dropdown data
+  const [courses, setCourses] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  // State for dropdown toggles
+  const [showStudentsDropdown, setShowStudentsDropdown] = useState(false);
+  const [showInstructorsDropdown, setShowInstructorsDropdown] = useState(false);
+
+  const { toast } = useToast();
 
   // Determine the back link and text based on 'from' parameter
   const getBackLink = () => {
@@ -77,6 +206,127 @@ export default function ClassDetailPage() {
 
     loadClassDetails();
   }, [classroomId]);
+
+  // Load dropdown data for edit modal
+  const loadEditData = async () => {
+    setLoadingData(true);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) return;
+
+      const [coursesData, instructorsData, studentsData] = await Promise.all([
+        fetchCourses({ tenantId, token }),
+        fetchInstructors({ tenantId, token }),
+        fetchStudents({ tenantId, token }),
+      ]);
+
+      setCourses(coursesData.data || []);
+      setInstructors(instructorsData || []);
+      setStudents(studentsData || []);
+    } catch (error) {
+      console.error("Error loading edit data:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải dữ liệu cho form chỉnh sửa",
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  // Handle opening edit modal
+  const handleEditClick = async () => {
+    if (classData) {
+      setFormData({
+        course: classData.course._id || "",
+        name: classData.name || "",
+        instructor:
+          typeof classData.instructor === "string"
+            ? classData.instructor
+            : Array.isArray(classData.instructor) &&
+              classData.instructor.length > 0
+            ? classData.instructor[0]
+            : "",
+        member: Array.isArray(classData.member)
+          ? classData.member
+              .map((m: any) => (typeof m === "string" ? m : m._id))
+              .filter(Boolean)
+          : [],
+      });
+      setIsEditModalOpen(true);
+      await loadEditData();
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (field: keyof typeof formData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Handle member selection
+  const handleMemberToggle = (memberId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      member: prev.member.includes(memberId)
+        ? prev.member.filter((id) => id !== memberId)
+        : [...prev.member, memberId],
+    }));
+  };
+
+  // Handle form submission
+  const handleSaveClass = async () => {
+    try {
+      setIsSaving(true);
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      if (!classroomId) {
+        throw new Error("Thiếu ID lớp học");
+      }
+
+      const updateData: UpdateClassData = {
+        course: formData.course,
+        name: formData.name,
+        instructor: formData.instructor,
+        member: formData.member,
+      };
+
+      console.log("Sending update data:", updateData);
+      console.log("Form data state:", formData);
+
+      await updateClass(classroomId, updateData, tenantId, token);
+
+      // Refresh class data
+      const updatedClass = await fetchClassDetails(
+        classroomId,
+        tenantId,
+        token
+      );
+      setClassData(updatedClass);
+
+      setIsEditModalOpen(false);
+      toast({
+        title: "Thành công",
+        description: "Lớp học đã được cập nhật thành công",
+      });
+    } catch (error: any) {
+      console.error("Error updating class:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật lớp học",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Show loading state
   if (loading) {
@@ -199,6 +449,13 @@ export default function ClassDetailPage() {
               </p>
             </div>{" "}
             <div className='flex items-center gap-4'>
+              <Button
+                onClick={handleEditClick}
+                className='inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
+              >
+                <Edit className='h-4 w-4' />
+                Chỉnh sửa lớp học
+              </Button>
               <Badge
                 variant='default'
                 className='bg-primary text-primary-foreground text-sm px-4 py-2'
@@ -226,7 +483,10 @@ export default function ClassDetailPage() {
               </CardHeader>
               <CardContent className='space-y-6'>
                 <div>
-                  <h3 className='text-lg font-semibold mb-2'>Mô tả</h3>
+                  <h3 className='text-xl font-bold mb-3 text-primary'>
+                    {classData.course.title}
+                  </h3>
+                  <h4 className='text-lg font-semibold mb-2'>Mô tả</h4>
                   <p className='text-muted-foreground leading-relaxed'>
                     {classData.course.description}
                   </p>
@@ -301,7 +561,7 @@ export default function ClassDetailPage() {
                 </div>
 
                 {/* Schedule Information */}
-                <div>
+                <div data-section='schedule'>
                   <h3 className='text-lg font-semibold mb-4'>
                     Lịch học ({classData.total_schedules || 0} buổi)
                   </h3>
@@ -405,18 +665,227 @@ export default function ClassDetailPage() {
                 </CardTitle>
               </CardHeader>{" "}
               <CardContent className='space-y-4'>
-                <div className='flex justify-between items-center p-3 bg-muted/50 rounded-lg'>
-                  <span className='text-sm font-medium'>Số học viên</span>
-                  <span className='font-bold text-lg'>
-                    {classData.member?.length || 0}
-                  </span>
+                {/* Students Section */}
+                <div
+                  className='space-y-2'
+                  data-section='students'
+                >
+                  <div
+                    className='flex justify-between items-center p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors'
+                    onClick={() =>
+                      setShowStudentsDropdown(!showStudentsDropdown)
+                    }
+                  >
+                    <span className='text-sm font-medium flex items-center gap-2'>
+                      <Users className='h-4 w-4' />
+                      Số học viên
+                    </span>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-bold text-lg'>
+                        {classData.member?.length || 0}
+                      </span>
+                      {showStudentsDropdown ? (
+                        <ChevronUp className='h-4 w-4' />
+                      ) : (
+                        <ChevronDown className='h-4 w-4' />
+                      )}
+                    </div>
+                  </div>
+
+                  {showStudentsDropdown &&
+                    classData.member &&
+                    classData.member.length > 0 && (
+                      <div className='bg-background border rounded-xl p-4 space-y-3 max-h-80 overflow-y-auto shadow-sm'>
+                        {classData.member.map((student: any, index: number) => (
+                          <Link
+                            key={student._id || index}
+                            href={`/dashboard/manager/students/${student._id}`}
+                            className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
+                          >
+                            <UserAvatar
+                              user={student}
+                              className='h-12 w-12 ring-2 ring-background shadow-md'
+                            />
+                            <div className='flex-1 min-w-0 space-y-1'>
+                              <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
+                                {student.username}
+                              </p>
+                              <div className='flex flex-col gap-1'>
+                                {student.email && (
+                                  <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                    <Mail className='h-3.5 w-3.5 flex-shrink-0' />
+                                    <span className='truncate'>
+                                      {student.email}
+                                    </span>
+                                  </div>
+                                )}
+                                {student.phone && (
+                                  <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                    <Phone className='h-3.5 w-3.5 flex-shrink-0' />
+                                    <span>{student.phone}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className='flex flex-col items-end gap-2'>
+                              <div className='flex items-center gap-2'>
+                                <div
+                                  className={`h-2.5 w-2.5 rounded-full shadow-sm ${
+                                    student.is_active
+                                      ? "bg-green-500"
+                                      : "bg-gray-400"
+                                  }`}
+                                />
+                                <span className='text-xs font-medium text-muted-foreground'>
+                                  {student.is_active ? "Active" : "Inactive"}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
-                <div className='flex justify-between items-center p-3 bg-muted/50 rounded-lg'>
-                  <span className='text-sm font-medium'>Số giảng viên</span>
-                  <span className='font-bold text-lg'>
-                    {classData.instructor?.length || 0}
-                  </span>
+                {/* Instructors Section */}
+                <div
+                  className='space-y-2'
+                  data-section='instructors'
+                >
+                  <div
+                    className='flex justify-between items-center p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors'
+                    onClick={() =>
+                      setShowInstructorsDropdown(!showInstructorsDropdown)
+                    }
+                  >
+                    <span className='text-sm font-medium flex items-center gap-2'>
+                      <GraduationCap className='h-4 w-4' />
+                      Số giảng viên
+                    </span>
+                    <div className='flex items-center gap-2'>
+                      <span className='font-bold text-lg'>
+                        {Array.isArray(classData.instructor)
+                          ? classData.instructor.length
+                          : classData.instructor
+                          ? 1
+                          : 0}
+                      </span>
+                      {showInstructorsDropdown ? (
+                        <ChevronUp className='h-4 w-4' />
+                      ) : (
+                        <ChevronDown className='h-4 w-4' />
+                      )}
+                    </div>
+                  </div>
+
+                  {showInstructorsDropdown && classData.instructor && (
+                    <div className='bg-background border rounded-xl p-4 space-y-3 shadow-sm'>
+                      {Array.isArray(classData.instructor) ? (
+                        classData.instructor.map(
+                          (instructor: any, index: number) => (
+                            <Link
+                              key={instructor._id || index}
+                              href={`/dashboard/manager/instructors/${instructor._id}`}
+                              className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
+                            >
+                              <UserAvatar
+                                user={instructor}
+                                className='h-12 w-12 ring-2 ring-background shadow-md'
+                              />
+                              <div className='flex-1 min-w-0 space-y-1'>
+                                <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
+                                  {instructor.username}
+                                </p>
+                                <div className='flex flex-col gap-1'>
+                                  {instructor.email && (
+                                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                      <Mail className='h-3.5 w-3.5 flex-shrink-0' />
+                                      <span className='truncate'>
+                                        {instructor.email}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {instructor.phone && (
+                                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                      <Phone className='h-3.5 w-3.5 flex-shrink-0' />
+                                      <span>{instructor.phone}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className='flex flex-col items-end gap-2'>
+                                <div className='flex items-center gap-2'>
+                                  <div
+                                    className={`h-2.5 w-2.5 rounded-full shadow-sm ${
+                                      instructor.is_active
+                                        ? "bg-green-500"
+                                        : "bg-gray-400"
+                                    }`}
+                                  />
+                                  <span className='text-xs font-medium text-muted-foreground'>
+                                    {instructor.is_active
+                                      ? "Active"
+                                      : "Inactive"}
+                                  </span>
+                                </div>
+                              </div>
+                            </Link>
+                          )
+                        )
+                      ) : (
+                        <Link
+                          href={`/dashboard/manager/instructors/${
+                            (classData.instructor as any)._id
+                          }`}
+                          className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
+                        >
+                          <UserAvatar
+                            user={classData.instructor}
+                            className='h-12 w-12 ring-2 ring-background shadow-md'
+                          />
+                          <div className='flex-1 min-w-0 space-y-1'>
+                            <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
+                              {(classData.instructor as any).username}
+                            </p>
+                            <div className='flex flex-col gap-1'>
+                              {(classData.instructor as any).email && (
+                                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                  <Mail className='h-3.5 w-3.5 flex-shrink-0' />
+                                  <span className='truncate'>
+                                    {(classData.instructor as any).email}
+                                  </span>
+                                </div>
+                              )}
+                              {(classData.instructor as any).phone && (
+                                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                  <Phone className='h-3.5 w-3.5 flex-shrink-0' />
+                                  <span>
+                                    {(classData.instructor as any).phone}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className='flex flex-col items-end gap-2'>
+                            <div className='flex items-center gap-2'>
+                              <div
+                                className={`h-2.5 w-2.5 rounded-full shadow-sm ${
+                                  (classData.instructor as any).is_active
+                                    ? "bg-green-500"
+                                    : "bg-gray-400"
+                                }`}
+                              />
+                              <span className='text-xs font-medium text-muted-foreground'>
+                                {(classData.instructor as any).is_active
+                                  ? "Active"
+                                  : "Inactive"}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className='flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
@@ -471,6 +940,29 @@ export default function ClassDetailPage() {
                 <Button
                   className='w-full'
                   variant='outline'
+                  onClick={() => {
+                    setShowStudentsDropdown(true);
+                    if (classData.member && classData.member.length > 0) {
+                      // Scroll to students section after a short delay
+                      setTimeout(() => {
+                        const element = document.querySelector(
+                          '[data-section="students"]'
+                        );
+                        if (element) {
+                          element.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                        }
+                      }, 100);
+                    } else {
+                      toast({
+                        title: "Thông báo",
+                        description: "Lớp học này chưa có học viên nào",
+                        variant: "default",
+                      });
+                    }
+                  }}
                 >
                   <Users className='mr-2 h-4 w-4' />
                   Xem danh sách học viên
@@ -478,6 +970,29 @@ export default function ClassDetailPage() {
                 <Button
                   className='w-full'
                   variant='outline'
+                  onClick={() => {
+                    setShowInstructorsDropdown(true);
+                    if (classData.instructor) {
+                      // Scroll to instructors section after a short delay
+                      setTimeout(() => {
+                        const element = document.querySelector(
+                          '[data-section="instructors"]'
+                        );
+                        if (element) {
+                          element.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                        }
+                      }, 100);
+                    } else {
+                      toast({
+                        title: "Thông báo",
+                        description: "Lớp học này chưa có giảng viên nào",
+                        variant: "default",
+                      });
+                    }
+                  }}
                 >
                   <User className='mr-2 h-4 w-4' />
                   Xem giảng viên
@@ -485,6 +1000,18 @@ export default function ClassDetailPage() {
                 <Button
                   className='w-full'
                   variant='outline'
+                  onClick={() => {
+                    // Scroll to schedule section
+                    const element = document.querySelector(
+                      '[data-section="schedule"]'
+                    );
+                    if (element) {
+                      element.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    }
+                  }}
                 >
                   <Calendar className='mr-2 h-4 w-4' />
                   Xem lịch học
@@ -494,6 +1021,172 @@ export default function ClassDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Class Modal */}
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      >
+        <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa lớp học</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin lớp học. Tất cả thay đổi sẽ được lưu ngay lập
+              tức.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingData ? (
+            <div className='flex items-center justify-center py-8'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+              <span className='ml-2'>Đang tải dữ liệu...</span>
+            </div>
+          ) : (
+            <div className='space-y-6'>
+              {/* Class Name */}
+              <div className='space-y-2'>
+                <Label htmlFor='name'>Tên lớp học *</Label>
+                <Input
+                  id='name'
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder='Nhập tên lớp học'
+                />
+              </div>
+
+              {/* Course Selection */}
+              <div className='space-y-2'>
+                <Label htmlFor='course'>Khóa học *</Label>
+                <Select
+                  value={formData.course}
+                  onValueChange={(value) => handleInputChange("course", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Chọn khóa học' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem
+                        key={course._id}
+                        value={course._id}
+                      >
+                        <div className='flex items-center gap-2'>
+                          <span>{course.title}</span>
+                          <Badge
+                            variant='outline'
+                            className='text-xs'
+                          >
+                            {course.price?.toLocaleString()}₫
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Instructor Selection */}
+              <div className='space-y-2'>
+                <Label htmlFor='instructor'>Giảng viên *</Label>
+                <Select
+                  value={formData.instructor}
+                  onValueChange={(value) =>
+                    handleInputChange("instructor", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Chọn giảng viên' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {instructors.map((instructor) => (
+                      <SelectItem
+                        key={instructor._id}
+                        value={instructor.user._id}
+                      >
+                        <div className='flex items-center gap-2'>
+                          <UserAvatar
+                            user={instructor}
+                            className='h-6 w-6'
+                          />
+                          <span>{instructor.user.username}</span>
+                          <span className='text-muted-foreground text-sm'>
+                            ({instructor.user.email})
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Students Selection */}
+              <div className='space-y-4'>
+                <Label>Học viên ({formData.member.length} đã chọn)</Label>
+                <div className='border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2'>
+                  {students.length > 0 ? (
+                    students.map((student) => (
+                      <div
+                        key={student._id}
+                        className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
+                      >
+                        <Checkbox
+                          id={student.user._id}
+                          checked={formData.member.includes(student.user._id)}
+                          onCheckedChange={() =>
+                            handleMemberToggle(student.user._id)
+                          }
+                        />
+                        <UserAvatar
+                          user={student}
+                          className='h-8 w-8'
+                        />
+                        <div className='flex-1'>
+                          <p className='font-medium'>{student.user.username}</p>
+                          <p className='text-sm text-muted-foreground'>
+                            {student.user.email}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className='text-muted-foreground text-center py-4'>
+                      Không có học viên nào
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isSaving}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSaveClass}
+              disabled={
+                isSaving ||
+                !formData.name.trim() ||
+                !formData.course ||
+                !formData.instructor
+              }
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu thay đổi"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

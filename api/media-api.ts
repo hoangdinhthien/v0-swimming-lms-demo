@@ -115,3 +115,45 @@ export async function uploadMedia({
     throw error;
   }
 }
+
+// Function to delete media file(s) by IDs
+export async function deleteMedia({
+  mediaIds,
+  tenantId,
+  token,
+}: {
+  mediaIds: string[];
+  tenantId: string;
+  token: string;
+}): Promise<void> {
+  try {
+    if (mediaIds.length === 0) {
+      return;
+    }
+
+    // Join multiple IDs with comma for the query parameter
+    const idsParam = mediaIds.join(",");
+
+    const response = await fetch(
+      `${config.API}/v1/media?ids=${encodeURIComponent(idsParam)}`,
+      {
+        method: "DELETE",
+        headers: {
+          "x-tenant-id": tenantId,
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Delete failed: ${response.status} ${errorText}`);
+    }
+
+    // Response might be empty for successful deletion
+    console.log(`Successfully deleted ${mediaIds.length} media file(s)`);
+  } catch (error) {
+    console.error("Error deleting media:", error);
+    throw error;
+  }
+}

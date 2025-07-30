@@ -220,3 +220,58 @@ export const fetchClasses = async (
     meta_data: meta_data,
   };
 };
+
+// Interface for updating a class
+export interface UpdateClassData {
+  course: string; // course id
+  name: string; // class name
+  instructor: string; // instructor id
+  member: string[]; // array of member ids
+}
+
+/**
+ * Update class details by class ID
+ * @param classId - The ID of the class to update
+ * @param data - The update data
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with updated class data
+ */
+export const updateClass = async (
+  classId: string,
+  data: UpdateClassData,
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId) {
+    throw new Error("Class ID is required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to update class: ${response.status} ${errorText}`);
+  }
+
+  return await response.json();
+};

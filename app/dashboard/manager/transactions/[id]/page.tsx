@@ -35,7 +35,9 @@ import {
   getStatusClass,
   getOrderUserName,
   getOrderUserContact,
+  getOrderTypeDisplayName,
   updateOrderStatus,
+  fetchOrderById,
 } from "../../../../../api/orders-api";
 import { fetchCourseById } from "../../../../../api/courses-api";
 import ManagerNotFound from "@/components/manager/not-found";
@@ -62,33 +64,12 @@ export default function TransactionDetailPage() {
       try {
         setLoading(true);
 
-        // Fetch order by ID - we'll use the orders API and filter by ID
-        // In a real app, you'd have a specific endpoint for getting a single order
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/v1/workflow-process/manager/orders`,
-          {
-            headers: {
-              "x-tenant-id": tenantId,
-              Authorization: `Bearer ${token}`,
-            },
-            cache: "no-store",
-          }
-        );
-        if (!response.ok) {
-          // Check if it's a 404 error
-          if (response.status === 404) {
-            throw new Error("404");
-          }
-          throw new Error("Không thể tải thông tin giao dịch");
-        }
-
-        const data = await response.json();
-        const orders = data.data?.[0]?.[0]?.data || [];
-        const foundOrder = orders.find((o: Order) => o._id === orderId);
-
-        if (!foundOrder) {
-          throw new Error("Không tìm thấy giao dịch");
-        }
+        // Fetch order by ID using the dedicated API function
+        const foundOrder = await fetchOrderById({
+          orderId,
+          tenantId,
+          token,
+        });
 
         setOrder(foundOrder);
         setNewStatus(foundOrder.status?.[0] || "");
@@ -162,8 +143,9 @@ export default function TransactionDetailPage() {
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        <p>Đang tải thông tin giao dịch...</p>
+      <div className='flex flex-col items-center justify-center h-64 space-y-4'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+        <p className='text-muted-foreground'>Đang tải thông tin giao dịch...</p>
       </div>
     );
   }
@@ -268,25 +250,67 @@ export default function TransactionDetailPage() {
                     Loại giao dịch
                   </div>
                   <div className='font-medium'>
-                    {order.type === "guest"
-                      ? "Đăng ký từ Khách"
-                      : order.type === "member"
-                      ? "Đăng ký từ Thành viên"
-                      : order.type}
-                  </div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-sm text-muted-foreground'>
-                    Phương thức thanh toán
-                  </div>
-                  <div className='font-medium flex items-center gap-1'>
-                    <CreditCard className='h-3.5 w-3.5 text-muted-foreground' />
-                    {order.payment?.zp_trans_id ? "ZaloPay" : "Chưa xác định"}
+                    {getOrderTypeDisplayName(order)}
                   </div>
                 </div>
               </div>
 
               <Separator className='my-6' />
+
+              {/* Payment Information */}
+              {order.payment && (
+                <div className='space-y-6'>
+                  <div>
+                    <h3 className='text-lg font-medium mb-4'>
+                      Thông tin thanh toán
+                    </h3>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
+                          Phương thức
+                        </div>
+                        <div className='font-medium flex items-center gap-1'>
+                          <CreditCard className='h-3.5 w-3.5 text-muted-foreground' />
+                          {order.payment.zp_trans_id
+                            ? "ZaloPay"
+                            : "Chưa xác định"}
+                        </div>
+                      </div>
+                      {order.payment.app_trans_id && (
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
+                            Mã giao dịch ứng dụng
+                          </div>
+                          <div className='font-medium font-mono text-sm'>
+                            {order.payment.app_trans_id}
+                          </div>
+                        </div>
+                      )}
+                      {order.payment.zp_trans_id && (
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
+                            Mã giao dịch ZaloPay
+                          </div>
+                          <div className='font-medium font-mono text-sm'>
+                            {order.payment.zp_trans_id}
+                          </div>
+                        </div>
+                      )}
+                      {order.payment.url && (
+                        <div className='space-y-1 sm:col-span-2'>
+                          <div className='text-sm text-muted-foreground'>
+                            Link thanh toán
+                          </div>
+                          <div className='font-medium text-blue-600 text-sm break-all'>
+                            {order.payment.url}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Separator />
+                </div>
+              )}
 
               <div className='space-y-6'>
                 <div>
@@ -351,25 +375,107 @@ export default function TransactionDetailPage() {
                     </div>
                     <div className='space-y-1'>
                       <div className='text-sm text-muted-foreground'>
-                        Liên hệ
+                        Loại khách hàng
                       </div>
-                      <div className='font-medium'>{userContact}</div>
+                      <div className='font-medium'>
+                        <Badge variant='outline'>
+                          {getOrderTypeDisplayName(order)}
+                        </Badge>
+                      </div>
                     </div>
-                    {order.guest?.email && (
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>
-                          Email
-                        </div>
-                        <div className='font-medium'>{order.guest.email}</div>
-                      </div>
+
+                    {/* Guest Information */}
+                    {order.guest && (
+                      <>
+                        {order.guest.email && (
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
+                              Email (Khách)
+                            </div>
+                            <div className='font-medium'>
+                              {order.guest.email}
+                            </div>
+                          </div>
+                        )}
+                        {order.guest.phone && (
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
+                              Điện thoại (Khách)
+                            </div>
+                            <div className='font-medium'>
+                              {order.guest.phone}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
-                    {order.guest?.phone && (
-                      <div className='space-y-1'>
-                        <div className='text-sm text-muted-foreground'>
-                          Điện thoại
+
+                    {/* Member Information */}
+                    {order.user && (
+                      <>
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
+                            ID Thành viên
+                          </div>
+                          <div className='font-medium font-mono text-sm'>
+                            {order.user._id}
+                          </div>
                         </div>
-                        <div className='font-medium'>{order.guest.phone}</div>
-                      </div>
+                        {order.user.email && (
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
+                              Email (Thành viên)
+                            </div>
+                            <div className='font-medium'>
+                              {order.user.email}
+                            </div>
+                          </div>
+                        )}
+                        {order.user.phone && (
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
+                              Điện thoại (Thành viên)
+                            </div>
+                            <div className='font-medium'>
+                              {order.user.phone}
+                            </div>
+                          </div>
+                        )}
+                        {order.user.birthday && (
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
+                              Ngày sinh
+                            </div>
+                            <div className='font-medium'>
+                              {format(
+                                new Date(order.user.birthday),
+                                "dd/MM/yyyy"
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {order.user.address && (
+                          <div className='space-y-1 sm:col-span-2'>
+                            <div className='text-sm text-muted-foreground'>
+                              Địa chỉ
+                            </div>
+                            <div className='font-medium'>
+                              {order.user.address}
+                            </div>
+                          </div>
+                        )}
+                        {order.user.parent_id &&
+                          order.user.parent_id.length > 0 && (
+                            <div className='space-y-1'>
+                              <div className='text-sm text-muted-foreground'>
+                                ID Phụ huynh
+                              </div>
+                              <div className='font-medium font-mono text-sm'>
+                                {order.user.parent_id.join(", ")}
+                              </div>
+                            </div>
+                          )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -481,24 +587,76 @@ export default function TransactionDetailPage() {
                         {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
                       </time>
                     </div>
+                    {order.created_by && (
+                      <p className='text-xs text-muted-foreground mt-1'>
+                        Tạo bởi: {order.created_by}
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* This would be populated from real activity logs in a production app */}
+                {order.updated_at && order.updated_at !== order.created_at && (
+                  <div className='flex items-start gap-2'>
+                    <div className='h-2 w-2 mt-1.5 rounded-full bg-blue-500' />
+                    <div className='flex-1'>
+                      <p className='font-medium'>Cập nhật gần nhất</p>
+                      <div className='flex items-center text-sm text-muted-foreground'>
+                        <Clock className='mr-1 h-3.5 w-3.5' />
+                        <time dateTime={order.updated_at}>
+                          {format(
+                            new Date(order.updated_at),
+                            "dd/MM/yyyy HH:mm"
+                          )}
+                        </time>
+                      </div>
+                      {order.updated_by && (
+                        <p className='text-xs text-muted-foreground mt-1'>
+                          Cập nhật bởi: {order.updated_by}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className='flex items-start gap-2'>
-                  <div className='h-2 w-2 mt-1.5 rounded-full bg-blue-500' />
+                  <div
+                    className={`h-2 w-2 mt-1.5 rounded-full ${
+                      order.status[0] === "paid"
+                        ? "bg-green-500"
+                        : order.status[0] === "pending"
+                        ? "bg-amber-500"
+                        : order.status[0] === "cancelled"
+                        ? "bg-red-500"
+                        : "bg-gray-500"
+                    }`}
+                  />
                   <div className='flex-1'>
                     <p className='font-medium'>
-                      Trạng thái đặt thành {getStatusName(order.status)}
+                      Trạng thái: {getStatusName(order.status)}
                     </p>
                     <div className='flex items-center text-sm text-muted-foreground'>
                       <Clock className='mr-1 h-3.5 w-3.5' />
-                      <time dateTime={order.created_at}>
-                        {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
+                      <time dateTime={order.updated_at || order.created_at}>
+                        {format(
+                          new Date(order.updated_at || order.created_at),
+                          "dd/MM/yyyy HH:mm"
+                        )}
                       </time>
                     </div>
                   </div>
                 </div>
+
+                {order.payment?.zp_trans_id && (
+                  <div className='flex items-start gap-2'>
+                    <div className='h-2 w-2 mt-1.5 rounded-full bg-purple-500' />
+                    <div className='flex-1'>
+                      <p className='font-medium'>Thanh toán ZaloPay</p>
+                      <p className='text-xs text-muted-foreground mt-1'>
+                        Mã GD: {order.payment.zp_trans_id}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
