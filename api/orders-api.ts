@@ -284,6 +284,77 @@ export function getOrderTypeDisplayName(order: Order): string {
 }
 
 /**
+ * Fetch orders by course and class with filters for student selection
+ */
+export async function fetchOrdersForCourse({
+  tenantId,
+  token,
+  courseId,
+  classId,
+  status = "paid",
+  haveUser = true,
+}: {
+  tenantId: string;
+  token: string;
+  courseId: string;
+  classId: string;
+  status?: string;
+  haveUser?: boolean;
+}): Promise<Order[]> {
+  console.log("[fetchOrdersForCourse] called with", {
+    tenantId,
+    token,
+    courseId,
+    classId,
+    status,
+    haveUser,
+  });
+  if (!tenantId || !token) {
+    console.error("[fetchOrdersForCourse] Missing tenantId or token", {
+      tenantId,
+      token,
+    });
+    throw new Error(
+      "Thiếu thông tin xác thực (token hoặc tenantId). Vui lòng đăng nhập lại hoặc chọn chi nhánh."
+    );
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/orders?course=${courseId}&class=${classId}&status=${status}&haveUser=${haveUser}`;
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  console.log("[fetchOrdersForCourse] URL:", url);
+  console.log("[fetchOrdersForCourse] Headers:", headers);
+
+  try {
+    const res = await fetch(url, {
+      headers,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("[fetchOrdersForCourse] API error:", res.status, errorText);
+      throw new Error("Không thể lấy danh sách đơn hàng: " + errorText);
+    }
+
+    const data: OrdersResponse = await res.json();
+    console.log("[fetchOrdersForCourse] API Response:", data);
+
+    // Unwrap the nested structure to get the array of orders
+    const orders = data.data?.[0]?.[0]?.data || [];
+    console.log("[fetchOrdersForCourse] Parsed orders count:", orders.length);
+
+    return orders;
+  } catch (error) {
+    console.error("[fetchOrdersForCourse] Exception:", error);
+    throw error;
+  }
+}
+
+/**
  * Fetch a single order by ID
  */
 export async function fetchOrderById({

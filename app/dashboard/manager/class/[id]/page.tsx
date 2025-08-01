@@ -52,7 +52,7 @@ import {
 } from "@/api/class-api";
 import { fetchCourses } from "@/api/courses-api";
 import { fetchInstructors } from "@/api/instructors-api";
-import { fetchStudents } from "@/api/students-api";
+import { fetchOrdersForCourse, type Order } from "@/api/orders-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -149,7 +149,7 @@ export default function ClassDetailPage() {
   // Dropdown data
   const [courses, setCourses] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
+  const [ordersWithUsers, setOrdersWithUsers] = useState<Order[]>([]);
   const [loadingData, setLoadingData] = useState(false);
 
   // State for dropdown toggles
@@ -214,17 +214,24 @@ export default function ClassDetailPage() {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
 
-      if (!tenantId || !token) return;
+      if (!tenantId || !token || !classData) return;
 
-      const [coursesData, instructorsData, studentsData] = await Promise.all([
+      const [coursesData, instructorsData, ordersData] = await Promise.all([
         fetchCourses({ tenantId, token }),
         fetchInstructors({ tenantId, token }),
-        fetchStudents({ tenantId, token }),
+        fetchOrdersForCourse({
+          tenantId,
+          token,
+          courseId: classData.course._id,
+          classId: classroomId,
+          status: "paid",
+          haveUser: true,
+        }),
       ]);
 
       setCourses(coursesData.data || []);
       setInstructors(instructorsData || []);
-      setStudents(studentsData || []);
+      setOrdersWithUsers(ordersData || []);
     } catch (error) {
       console.error("Error loading edit data:", error);
       toast({
@@ -1123,34 +1130,38 @@ export default function ClassDetailPage() {
               <div className='space-y-4'>
                 <Label>Học viên ({formData.member.length} đã chọn)</Label>
                 <div className='border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2'>
-                  {students.length > 0 ? (
-                    students.map((student) => (
-                      <div
-                        key={student._id}
-                        className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
-                      >
-                        <Checkbox
-                          id={student.user._id}
-                          checked={formData.member.includes(student.user._id)}
-                          onCheckedChange={() =>
-                            handleMemberToggle(student.user._id)
-                          }
-                        />
-                        <UserAvatar
-                          user={student}
-                          className='h-8 w-8'
-                        />
-                        <div className='flex-1'>
-                          <p className='font-medium'>{student.user.username}</p>
-                          <p className='text-sm text-muted-foreground'>
-                            {student.user.email}
-                          </p>
+                  {ordersWithUsers.length > 0 ? (
+                    ordersWithUsers
+                      .filter((order) => order.user) // Only show orders with user data
+                      .map((order) => (
+                        <div
+                          key={order._id}
+                          className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
+                        >
+                          <Checkbox
+                            id={order.user!._id}
+                            checked={formData.member.includes(order.user!._id)}
+                            onCheckedChange={() =>
+                              handleMemberToggle(order.user!._id)
+                            }
+                          />
+                          <UserAvatar
+                            user={order.user}
+                            className='h-8 w-8'
+                          />
+                          <div className='flex-1'>
+                            <p className='font-medium'>
+                              {order.user!.username}
+                            </p>
+                            <p className='text-sm text-muted-foreground'>
+                              {order.user!.email}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))
                   ) : (
                     <p className='text-muted-foreground text-center py-4'>
-                      Không có học viên nào
+                      Không có học viên nào đã đăng ký khóa học này
                     </p>
                   )}
                 </div>
