@@ -31,10 +31,40 @@ export interface OrderPayment {
   zp_trans_id?: string;
 }
 
+export interface OrderCourse {
+  _id: string;
+  title: string;
+  description?: string;
+  price: number;
+  category?: string[];
+  session_number?: number;
+  session_number_duration?: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+  is_active?: boolean;
+  slug?: string;
+  detail?: Array<{ title: string }>;
+  media?: string | string[];
+}
+
+export interface OrderClass {
+  _id: string;
+  name: string;
+  course: string;
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
 export interface Order {
   _id: string;
   type: string[]; // Changed from string to string[] to match API response
-  course: string;
+  course: OrderCourse | string; // Can be either an object or string ID
   price: number;
   guest?: OrderGuest; // Made optional since not all orders have guest data
   user?: OrderUser;
@@ -45,21 +75,16 @@ export interface Order {
   payment?: OrderPayment; // Made optional since not all orders have payment data
   updated_at?: string; // Added optional updated_at field
   updated_by?: string; // Added optional updated_by field
+  class?: OrderClass; // Added optional class field from API response
 }
 
 export interface OrdersResponse {
-  data: [
-    [
-      {
-        data: Order[];
-        meta_data: {
-          count: number;
-          page: number;
-          limit: number;
-        };
-      }
-    ]
-  ];
+  data: Order[];
+  meta: {
+    total: number;
+    last_page: number;
+    current_page: number;
+  };
   message: string;
   statusCode: number;
 }
@@ -90,7 +115,7 @@ export async function fetchOrders({
     );
   }
 
-  const url = `${config.API}/v1/workflow-process/manager/orders?page=${page}&limit=${limit}`;
+  const url = `${config.API}/v1/order?page=${page}&limit=${limit}`;
   const headers = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
@@ -114,13 +139,13 @@ export async function fetchOrders({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrders] API Response:", data);
 
-    // Unwrap the nested structure to get the array of orders
-    const orders = data.data?.[0]?.[0]?.data || [];
+    // Parse the new flat structure where data is directly an array of orders
+    const orders = data.data || [];
     console.log("[fetchOrders] Parsed orders count:", orders.length);
 
-    const meta = data.data?.[0]?.[0]?.meta_data;
-    const total = meta?.count || orders.length;
-    const currentPage = meta?.page || page;
+    const meta = data.meta;
+    const total = meta?.total || orders.length;
+    const currentPage = meta?.current_page || page;
 
     return {
       orders,
@@ -131,6 +156,26 @@ export async function fetchOrders({
     console.error("[fetchOrders] Exception:", error);
     throw error;
   }
+}
+
+/**
+ * Get the course ID from an order (handles both object and string formats)
+ */
+export function getOrderCourseId(order: Order): string {
+  if (typeof order.course === "string") {
+    return order.course;
+  }
+  return order.course._id;
+}
+
+/**
+ * Get the course title from an order (returns the title if course is an object, or the ID if string)
+ */
+export function getOrderCourseTitle(order: Order): string {
+  if (typeof order.course === "string") {
+    return order.course; // Return the ID as fallback
+  }
+  return order.course.title || order.course._id;
 }
 
 /**
@@ -258,7 +303,7 @@ export async function updateOrderStatus({
   }
 
   const data = await res.json();
-  return data.data?.[0]?.[0]?.data || {};
+  return data.data || {};
 }
 
 /**
@@ -343,8 +388,8 @@ export async function fetchOrdersForCourse({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrdersForCourse] API Response:", data);
 
-    // Unwrap the nested structure to get the array of orders
-    const orders = data.data?.[0]?.[0]?.data || [];
+    // Parse the new flat structure where data is directly an array of orders
+    const orders = data.data || [];
     console.log("[fetchOrdersForCourse] Parsed orders count:", orders.length);
 
     return orders;
@@ -404,7 +449,7 @@ export async function fetchOrderById({
     const data = await res.json();
     console.log("[fetchOrderById] API Response:", data);
 
-    // Unwrap the nested structure to get the order
+    // Handle the nested structure for single order: data[0][0][0]
     const order = data.data?.[0]?.[0]?.[0];
     if (!order) {
       throw new Error("Không tìm thấy đơn hàng");

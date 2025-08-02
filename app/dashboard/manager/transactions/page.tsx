@@ -56,6 +56,8 @@ import {
   getOrderUserName,
   getOrderUserContact,
   getOrderTypeDisplayName,
+  getOrderCourseId,
+  getOrderCourseTitle,
   updateOrderStatus,
   Order,
 } from "../../../../api/orders-api";
@@ -136,22 +138,48 @@ export default function TransactionsPage() {
         setOrders(ordersData.orders);
         setTotalOrders(ordersData.total);
 
-        // Prepare for course fetching
+        // Prepare for course fetching - extract course IDs and handle embedded course objects
         const courseIds = [
-          ...new Set(ordersData.orders.map((order) => order.course)),
+          ...new Set(
+            ordersData.orders
+              .map((order) => getOrderCourseId(order))
+              .filter(Boolean)
+          ),
         ];
         console.log("[Transactions] Found course IDs:", courseIds);
 
-        const initialLoadingState = courseIds.reduce((acc, id) => {
-          acc[id] = true;
-          return acc;
-        }, {} as Record<string, boolean>);
-        setLoadingCourses(initialLoadingState);
-
-        // Fetch course details for each unique course ID
-        courseIds.forEach((courseId) => {
-          fetchCourseDetails(courseId);
+        // Pre-populate course info for orders that already have course objects embedded
+        const embeddedCourseInfo: Record<string, CourseInfo> = {};
+        ordersData.orders.forEach((order) => {
+          if (typeof order.course === "object" && order.course._id) {
+            embeddedCourseInfo[order.course._id] = {
+              title: order.course.title,
+              price: order.course.price,
+            };
+          }
         });
+
+        if (Object.keys(embeddedCourseInfo).length > 0) {
+          setCourseInfo(embeddedCourseInfo);
+        }
+
+        // Only fetch course details for courses that are not already embedded
+        const coursesToFetch = courseIds.filter(
+          (courseId) => !embeddedCourseInfo[courseId]
+        );
+
+        if (coursesToFetch.length > 0) {
+          const initialLoadingState = coursesToFetch.reduce((acc, id) => {
+            acc[id] = true;
+            return acc;
+          }, {} as Record<string, boolean>);
+          setLoadingCourses(initialLoadingState);
+
+          // Fetch course details for each unique course ID that's not already embedded
+          coursesToFetch.forEach((courseId) => {
+            fetchCourseDetails(courseId);
+          });
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
@@ -244,7 +272,8 @@ export default function TransactionsPage() {
   const courses = Array.from(
     new Set(
       orders.map((order) => {
-        return courseInfo[order.course]?.title || order.course;
+        const courseId = getOrderCourseId(order);
+        return courseInfo[courseId]?.title || getOrderCourseTitle(order);
       })
     )
   );
@@ -268,7 +297,9 @@ export default function TransactionsPage() {
   const filteredTransactions = orders.filter((order) => {
     const orderDate = new Date(order.created_at);
     const formattedDate = format(orderDate, "MMM d, yyyy");
-    const courseName = courseInfo[order.course]?.title || order.course;
+    const courseId = getOrderCourseId(order);
+    const courseName =
+      courseInfo[courseId]?.title || getOrderCourseTitle(order);
     const userName = getOrderUserName(order);
     const userContact = getOrderUserContact(order);
 
@@ -530,10 +561,10 @@ export default function TransactionsPage() {
                     const formattedDate = format(orderDate, "dd/MM/yyyy");
                     const userName = getOrderUserName(order);
                     const userContact = getOrderUserContact(order);
-                    const isLoadingCourse =
-                      loadingCourses[order.course] || false;
+                    const courseId = getOrderCourseId(order);
+                    const isLoadingCourse = loadingCourses[courseId] || false;
                     const courseName =
-                      courseInfo[order.course]?.title || "Đang tải...";
+                      courseInfo[courseId]?.title || getOrderCourseTitle(order);
 
                     return (
                       <TableRow

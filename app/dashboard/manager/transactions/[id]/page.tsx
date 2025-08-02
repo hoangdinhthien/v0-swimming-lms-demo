@@ -36,6 +36,8 @@ import {
   getOrderUserName,
   getOrderUserContact,
   getOrderTypeDisplayName,
+  getOrderCourseId,
+  getOrderCourseTitle,
   updateOrderStatus,
   fetchOrderById,
 } from "../../../../../api/orders-api";
@@ -74,8 +76,12 @@ export default function TransactionDetailPage() {
         setOrder(foundOrder);
         setNewStatus(foundOrder.status?.[0] || "");
 
-        // Now fetch course details
-        if (foundOrder.course) {
+        // Handle course details - check if course is already embedded or needs to be fetched
+        if (typeof foundOrder.course === "object") {
+          // Course details are already embedded in the order
+          setCourseDetails(foundOrder.course);
+        } else if (foundOrder.course) {
+          // Course is just an ID, need to fetch details
           const courseData = await fetchCourseById({
             courseId: foundOrder.course,
             tenantId,
