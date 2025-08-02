@@ -97,6 +97,30 @@ export default function NewStudentPage() {
   });
 
   useEffect(() => {
+    // Check for prefilled guest data from sessionStorage
+    const guestDataStr = sessionStorage.getItem("guestData");
+    if (guestDataStr) {
+      try {
+        const guestData = JSON.parse(guestDataStr);
+
+        // Prefill the form with guest data
+        if (guestData.username) {
+          form.setValue("username", guestData.username);
+        }
+        if (guestData.email) {
+          form.setValue("email", guestData.email);
+        }
+        if (guestData.phone) {
+          form.setValue("phone", guestData.phone);
+        }
+
+        // Clear the data from sessionStorage after using it
+        sessionStorage.removeItem("guestData");
+      } catch (error) {
+        console.error("Error parsing guest data:", error);
+      }
+    }
+
     // Fetch existing parents when the component mounts
     fetchExistingParents();
   }, []);
@@ -217,14 +241,45 @@ export default function NewStudentPage() {
         token,
       });
 
+      console.log("Student creation result:", result);
+
       // Show success message
       toast({
         title: "Thành công",
         description: "Đã thêm học viên mới",
       });
 
-      // Redirect to students list
-      router.push("/dashboard/manager/students");
+      // Check if there's a return URL from guest order flow
+      const guestDataStr = sessionStorage.getItem("guestData");
+      let returnUrl = null;
+
+      if (guestDataStr) {
+        try {
+          const guestData = JSON.parse(guestDataStr);
+          returnUrl = guestData.returnUrl;
+
+          // Store the newly created user ID for the transaction page to use
+          const newUserData = {
+            userId: result.data?._id || result._id, // API might return data in different structures
+            showClassModal: true, // Flag to show class modal immediately
+          };
+          sessionStorage.setItem("newUserData", JSON.stringify(newUserData));
+
+          sessionStorage.removeItem("guestData");
+        } catch (error) {
+          console.error("Error parsing guest data:", error);
+        }
+      }
+
+      // Redirect appropriately
+      if (returnUrl) {
+        // Coming from transaction detail page - go back there
+        router.push(returnUrl);
+      } else {
+        // Normal flow - go to students list
+        router.push("/dashboard/manager/students");
+      }
+
       router.refresh(); // Refresh the page to show the new student
     } catch (error: any) {
       toast({

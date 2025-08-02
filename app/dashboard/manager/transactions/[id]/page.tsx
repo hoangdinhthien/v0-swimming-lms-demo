@@ -13,6 +13,8 @@ import {
   Clock,
   Check,
   X,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -42,6 +52,10 @@ import {
   fetchOrderById,
 } from "../../../../../api/orders-api";
 import { fetchCourseById } from "../../../../../api/courses-api";
+import {
+  fetchClassroomsByCourse,
+  addUserToClass,
+} from "../../../../../api/classrooms-api";
 import ManagerNotFound from "@/components/manager/not-found";
 
 export default function TransactionDetailPage() {
@@ -57,6 +71,13 @@ export default function TransactionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // New state for class selection modal
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [classrooms, setClassrooms] = useState<any[]>([]);
+  const [loadingClassrooms, setLoadingClassrooms] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [addingToClass, setAddingToClass] = useState(false);
 
   // Fetch order details and related course
   useEffect(() => {
@@ -111,6 +132,89 @@ export default function TransactionDetailPage() {
     getOrderDetails();
   }, [token, tenantId, orderId]);
 
+  // Check for newly created user from guest account creation flow
+  useEffect(() => {
+    const newUserDataStr = sessionStorage.getItem("newUserData");
+    if (newUserDataStr && order) {
+      try {
+        const newUserData = JSON.parse(newUserDataStr);
+        if (newUserData.showClassModal && newUserData.userId) {
+          // Update the order with the new user ID so we can add them to class
+          setOrder((prevOrder) => {
+            if (!prevOrder) return null;
+
+            // Create a basic user object with the new user ID
+            const newUser = {
+              _id: newUserData.userId,
+              username: prevOrder.guest?.username || "Học viên mới",
+              email: prevOrder.guest?.email || "",
+              password: "",
+              role_front: ["member"],
+              parent_id: [],
+              phone: prevOrder.guest?.phone || "",
+              is_active: true,
+              birthday: "",
+              address: "",
+              created_at: new Date().toISOString(),
+              created_by: "",
+              updated_at: new Date().toISOString(),
+              updated_by: "",
+            };
+
+            return {
+              ...prevOrder,
+              user: newUser,
+              type: ["member"], // Change type from guest to member
+            };
+          });
+
+          // Show the class selection modal after a small delay to ensure state is updated
+          setTimeout(() => {
+            setShowClassModal(true);
+            // Load classrooms directly here since we have all the needed values
+            if (token && tenantId) {
+              (async () => {
+                try {
+                  setLoadingClassrooms(true);
+                  const courseId = getOrderCourseId(order);
+                  if (courseId) {
+                    const classroomsData = await fetchClassroomsByCourse(
+                      courseId,
+                      tenantId,
+                      token
+                    );
+                    setClassrooms(classroomsData);
+                  }
+                } catch (err) {
+                  console.error("Error loading classrooms:", err);
+                  toast({
+                    variant: "destructive",
+                    title: "Lỗi",
+                    description: "Không thể tải danh sách lớp học",
+                  });
+                } finally {
+                  setLoadingClassrooms(false);
+                }
+              })();
+            }
+          }, 100);
+
+          // Clear the session storage
+          sessionStorage.removeItem("newUserData");
+
+          // Show success message
+          toast({
+            title: "Tài khoản đã được tạo",
+            description: "Vui lòng chọn lớp học để thêm học viên vào.",
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing new user data:", error);
+        sessionStorage.removeItem("newUserData");
+      }
+    }
+  }, [order, toast, token, tenantId]); // Depend on order so this runs after order is loaded
+
   // Handle status update
   const handleStatusUpdate = async () => {
     if (!order || !newStatus || !token || !tenantId) return;
@@ -145,6 +249,113 @@ export default function TransactionDetailPage() {
     } finally {
       setUpdatingStatus(false);
     }
+  };
+
+  // Check if this is a paid member order (scenario 1)
+  const isPaidMemberOrder = () => {
+    if (!order) return false;
+    return (
+      order.type?.includes("member") &&
+      order.status?.includes("paid") &&
+      order.user &&
+      !order.guest
+    );
+  };
+
+  // Check if this is a paid guest order (scenario 2)
+  const isPaidGuestOrder = () => {
+    if (!order) return false;
+    return (
+      order.type?.includes("guest") &&
+      order.status?.includes("paid") &&
+      order.guest &&
+      !order.user
+    );
+  };
+
+  // Handle adding member to class
+  const handleAddToClass = async () => {
+    if (!order || !selectedClassId || !token || !tenantId) return;
+
+    try {
+      setAddingToClass(true);
+
+      const userId = order.user?._id;
+      if (!userId) {
+        throw new Error("Không tìm thấy thông tin người dùng");
+      }
+
+      await addUserToClass(selectedClassId, userId, tenantId, token);
+
+      toast({
+        title: "Thành công",
+        description: "Đã thêm học viên vào lớp học",
+      });
+
+      setShowClassModal(false);
+      setSelectedClassId("");
+    } catch (err) {
+      console.error("Error adding user to class:", err);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể thêm học viên vào lớp học",
+      });
+    } finally {
+      setAddingToClass(false);
+    }
+  };
+
+  // Load classrooms for the course
+  const loadClassrooms = async () => {
+    if (!order || !token || !tenantId) return;
+
+    try {
+      setLoadingClassrooms(true);
+
+      const courseId = getOrderCourseId(order);
+      if (!courseId) {
+        throw new Error("Không tìm thấy thông tin khóa học");
+      }
+
+      const classroomsData = await fetchClassroomsByCourse(
+        courseId,
+        tenantId,
+        token
+      );
+      setClassrooms(classroomsData);
+    } catch (err) {
+      console.error("Error loading classrooms:", err);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải danh sách lớp học",
+      });
+    } finally {
+      setLoadingClassrooms(false);
+    }
+  };
+
+  // Handle showing class selection modal
+  const handleShowClassModal = () => {
+    setShowClassModal(true);
+    loadClassrooms();
+  };
+
+  // Handle redirecting to create student account
+  const handleCreateStudentAccount = () => {
+    if (!order?.guest) return;
+
+    // Store guest data in sessionStorage to prefill the form
+    const guestData = {
+      username: order.guest.username || "",
+      email: order.guest.email || "",
+      phone: order.guest.phone || "",
+      returnUrl: `/dashboard/manager/transactions/${orderId}`,
+    };
+
+    sessionStorage.setItem("guestData", JSON.stringify(guestData));
+    router.push("/dashboard/manager/students/new");
   };
 
   if (loading) {
@@ -485,6 +696,69 @@ export default function TransactionDetailPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Paid Member Order Scenario */}
+                {isPaidMemberOrder() && (
+                  <div className='mt-6'>
+                    <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <UserCheck className='h-5 w-5 text-green-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-green-800'>
+                            Thành viên đã thanh toán
+                          </h4>
+                          <p className='text-sm text-green-700 mt-1'>
+                            Học viên {userName} đã thanh toán thành công cho
+                            khóa học {getOrderCourseTitle(order)}. Bạn có thể
+                            thêm học viên vào lớp học.
+                          </p>
+                          <div className='mt-3'>
+                            <Button
+                              size='sm'
+                              onClick={handleShowClassModal}
+                              className='bg-green-600 hover:bg-green-700'
+                            >
+                              <UserPlus className='mr-2 h-4 w-4' />
+                              Thêm vào lớp học
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Paid Guest Order Scenario */}
+                {isPaidGuestOrder() && (
+                  <div className='mt-6'>
+                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <User className='h-5 w-5 text-blue-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-blue-800'>
+                            Khách hàng đã thanh toán
+                          </h4>
+                          <p className='text-sm text-blue-700 mt-1'>
+                            Khách hàng {order.guest?.username || "Không rõ tên"}{" "}
+                            đã thanh toán thành công cho khóa học{" "}
+                            {getOrderCourseTitle(order)}. Cần tạo tài khoản để
+                            thêm vào lớp học.
+                          </p>
+                          <div className='mt-3'>
+                            <Button
+                              size='sm'
+                              onClick={handleCreateStudentAccount}
+                              className='bg-blue-600 hover:bg-blue-700'
+                            >
+                              <UserPlus className='mr-2 h-4 w-4' />
+                              Tạo tài khoản
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -668,6 +942,86 @@ export default function TransactionDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Class Selection Modal */}
+      <Dialog
+        open={showClassModal}
+        onOpenChange={setShowClassModal}
+      >
+        <DialogContent className='sm:max-w-[625px]'>
+          <DialogHeader>
+            <DialogTitle>Chọn lớp học</DialogTitle>
+            <DialogDescription>
+              Chọn lớp học để thêm {userName} vào khóa học{" "}
+              {getOrderCourseTitle(order)}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4'>
+            {loadingClassrooms ? (
+              <div className='flex justify-center py-8'>
+                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+              </div>
+            ) : classrooms.length === 0 ? (
+              <div className='text-center py-8'>
+                <p className='text-muted-foreground'>
+                  Chưa có lớp học nào cho khóa học này
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium'>Lớp học:</label>
+                  <Select
+                    value={selectedClassId}
+                    onValueChange={setSelectedClassId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Chọn lớp học' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classrooms.map((classroom) => (
+                        <SelectItem
+                          key={classroom._id}
+                          value={classroom._id}
+                        >
+                          <div className='flex flex-col'>
+                            <span className='font-medium'>
+                              {classroom.name}
+                            </span>
+                            <span className='text-sm text-muted-foreground'>
+                              Giảng viên:{" "}
+                              {typeof classroom.instructor === "object"
+                                ? classroom.instructor?.name || "Chưa phân công"
+                                : "Chưa phân công"}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className='flex justify-end gap-2 pt-4'>
+                  <Button
+                    variant='outline'
+                    onClick={() => setShowClassModal(false)}
+                    disabled={addingToClass}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleAddToClass}
+                    disabled={!selectedClassId || addingToClass}
+                  >
+                    {addingToClass ? "Đang thêm..." : "Thêm vào lớp"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

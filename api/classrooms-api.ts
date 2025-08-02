@@ -104,6 +104,57 @@ export async function fetchClassrooms(
   return [];
 }
 
+/**
+ * Fetch classrooms by course ID
+ */
+export async function fetchClassroomsByCourse(
+  courseId: string,
+  tenantId?: string,
+  token?: string
+): Promise<Classroom[]> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!courseId) {
+    throw new Error("Course ID is required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/classrooms?course=${courseId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch classrooms by course: ${response.status}`);
+  }
+
+  const result: ClassroomsApiResponse = await response.json();
+
+  // Extract classrooms from the nested structure
+  if (
+    result.data &&
+    result.data[0] &&
+    result.data[0][0] &&
+    result.data[0][0].data
+  ) {
+    return result.data[0][0].data;
+  }
+
+  return [];
+}
+
 export interface ScheduleRequest {
   date: string;
   slot: string;
@@ -198,6 +249,115 @@ export async function addClassToSchedule(
         errorMessage = `Failed to add class to schedule: ${response.status}, ${errorText}`;
       } catch (textError) {
         errorMessage = `Failed to add class to schedule: ${response.status}`;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+/**
+ * Add a user to a class by updating the member array
+ */
+export async function addUserToClass(
+  classId: string,
+  userId: string,
+  tenantId?: string,
+  token?: string
+): Promise<any> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId || !userId) {
+    throw new Error("Class ID and User ID are required");
+  }
+
+  // First, fetch the current class details to get existing members
+  let existingMembers: string[] = [];
+  try {
+    const classResponse = await fetch(
+      `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "x-tenant-id": finalTenantId,
+          Authorization: `Bearer ${finalToken}`,
+        },
+      }
+    );
+
+    if (classResponse.ok) {
+      const classData = await classResponse.json();
+      // Extract existing members from the nested structure
+      if (classData.data && Array.isArray(classData.data)) {
+        classData.data.forEach((outerArray: any) => {
+          if (Array.isArray(outerArray)) {
+            outerArray.forEach((innerArray: any) => {
+              if (Array.isArray(innerArray) && innerArray.length > 0) {
+                const classDetails = innerArray[0];
+                if (classDetails.member && Array.isArray(classDetails.member)) {
+                  existingMembers = classDetails.member.map((member: any) =>
+                    typeof member === "string" ? member : member._id
+                  );
+                }
+              }
+            });
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.warn(
+      "Could not fetch existing members, proceeding with empty array:",
+      error
+    );
+  }
+
+  // Check if user is already in the class
+  if (existingMembers.includes(userId)) {
+    throw new Error("Học viên đã có trong lớp học này");
+  }
+
+  // Add the new user to the existing members array
+  const updatedMembers = [...existingMembers, userId];
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+      body: JSON.stringify({
+        member: updatedMembers,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    let errorMessage = `Failed to add user to class: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      try {
+        const errorText = await response.text();
+        errorMessage = `Failed to add user to class: ${response.status}, ${errorText}`;
+      } catch (textError) {
+        errorMessage = `Failed to add user to class: ${response.status}`;
       }
     }
 
