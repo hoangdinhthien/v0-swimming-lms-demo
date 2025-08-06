@@ -221,6 +221,66 @@ export const fetchClasses = async (
   };
 };
 
+/**
+ * Create a new class
+ * @param data - The class data to create
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with created class data
+ */
+export const createClass = async (
+  data: CreateClassData,
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Failed to create class: ${response.status}`;
+
+    try {
+      const errorData = JSON.parse(errorText);
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      errorMessage = `Failed to create class: ${response.status} ${errorText}`;
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return await response.json();
+};
+
+// Interface for creating a new class
+export interface CreateClassData {
+  course: string; // course id
+  name: string; // class name
+  instructor: string; // instructor id
+  member: string[]; // array of member ids
+}
+
 // Interface for updating a class
 export interface UpdateClassData {
   course: string; // course id

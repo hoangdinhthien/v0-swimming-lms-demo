@@ -219,9 +219,11 @@ export default function ClassesPage() {
               Quản lý tất cả các lớp học hiện có
             </p>
           </div>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
-          </Button>
+          <Link href='/dashboard/manager/classes/create'>
+            <Button>
+              <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+            </Button>
+          </Link>
         </div>
 
         <div className='mt-8 grid gap-6 md:grid-cols-4'>

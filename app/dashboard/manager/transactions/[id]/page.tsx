@@ -49,6 +49,7 @@ import {
   getOrderCourseId,
   getOrderCourseTitle,
   updateOrderStatus,
+  updateOrderWithUser,
   fetchOrderById,
 } from "../../../../../api/orders-api";
 import { fetchCourseById } from "../../../../../api/courses-api";
@@ -57,6 +58,7 @@ import {
   addUserToClass,
 } from "../../../../../api/classrooms-api";
 import ManagerNotFound from "@/components/manager/not-found";
+import CreateStudentModal from "@/components/create-student-modal";
 
 export default function TransactionDetailPage() {
   const params = useParams();
@@ -78,6 +80,9 @@ export default function TransactionDetailPage() {
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [addingToClass, setAddingToClass] = useState(false);
+
+  // New state for create student modal
+  const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
 
   // Fetch order details and related course
   useEffect(() => {
@@ -252,24 +257,22 @@ export default function TransactionDetailPage() {
   };
 
   // Check if this is a paid member order (scenario 1)
+  // Show this if the order has user data (regardless of guest data)
   const isPaidMemberOrder = () => {
     if (!order) return false;
     return (
-      order.type?.includes("member") &&
-      order.status?.includes("paid") &&
-      order.user &&
-      !order.guest
+      order.status?.includes("paid") && order.user // Has user data (converted from guest or original member)
     );
   };
 
   // Check if this is a paid guest order (scenario 2)
+  // Show this only if it has guest data but NO user data
   const isPaidGuestOrder = () => {
     if (!order) return false;
     return (
-      order.type?.includes("guest") &&
       order.status?.includes("paid") &&
-      order.guest &&
-      !order.user
+      order.guest && // Has guest data
+      !order.user // Does NOT have user data yet
     );
   };
 
@@ -342,20 +345,59 @@ export default function TransactionDetailPage() {
     loadClassrooms();
   };
 
-  // Handle redirecting to create student account
+  // Handle showing create student modal
   const handleCreateStudentAccount = () => {
     if (!order?.guest) return;
+    setShowCreateStudentModal(true);
+  };
 
-    // Store guest data in sessionStorage to prefill the form
-    const guestData = {
-      username: order.guest.username || "",
-      email: order.guest.email || "",
-      phone: order.guest.phone || "",
-      returnUrl: `/dashboard/manager/transactions/${orderId}`,
-    };
+  // Handle successful student creation
+  const handleStudentCreated = async (studentId: string) => {
+    if (!order || !token || !tenantId) return;
 
-    sessionStorage.setItem("guestData", JSON.stringify(guestData));
-    router.push("/dashboard/manager/students/new");
+    try {
+      // Update the order with the new user ID
+      await updateOrderWithUser({
+        orderId: order._id,
+        userId: studentId,
+        tenantId,
+        token,
+      });
+
+      // Show success notification
+      toast({
+        title: "Tài khoản đã được tạo thành công",
+        description: `Đã tạo tài khoản và cập nhật đơn hàng cho ${
+          order.guest?.username || "học viên"
+        }.`,
+      });
+
+      // Refresh the order data to reflect the changes
+      const updatedOrder = await fetchOrderById({
+        orderId: order._id,
+        tenantId,
+        token,
+      });
+
+      setOrder(updatedOrder);
+
+      // Automatically show the class selection modal if the updated order has user data
+      if (updatedOrder.user) {
+        setTimeout(() => {
+          setShowClassModal(true);
+          loadClassrooms();
+        }, 1000);
+      }
+    } catch (error: any) {
+      console.error("Error updating order with user:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description:
+          error.message ||
+          "Không thể cập nhật đơn hàng với thông tin người dùng",
+      });
+    }
   };
 
   if (loading) {
@@ -744,8 +786,10 @@ export default function TransactionDetailPage() {
                           <p className='text-sm text-blue-700 mt-1'>
                             Khách hàng {order.guest?.username || "Không rõ tên"}{" "}
                             đã thanh toán thành công cho khóa học{" "}
-                            {courseDetails.title}. Cần tạo tài khoản để thêm vào
-                            lớp học.
+                            <u>
+                              <b>{courseDetails.title}.</b>
+                            </u>{" "}
+                            Cần tạo tài khoản để thêm vào lớp học.
                           </p>
                           <div className='mt-3'>
                             <Button
@@ -956,7 +1000,9 @@ export default function TransactionDetailPage() {
             <DialogTitle>Chọn lớp học</DialogTitle>
             <DialogDescription>
               Chọn lớp học để thêm {userName} vào khóa học{" "}
-              {getOrderCourseTitle(order)}.
+              <u>
+                <b>{courseDetails.title}.</b>
+              </u>
             </DialogDescription>
           </DialogHeader>
 
@@ -1025,6 +1071,14 @@ export default function TransactionDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create Student Modal */}
+      <CreateStudentModal
+        open={showCreateStudentModal}
+        onOpenChange={setShowCreateStudentModal}
+        onSuccess={handleStudentCreated}
+        guestData={order?.guest}
+      />
     </>
   );
 }

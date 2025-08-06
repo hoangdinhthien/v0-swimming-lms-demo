@@ -125,7 +125,7 @@ export async function fetchClassroomsByCourse(
   }
 
   const response = await fetch(
-    `${config.API}/v1/workflow-process/classrooms?course=${courseId}`,
+    `${config.API}/v1/workflow-process/manager/classes?course=${courseId}`,
     {
       method: "GET",
       headers: {

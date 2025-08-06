@@ -307,6 +307,47 @@ export async function updateOrderStatus({
 }
 
 /**
+ * Update an order with a user ID (convert guest order to member order)
+ */
+export async function updateOrderWithUser({
+  orderId,
+  userId,
+  tenantId,
+  token,
+}: {
+  orderId: string;
+  userId: string;
+  tenantId: string;
+  token: string;
+}): Promise<Order> {
+  if (!tenantId || !token) {
+    throw new Error("Thiếu thông tin xác thực");
+  }
+
+  const url = `${config.API}/v1/order/${orderId}`;
+  const headers = {
+    "Content-Type": "application/json",
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ user: [userId] }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("API error:", res.status, errorText);
+    throw new Error("Không thể cập nhật đơn hàng với thông tin người dùng");
+  }
+
+  const data = await res.json();
+  return data.data || {};
+}
+
+/**
  * Get the order type (guest or member) from an order
  */
 export function getOrderType(order: Order): string {
