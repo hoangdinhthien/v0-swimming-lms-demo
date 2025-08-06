@@ -709,8 +709,11 @@ export default function TransactionDetailPage() {
                           </h4>
                           <p className='text-sm text-green-700 mt-1'>
                             Học viên {userName} đã thanh toán thành công cho
-                            khóa học {getOrderCourseTitle(order)}. Bạn có thể
-                            thêm học viên vào lớp học.
+                            khóa học{" "}
+                            <b>
+                              <u>{courseDetails.title}.</u>
+                            </b>{" "}
+                            Bạn có thể thêm học viên vào lớp học.
                           </p>
                           <div className='mt-3'>
                             <Button
@@ -741,8 +744,8 @@ export default function TransactionDetailPage() {
                           <p className='text-sm text-blue-700 mt-1'>
                             Khách hàng {order.guest?.username || "Không rõ tên"}{" "}
                             đã thanh toán thành công cho khóa học{" "}
-                            {getOrderCourseTitle(order)}. Cần tạo tài khoản để
-                            thêm vào lớp học.
+                            {courseDetails.title}. Cần tạo tài khoản để thêm vào
+                            lớp học.
                           </p>
                           <div className='mt-3'>
                             <Button

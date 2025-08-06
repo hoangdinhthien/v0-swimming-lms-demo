@@ -337,14 +337,14 @@ export async function fetchOrdersForCourse({
   courseId,
   classId,
   status = "paid",
-  haveUser = true,
+  type = "member",
 }: {
   tenantId: string;
   token: string;
   courseId: string;
   classId: string;
   status?: string;
-  haveUser?: boolean;
+  type?: string;
 }): Promise<Order[]> {
   console.log("[fetchOrdersForCourse] called with", {
     tenantId,
@@ -352,7 +352,7 @@ export async function fetchOrdersForCourse({
     courseId,
     classId,
     status,
-    haveUser,
+    type,
   });
   if (!tenantId || !token) {
     console.error("[fetchOrdersForCourse] Missing tenantId or token", {
@@ -364,7 +364,15 @@ export async function fetchOrdersForCourse({
     );
   }
 
-  const url = `${config.API}/v1/workflow-process/manager/orders?course=${courseId}&class=${classId}&status=${status}&haveUser=${haveUser}`;
+  // Build the new search-based URL with unencoded square brackets and colons
+  const queryParams = [
+    `search[course._id%3Ain]=${courseId}`,
+    `search[class._id%3Ain]=${classId}`,
+    `search[type:contains]=${type}`,
+    `search[status:contains]=${status}`,
+  ].join("&");
+
+  const url = `${config.API}/v1/order?${queryParams}`;
   const headers = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,

@@ -225,7 +225,7 @@ export default function ClassDetailPage() {
           courseId: classData.course._id,
           classId: classroomId,
           status: "paid",
-          haveUser: true,
+          type: "member",
         }),
       ]);
 
