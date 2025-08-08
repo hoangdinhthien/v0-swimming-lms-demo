@@ -22,6 +22,17 @@ import {
   Menu,
   X,
   Building,
+  // Add new icons for better visual hierarchy
+  Home,
+  GraduationCap,
+  UserCheck,
+  BookOpen,
+  Clock,
+  FileText,
+  CreditCard as PaymentIcon,
+  MessageCircle,
+  Tag,
+  Cog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -52,7 +63,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -70,6 +81,7 @@ export default function DashboardLayout({
   const [tenantName, setTenantName] = useState("");
   const [availableTenants, setAvailableTenants] = useState<any[]>([]);
   const [selectedTenantId, setSelectedTenantIdState] = useState<string>("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter(); // Handle tenant switching
   const handleTenantSwitch = async (newTenantId: string) => {
@@ -127,7 +139,20 @@ export default function DashboardLayout({
       setLoading(false);
     }, 500); // Adjust the delay as needed
 
-    return () => clearTimeout(timer);
+    // Keyboard shortcut for sidebar toggle (Ctrl/Cmd + B)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "b") {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
   // For this version of the app, we only have manager role
   const getRoleDisplayName = () => {
@@ -142,57 +167,57 @@ export default function DashboardLayout({
       {
         name: "Dashboard",
         href: "/dashboard/manager",
-        icon: <LayoutDashboard className='h-4 w-4 mr-2' />,
+        icon: <Home className='h-4 w-4' />,
       },
       {
         name: "Học Viên",
         href: "/dashboard/manager/students",
-        icon: <Users className='h-4 w-4 mr-2' />,
+        icon: <GraduationCap className='h-4 w-4' />,
       },
       {
         name: "Giáo Viên",
         href: "/dashboard/manager/instructors",
-        icon: <Users className='h-4 w-4 mr-2' />,
+        icon: <UserCheck className='h-4 w-4' />,
       },
       {
         name: "Khóa Học",
         href: "/dashboard/manager/courses",
-        icon: <Award className='h-4 w-4 mr-2' />,
+        icon: <BookOpen className='h-4 w-4' />,
       },
       {
         name: "Lớp Học",
         href: "/dashboard/manager/classes",
-        icon: <Users className='h-4 w-4 mr-2' />,
+        icon: <Users className='h-4 w-4' />,
       },
       {
         name: "Lịch",
         href: "/dashboard/manager/calendar",
-        icon: <Calendar className='h-4 w-4 mr-2' />,
+        icon: <Clock className='h-4 w-4' />,
       },
       {
         name: "Đơn từ",
         href: "/dashboard/manager/applications",
-        icon: <Building className='h-4 w-4 mr-2' />,
+        icon: <FileText className='h-4 w-4' />,
       },
       {
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
-        icon: <CreditCard className='h-4 w-4 mr-2' />,
+        icon: <PaymentIcon className='h-4 w-4' />,
       },
       {
         name: "Tin nhắn",
         href: "/dashboard/manager/messages",
-        icon: <MessageSquare className='h-4 w-4 mr-2' />,
+        icon: <MessageCircle className='h-4 w-4' />,
       },
       {
         name: "Khuyến Mãi",
         href: "/dashboard/manager/promotions",
-        icon: <Percent className='h-4 w-4 mr-2' />,
+        icon: <Tag className='h-4 w-4' />,
       },
       {
         name: "Cài Đặt Tài Khoản",
         href: "/dashboard/manager/settings",
-        icon: <Settings className='h-4 w-4 mr-2' />,
+        icon: <Cog className='h-4 w-4' />,
       },
     ],
     // We keep this structure for compatibility but it won't be used
@@ -270,57 +295,71 @@ export default function DashboardLayout({
             side='left'
             className='pr-0 overflow-y-auto'
           >
-            <div className='px-7'>
-              <Link
-                href='/'
-                className='flex items-center gap-2 font-semibold'
-              >
-                <Waves className='h-6 w-6 text-sky-500' />
-                <span>AquaLearn</span>
-              </Link>
-            </div>
-            <div className='grid gap-2 py-6 px-7'>
-              {currentNavItems.map((item) => (
+            <div className='px-4 py-6'>
+              <div className='mb-6'>
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className='flex items-center gap-2 text-lg font-semibold'
+                  href='/'
+                  className='flex items-center gap-2 font-semibold text-lg'
                 >
-                  {item.icon}
-                  {item.name}
+                  <Waves className='h-6 w-6 text-sky-500' />
+                  <span>AquaLearn</span>
                 </Link>
-              ))}
-              <AlertDialog
-                open={logoutDialogOpen}
-                onOpenChange={setLogoutDialogOpen}
-              >
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant='ghost'
-                    className='mt-2 justify-start px-2'
-                  >
-                    <LogOut className='h-5 w-5 mr-2' />
-                    Đăng xuất
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Bạn chắc chắn muốn đăng xuất?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Bạn sẽ bị đăng xuất khỏi tài khoản của mình. Để tiếp tục
-                      sử dụng, bạn sẽ cần đăng nhập lại.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleLogout}>
+              </div>
+
+              <div className='space-y-2'>
+                {currentNavItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors
+                        ${
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                    >
+                      {item.icon}
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <div className='mt-6 pt-6 border-t'>
+                <AlertDialog
+                  open={logoutDialogOpen}
+                  onOpenChange={setLogoutDialogOpen}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      className='w-full justify-start px-3 text-muted-foreground hover:text-foreground'
+                    >
+                      <LogOut className='h-4 w-4 mr-3' />
                       Đăng xuất
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Bạn chắc chắn muốn đăng xuất?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Bạn sẽ bị đăng xuất khỏi tài khoản của mình. Để tiếp tục
+                        sử dụng, bạn sẽ cần đăng nhập lại.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Hủy</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLogout}>
+                        Đăng xuất
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </SheetContent>
         </Sheet>{" "}
@@ -412,29 +451,280 @@ export default function DashboardLayout({
         </div>
       </header>{" "}
       <div className='flex flex-1'>
-        <nav className='hidden border-r bg-muted/40 md:flex h-[calc(100vh-64px)] fixed top-16 w-[220px] z-20'>
-          <div className='grid gap-2 p-4 w-full overflow-y-auto'>
-            {currentNavItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all
-                    ${
-                      isActive
-                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        <nav
+          className={`hidden border-r bg-gradient-to-b from-background/95 to-muted/20 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:flex h-[calc(100vh-64px)] fixed top-16 z-20 shadow-sm border-r-border/50 transition-all duration-300 ${
+            sidebarCollapsed ? "w-[70px]" : "w-[260px]"
+          }`}
+        >
+          <div className='flex flex-col w-full'>
+            {/* Sidebar Header */}
+            <div className='p-4 border-b border-border/50 flex items-center justify-between'>
+              <div
+                className={`flex items-center gap-2 text-sm font-medium text-muted-foreground transition-opacity duration-200 ${
+                  sidebarCollapsed ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                <Building className='h-4 w-4 text-primary' />
+                {!sidebarCollapsed && <span>Quản Lý Hệ Thống</span>}
+              </div>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className='h-8 w-8 p-0 hover:bg-muted'
+                title={sidebarCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className='h-4 w-4' />
+                ) : (
+                  <ChevronLeft className='h-4 w-4' />
+                )}
+              </Button>
+            </div>
+
+            {/* Navigation Items */}
+            <div className='flex-1 overflow-y-auto px-3 py-4'>
+              <div className='space-y-6'>
+                {/* Overview Section */}
+                <div className='space-y-1'>
+                  <div
+                    className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
+                      sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
                     }`}
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </Link>
-              );
-            })}
+                  >
+                    {!sidebarCollapsed && "Tổng Quan"}
+                  </div>
+                  <Link
+                    href='/dashboard/manager'
+                    className={`group flex items-center ${
+                      sidebarCollapsed ? "justify-center" : "gap-3"
+                    } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
+                      ${
+                        pathname === "/dashboard/manager"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    title={sidebarCollapsed ? "Dashboard" : undefined}
+                  >
+                    <div
+                      className={`flex-shrink-0 ${
+                        pathname === "/dashboard/manager"
+                          ? "text-primary-foreground"
+                          : "group-hover:text-foreground"
+                      }`}
+                    >
+                      <Home className='h-4 w-4' />
+                    </div>
+                    {!sidebarCollapsed && (
+                      <span className='truncate'>Dashboard</span>
+                    )}
+                    {pathname === "/dashboard/manager" && (
+                      <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
+                    )}
+                  </Link>
+                </div>
+
+                {/* Management Section */}
+                <div className='space-y-1'>
+                  <div
+                    className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
+                      sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
+                    }`}
+                  >
+                    {!sidebarCollapsed && "Quản Lý"}
+                  </div>
+                  {[
+                    {
+                      name: "Học Viên",
+                      href: "/dashboard/manager/students",
+                      icon: <GraduationCap className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Giáo Viên",
+                      href: "/dashboard/manager/instructors",
+                      icon: <UserCheck className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Khóa Học",
+                      href: "/dashboard/manager/courses",
+                      icon: <BookOpen className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Lớp Học",
+                      href: "/dashboard/manager/classes",
+                      icon: <Users className='h-4 w-4' />,
+                    },
+                  ].map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`group flex items-center ${
+                          sidebarCollapsed ? "justify-center" : "gap-3"
+                        } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
+                          ${
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        title={sidebarCollapsed ? item.name : undefined}
+                      >
+                        <div
+                          className={`flex-shrink-0 ${
+                            isActive
+                              ? "text-primary-foreground"
+                              : "group-hover:text-foreground"
+                          }`}
+                        >
+                          {item.icon}
+                        </div>
+                        {!sidebarCollapsed && (
+                          <span className='truncate'>{item.name}</span>
+                        )}
+                        {isActive && (
+                          <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Operations Section */}
+                <div className='space-y-1'>
+                  <div
+                    className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
+                      sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
+                    }`}
+                  >
+                    {!sidebarCollapsed && "Hoạt Động"}
+                  </div>
+                  {[
+                    {
+                      name: "Lịch",
+                      href: "/dashboard/manager/calendar",
+                      icon: <Clock className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Đơn từ",
+                      href: "/dashboard/manager/applications",
+                      icon: <FileText className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Giao Dịch",
+                      href: "/dashboard/manager/transactions",
+                      icon: <PaymentIcon className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Tin nhắn",
+                      href: "/dashboard/manager/messages",
+                      icon: <MessageCircle className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Khuyến Mãi",
+                      href: "/dashboard/manager/promotions",
+                      icon: <Tag className='h-4 w-4' />,
+                    },
+                  ].map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`group flex items-center ${
+                          sidebarCollapsed ? "justify-center" : "gap-3"
+                        } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
+                          ${
+                            isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        title={sidebarCollapsed ? item.name : undefined}
+                      >
+                        <div
+                          className={`flex-shrink-0 ${
+                            isActive
+                              ? "text-primary-foreground"
+                              : "group-hover:text-foreground"
+                          }`}
+                        >
+                          {item.icon}
+                        </div>
+                        {!sidebarCollapsed && (
+                          <span className='truncate'>{item.name}</span>
+                        )}
+                        {isActive && (
+                          <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Settings Section */}
+                <div className='space-y-1'>
+                  <div
+                    className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
+                      sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
+                    }`}
+                  >
+                    {!sidebarCollapsed && "Cài Đặt"}
+                  </div>
+                  <Link
+                    href='/dashboard/manager/settings'
+                    className={`group flex items-center ${
+                      sidebarCollapsed ? "justify-center" : "gap-3"
+                    } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
+                      ${
+                        pathname === "/dashboard/manager/settings"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      }`}
+                    title={sidebarCollapsed ? "Cài Đặt Tài Khoản" : undefined}
+                  >
+                    <div
+                      className={`flex-shrink-0 ${
+                        pathname === "/dashboard/manager/settings"
+                          ? "text-primary-foreground"
+                          : "group-hover:text-foreground"
+                      }`}
+                    >
+                      <Cog className='h-4 w-4' />
+                    </div>
+                    {!sidebarCollapsed && (
+                      <span className='truncate'>Cài Đặt Tài Khoản</span>
+                    )}
+                    {pathname === "/dashboard/manager/settings" && (
+                      <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
+                    )}
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar Footer */}
+            <div className='p-4 border-t border-border/50 mt-auto bg-muted/30'>
+              <div
+                className={`flex items-center text-xs text-muted-foreground transition-all duration-200 ${
+                  sidebarCollapsed ? "justify-center" : "gap-2 justify-center"
+                }`}
+              >
+                <Waves className='h-3 w-3 text-primary' />
+                {!sidebarCollapsed && (
+                  <>
+                    <span className='font-medium'>AquaLearn Manager</span>
+                    <span className='text-muted-foreground/60'>v2.0</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </nav>
-        <main className='flex flex-1 flex-col p-4 md:gap-8 md:p-6 md:ml-[220px] mt-16'>
+        <main
+          className={`flex flex-1 flex-col p-4 md:gap-8 md:p-6 mt-16 transition-all duration-300 ${
+            sidebarCollapsed ? "md:ml-[70px]" : "md:ml-[260px]"
+          }`}
+        >
           {loading ? <LoadingScreen /> : children}
         </main>
       </div>
