@@ -16,6 +16,7 @@ import {
   Percent,
   Bell,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,11 @@ import {
   getStatusClass,
 } from "@/api/orders-api";
 import { useAuth } from "@/hooks/use-auth";
+import {
+  fetchDateRangeSchedule,
+  fetchWeekSchedule,
+  type ScheduleEvent,
+} from "@/api/schedule-api";
 
 function ManagerDashboardPage() {
   const router = useRouter();
@@ -60,6 +66,9 @@ function ManagerDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [isLoadingSchedule, setIsLoadingSchedule] = useState(true);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
   const { token, tenantId } = useAuth();
 
   // Fetch news when the component mounts
@@ -134,6 +143,52 @@ function ManagerDashboardPage() {
       setIsLoadingOrders(false);
     }
     fetchRecentOrders();
+  }, [token, tenantId]);
+
+  // Fetch upcoming schedule events (next 7 days)
+  useEffect(() => {
+    async function fetchUpcomingSchedule() {
+      if (!token || !tenantId) {
+        setIsLoadingSchedule(false);
+        return;
+      }
+
+      setIsLoadingSchedule(true);
+      setScheduleError(null);
+      try {
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        const events = await fetchDateRangeSchedule(today, nextWeek);
+
+        // Sort by date and time
+        const sortedEvents = events.sort((a, b) => {
+          const dateComparison =
+            new Date(a.date).getTime() - new Date(b.date).getTime();
+          if (dateComparison !== 0) return dateComparison;
+
+          // If same date, sort by start time
+          const aSlot = Array.isArray(a.slot) ? a.slot[0] : a.slot;
+          const bSlot = Array.isArray(b.slot) ? b.slot[0] : b.slot;
+
+          if (aSlot && bSlot) {
+            const aTime = aSlot.start_time * 60 + aSlot.start_minute;
+            const bTime = bSlot.start_time * 60 + bSlot.start_minute;
+            return aTime - bTime;
+          }
+          return 0;
+        });
+
+        setScheduleEvents(sortedEvents);
+      } catch (e: any) {
+        console.error("Error fetching schedule:", e);
+        setScheduleError(e.message || "Lỗi không thể tải lịch học");
+        setScheduleEvents([]);
+      }
+      setIsLoadingSchedule(false);
+    }
+    fetchUpcomingSchedule();
   }, [token, tenantId]);
 
   // Mock manager data
@@ -260,6 +315,69 @@ function ManagerDashboardPage() {
       },
     ],
   };
+
+  // Helper function to format schedule events for display
+  const formatScheduleEvent = (event: ScheduleEvent) => {
+    const slots = Array.isArray(event.slot) ? event.slot : [event.slot];
+    const classrooms = Array.isArray(event.classroom)
+      ? event.classroom
+      : [event.classroom];
+    const pools = Array.isArray(event.pool) ? event.pool : [event.pool];
+
+    const slot = slots[0];
+    const classroom = classrooms[0];
+    const pool = pools[0];
+
+    if (!slot || !classroom) return null;
+
+    // Format time display
+    const formatTime = (hour: number, minute: number) => {
+      return `${hour.toString().padStart(2, "0")}:${minute
+        .toString()
+        .padStart(2, "0")}`;
+    };
+
+    const startTime = formatTime(slot.start_time, slot.start_minute);
+    const endTime = formatTime(slot.end_time, slot.end_minute);
+
+    // Format date for display
+    const eventDate = new Date(event.date);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    let dateDisplay = "";
+    if (eventDate.toDateString() === today.toDateString()) {
+      dateDisplay = "Hôm nay";
+    } else if (eventDate.toDateString() === tomorrow.toDateString()) {
+      dateDisplay = "Ngày mai";
+    } else {
+      dateDisplay = eventDate.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+      });
+    }
+
+    return {
+      id: event._id,
+      title: classroom.name,
+      time: `${startTime} - ${endTime}`,
+      date: dateDisplay,
+      instructor: "Đang cập nhật", // API doesn't provide instructor info
+      students: "Đang cập nhật", // API doesn't provide student count
+      pool: pool?.title || "Chưa phân bổ",
+      rawDate: eventDate,
+    };
+  };
+
+  // Get formatted upcoming classes from schedule events
+  const getUpcomingClasses = () => {
+    return scheduleEvents
+      .map(formatScheduleEvent)
+      .filter((event) => event !== null)
+      .slice(0, 3); // Show only the first 3 upcoming classes
+  };
+
   return (
     <>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
@@ -1012,44 +1130,99 @@ function ManagerDashboardPage() {
               </CardContent>
             </Card>
             <Card className='lg:col-span-3'>
-              <CardHeader>
-                <CardTitle>Lớp Học Hôm Nay</CardTitle>
+              <CardHeader className='flex flex-row items-center justify-between'>
+                <div className='flex items-center space-x-2'>
+                  <div className='p-2 bg-blue-100 dark:bg-blue-900 rounded-lg'>
+                    <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                  </div>
+                  <div>
+                    <CardTitle className='text-lg'>Lớp Học Sắp Tới</CardTitle>
+                    <p className='text-sm text-muted-foreground'>
+                      Lịch học trong 7 ngày tới
+                    </p>
+                  </div>
+                </div>
+                {isLoadingSchedule && (
+                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                )}
               </CardHeader>
               <CardContent>
-                <div className='space-y-4'>
-                  {manager.upcomingClasses.map((class_) => (
-                    <div
-                      key={class_.id}
-                      className='flex flex-col gap-1 border-b pb-3 last:border-0'
-                    >
-                      <div className='flex justify-between'>
-                        <div className='text-sm font-medium'>
-                          {class_.title}
+                {isLoadingSchedule ? (
+                  <div className='space-y-4'>
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className='flex flex-col gap-1 border-b pb-3 last:border-0 animate-pulse'
+                      >
+                        <div className='flex justify-between'>
+                          <div className='h-4 w-32 bg-muted rounded'></div>
+                          <div className='h-4 w-16 bg-muted rounded'></div>
                         </div>
-                        <Badge variant='outline'>{class_.pool}</Badge>
+                        <div className='h-3 w-24 bg-muted rounded'></div>
+                        <div className='h-3 w-20 bg-muted rounded'></div>
                       </div>
-                      <div className='flex items-center gap-2 text-xs'>
-                        <Calendar className='h-3 w-3' />
-                        <span>
-                          {class_.time} • {class_.date}
-                        </span>
-                      </div>
-                      <div className='text-xs text-muted-foreground'>
-                        Huấn luyện viên: {class_.instructor}
-                      </div>
-                      <div className='text-xs text-muted-foreground'>
-                        Học viên: {class_.students}
-                      </div>
+                    ))}
+                  </div>
+                ) : scheduleError ? (
+                  <div className='flex flex-col items-center justify-center py-8 text-center'>
+                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
+                      <Calendar className='h-6 w-6 text-red-600 dark:text-red-400' />
                     </div>
-                  ))}
-                </div>
+                    <h3 className='text-sm font-medium text-red-900 dark:text-red-100 mb-1'>
+                      Lỗi tải lịch học
+                    </h3>
+                    <p className='text-xs text-red-600 dark:text-red-400'>
+                      {scheduleError}
+                    </p>
+                  </div>
+                ) : getUpcomingClasses().length > 0 ? (
+                  <div className='space-y-4'>
+                    {getUpcomingClasses().map((class_) => (
+                      <div
+                        key={class_.id}
+                        className='flex flex-col gap-1 border-b pb-3 last:border-0 hover:bg-muted/30 rounded-lg p-2 transition-colors'
+                      >
+                        <div className='flex justify-between'>
+                          <div className='text-sm font-medium'>
+                            {class_.title}
+                          </div>
+                          <Badge variant='outline'>{class_.pool}</Badge>
+                        </div>
+                        <div className='flex items-center gap-2 text-xs'>
+                          <Calendar className='h-3 w-3' />
+                          <span>
+                            {class_.time} • {class_.date}
+                          </span>
+                        </div>
+                        <div className='text-xs text-muted-foreground'>
+                          Huấn luyện viên: {class_.instructor}
+                        </div>
+                        <div className='text-xs text-muted-foreground'>
+                          Học viên: {class_.students}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='flex flex-col items-center justify-center py-8 text-center'>
+                    <div className='w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3'>
+                      <Calendar className='h-6 w-6 text-gray-400' />
+                    </div>
+                    <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-1'>
+                      Chưa có lớp học nào
+                    </h3>
+                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                      Lịch học sẽ hiển thị ở đây khi có dữ liệu
+                    </p>
+                  </div>
+                )}
                 <div className='mt-4 flex justify-center'>
-                  <Link href='/dashboard/manager/courses'>
+                  <Link href='/dashboard/manager/calendar'>
                     <Button
                       variant='outline'
                       className='w-full'
                     >
-                      Xem Tất Cả Lớp Học
+                      Xem Tất Cả Lịch Học
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
                   </Link>
@@ -1060,68 +1233,275 @@ function ManagerDashboardPage() {
         </TabsContent>{" "}
         <TabsContent value='calendar'>
           <Card>
-            <CardHeader>
-              <CardTitle>Lịch Học và Sự Kiện</CardTitle>
+            <CardHeader className='flex flex-row items-center justify-between'>
+              <div className='flex items-center space-x-2'>
+                <div className='p-2 bg-purple-100 dark:bg-purple-900 rounded-lg'>
+                  <Calendar className='h-5 w-5 text-purple-600 dark:text-purple-400' />
+                </div>
+                <div>
+                  <CardTitle className='text-lg'>Lịch Học và Sự Kiện</CardTitle>
+                  <p className='text-sm text-muted-foreground'>
+                    Tổng quan lịch học trong tuần tới
+                  </p>
+                </div>
+              </div>
+              {isLoadingSchedule && (
+                <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+              )}
             </CardHeader>
             <CardContent>
-              <div className='space-y-4'>
-                <div className='h-[300px] flex items-center justify-center border-2 border-dashed'>
-                  <div className='text-center'>
-                    <Calendar className='mx-auto h-12 w-12 text-muted-foreground' />
-                    <h3 className='mt-2 text-xl font-semibold'>
-                      Lịch Trình Học Tập
+              <div className='space-y-6'>
+                {/* Calendar Overview Section */}
+                <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+                  <div className='bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 rounded-xl p-4 border border-blue-200 dark:border-blue-800'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='text-sm font-medium text-blue-600 dark:text-blue-400'>
+                          Tổng Lớp Học
+                        </p>
+                        <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
+                          {isLoadingSchedule ? (
+                            <span className='w-8 h-6 bg-blue-200 dark:bg-blue-800 animate-pulse rounded'></span>
+                          ) : (
+                            scheduleEvents.length
+                          )}
+                        </p>
+                      </div>
+                      <div className='w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center'>
+                        <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950 dark:to-green-950 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='text-sm font-medium text-emerald-600 dark:text-emerald-400'>
+                          Hôm Nay
+                        </p>
+                        <p className='text-2xl font-bold text-emerald-900 dark:text-emerald-100'>
+                          {isLoadingSchedule ? (
+                            <span className='w-8 h-6 bg-emerald-200 dark:bg-emerald-800 animate-pulse rounded'></span>
+                          ) : (
+                            scheduleEvents.filter((event) => {
+                              const eventDate = new Date(event.date);
+                              const today = new Date();
+                              return (
+                                eventDate.toDateString() ===
+                                today.toDateString()
+                              );
+                            }).length
+                          )}
+                        </p>
+                      </div>
+                      <div className='w-10 h-10 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center'>
+                        <Clock className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-950 dark:to-yellow-950 rounded-xl p-4 border border-amber-200 dark:border-amber-800'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='text-sm font-medium text-amber-600 dark:text-amber-400'>
+                          Tuần Này
+                        </p>
+                        <p className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
+                          {isLoadingSchedule ? (
+                            <span className='w-8 h-6 bg-amber-200 dark:bg-amber-800 animate-pulse rounded'></span>
+                          ) : (
+                            scheduleEvents.filter((event) => {
+                              const eventDate = new Date(event.date);
+                              const today = new Date();
+                              const startOfWeek = new Date(
+                                today.setDate(
+                                  today.getDate() - today.getDay() + 1
+                                )
+                              );
+                              const endOfWeek = new Date(
+                                today.setDate(
+                                  today.getDate() - today.getDay() + 7
+                                )
+                              );
+                              return (
+                                eventDate >= startOfWeek &&
+                                eventDate <= endOfWeek
+                              );
+                            }).length
+                          )}
+                        </p>
+                      </div>
+                      <div className='w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center'>
+                        <Users className='h-5 w-5 text-amber-600 dark:text-amber-400' />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950 dark:to-pink-950 rounded-xl p-4 border border-rose-200 dark:border-rose-800'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <p className='text-sm font-medium text-rose-600 dark:text-rose-400'>
+                          Hồ Bơi Sử Dụng
+                        </p>
+                        <p className='text-2xl font-bold text-rose-900 dark:text-rose-100'>
+                          {isLoadingSchedule ? (
+                            <span className='w-8 h-6 bg-rose-200 dark:bg-rose-800 animate-pulse rounded'></span>
+                          ) : (
+                            new Set(
+                              scheduleEvents
+                                .map((event) => {
+                                  const pools = Array.isArray(event.pool)
+                                    ? event.pool
+                                    : [event.pool];
+                                  return pools[0]?.title || "Chưa phân bổ";
+                                })
+                                .filter((pool) => pool !== "Chưa phân bổ")
+                            ).size
+                          )}
+                        </p>
+                      </div>
+                      <div className='w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-lg flex items-center justify-center'>
+                        <Waves className='h-5 w-5 text-rose-600 dark:text-rose-400' />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Schedule List Section */}
+                <div className='bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-semibold text-slate-900 dark:text-slate-100'>
+                      Lịch Học Chi Tiết
                     </h3>
-                    <p className='mt-1 text-sm text-muted-foreground'>
-                      Xem và quản lý lịch trình các khóa học và sự kiện
-                    </p>
                     <Link href='/dashboard/manager/calendar'>
-                      <Button className='mt-4'>
-                        Đến Trang Lịch
-                        <ArrowRight className='ml-2 h-4 w-4' />
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className='text-xs'
+                      >
+                        Xem Đầy Đủ
+                        <ArrowRight className='ml-1 h-3 w-3' />
                       </Button>
                     </Link>
                   </div>
+
+                  {isLoadingSchedule ? (
+                    <div className='space-y-3'>
+                      {[...Array(4)].map((_, i) => (
+                        <div
+                          key={i}
+                          className='flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg animate-pulse'
+                        >
+                          <div className='flex items-center space-x-3'>
+                            <div className='w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg'></div>
+                            <div className='space-y-1'>
+                              <div className='h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                              <div className='h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                            </div>
+                          </div>
+                          <div className='h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : scheduleError ? (
+                    <div className='text-center py-8'>
+                      <div className='w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4'>
+                        <Calendar className='h-8 w-8 text-red-600 dark:text-red-400' />
+                      </div>
+                      <h3 className='text-lg font-medium text-red-900 dark:text-red-100 mb-2'>
+                        Lỗi tải lịch học
+                      </h3>
+                      <p className='text-sm text-red-600 dark:text-red-400'>
+                        {scheduleError}
+                      </p>
+                    </div>
+                  ) : scheduleEvents.length > 0 ? (
+                    <div className='space-y-3 max-h-96 overflow-y-auto'>
+                      {scheduleEvents.slice(0, 6).map((event, index) => {
+                        const formattedEvent = formatScheduleEvent(event);
+                        if (!formattedEvent) return null;
+
+                        return (
+                          <div
+                            key={formattedEvent.id}
+                            className='flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow group'
+                          >
+                            <div className='flex items-center space-x-4'>
+                              <div
+                                className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                  index % 4 === 0
+                                    ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
+                                    : index % 4 === 1
+                                    ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400"
+                                    : index % 4 === 2
+                                    ? "bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400"
+                                    : "bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400"
+                                }`}
+                              >
+                                <Clock className='h-5 w-5' />
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='font-medium text-slate-900 dark:text-slate-100'>
+                                  {formattedEvent.title}
+                                </div>
+                                <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2'>
+                                  <span>{formattedEvent.time}</span>
+                                  <span>•</span>
+                                  <span>{formattedEvent.date}</span>
+                                  <span>•</span>
+                                  <span>{formattedEvent.pool}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <Badge
+                                variant='outline'
+                                className='text-xs'
+                              >
+                                {formattedEvent.date}
+                              </Badge>
+                              <ArrowRight className='h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors' />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {scheduleEvents.length > 6 && (
+                        <div className='text-center py-3 text-sm text-slate-500 dark:text-slate-400'>
+                          Còn {scheduleEvents.length - 6} lớp học khác...
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className='text-center py-12'>
+                      <div className='w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4'>
+                        <Calendar className='h-8 w-8 text-slate-400' />
+                      </div>
+                      <h3 className='text-lg font-medium text-slate-900 dark:text-slate-100 mb-2'>
+                        Chưa có lịch học nào
+                      </h3>
+                      <p className='text-sm text-slate-500 dark:text-slate-400 mb-4'>
+                        Lịch học sẽ hiển thị ở đây khi có dữ liệu từ hệ thống
+                      </p>
+                      <Link href='/dashboard/manager/calendar'>
+                        <Button variant='outline'>
+                          Đi Tới Trang Lịch
+                          <ArrowRight className='ml-2 h-4 w-4' />
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Thời Gian</TableHead>
-                      <TableHead>Doanh Thu</TableHead>
-                      <TableHead>Học Viên</TableHead>
-                      <TableHead>Lớp Học</TableHead>
-                      <TableHead className='text-right'>Tăng Trưởng</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className='font-medium'>Tuần Này</TableCell>
-                      <TableCell>$3,245</TableCell>
-                      <TableCell>24</TableCell>
-                      <TableCell>42</TableCell>
-                      <TableCell className='text-right text-green-600'>
-                        +12%
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className='font-medium'>Tháng Này</TableCell>
-                      <TableCell>$14,560</TableCell>
-                      <TableCell>68</TableCell>
-                      <TableCell>156</TableCell>
-                      <TableCell className='text-right text-green-600'>
-                        +23%
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className='font-medium'>Năm Nay</TableCell>
-                      <TableCell>$124,580</TableCell>
-                      <TableCell>1,245</TableCell>
-                      <TableCell>312</TableCell>
-                      <TableCell className='text-right text-green-600'>
-                        +45%
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+
+                {/* Quick Actions */}
+                <div className='flex justify-center'>
+                  <Link href='/dashboard/manager/calendar'>
+                    <Button className='bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
+                      <Calendar className='mr-2 h-4 w-4' />
+                      Mở Lịch Đầy Đủ
+                      <ArrowRight className='ml-2 h-4 w-4' />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
