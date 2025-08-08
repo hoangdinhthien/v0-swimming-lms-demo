@@ -612,14 +612,14 @@ function ManagerDashboardPage() {
                         href={`/dashboard/manager/notifications/${newsItem._id}`}
                         className='block group'
                       >
-                        <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-indigo-200 dark:hover:border-indigo-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
+                        <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
                           <div
                             className={`relative p-3 rounded-xl flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all duration-300 ${
                               index === 0
                                 ? "bg-gradient-to-br from-emerald-400 to-teal-500"
                                 : index === 1
                                 ? "bg-gradient-to-br from-blue-400 to-indigo-500"
-                                : "bg-gradient-to-br from-purple-400 to-pink-500"
+                                : "bg-gradient-to-br from-indigo-400 to-blue-500"
                             }`}
                           >
                             <Bell className='h-4 w-4 text-white group-hover:scale-110 transition-transform duration-200' />
@@ -639,7 +639,7 @@ function ManagerDashboardPage() {
                                       ? "bg-emerald-400"
                                       : index === 1
                                       ? "bg-blue-400"
-                                      : "bg-purple-400"
+                                      : "bg-indigo-400"
                                   } animate-pulse`}
                                 />
                                 <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-2 transition-all duration-300' />
@@ -655,7 +655,7 @@ function ManagerDashboardPage() {
                                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
                                     : index === 1
                                     ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
-                                    : "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800"
+                                    : "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800"
                                 }`}
                               >
                                 <Calendar className='h-3 w-3 mr-1.5' />
@@ -666,11 +666,6 @@ function ManagerDashboardPage() {
                               </div>
                             </div>
                           </div>
-                          {/* Hover effect overlay with gradient */}
-                          <div className='absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-all duration-300 pointer-events-none' />
-
-                          {/* Animated border on hover */}
-                          <div className='absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-sm' />
                         </div>
                       </Link>
                     ))}
@@ -781,7 +776,7 @@ function ManagerDashboardPage() {
                   <Link href='/dashboard/manager/notifications'>
                     <Button
                       variant='outline'
-                      className='w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-indigo-950 dark:to-purple-950 hover:from-indigo-50 hover:via-purple-50 hover:to-pink-50 dark:hover:from-indigo-950 dark:hover:via-purple-950 dark:hover:to-pink-950 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5'
+                      className='w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-indigo-950 dark:to-blue-950 hover:from-indigo-50 hover:via-blue-50 hover:to-blue-100 dark:hover:from-indigo-950 dark:hover:via-blue-950 dark:hover:to-blue-900 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5'
                     >
                       <span className='relative z-10 flex items-center justify-center space-x-2'>
                         <span>Xem Tất Cả Thông Báo</span>
@@ -789,7 +784,7 @@ function ManagerDashboardPage() {
                       </span>
 
                       {/* Animated background effect */}
-                      <div className='absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+                      <div className='absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
 
                       {/* Shimmer effect */}
                       <div className='absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12' />

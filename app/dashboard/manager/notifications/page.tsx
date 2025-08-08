@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Bell, Calendar, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getNews, type NewsItem, formatRelativeTime } from "@/api/news-api";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,65 +30,197 @@ export default function NotificationsListPage() {
   }, []);
 
   return (
-    <>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' />
-          Quay lại Trang Chủ
-        </Link>
-      </div>
+    <div className='min-h-screen from-gray-50 via-white to-blue-50/30 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300'>
+      <div className='container mx-auto px-1 sm:px-2 md:px-4 py-8 max-w-7xl'>
+        {/* Header Section */}
+        <div className='mb-8'>
+          <Link
+            href='/dashboard/manager'
+            className='inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 group mb-6'
+          >
+            <ArrowLeft className='mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200' />
+            Quay lại Trang Chủ
+          </Link>
 
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold'>Thông Báo</h1>
-          <p className='text-muted-foreground'>Xem tất cả thông báo quản lý</p>
+          <div className='flex items-center space-x-4 mb-2'>
+            <div className='p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg'>
+              <Bell className='h-8 w-8 text-white' />
+            </div>
+            <div>
+              <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent'>
+                Thông Báo
+              </h1>
+              <p className='text-lg text-gray-600 dark:text-gray-400 mt-1'>
+                Quản lý và theo dõi tất cả thông báo hệ thống
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className='mt-6'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Tất Cả Thông Báo</CardTitle>
+        {/* Stats Section */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Tổng thông báo
+                  </p>
+                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-12 bg-gray-300 dark:bg-gray-700' />
+                    ) : (
+                      newsItems.length
+                    )}
+                  </div>
+                </div>
+                <div className='p-3 bg-blue-200/80 dark:bg-blue-900/50 rounded-xl'>
+                  <Bell className='h-6 w-6 text-blue-700 dark:text-blue-300' />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Mới nhất
+                  </p>
+                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-16 bg-gray-300 dark:bg-gray-700' />
+                    ) : newsItems.length > 0 ? (
+                      formatRelativeTime(newsItems[0]?.created_at).split(" ")[0]
+                    ) : (
+                      "0"
+                    )}
+                  </div>
+                </div>
+                <div className='p-3 bg-green-200/80 dark:bg-green-900/50 rounded-xl'>
+                  <Calendar className='h-6 w-6 text-green-700 dark:text-green-300' />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
+            <CardContent className='p-6'>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Trạng thái
+                  </p>
+                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
+                    {isLoading ? (
+                      <Skeleton className='h-8 w-20 bg-gray-300 dark:bg-gray-700' />
+                    ) : (
+                      "Hoạt động"
+                    )}
+                  </div>
+                </div>
+                <div className='p-3 bg-emerald-200/80 dark:bg-emerald-900/50 rounded-xl'>
+                  <div className='h-6 w-6 bg-emerald-600 dark:bg-emerald-500 rounded-full flex items-center justify-center'>
+                    <div className='h-2 w-2 bg-white rounded-full animate-pulse' />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Notifications List */}
+        <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 shadow-xl'>
+          <CardHeader className='border-b border-gray-400 dark:border-gray-800 bg-gray-200/70 dark:bg-black/70'>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center space-x-3'>
+                <div className='p-2 bg-indigo-200/80 dark:bg-indigo-900/50 rounded-lg'>
+                  <Bell className='h-5 w-5 text-indigo-700 dark:text-indigo-300' />
+                </div>
+                <div>
+                  <CardTitle className='text-xl font-bold text-gray-800 dark:text-white'>
+                    Danh Sách Thông Báo
+                  </CardTitle>
+                  <p className='text-sm text-gray-700 dark:text-gray-300 mt-1'>
+                    Tất cả thông báo được sắp xếp theo thời gian
+                  </p>
+                </div>
+              </div>
+              {isLoading && (
+                <Loader2 className='h-5 w-5 animate-spin text-gray-500 dark:text-gray-400' />
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className='p-0'>
             {isLoading ? (
-              <div className='space-y-4'>
+              <div className='p-6 space-y-4'>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
-                    className='flex items-start gap-2 border-b pb-3'
+                    className='flex items-start space-x-4 p-4 bg-gray-200/50 dark:bg-gray-900/50 rounded-xl animate-pulse'
                   >
-                    <div className='mt-1 flex h-2 w-2 rounded-full bg-muted' />
-                    <div className='flex flex-1 flex-col gap-1'>
-                      <div className='h-4 w-3/4 rounded bg-muted' />
-                      <div className='h-3 w-full rounded bg-muted' />
-                      <div className='h-3 w-1/4 rounded bg-muted' />
+                    <div className='w-12 h-12 bg-gray-400 dark:bg-gray-700 rounded-full flex-shrink-0' />
+                    <div className='flex-1 space-y-2'>
+                      <div className='h-4 w-3/4 bg-gray-400 dark:bg-gray-700 rounded' />
+                      <div className='h-3 w-full bg-gray-400 dark:bg-gray-700 rounded' />
+                      <div className='h-3 w-1/4 bg-gray-400 dark:bg-gray-700 rounded' />
                     </div>
                   </div>
                 ))}
               </div>
             ) : newsItems.length > 0 ? (
-              <div className='space-y-4'>
-                {newsItems.map((newsItem) => (
+              <div className='divide-y divide-gray-300 dark:divide-gray-800'>
+                {newsItems.map((newsItem, index) => (
                   <Link
                     key={newsItem._id}
                     href={`/dashboard/manager/notifications/${newsItem._id}`}
-                    className='block'
+                    className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200'
                   >
-                    <div className='flex items-start gap-2 border-b pb-3 last:border-0 hover:bg-muted/20 p-2 -mx-2 rounded-md transition-colors'>
-                      <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
-                      <div className='flex flex-1 flex-col gap-1'>
-                        <div className='text-sm font-medium'>
-                          {newsItem.title}
+                    <div className='flex items-start space-x-4 p-6 group-hover:scale-[1.01] transition-transform duration-200'>
+                      <div
+                        className={`relative p-3 rounded-xl flex-shrink-0 shadow-md group-hover:shadow-lg transition-all duration-200 ${
+                          index % 3 === 0
+                            ? "bg-gradient-to-br from-emerald-400 to-teal-500"
+                            : index % 3 === 1
+                            ? "bg-gradient-to-br from-blue-400 to-indigo-500"
+                            : "bg-gradient-to-br from-indigo-400 to-blue-500"
+                        }`}
+                      >
+                        <Bell className='h-5 w-5 text-white group-hover:scale-110 transition-transform duration-200' />
+                        <div className='absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-800' />
+                      </div>
+
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-start justify-between mb-2'>
+                          <h3 className='text-base font-semibold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors line-clamp-1 pr-4'>
+                            {newsItem.title}
+                          </h3>
+                          <ChevronRight className='h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0' />
                         </div>
-                        <div className='text-xs text-muted-foreground'>
+
+                        <p className='text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors'>
                           {newsItem.content}
-                        </div>
-                        <div className='text-xs text-muted-foreground'>
-                          {formatRelativeTime(newsItem.created_at)}
+                        </p>
+
+                        <div className='flex items-center justify-between'>
+                          <Badge
+                            variant='secondary'
+                            className={`${
+                              index % 3 === 0
+                                ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
+                                : index % 3 === 1
+                                ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                                : "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800"
+                            } shadow-sm`}
+                          >
+                            <Calendar className='h-3 w-3 mr-1.5' />
+                            {formatRelativeTime(newsItem.created_at)}
+                          </Badge>
+
+                          <span className='text-xs text-gray-500 dark:text-gray-400 font-medium'>
+                            Mới
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -95,13 +228,25 @@ export default function NotificationsListPage() {
                 ))}
               </div>
             ) : (
-              <div className='text-center py-8'>
-                <p className='text-muted-foreground'>Không có thông báo nào</p>
+              <div className='flex flex-col items-center justify-center py-16 text-center'>
+                <div className='relative mb-6'>
+                  <div className='w-20 h-20 bg-gradient-to-br from-gray-200 via-gray-100 to-blue-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center shadow-lg'>
+                    <Bell className='h-10 w-10 text-gray-500 dark:text-gray-400' />
+                  </div>
+                  <div className='absolute inset-0 bg-gradient-to-br from-blue-200/30 to-indigo-200/30 dark:from-blue-800/20 dark:to-indigo-800/20 rounded-full animate-pulse' />
+                </div>
+                <h3 className='text-xl font-semibold text-gray-800 dark:text-white mb-2'>
+                  Chưa có thông báo nào
+                </h3>
+                <p className='text-gray-600 dark:text-gray-300 max-w-md'>
+                  Thông báo mới từ hệ thống sẽ xuất hiện tại đây. Hãy kiểm tra
+                  lại sau.
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }
