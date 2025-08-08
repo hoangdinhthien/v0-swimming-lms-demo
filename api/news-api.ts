@@ -39,6 +39,19 @@ export interface NewsDetailResponse {
   statusCode: number;
 }
 
+export interface CreateNewsData {
+  title: string;
+  content: string;
+  type: string[];
+  cover?: string[];
+}
+
+export interface CreateNewsResponse {
+  data: NewsItem;
+  message: string;
+  statusCode: number;
+}
+
 export async function getNews() {
   try {
     const response = await apiGet(
@@ -119,3 +132,68 @@ export function formatRelativeTime(dateString: string): string {
 
 // Re-export the getMediaDetails function to maintain backwards compatibility
 export { getMediaDetails };
+
+// Create a new news article
+export async function createNews(
+  data: CreateNewsData,
+  token: string,
+  tenantId: string
+): Promise<CreateNewsResponse> {
+  try {
+    const response = await fetch(`${config.API}/v1/news`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Tạo thông báo thất bại: ${response.status} ${errorText}`
+      );
+    }
+
+    const result: CreateNewsResponse = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error creating news:", error);
+    throw error;
+  }
+}
+
+// Update an existing news article
+export async function updateNews(
+  newsId: string,
+  data: CreateNewsData,
+  token: string,
+  tenantId: string
+): Promise<CreateNewsResponse> {
+  try {
+    const response = await fetch(`${config.API}/v1/news/${newsId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Cập nhật thông báo thất bại: ${response.status} ${errorText}`
+      );
+    }
+
+    const result: CreateNewsResponse = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error updating news:", error);
+    throw error;
+  }
+}
