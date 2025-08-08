@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Calendar,
   DollarSign,
@@ -38,13 +39,28 @@ import { withTenantGuard } from "@/components/tenant-provider";
 import { fetchCourses } from "@/api/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import {
+  fetchOrders,
+  Order,
+  getOrderUserName,
+  getOrderCourseTitle,
+  formatPrice,
+  getStatusName,
+  getStatusClass,
+} from "@/api/orders-api";
+import { useAuth } from "@/hooks/use-auth";
 
 function ManagerDashboardPage() {
+  const router = useRouter();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState(true);
   const [courses, setCourses] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
   const [coursesError, setCoursesError] = useState<string | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const { token, tenantId } = useAuth();
 
   // Fetch news when the component mounts
   useEffect(() => {
@@ -83,6 +99,43 @@ function ManagerDashboardPage() {
     }
     fetchCoursesData();
   }, []);
+
+  // Fetch recent orders
+  useEffect(() => {
+    async function fetchRecentOrders() {
+      if (!token || !tenantId) {
+        setIsLoadingOrders(false);
+        return;
+      }
+
+      setIsLoadingOrders(true);
+      try {
+        const ordersData = await fetchOrders({
+          tenantId,
+          token,
+          page: 1,
+          limit: 5, // Get only the 5 most recent orders
+        });
+
+        if (ordersData && ordersData.orders) {
+          // Sort by creation date descending to get the most recent first
+          const sortedOrders = ordersData.orders.sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          );
+          setRecentOrders(sortedOrders);
+        }
+      } catch (e: any) {
+        console.error("Error fetching recent orders:", e);
+        setOrdersError(e.message || "Lỗi không thể tải giao dịch gần đây");
+        setRecentOrders([]);
+      }
+      setIsLoadingOrders(false);
+    }
+    fetchRecentOrders();
+  }, [token, tenantId]);
+
   // Mock manager data
   const manager = {
     name: "Quản Lý",
@@ -306,63 +359,208 @@ function ManagerDashboardPage() {
           </div>
           <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
             <Card className='lg:col-span-4'>
-              <CardHeader>
-                <CardTitle>Tổng Quan Khóa Học</CardTitle>
+              <CardHeader className='flex flex-row items-center justify-between'>
+                <div className='flex items-center space-x-2'>
+                  <div className='p-2 bg-blue-100 dark:bg-blue-900 rounded-lg'>
+                    <FileText className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                  </div>
+                  <div>
+                    <CardTitle className='text-lg'>
+                      Tổng Quan Khóa Học
+                    </CardTitle>
+                    <p className='text-sm text-muted-foreground'>
+                      Thông tin các khóa học đang hoạt động
+                    </p>
+                  </div>
+                </div>
+                {isLoadingCourses && (
+                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                )}
               </CardHeader>
               <CardContent>
                 {isLoadingCourses ? (
-                  <div className='space-y-2'>Đang tải dữ liệu khóa học...</div>
-                ) : coursesError ? (
-                  <div className='text-red-500'>{coursesError}</div>
-                ) : (
-                  <div className='space-y-8'>
-                    <div className='space-y-2'>
-                      <div className='flex items-center'>
-                        <div className='text-sm font-medium'>
-                          Khóa Học Đang Hoạt Động
+                  <div className='space-y-4'>
+                    <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
+                      <div className='flex items-center space-x-3'>
+                        <div className='w-10 h-10 bg-muted rounded-full animate-pulse'></div>
+                        <div>
+                          <div className='h-4 w-24 bg-muted rounded animate-pulse mb-1'></div>
+                          <div className='h-3 w-16 bg-muted rounded animate-pulse'></div>
                         </div>
-                        <div className='ml-auto'>
+                      </div>
+                      <div className='h-6 w-16 bg-muted rounded animate-pulse'></div>
+                    </div>
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className='flex items-center justify-between p-3 bg-muted/10 rounded-lg border'
+                      >
+                        <div className='flex items-center space-x-3'>
+                          <div className='w-8 h-8 bg-muted rounded-full animate-pulse'></div>
+                          <div>
+                            <div className='h-3 w-20 bg-muted rounded animate-pulse mb-1'></div>
+                            <div className='h-2 w-12 bg-muted rounded animate-pulse'></div>
+                          </div>
+                        </div>
+                        <div className='space-y-1'>
+                          <div className='h-3 w-12 bg-muted rounded animate-pulse'></div>
+                          <div className='h-2 w-8 bg-muted rounded animate-pulse'></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : coursesError ? (
+                  <div className='flex flex-col items-center justify-center py-8 text-center'>
+                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
+                      <FileText className='h-6 w-6 text-red-600 dark:text-red-400' />
+                    </div>
+                    <p className='text-red-600 dark:text-red-400 font-medium mb-1'>
+                      Lỗi tải dữ liệu
+                    </p>
+                    <p className='text-sm text-muted-foreground'>
+                      {coursesError}
+                    </p>
+                  </div>
+                ) : courses.length > 0 ? (
+                  <div className='space-y-4'>
+                    {/* Header Stats */}
+                    <div className='flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+                      <div className='flex items-center space-x-3'>
+                        <div className='p-2 bg-blue-500 rounded-full'>
+                          <FileText className='h-5 w-5 text-white' />
+                        </div>
+                        <div>
+                          <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+                            Khóa Học Đang Hoạt Động
+                          </p>
+                          <p className='text-xs text-blue-700 dark:text-blue-300'>
+                            Tổng số khóa học hiện tại
+                          </p>
+                        </div>
+                      </div>
+                      <div className='text-right'>
+                        <div className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
                           {courses.filter((c) => c.is_active).length}
                         </div>
-                      </div>
-                      <div className='space-y-2'>
-                        {courses.slice(0, 4).map((course: any) => (
-                          <div
-                            key={course._id}
-                            className='grid grid-cols-4 items-center gap-2'
-                          >
-                            <div className='text-sm font-medium'>
-                              {course.title}
-                            </div>
-                            <div className='text-right text-sm'>
-                              {typeof course.students === "number"
-                                ? course.students
-                                : 0}{" "}
-                              học viên
-                            </div>
-                            <div className='text-right text-sm'>
-                              {course.price
-                                ? course.price.toLocaleString() + "₫"
-                                : ""}
-                            </div>
-                            <div className='text-right'>
-                              <Badge variant='outline'>
-                                {course.is_active
-                                  ? "Đang hoạt động"
-                                  : "Đã kết thúc"}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
+                        <p className='text-xs text-blue-700 dark:text-blue-300'>
+                          khóa học
+                        </p>
                       </div>
                     </div>
+
+                    {/* Course List */}
+                    <div className='space-y-3'>
+                      {courses.slice(0, 4).map((course: any, index: number) => (
+                        <div
+                          key={course._id}
+                          className='group relative flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 cursor-pointer'
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/manager/courses/${course._id}`
+                            )
+                          }
+                        >
+                          {/* Left side - Course info */}
+                          <div className='flex items-center space-x-3 flex-1 min-w-0'>
+                            <div
+                              className={`p-2 rounded-full ${
+                                index === 0
+                                  ? "bg-green-100 dark:bg-green-900"
+                                  : index === 1
+                                  ? "bg-blue-100 dark:bg-blue-900"
+                                  : index === 2
+                                  ? "bg-purple-100 dark:bg-purple-900"
+                                  : "bg-orange-100 dark:bg-orange-900"
+                              }`}
+                            >
+                              <FileText
+                                className={`h-4 w-4 ${
+                                  index === 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : index === 1
+                                    ? "text-blue-600 dark:text-blue-400"
+                                    : index === 2
+                                    ? "text-purple-600 dark:text-purple-400"
+                                    : "text-orange-600 dark:text-orange-400"
+                                }`}
+                              />
+                            </div>
+                            <div className='flex-1 min-w-0'>
+                              <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
+                                {course.title}
+                              </h4>
+                              <div className='flex items-center space-x-3 mt-1'>
+                                <span className='text-xs text-gray-500 dark:text-gray-400 flex items-center'>
+                                  <Users className='h-3 w-3 mr-1' />
+                                  {typeof course.students === "number"
+                                    ? course.students
+                                    : 0}{" "}
+                                  học viên
+                                </span>
+                                <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                  •
+                                </span>
+                                <span className='text-xs font-medium text-green-600 dark:text-green-400'>
+                                  {course.price
+                                    ? course.price.toLocaleString() + "₫"
+                                    : "Miễn phí"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right side - Status and arrow */}
+                          <div className='flex items-center space-x-3'>
+                            <Badge
+                              variant={
+                                course.is_active ? "default" : "secondary"
+                              }
+                              className={
+                                course.is_active
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                              }
+                            >
+                              {course.is_active
+                                ? "Đang hoạt động"
+                                : "Đã kết thúc"}
+                            </Badge>
+                            <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-200' />
+                          </div>
+
+                          {/* Hover effect overlay */}
+                          <div className='absolute inset-0 bg-blue-50 dark:bg-blue-900/10 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity duration-200 pointer-events-none'></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
+                      <FileText className='h-8 w-8 text-gray-400' />
+                    </div>
+                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+                      Chưa có khóa học nào
+                    </h3>
+                    <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
+                      Bắt đầu bằng cách tạo khóa học đầu tiên của bạn
+                    </p>
+                    <Link href='/dashboard/manager/courses/new'>
+                      <Button
+                        size='sm'
+                        className='bg-blue-600 hover:bg-blue-700'
+                      >
+                        <Plus className='h-4 w-4 mr-1' />
+                        Tạo khóa học
+                      </Button>
+                    </Link>
                   </div>
                 )}
-                <div className='mt-4 flex justify-center'>
+                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
                   <Link href='/dashboard/manager/courses'>
                     <Button
                       variant='outline'
-                      className='w-full'
+                      className='w-full bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 dark:hover:border-blue-600'
                     >
                       Xem Tất Cả Khóa Học
                       <ArrowRight className='ml-2 h-4 w-4' />
@@ -373,7 +571,17 @@ function ManagerDashboardPage() {
             </Card>
             <Card className='lg:col-span-3'>
               <CardHeader className='flex flex-row items-center justify-between'>
-                <CardTitle>Thông Báo</CardTitle>
+                <div className='flex items-center space-x-2'>
+                  <div className='p-2 bg-sky-100 dark:bg-sky-900 rounded-lg'>
+                    <Bell className='h-5 w-5 text-sky-600 dark:text-sky-400' />
+                  </div>
+                  <div>
+                    <CardTitle className='text-lg'>Thông Báo</CardTitle>
+                    <p className='text-sm text-muted-foreground'>
+                      Cập nhật mới nhất từ hệ thống
+                    </p>
+                  </div>
+                </div>
                 {isLoadingNews && (
                   <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
                 )}
@@ -384,13 +592,13 @@ function ManagerDashboardPage() {
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className='flex items-start gap-2 border-b pb-3'
+                        className='flex items-start space-x-3 p-3 bg-muted/20 rounded-lg animate-pulse'
                       >
-                        <div className='mt-1 flex h-2 w-2 rounded-full bg-muted' />
-                        <div className='flex flex-1 flex-col gap-1'>
-                          <div className='h-4 w-3/4 rounded bg-muted' />
-                          <div className='h-3 w-full rounded bg-muted' />
-                          <div className='h-3 w-1/4 rounded bg-muted' />
+                        <div className='w-8 h-8 bg-muted rounded-full flex-shrink-0' />
+                        <div className='flex-1 space-y-2'>
+                          <div className='h-4 w-3/4 bg-muted rounded' />
+                          <div className='h-3 w-full bg-muted rounded' />
+                          <div className='h-3 w-1/3 bg-muted rounded' />
                         </div>
                       </div>
                     ))}
@@ -398,61 +606,193 @@ function ManagerDashboardPage() {
                 ) : newsItems.length > 0 ? (
                   <div className='space-y-4'>
                     {/* Show only the 3 most recent notifications */}
-                    {newsItems.slice(0, 3).map((newsItem) => (
+                    {newsItems.slice(0, 3).map((newsItem, index: number) => (
                       <Link
                         key={newsItem._id}
                         href={`/dashboard/manager/notifications/${newsItem._id}`}
-                        className='block'
+                        className='block group'
                       >
-                        <div className='flex items-start gap-2 border-b pb-3 last:border-0 hover:bg-muted/20 p-2 -mx-2 rounded-md transition-colors'>
-                          <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
-                          <div className='flex flex-1 flex-col gap-1'>
-                            <div className='text-sm font-medium'>
-                              {newsItem.title}
+                        <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-indigo-200 dark:hover:border-indigo-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
+                          <div
+                            className={`relative p-3 rounded-xl flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all duration-300 ${
+                              index === 0
+                                ? "bg-gradient-to-br from-emerald-400 to-teal-500"
+                                : index === 1
+                                ? "bg-gradient-to-br from-blue-400 to-indigo-500"
+                                : "bg-gradient-to-br from-purple-400 to-pink-500"
+                            }`}
+                          >
+                            <Bell className='h-4 w-4 text-white group-hover:scale-110 transition-transform duration-200' />
+                            <div className='absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
+                            {/* Notification indicator */}
+                            <div className='absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-800' />
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex items-start justify-between mb-2'>
+                              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 pr-2'>
+                                {newsItem.title}
+                              </h4>
+                              <div className='flex items-center space-x-2 flex-shrink-0'>
+                                <div
+                                  className={`w-2 h-2 rounded-full ${
+                                    index === 0
+                                      ? "bg-emerald-400"
+                                      : index === 1
+                                      ? "bg-blue-400"
+                                      : "bg-purple-400"
+                                  } animate-pulse`}
+                                />
+                                <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-2 transition-all duration-300' />
+                              </div>
                             </div>
-                            <div className='text-xs text-muted-foreground line-clamp-2'>
+                            <p className='text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors'>
                               {newsItem.content}
-                            </div>
-                            <div className='text-xs text-muted-foreground'>
-                              {formatRelativeTime(newsItem.created_at)}
+                            </p>
+                            <div className='flex items-center justify-between'>
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                                  index === 0
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                                    : index === 1
+                                    ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                                    : "bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800"
+                                }`}
+                              >
+                                <Calendar className='h-3 w-3 mr-1.5' />
+                                {formatRelativeTime(newsItem.created_at)}
+                              </span>
+                              <div className='text-xs text-gray-400 dark:text-gray-500 font-medium'>
+                                Mới
+                              </div>
                             </div>
                           </div>
+                          {/* Hover effect overlay with gradient */}
+                          <div className='absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-purple-50/50 dark:from-indigo-900/10 dark:to-purple-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-all duration-300 pointer-events-none' />
+
+                          {/* Animated border on hover */}
+                          <div className='absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 blur-sm' />
                         </div>
                       </Link>
                     ))}
                   </div>
                 ) : (
                   <div className='space-y-4'>
-                    {" "}
-                    {manager.notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className='flex items-start gap-2 border-b pb-3 last:border-0'
-                      >
-                        <div className='mt-1 flex h-2 w-2 rounded-full bg-sky-500' />
-                        <div className='flex flex-1 flex-col gap-1'>
-                          <div className='text-sm font-medium'>
-                            {notification.title}
+                    {manager.notifications.map(
+                      (notification, index: number) => (
+                        <div
+                          key={notification.id}
+                          className='relative flex items-start space-x-4 p-4 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-300'
+                        >
+                          <div
+                            className={`relative p-3 rounded-xl flex-shrink-0 shadow-md ${
+                              index === 0
+                                ? "bg-gradient-to-br from-amber-400 to-orange-500"
+                                : index === 1
+                                ? "bg-gradient-to-br from-cyan-400 to-blue-500"
+                                : "bg-gradient-to-br from-rose-400 to-red-500"
+                            }`}
+                          >
+                            <Bell className='h-4 w-4 text-white' />
+                            <div className='absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-bounce border-2 border-white dark:border-gray-800' />
                           </div>
-                          <div className='text-xs text-muted-foreground'>
-                            {notification.description}
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex items-start justify-between mb-2'>
+                              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                                {notification.title}
+                              </h4>
+                              <div
+                                className={`w-2 h-2 rounded-full ${
+                                  index === 0
+                                    ? "bg-amber-400"
+                                    : index === 1
+                                    ? "bg-cyan-400"
+                                    : "bg-rose-400"
+                                }`}
+                              />
+                            </div>
+                            <p className='text-xs text-gray-600 dark:text-gray-300 mb-3'>
+                              {notification.description}
+                            </p>
+                            <div className='flex items-center space-x-2'>
+                              <span
+                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
+                                  index === 0
+                                    ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                                    : index === 1
+                                    ? "bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400 dark:border-cyan-800"
+                                    : "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800"
+                                }`}
+                              >
+                                <Calendar className='h-3 w-3 mr-1.5' />
+                                {notification.time}
+                              </span>
+                            </div>
                           </div>
-                          <div className='text-xs text-muted-foreground'>
-                            {notification.time}
-                          </div>
+                          {/* Subtle hover gradient */}
+                          <div className='absolute inset-0 bg-gradient-to-br from-amber-50/30 via-transparent to-orange-50/30 dark:from-amber-900/10 dark:to-orange-900/10 opacity-0 hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 )}
-                <div className='mt-4 flex justify-center'>
+
+                {/* Empty state when no notifications */}
+                {!isLoadingNews &&
+                  newsItems.length === 0 &&
+                  manager.notifications.length === 0 && (
+                    <div className='flex flex-col items-center justify-center py-12 text-center relative'>
+                      {/* Background decorative elements */}
+                      <div className='absolute inset-0 flex items-center justify-center'>
+                        <div className='w-32 h-32 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 dark:from-indigo-900/20 dark:via-purple-900/10 dark:to-pink-900/20 rounded-full opacity-50' />
+                      </div>
+                      <div className='relative'>
+                        <div className='w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg rotate-3 hover:rotate-6 transition-transform duration-300'>
+                          <Bell className='h-8 w-8 text-white' />
+                          <div className='absolute inset-0 bg-white/20 rounded-2xl' />
+                        </div>
+                        <h3 className='text-base font-bold text-gray-900 dark:text-gray-100 mb-2'>
+                          Chưa có thông báo nào
+                        </h3>
+                        <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs'>
+                          Thông báo mới sẽ xuất hiện ở đây khi có cập nhật từ hệ
+                          thống
+                        </p>
+
+                        {/* Animated notification preview cards */}
+                        <div className='flex justify-center space-x-2 opacity-30'>
+                          <div className='w-2 h-8 bg-gradient-to-t from-indigo-400 to-indigo-200 rounded-full animate-pulse' />
+                          <div
+                            className='w-2 h-6 bg-gradient-to-t from-purple-400 to-purple-200 rounded-full animate-pulse'
+                            style={{ animationDelay: "0.2s" }}
+                          />
+                          <div
+                            className='w-2 h-10 bg-gradient-to-t from-pink-400 to-pink-200 rounded-full animate-pulse'
+                            style={{ animationDelay: "0.4s" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                <div className='mt-8 pt-6 border-t border-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700 relative'>
+                  {/* Decorative border gradient */}
+                  <div className='absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-700' />
+
                   <Link href='/dashboard/manager/notifications'>
                     <Button
                       variant='outline'
-                      className='w-full'
+                      className='w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-purple-50 dark:from-gray-800 dark:via-indigo-950 dark:to-purple-950 hover:from-indigo-50 hover:via-purple-50 hover:to-pink-50 dark:hover:from-indigo-950 dark:hover:via-purple-950 dark:hover:to-pink-950 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5'
                     >
-                      Xem Tất Cả Thông Báo
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <span className='relative z-10 flex items-center justify-center space-x-2'>
+                        <span>Xem Tất Cả Thông Báo</span>
+                        <ArrowRight className='ml-2 h-4 w-4 group-hover:translate-x-2 transition-transform duration-300' />
+                      </span>
+
+                      {/* Animated background effect */}
+                      <div className='absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+
+                      {/* Shimmer effect */}
+                      <div className='absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12' />
                     </Button>
                   </Link>
                 </div>
@@ -461,41 +801,213 @@ function ManagerDashboardPage() {
           </div>
           <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
             <Card className='lg:col-span-4'>
-              <CardHeader>
-                <CardTitle>Giao Dịch Gần Đây</CardTitle>
+              <CardHeader className='flex flex-row items-center justify-between'>
+                <div className='flex items-center space-x-2'>
+                  <div className='p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg'>
+                    <DollarSign className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
+                  </div>
+                  <div>
+                    <CardTitle className='text-lg'>Giao Dịch Gần Đây</CardTitle>
+                    <p className='text-sm text-muted-foreground'>
+                      Thanh toán và giao dịch mới nhất
+                    </p>
+                  </div>
+                </div>
+                {isLoadingOrders && (
+                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                )}
               </CardHeader>
               <CardContent>
-                <div className='space-y-4'>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Học viên</TableHead>
-                        <TableHead>Khóa học</TableHead>
-                        <TableHead>Số tiền</TableHead>
-                        <TableHead>Ngày</TableHead>
-                        <TableHead className='text-right'>Trạng thái</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {manager.recentTransactions.map((transaction) => (
-                        <TableRow key={transaction.id}>
-                          <TableCell>{transaction.student}</TableCell>
-                          <TableCell>{transaction.course}</TableCell>
-                          <TableCell>{transaction.amount}</TableCell>
-                          <TableCell>{transaction.date}</TableCell>
-                          <TableCell className='text-right'>
-                            <Badge variant='outline'>Hoàn thành</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className='mt-4 flex justify-center'>
+                {isLoadingOrders ? (
+                  <div className='space-y-4'>
+                    <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
+                      <div className='flex items-center space-x-3'>
+                        <div className='w-10 h-10 bg-muted rounded-full animate-pulse'></div>
+                        <div>
+                          <div className='h-4 w-24 bg-muted rounded animate-pulse mb-1'></div>
+                          <div className='h-3 w-16 bg-muted rounded animate-pulse'></div>
+                        </div>
+                      </div>
+                      <div className='h-6 w-16 bg-muted rounded animate-pulse'></div>
+                    </div>
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className='flex items-center justify-between p-3 bg-muted/10 rounded-lg border'
+                      >
+                        <div className='flex items-center space-x-3'>
+                          <div className='w-8 h-8 bg-muted rounded-full animate-pulse'></div>
+                          <div>
+                            <div className='h-3 w-20 bg-muted rounded animate-pulse mb-1'></div>
+                            <div className='h-2 w-12 bg-muted rounded animate-pulse'></div>
+                          </div>
+                        </div>
+                        <div className='space-y-1'>
+                          <div className='h-3 w-12 bg-muted rounded animate-pulse'></div>
+                          <div className='h-2 w-8 bg-muted rounded animate-pulse'></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : ordersError ? (
+                  <div className='flex flex-col items-center justify-center py-8 text-center'>
+                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
+                      <DollarSign className='h-6 w-6 text-red-600 dark:text-red-400' />
+                    </div>
+                    <p className='text-red-600 dark:text-red-400 font-medium mb-1'>
+                      Lỗi tải dữ liệu
+                    </p>
+                    <p className='text-sm text-muted-foreground'>
+                      {ordersError}
+                    </p>
+                  </div>
+                ) : recentOrders.length > 0 ? (
+                  <div className='space-y-4'>
+                    {/* Transaction List */}
+                    <div className='space-y-3'>
+                      {recentOrders.map((order, index: number) => {
+                        const orderDate = new Date(order.created_at);
+                        const today = new Date();
+                        const isToday =
+                          orderDate.toDateString() === today.toDateString();
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const isYesterday =
+                          orderDate.toDateString() === yesterday.toDateString();
+
+                        let dateDisplay = "";
+                        if (isToday) {
+                          dateDisplay = "Hôm nay";
+                        } else if (isYesterday) {
+                          dateDisplay = "Hôm qua";
+                        } else {
+                          dateDisplay = orderDate.toLocaleDateString("vi-VN");
+                        }
+
+                        const statusColor =
+                          order.status?.[0] === "paid"
+                            ? "emerald"
+                            : order.status?.[0] === "pending"
+                            ? "amber"
+                            : "gray";
+
+                        return (
+                          <div
+                            key={order._id}
+                            className='group relative flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 cursor-pointer'
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/manager/transactions/${order._id}`
+                              )
+                            }
+                          >
+                            {/* Left side - Transaction info */}
+                            <div className='flex items-center space-x-3 flex-1 min-w-0'>
+                              <div
+                                className={`p-2 rounded-full ${
+                                  index === 0
+                                    ? "bg-emerald-100 dark:bg-emerald-900"
+                                    : index === 1
+                                    ? "bg-blue-100 dark:bg-blue-900"
+                                    : index === 2
+                                    ? "bg-purple-100 dark:bg-purple-900"
+                                    : index === 3
+                                    ? "bg-orange-100 dark:bg-orange-900"
+                                    : "bg-gray-100 dark:bg-gray-900"
+                                }`}
+                              >
+                                <DollarSign
+                                  className={`h-4 w-4 ${
+                                    index === 0
+                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      : index === 1
+                                      ? "text-blue-600 dark:text-blue-400"
+                                      : index === 2
+                                      ? "text-purple-600 dark:text-purple-400"
+                                      : index === 3
+                                      ? "text-orange-600 dark:text-orange-400"
+                                      : "text-gray-600 dark:text-gray-400"
+                                  }`}
+                                />
+                              </div>
+                              <div className='flex-1 min-w-0'>
+                                <div className='flex items-center space-x-2 mb-1'>
+                                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors'>
+                                    {getOrderUserName(order)}
+                                  </h4>
+                                  <span className='text-xs text-gray-400'>
+                                    •
+                                  </span>
+                                  <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                    {dateDisplay}
+                                  </span>
+                                </div>
+                                <div className='flex items-center justify-between'>
+                                  <div>
+                                    <p className='text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]'>
+                                      {getOrderCourseTitle(order)}
+                                    </p>
+                                  </div>
+                                  <div className='flex items-center space-x-2'>
+                                    <span className='text-sm font-semibold text-emerald-600 dark:text-emerald-400'>
+                                      {formatPrice(order.price)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right side - Status and arrow */}
+                            <div className='flex items-center space-x-3 ml-4'>
+                              <Badge
+                                variant='outline'
+                                className={`${
+                                  statusColor === "emerald"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                                    : statusColor === "amber"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800"
+                                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700"
+                                } text-xs px-2 py-1`}
+                              >
+                                {getStatusName(order.status)}
+                              </Badge>
+                              <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-200' />
+                            </div>
+
+                            {/* Hover effect overlay */}
+                            <div className='absolute inset-0 bg-emerald-50 dark:bg-emerald-900/10 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity duration-200 pointer-events-none'></div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
+                      <DollarSign className='h-8 w-8 text-gray-400' />
+                    </div>
+                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+                      Chưa có giao dịch nào
+                    </h3>
+                    <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
+                      Các giao dịch mới sẽ xuất hiện ở đây
+                    </p>
+                    <Link href='/dashboard/manager/transactions/new'>
+                      <Button
+                        size='sm'
+                        className='bg-emerald-600 hover:bg-emerald-700'
+                      >
+                        <Plus className='h-4 w-4 mr-1' />
+                        Ghi nhận thanh toán
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
                   <Link href='/dashboard/manager/transactions'>
                     <Button
                       variant='outline'
-                      className='w-full'
+                      className='w-full bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-600'
                     >
                       Xem Tất Cả Giao Dịch
                       <ArrowRight className='ml-2 h-4 w-4' />

@@ -36,23 +36,21 @@ export default function NotificationsListPage() {
           className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
           <ArrowLeft className='mr-1 h-4 w-4' />
-          Back to Dashboard
+          Quay lại Trang Chủ
         </Link>
       </div>
 
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Notifications</h1>
-          <p className='text-muted-foreground'>
-            View all manager notifications
-          </p>
+          <h1 className='text-3xl font-bold'>Thông Báo</h1>
+          <p className='text-muted-foreground'>Xem tất cả thông báo quản lý</p>
         </div>
       </div>
 
       <div className='mt-6'>
         <Card>
           <CardHeader>
-            <CardTitle>All Notifications</CardTitle>
+            <CardTitle>Tất Cả Thông Báo</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -98,7 +96,7 @@ export default function NotificationsListPage() {
               </div>
             ) : (
               <div className='text-center py-8'>
-                <p className='text-muted-foreground'>No notifications found</p>
+                <p className='text-muted-foreground'>Không có thông báo nào</p>
               </div>
             )}
           </CardContent>
