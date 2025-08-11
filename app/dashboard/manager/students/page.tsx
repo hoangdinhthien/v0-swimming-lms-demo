@@ -26,6 +26,7 @@ import { fetchStudents, fetchStudentDetail } from "@/api/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
+import { apiCache } from "@/utils/api-cache"; // ✅ Import cache
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -122,16 +123,25 @@ export default function StudentsPage() {
             );
             let parentName = null;
 
-            // Fetch parent information if parent_id exists
+            // ✅ FIX: Add caching and batch parent requests
             if (item.user?.parent_id && item.user.parent_id.length > 0) {
               try {
                 const parentId = item.user.parent_id[0];
-                // Use fetchStudentDetail to get parent information
-                const parentDetail = await fetchStudentDetail({
-                  studentId: parentId,
-                  tenantId: tenantId!,
-                  token: token!,
-                });
+                const cacheKey = `parent-detail-${parentId}`;
+
+                // Try cache first
+                let parentDetail = apiCache.get(cacheKey);
+
+                if (!parentDetail) {
+                  // Use fetchStudentDetail to get parent information
+                  parentDetail = await fetchStudentDetail({
+                    studentId: parentId,
+                    tenantId: tenantId!,
+                    token: token!,
+                  });
+                  // Cache for 5 minutes
+                  apiCache.set(cacheKey, parentDetail, 300);
+                }
 
                 if (parentDetail?.user?.username) {
                   parentName = parentDetail.user.username;

@@ -113,7 +113,7 @@ export default function NewCoursePage() {
       setLoadingCategories(false);
     }
     fetchCategories();
-  }, [toast]);
+  }, []); // ✅ FIX: Empty dependency array - only fetch once on mount
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

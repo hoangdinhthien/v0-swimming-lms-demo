@@ -26,12 +26,12 @@ export default function AuthProvider({
       );
     }
 
-    // Create an interval to periodically check token validity (every 15 minutes)
+    // Create an interval to periodically check token validity (every 30 minutes)
     const tokenCheckInterval = setInterval(() => {
       if (isDashboardPath) {
         isAuthenticated();
       }
-    }, 15 * 60 * 1000);
+    }, 30 * 60 * 1000); // ✅ Increased to 30 minutes to reduce API calls
 
     return () => clearInterval(tokenCheckInterval);
   }, [pathname, isDashboardPath]);

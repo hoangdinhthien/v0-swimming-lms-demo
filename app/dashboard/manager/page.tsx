@@ -109,10 +109,13 @@ function ManagerDashboardPage() {
     fetchCoursesData();
   }, []);
 
-  // Fetch recent orders
+  // Fetch recent orders - Only once on mount
   useEffect(() => {
     async function fetchRecentOrders() {
-      if (!token || !tenantId) {
+      const currentToken = getAuthToken();
+      const currentTenantId = getSelectedTenant();
+
+      if (!currentToken || !currentTenantId) {
         setIsLoadingOrders(false);
         return;
       }
@@ -120,8 +123,8 @@ function ManagerDashboardPage() {
       setIsLoadingOrders(true);
       try {
         const ordersData = await fetchOrders({
-          tenantId,
-          token,
+          tenantId: currentTenantId,
+          token: currentToken,
           page: 1,
           limit: 5, // Get only the 5 most recent orders
         });
@@ -143,12 +146,15 @@ function ManagerDashboardPage() {
       setIsLoadingOrders(false);
     }
     fetchRecentOrders();
-  }, [token, tenantId]);
+  }, []); // ✅ Only fetch once on mount
 
-  // Fetch upcoming schedule events (next 7 days)
+  // Fetch upcoming schedule events (next 7 days) - Only once on mount
   useEffect(() => {
     async function fetchUpcomingSchedule() {
-      if (!token || !tenantId) {
+      const currentToken = getAuthToken();
+      const currentTenantId = getSelectedTenant();
+
+      if (!currentToken || !currentTenantId) {
         setIsLoadingSchedule(false);
         return;
       }
@@ -189,7 +195,7 @@ function ManagerDashboardPage() {
       setIsLoadingSchedule(false);
     }
     fetchUpcomingSchedule();
-  }, [token, tenantId]);
+  }, []); // ✅ Only fetch once on mount
 
   // Mock manager data
   const manager = {

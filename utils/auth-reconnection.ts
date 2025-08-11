@@ -33,7 +33,7 @@ export const useAuthStatus = () => {
     checkAuth();
 
     // Set up periodic checking
-    const interval = setInterval(checkAuth, 30000); // Check every 30 seconds
+    const interval = setInterval(checkAuth, 60000); // ✅ Check every 60 seconds instead of 30
 
     return () => clearInterval(interval);
   }, [router]);

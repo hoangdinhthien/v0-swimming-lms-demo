@@ -1,4 +1,5 @@
 import config from "@/api/config.json";
+import { apiRequest } from "@/api/api-utils";
 
 export async function fetchCourses({
   tenantId,
@@ -12,16 +13,23 @@ export async function fetchCourses({
   limit?: number;
 } = {}) {
   if (!tenantId || !token) return { data: [], total: 0 };
-  const res = await fetch(
+
+  // Use cached request for courses (5 minutes cache)
+  const res = await apiRequest(
     `${config.API}/v1/workflow-process/manager/courses?page=${page}&limit=${limit}`,
     {
+      method: "GET",
+      requireAuth: true,
+      includeTenant: true,
+      useCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes cache
       headers: {
         "x-tenant-id": tenantId,
         Authorization: `Bearer ${token}`,
       },
-      cache: "no-store",
     }
   );
+
   if (!res.ok) throw new Error("Failed to fetch courses");
   const data = await res.json();
   // Defensive: unwrap the nested structure to get the array of courses and total

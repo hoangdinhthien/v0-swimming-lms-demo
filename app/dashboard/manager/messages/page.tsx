@@ -93,20 +93,20 @@ const MessagesPageContent = () => {
       initializeSocket();
     }
 
-    // Setup reconnection logic
-    const reconnectInterval = setInterval(() => {
-      if (!isConnected && !useMockSocket && isAuthenticated) {
-        console.log("Attempting to reconnect to WebSocket server...");
-        setReconnecting(true);
-        initializeSocket();
-      } else {
-        setReconnecting(false);
-      }
-    }, 10000); // Try to reconnect every 10 seconds
+    // ⚠️ WebSocket reconnection DISABLED - will be implemented later
+    // const reconnectInterval = setInterval(() => {
+    //   if (!isConnected && !useMockSocket && isAuthenticated) {
+    //     console.log("Attempting to reconnect to WebSocket server...");
+    //     setReconnecting(true);
+    //     initializeSocket();
+    //   } else {
+    //     setReconnecting(false);
+    //   }
+    // }, 30000); // Try to reconnect every 30 seconds
 
     // Cleanup on component unmount
     return () => {
-      clearInterval(reconnectInterval);
+      // clearInterval(reconnectInterval);
     };
   }, [
     initializeSocket,
@@ -131,7 +131,7 @@ const MessagesPageContent = () => {
         }
       }
     }
-  }, [lastMessage, activeConversation, messages]);
+  }, [lastMessage, activeConversation]); // ✅ FIX: Remove 'messages' from dependencies to prevent infinite loop
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

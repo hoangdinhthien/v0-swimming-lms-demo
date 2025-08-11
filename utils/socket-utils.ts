@@ -90,8 +90,9 @@ export const useSocket = () => {
         auth: {
           token: token,
         },
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
+        reconnection: false, // ⚠️ Disable WebSocket auto-reconnection - will be implemented later
+        // reconnectionAttempts: 5,
+        // reconnectionDelay: 1000,
       });
 
       // Setup event listeners
@@ -100,15 +101,15 @@ export const useSocket = () => {
         setIsConnected(true);
         setConnectionError(null);
 
-        // Send any pending offline messages when we reconnect
-        if (offlineMessages.length > 0) {
-          console.log(`Sending ${offlineMessages.length} pending messages`);
-          offlineMessages.forEach((msg) => {
-            socket?.emit("send_message", msg);
-          });
-          // Clear offline messages queue after sending
-          setOfflineMessages([]);
-        }
+        // ⚠️ Offline message handling DISABLED - will be implemented later with proper reconnection
+        // if (offlineMessages.length > 0) {
+        //   console.log(`Sending ${offlineMessages.length} pending messages`);
+        //   offlineMessages.forEach((msg) => {
+        //     socket?.emit("send_message", msg);
+        //   });
+        //   // Clear offline messages queue after sending
+        //   setOfflineMessages([]);
+        // }
       });
 
       socket.on("disconnect", () => {
@@ -186,9 +187,12 @@ export const useSocket = () => {
         socket.emit("send_message", message);
         return true;
       } else {
-        // Store messages for when we reconnect
-        setOfflineMessages((prev) => [...prev, message]);
-        return true; // Optimistically return true for better UX
+        // ⚠️ Offline message storage DISABLED - will be implemented later with proper reconnection
+        console.warn(
+          "WebSocket not connected, message not sent:",
+          message.content
+        );
+        return false; // Return false to indicate message wasn't sent
       }
     },
     [isConnected]

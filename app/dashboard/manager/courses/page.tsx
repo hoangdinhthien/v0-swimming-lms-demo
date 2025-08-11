@@ -79,7 +79,10 @@ export default function CoursesPage() {
       }
       setLoading(false);
     }
-    fetchData();
+
+    // ✅ Add request deduplication
+    const timeoutId = setTimeout(fetchData, 100); // Debounce API calls
+    return () => clearTimeout(timeoutId);
   }, [page, limit]);
 
   useEffect(() => {

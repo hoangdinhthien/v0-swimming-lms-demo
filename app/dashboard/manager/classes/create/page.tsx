@@ -245,7 +245,7 @@ export default function CreateClassPage() {
     };
 
     fetchData();
-  }, [toast]);
+  }, []); // ✅ FIX: Empty dependency array - only fetch once on mount
 
   // Filter functions
   const filteredCourses = (courses || []).filter((course) =>

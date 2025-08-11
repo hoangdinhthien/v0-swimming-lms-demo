@@ -177,7 +177,7 @@ export default function CalendarPage() {
     };
 
     loadScheduleData();
-  }, [currentDate, viewMode, selectedWeek, availableWeeks]); // Effect to update available weeks when current date changes
+  }, [currentDate, viewMode, selectedWeek]); // ✅ Removed availableWeeks dependency to prevent infinite loop // Effect to update available weeks when current date changes
   useEffect(() => {
     const weeks = getWeeksInYear(currentDate);
     setAvailableWeeks(weeks);

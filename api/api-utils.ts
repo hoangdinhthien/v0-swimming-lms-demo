@@ -1,9 +1,12 @@
 import { getSelectedTenant } from "../utils/tenant-utils";
 import { getAuthToken } from "./auth-utils";
+import { apiCache } from "../utils/api-cache";
 
 export interface ApiOptions extends RequestInit {
   requireAuth?: boolean;
   includeTenant?: boolean;
+  useCache?: boolean;
+  cacheTTL?: number; // in milliseconds
 }
 
 export async function apiRequest(
@@ -13,8 +16,25 @@ export async function apiRequest(
   const {
     requireAuth = false,
     includeTenant = true,
+    useCache = false,
+    cacheTTL = 60000, // Default 1 minute
     ...fetchOptions
   } = options;
+
+  // Check cache for GET requests (default method is GET)
+  if (useCache && (!fetchOptions.method || fetchOptions.method === "GET")) {
+    const cacheKey = apiCache.generateKey(url, {
+      headers: fetchOptions.headers,
+    });
+    const cachedData = apiCache.get(cacheKey);
+    if (cachedData) {
+      console.log("🚀 API Cache hit for:", url);
+      return new Response(JSON.stringify(cachedData), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -37,10 +57,26 @@ export async function apiRequest(
     }
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...fetchOptions,
     headers,
   });
+
+  // Cache successful GET responses
+  if (
+    useCache &&
+    (!fetchOptions.method || fetchOptions.method === "GET") &&
+    response.ok
+  ) {
+    const responseData = await response.clone().json();
+    const cacheKey = apiCache.generateKey(url, {
+      headers: fetchOptions.headers,
+    });
+    apiCache.set(cacheKey, responseData, cacheTTL);
+    console.log("💾 API response cached for:", url);
+  }
+
+  return response;
 }
 
 // Helper function for GET requests
