@@ -13,7 +13,7 @@ export interface NewsItem {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
-  cover?: string;
+  cover?: any; // Can be string, string[], or array of media objects
 }
 
 export interface NewsResponse {
@@ -128,6 +128,30 @@ export function formatRelativeTime(dateString: string): string {
     // Format the date in Vietnamese style: DD/MM/YYYY
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   }
+}
+
+// Helper function to extract image URLs from news cover field
+export function extractNewsImageUrls(cover: any): string[] {
+  if (!cover) return [];
+
+  // If cover is an array of media objects with path property
+  if (Array.isArray(cover)) {
+    return cover
+      .filter((item: any) => item && item.path)
+      .map((item: any) => item.path);
+  }
+
+  // If cover is a single media object with path
+  if (typeof cover === "object" && cover.path) {
+    return [cover.path];
+  }
+
+  // If cover is a string (media ID or path)
+  if (typeof cover === "string") {
+    return [cover];
+  }
+
+  return [];
 }
 
 // Re-export the getMediaDetails function to maintain backwards compatibility

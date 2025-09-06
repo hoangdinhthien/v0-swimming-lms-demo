@@ -312,16 +312,19 @@ export default function ClassesPage() {
                 <TableBody>
                   {filteredClasses.length > 0 ? (
                     filteredClasses.map((classItem) => (
-                      <TableRow key={classItem._id}>
+                      <TableRow
+                        key={classItem._id}
+                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        onClick={() =>
+                          (window.location.href = `/dashboard/manager/class/${classItem._id}?from=classes`)
+                        }
+                      >
                         <TableCell className='font-medium'>
                           <div className='flex items-center gap-2'>
                             <Users className='h-4 w-4 text-muted-foreground' />
-                            <Link
-                              href={`/dashboard/manager/class/${classItem._id}?from=classes`}
-                              className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
-                            >
+                            <div className='font-medium text-foreground'>
                               {classItem.name}
-                            </Link>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>

@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  Users,
+  UserCheck,
+  Star,
+  GraduationCap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -369,6 +377,33 @@ export default function InstructorsPage() {
     return statusMatch && specialtyMatch && searchMatch;
   });
 
+  // Calculate statistics
+  const totalInstructors = instructors.length;
+  const activeInstructors = instructors.filter(
+    (i) => i.status === "Active"
+  ).length;
+  const averageRating =
+    instructors.length > 0
+      ? (
+          instructors.reduce((sum, instructor) => sum + instructor.rating, 0) /
+          instructors.length
+        ).toFixed(1)
+      : "0.0";
+  const totalClasses = instructors.reduce(
+    (sum, instructor) => sum + instructor.classes,
+    0
+  );
+
+  // Create initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <>
       <InstructorDetailModal
@@ -402,88 +437,102 @@ export default function InstructorsPage() {
       </div>
 
       <div className='mt-8 grid gap-6 md:grid-cols-4'>
-        <Card>
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Giáo viên đang hoạt động
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Users className='h-4 w-4 text-primary' />
+              Tổng số giáo viên
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
-              {instructors.filter((i) => i.status === "Active").length}
+            <div className='text-2xl font-bold text-foreground'>
+              {totalInstructors}
             </div>
+            <p className='text-xs text-muted-foreground mt-1'>Đã đăng ký</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Điểm đánh giá trung bình
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <UserCheck className='h-4 w-4 text-green-600' />
+              Đang hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
-              {(
-                instructors.reduce(
-                  (sum, instructor) => sum + instructor.rating,
-                  0
-                ) / (instructors.length || 1)
-              ).toFixed(1)}
+            <div className='text-2xl font-bold text-green-600'>
+              {activeInstructors}
             </div>
-            <p className='text-xs text-amber-500'>★★★★★</p>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalInstructors > 0
+                ? Math.round((activeInstructors / totalInstructors) * 100)
+                : 0}
+              % tổng số
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Tổng số lớp</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {instructors.reduce(
-                (sum, instructor) => sum + instructor.classes,
-                0
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Số lớp trung bình/giáo viên
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Star className='h-4 w-4 text-amber-500' />
+              Đánh giá trung bình
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
-              {(() => {
-                const activeInstructors = instructors.filter(
-                  (i) => i.status === "Active"
-                );
-                const activeCount = activeInstructors.length;
-                const totalClasses = instructors.reduce(
-                  (sum, instructor) => sum + instructor.classes,
-                  0
-                );
-
-                // Avoid division by zero and handle edge cases
-                if (!activeCount) return 0;
-
-                return Math.round((totalClasses / activeCount) * 10) / 10;
-              })()}
+            <div className='text-2xl font-bold text-amber-500'>
+              {averageRating}
             </div>
+            <p className='text-xs text-amber-500 mt-1'>★★★★★</p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <GraduationCap className='h-4 w-4 text-blue-600' />
+              Tổng số lớp
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-blue-600'>
+              {totalClasses}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>Lớp đang dạy</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className='mt-8'>
+      <Card className='mt-8 bg-card/80 backdrop-blur-sm border shadow-lg'>
         <CardHeader>
-          <CardTitle>Danh sách Giáo viên</CardTitle>
+          <CardTitle className='flex items-center gap-2'>
+            <Users className='h-5 w-5 text-primary' />
+            Danh sách Giáo viên
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && <div className='py-8 text-center'>Đang tải...</div>}
+          {loading && (
+            <div className='flex items-center justify-center py-16'>
+              <div className='text-center space-y-4'>
+                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto'></div>
+                <p className='text-muted-foreground'>
+                  Đang tải danh sách giáo viên...
+                </p>
+              </div>
+            </div>
+          )}
           {error && (
-            <div className='py-8 text-center text-red-500'>{error}</div>
+            <div className='flex items-center justify-center py-16'>
+              <div className='text-center space-y-4'>
+                <div className='text-red-500 text-lg font-semibold'>
+                  Lỗi tải dữ liệu
+                </div>
+                <p className='text-muted-foreground'>{error}</p>
+                <Button onClick={() => window.location.reload()}>
+                  Thử lại
+                </Button>
+              </div>
+            </div>
           )}
           {!loading && !error && (
             <>
@@ -536,15 +585,17 @@ export default function InstructorsPage() {
                 </div>
               </div>
 
-              <div className='rounded-md border overflow-hidden'>
+              <div className='rounded-md border overflow-hidden bg-card/50'>
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Giáo viên</TableHead>
-                      <TableHead>Học viên</TableHead>
-                      <TableHead>Lớp học</TableHead>
-                      <TableHead>Đánh giá</TableHead>
-                      <TableHead>Trạng thái</TableHead>
+                    <TableRow className='bg-muted/50'>
+                      <TableHead className='font-semibold'>Giáo viên</TableHead>
+                      <TableHead className='font-semibold'>Học viên</TableHead>
+                      <TableHead className='font-semibold'>Lớp học</TableHead>
+                      <TableHead className='font-semibold'>Đánh giá</TableHead>
+                      <TableHead className='font-semibold'>
+                        Trạng thái
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -564,44 +615,79 @@ export default function InstructorsPage() {
                           avatar,
                         } = instructor;
                         return (
-                          <TableRow key={id}>
-                            <TableCell>
-                              <div className='flex items-center gap-2'>
-                                <img
-                                  src={avatar}
-                                  alt={name}
-                                  className='h-8 w-8 rounded-full'
-                                />
-                                <div>
-                                  <Link
-                                    href={`/dashboard/manager/instructors/${id}`}
-                                    className='font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
+                          <TableRow
+                            key={id}
+                            className='cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50'
+                            onClick={() =>
+                              (window.location.href = `/dashboard/manager/instructors/${id}`)
+                            }
+                          >
+                            <TableCell className='py-4'>
+                              <div className='flex items-center gap-3'>
+                                <div className='relative'>
+                                  <img
+                                    src={avatar}
+                                    alt={name}
+                                    className='h-10 w-10 rounded-full object-cover border-2 border-border/20'
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                      const fallback = e.currentTarget
+                                        .nextElementSibling as HTMLElement;
+                                      if (fallback) {
+                                        fallback.style.display = "flex";
+                                      }
+                                    }}
+                                  />
+                                  <div
+                                    className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary'
+                                    style={{ display: "none" }}
                                   >
+                                    {getInitials(name)}
+                                  </div>
+                                </div>
+                                <div className='min-w-0 flex-1'>
+                                  <div className='font-medium text-foreground truncate'>
                                     {name}
-                                  </Link>
-                                  <div className='text-xs text-muted-foreground'>
+                                  </div>
+                                  <div className='text-sm text-muted-foreground truncate'>
                                     {email}
                                   </div>
+                                  {specialty.length > 0 && (
+                                    <div className='text-xs text-muted-foreground mt-1'>
+                                      {specialty.slice(0, 2).join(", ")}
+                                      {specialty.length > 2 && "..."}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>{students}</TableCell>
-                            <TableCell>{classes}</TableCell>
-                            <TableCell>
-                              <div className='flex items-center'>
-                                <span className='text-amber-500 mr-1'>★</span>
-                                {rating}
+                            <TableCell className='py-4'>
+                              <div className='flex items-center gap-2'>
+                                <Users className='h-4 w-4 text-muted-foreground' />
+                                <span className='font-medium'>{students}</span>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className='py-4'>
+                              <div className='flex items-center gap-2'>
+                                <GraduationCap className='h-4 w-4 text-muted-foreground' />
+                                <span className='font-medium'>{classes}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className='py-4'>
+                              <div className='flex items-center gap-1'>
+                                <Star className='h-4 w-4 text-amber-500 fill-current' />
+                                <span className='font-medium'>{rating}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className='py-4'>
                               <Badge
                                 variant='outline'
                                 className={
                                   status === "Active"
-                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
                                     : status === "On Leave"
-                                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                                    : "bg-gray-50 text-gray-700 border-gray-200"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800"
                                 }
                               >
                                 {status === "Active"
@@ -618,9 +704,17 @@ export default function InstructorsPage() {
                       <TableRow>
                         <TableCell
                           colSpan={5}
-                          className='text-center py-8 text-muted-foreground'
+                          className='text-center py-12'
                         >
-                          Không tìm thấy giáo viên phù hợp với bộ lọc hiện tại.
+                          <div className='flex flex-col items-center gap-2'>
+                            <Users className='h-8 w-8 text-muted-foreground/50' />
+                            <p className='text-muted-foreground font-medium'>
+                              Không tìm thấy giáo viên phù hợp
+                            </p>
+                            <p className='text-sm text-muted-foreground'>
+                              Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                            </p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}

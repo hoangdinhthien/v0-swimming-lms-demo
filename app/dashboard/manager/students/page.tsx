@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Filter, FileText } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  Filter,
+  FileText,
+  Users,
+  UserCheck,
+  UserX,
+  Baby,
+  Mail,
+  Phone,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchStudents, fetchStudentDetail } from "@/api/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -189,6 +202,35 @@ export default function StudentsPage() {
         user.email.toLowerCase().includes(searchQuery.toLowerCase()));
     return statusMatch && searchMatch;
   });
+
+  // Calculate summary statistics
+  const totalStudents = students.length;
+  const activeStudents = students.filter(
+    (student) => student.user?.is_active
+  ).length;
+  const inactiveStudents = totalStudents - activeStudents;
+  const averageAge =
+    students.length > 0
+      ? Math.round(
+          students.reduce((sum, student) => {
+            const age = calculateAge(student.user?.birthday);
+            return sum + (age || 0);
+          }, 0) /
+            students.filter(
+              (student) => calculateAge(student.user?.birthday) !== null
+            ).length
+        ) || 0
+      : 0;
+
+  // Helper function to get user initials
+  const getUserInitials = (username: string) => {
+    return username
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
   return (
     <>
       <div className='mb-6'>
@@ -224,48 +266,158 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      <Card className='mt-8'>
+      {/* Summary Cards */}
+      <div className='mt-8 grid gap-6 md:grid-cols-4'>
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Users className='h-4 w-4 text-primary' />
+              Tổng số học viên
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-foreground'>
+              {totalStudents}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>Đã đăng ký</p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <UserCheck className='h-4 w-4 text-green-600' />
+              Đang hoạt động
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-green-600'>
+              {activeStudents}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalStudents > 0
+                ? Math.round((activeStudents / totalStudents) * 100)
+                : 0}
+              % tổng số
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <UserX className='h-4 w-4 text-red-500' />
+              Ngưng hoạt động
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-red-500'>
+              {inactiveStudents}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalStudents > 0
+                ? Math.round((inactiveStudents / totalStudents) * 100)
+                : 0}
+              % tổng số
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Baby className='h-4 w-4 text-blue-600' />
+              Tuổi trung bình
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-blue-600'>{averageAge}</div>
+            <p className='text-xs text-muted-foreground mt-1'>Tuổi</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className='mt-8 bg-card/80 backdrop-blur-sm border shadow-lg'>
         <CardHeader>
-          <CardTitle>Danh sách học viên</CardTitle>
+          <CardTitle className='flex items-center gap-3'>
+            <Users className='h-5 w-5 text-primary' />
+            Danh sách học viên
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
             <div className='flex-1 relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Search className='absolute left-3 top-3 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder='Tìm kiếm học viên theo tên, email hoặc số điện thoại...'
-                className='pl-8'
+                className='pl-10 h-11 border-muted-foreground/20 focus:border-primary transition-colors'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className='w-full md:w-[180px]'>
+            <div className='w-full md:w-[200px]'>
               <Select
                 value={filter}
                 onValueChange={setFilter}
               >
-                <SelectTrigger>
+                <SelectTrigger className='h-11 border-muted-foreground/20 focus:border-primary transition-colors'>
                   <SelectValue placeholder='Lọc theo trạng thái' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='all'>Tất cả học viên</SelectItem>
-                  <SelectItem value='active'>Đang hoạt động</SelectItem>
-                  <SelectItem value='inactive'>Ngưng hoạt động</SelectItem>
-                  <SelectItem value='on hold'>Tạm hoãn</SelectItem>
+                  <SelectItem value='all'>
+                    <div className='flex items-center gap-2'>
+                      <Users className='h-4 w-4' />
+                      Tất cả học viên
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='active'>
+                    <div className='flex items-center gap-2'>
+                      <UserCheck className='h-4 w-4 text-green-600' />
+                      Đang hoạt động
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='inactive'>
+                    <div className='flex items-center gap-2'>
+                      <UserX className='h-4 w-4 text-red-500' />
+                      Ngưng hoạt động
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='on hold'>
+                    <div className='flex items-center gap-2'>
+                      <Filter className='h-4 w-4 text-orange-500' />
+                      Tạm hoãn
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className='rounded-md border overflow-hidden'>
+          <div className='rounded-lg border border-border/50 overflow-hidden shadow-sm'>
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Học viên</TableHead>
-                  <TableHead>Tuổi</TableHead>
-                  <TableHead>Khoá học đã đăng ký</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Phụ Huynh</TableHead>
+                <TableRow className='bg-muted/30 hover:bg-muted/40 border-border/50'>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <Users className='h-4 w-4' />
+                      Học viên
+                    </div>
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <Baby className='h-4 w-4' />
+                      Tuổi
+                    </div>
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    Khoá học đã đăng ký
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    Trạng thái
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    Phụ Huynh
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -291,40 +443,62 @@ export default function StudentsPage() {
                   filteredStudents.map((student) => {
                     const user = student.user || {};
                     return (
-                      <TableRow key={student._id}>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            <img
-                              src={student.avatar}
-                              alt={user.username || "avatar"}
-                              className='h-8 w-8 rounded-full'
-                            />
-                            <div>
-                              <Link
-                                href={`/dashboard/manager/students/${user._id}`}
-                                className='font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
-                              >
+                      <TableRow
+                        key={student._id}
+                        className='cursor-pointer hover:bg-muted/50 transition-colors border-border/30'
+                        onClick={() =>
+                          (window.location.href = `/dashboard/manager/students/${user._id}`)
+                        }
+                      >
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-3'>
+                            <Avatar className='h-10 w-10 border-2 border-primary/10 shadow-sm'>
+                              <AvatarImage
+                                src={student.avatar}
+                                alt={user.username || "avatar"}
+                                className='object-cover'
+                              />
+                              <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-sm'>
+                                {user.username
+                                  ? getUserInitials(user.username)
+                                  : "ST"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className='min-w-0 flex-1'>
+                              <div className='font-medium text-foreground truncate'>
                                 {user.username}
-                              </Link>
-                              <div className='text-xs text-muted-foreground'>
-                                {user.email}
+                              </div>
+                              <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1'>
+                                <Mail className='h-3 w-3' />
+                                <span className='truncate'>{user.email}</span>
                               </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {calculateAge(user.birthday) !== null
-                            ? calculateAge(user.birthday)
-                            : "-"}
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-2'>
+                            <span className='font-medium text-foreground'>
+                              {calculateAge(user.birthday) !== null
+                                ? calculateAge(user.birthday)
+                                : "-"}
+                            </span>
+                            {calculateAge(user.birthday) !== null && (
+                              <span className='text-xs text-muted-foreground'>
+                                tuổi
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell>-</TableCell>
-                        <TableCell>
+                        <TableCell className='py-4'>
+                          <span className='text-muted-foreground'>-</span>
+                        </TableCell>
+                        <TableCell className='py-4'>
                           <Badge
                             variant='outline'
                             className={
                               user.is_active
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-gray-50 text-gray-700 border-gray-200"
+                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+                                : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800"
                             }
                           >
                             {user.is_active
@@ -332,13 +506,16 @@ export default function StudentsPage() {
                               : "Ngưng hoạt động"}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='py-4'>
                           {student.parentName ? (
-                            <span className='text-sm font-medium text-blue-700'>
-                              {student.parentName}
-                            </span>
+                            <div className='flex items-center gap-2'>
+                              <Users className='h-3 w-3 text-blue-600' />
+                              <span className='text-sm font-medium text-blue-700 dark:text-blue-400'>
+                                {student.parentName}
+                              </span>
+                            </div>
                           ) : (
-                            <span className='text-sm text-muted-foreground'>
+                            <span className='text-sm text-muted-foreground italic'>
                               Không có
                             </span>
                           )}

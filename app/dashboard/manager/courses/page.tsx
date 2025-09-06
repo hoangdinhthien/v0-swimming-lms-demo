@@ -415,14 +415,17 @@ export default function CoursesPage() {
                     </TableRow>
                   ) : displayedCourses.length > 0 ? (
                     displayedCourses.map((course: any) => (
-                      <TableRow key={course._id}>
+                      <TableRow
+                        key={course._id}
+                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        onClick={() =>
+                          (window.location.href = `/dashboard/manager/courses/${course._id}`)
+                        }
+                      >
                         <TableCell className='font-medium'>
-                          <Link
-                            href={`/dashboard/manager/courses/${course._id}`}
-                            className='text-blue-600 hover:text-blue-800 hover:underline cursor-pointer'
-                          >
+                          <div className='font-medium text-foreground'>
                             {course.title}
-                          </Link>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {Array.isArray(course.category)

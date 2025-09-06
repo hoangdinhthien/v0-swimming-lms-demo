@@ -15,6 +15,8 @@ import {
   X,
   Image as ImageIcon,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +40,7 @@ import {
   type NewsItem,
   formatRelativeTime,
   updateNews,
+  extractNewsImageUrls,
 } from "@/api/news-api";
 import { getMediaDetails, uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
@@ -51,7 +54,8 @@ export default function NotificationDetailPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [coverImages, setCoverImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,21 +90,13 @@ export default function NotificationDetailPage() {
         } else {
           setNewsItem(newsDetail);
 
-          // Always try to fetch the media path if cover exists
+          // Extract image URLs from cover field
           if (newsDetail.cover) {
-            try {
-              const mediaPath = await getMediaDetails(newsDetail.cover);
-              if (mediaPath) {
-                setCoverImageUrl(mediaPath);
-              } else {
-                setCoverImageUrl("/placeholder.svg");
-              }
-            } catch (mediaErr) {
-              console.error("Error fetching media details:", mediaErr);
-              setCoverImageUrl("/placeholder.svg");
-            }
+            const imageUrls = extractNewsImageUrls(newsDetail.cover);
+            setCoverImages(imageUrls);
+            setCurrentImageIndex(0); // Reset to first image
           } else {
-            setCoverImageUrl("/placeholder.svg");
+            setCoverImages([]);
           }
         }
       } catch (err) {
@@ -124,7 +120,7 @@ export default function NotificationDetailPage() {
         coverFile: null,
         removeCover: false,
       });
-      setImagePreview(coverImageUrl);
+      setImagePreview(coverImages.length > 0 ? coverImages[0] : null);
       setIsEditModalOpen(true);
     }
   };
@@ -230,18 +226,14 @@ export default function NotificationDetailPage() {
       if (updatedNewsDetail) {
         setNewsItem(updatedNewsDetail);
 
-        // Update cover image based on updated news data
+        // Update cover images based on updated news data
         if (updatedNewsDetail.cover) {
-          try {
-            const mediaPath = await getMediaDetails(updatedNewsDetail.cover);
-            setCoverImageUrl(mediaPath || "/placeholder.svg");
-          } catch (mediaErr) {
-            console.error("Error fetching updated media details:", mediaErr);
-            setCoverImageUrl("/placeholder.svg");
-          }
+          const imageUrls = extractNewsImageUrls(updatedNewsDetail.cover);
+          setCoverImages(imageUrls);
+          setCurrentImageIndex(0); // Reset to first image
         } else {
-          // Cover was removed, set to null
-          setCoverImageUrl(null);
+          // Cover was removed, set to empty array
+          setCoverImages([]);
         }
       }
 
@@ -277,6 +269,35 @@ export default function NotificationDetailPage() {
     });
     setImagePreview(null);
   };
+
+  // Navigation functions for image slider
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === coverImages.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? coverImages.length - 1 : prev - 1
+    );
+  };
+
+  // Keyboard navigation for image slider
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (coverImages && coverImages.length > 1) {
+        if (event.key === "ArrowLeft") {
+          prevImage();
+        } else if (event.key === "ArrowRight") {
+          nextImage();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [coverImages, currentImageIndex]);
 
   return (
     <div className='px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-full space-y-6'>
@@ -431,13 +452,15 @@ export default function NotificationDetailPage() {
               </CardHeader>
 
               <CardContent className='space-y-8'>
-                {/* Cover Image */}
-                {coverImageUrl && (
+                {/* Cover Images */}
+                {coverImages.length > 0 && (
                   <div className='relative'>
                     <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900'>
                       <img
-                        src={coverImageUrl}
-                        alt={newsItem.title}
+                        src={coverImages[currentImageIndex]}
+                        alt={`${newsItem.title} - Hình ${
+                          currentImageIndex + 1
+                        }`}
                         className='w-full h-auto max-h-96 object-contain rounded-xl transition-all duration-300 hover:scale-105'
                         onError={(e) => {
                           e.currentTarget.onerror = null;
@@ -445,7 +468,59 @@ export default function NotificationDetailPage() {
                         }}
                       />
                       <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl' />
+
+                      {/* Navigation Buttons */}
+                      {coverImages.length > 1 && (
+                        <>
+                          <button
+                            onClick={prevImage}
+                            className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                          >
+                            <ChevronLeft className='h-5 w-5' />
+                          </button>
+                          <button
+                            onClick={nextImage}
+                            className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                          >
+                            <ChevronRight className='h-5 w-5' />
+                          </button>
+                        </>
+                      )}
+
+                      {/* Image Counter */}
+                      {coverImages.length > 1 && (
+                        <div className='absolute bottom-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full'>
+                          {currentImageIndex + 1} / {coverImages.length}
+                        </div>
+                      )}
                     </div>
+
+                    {/* Image Thumbnails */}
+                    {coverImages.length > 1 && (
+                      <div className='flex gap-2 mt-4 justify-center overflow-x-auto pb-2'>
+                        {coverImages.map((image, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentImageIndex(index)}
+                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                              index === currentImageIndex
+                                ? "border-primary ring-2 ring-primary/20"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <img
+                              src={image}
+                              alt={`Thumbnail ${index + 1}`}
+                              className='w-full h-full object-cover'
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = "/placeholder.svg";
+                              }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
