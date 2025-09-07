@@ -24,6 +24,7 @@ import {
   Waves,
   Plus,
   Trash2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,6 +142,16 @@ const customStyles = `
 
   .pool-selector-trigger:focus-within {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4), 0 0 25px rgba(59, 130, 246, 0.15);
+  }
+
+  /* Hide scrollbars while keeping scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
   }
 `;
 
@@ -791,9 +802,9 @@ export default function SlotDetailsPage() {
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className='pt-2'>
+              <CardContent className='pt-2 max-h-[80vh] overflow-y-auto'>
                 {slotDetail && slotDetail.schedules.length > 0 ? (
-                  <div className='space-y-6'>
+                  <div className='space-y-6 pr-2'>
                     {slotDetail.schedules.map(
                       (schedule: SlotSchedule, index: number) => (
                         <div
@@ -808,9 +819,6 @@ export default function SlotDetailsPage() {
                             {/* Class Info Header */}
                             <div className='flex items-center justify-between'>
                               <div className='flex items-center gap-3'>
-                                <div className='p-1.5 bg-blue-100 dark:bg-blue-800/30 rounded-full'>
-                                  <School className='h-5 w-5 text-blue-500 dark:text-blue-400' />
-                                </div>
                                 <h3 className='text-xl font-bold text-foreground'>
                                   {schedule.classroom.name}
                                 </h3>
@@ -852,161 +860,123 @@ export default function SlotDetailsPage() {
 
                             <Separator className='bg-blue-200/50 dark:bg-blue-700/30' />
 
-                            {/* Schedule Details Grid */}
-                            <div className='grid md:grid-cols-2 gap-5'>
-                              {/* Classroom Info */}
-                              <div className='space-y-3'>
-                                <h4 className='font-semibold text-foreground flex items-center gap-2'>
-                                  <div className='p-1 bg-blue-100/70 dark:bg-blue-800/20 rounded-md'>
-                                    <School className='h-4 w-4 text-blue-500 dark:text-blue-400' />
+                            {/* Unified Schedule Details */}
+                            <div className='space-y-4'>
+                              {/* Class Information */}
+                              <div className='p-4 bg-background/70 dark:bg-background/50 backdrop-blur-sm rounded-lg border border-blue-100 dark:border-blue-900/30 hover:border-blue-200 dark:hover:border-blue-700/50 transition-colors duration-200 shadow-sm'>
+                                <div className='flex items-center justify-between mb-3'>
+                                  <div className='flex items-center gap-2'>
+                                    <span className='font-medium text-lg'>
+                                      {schedule.classroom.name}
+                                    </span>
                                   </div>
-                                  Lớp Học
-                                </h4>
-                                <div className='space-y-2'>
-                                  <div className='p-4 bg-background/70 dark:bg-background/50 backdrop-blur-sm rounded-lg border border-blue-100 dark:border-blue-900/30 hover:border-blue-200 dark:hover:border-blue-700/50 transition-colors duration-200 shadow-sm'>
-                                    <div className='flex items-center justify-between mb-3'>
-                                      <div className='flex items-center gap-2'>
-                                        <div className='h-8 w-8 rounded-full bg-blue-100/70 dark:bg-blue-800/20 flex items-center justify-center'>
-                                          <School className='h-4 w-4 text-blue-500 dark:text-blue-400' />
-                                        </div>
-                                        <span className='font-medium text-lg'>
-                                          {schedule.classroom.name}
-                                        </span>
-                                      </div>
-                                      <Badge
-                                        variant='outline'
-                                        className='text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30 px-2 py-1'
-                                      >
-                                        <Users className='h-3 w-3 mr-1' />
-                                        {schedule.classroom.member?.length ||
-                                          0}{" "}
-                                        học viên
-                                      </Badge>
-                                    </div>
-                                    <div className='flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2 border border-muted/30'>
-                                      <Book className='h-4 w-4 text-blue-500 dark:text-blue-400' />
-                                      <span>Khóa học: </span>
-                                      <span className='font-medium'>
-                                        {schedule.classroom.course
-                                          ? typeof schedule.classroom.course ===
-                                            "string"
-                                            ? courseNames[
-                                                schedule.classroom.course
-                                              ] || "Đang tải..."
-                                            : (schedule.classroom.course as any)
-                                                ?.title || "Đang tải..."
-                                          : "Chưa có khóa học"}
-                                      </span>
-                                    </div>
-                                  </div>
+                                  <Badge
+                                    variant='outline'
+                                    className='text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30 px-2 py-1'
+                                  >
+                                    <Users className='h-3 w-3 mr-1' />
+                                    {schedule.classroom.member?.length || 0} học
+                                    viên
+                                  </Badge>
                                 </div>
-                              </div>
+                                <div className='flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2 border border-muted/30 mb-4'>
+                                  <Book className='h-4 w-4 text-blue-500 dark:text-blue-400' />
+                                  <span>Khóa học: </span>
+                                  <span className='font-medium'>
+                                    {schedule.classroom.course
+                                      ? typeof schedule.classroom.course ===
+                                        "string"
+                                        ? courseNames[
+                                            schedule.classroom.course
+                                          ] || "Đang tải..."
+                                        : (schedule.classroom.course as any)
+                                            ?.title || "Đang tải..."
+                                      : "Chưa có khóa học"}
+                                  </span>
+                                </div>
 
-                              {/* Pool Info */}
-                              <div className='space-y-3'>
-                                <h4 className='font-semibold text-foreground flex items-center gap-2'>
-                                  <div className='p-1 bg-blue-100/70 dark:bg-blue-800/20 rounded-md'>
-                                    <MapPin className='h-4 w-4 text-blue-500 dark:text-blue-400' />
-                                  </div>
-                                  Hồ Bơi
-                                </h4>
-                                <div className='space-y-2'>
-                                  {normalizePools(schedule.pool).length > 0 ? (
-                                    normalizePools(schedule.pool).map(
+                                {/* Pool Information */}
+                                {normalizePools(schedule.pool).length > 0 ? (
+                                  <div className='space-y-3'>
+                                    <div className='flex items-center gap-2 text-sm font-medium text-foreground border-t border-blue-100 dark:border-blue-800/30 pt-3'>
+                                      <span>Hồ bơi được sử dụng:</span>
+                                    </div>
+                                    {normalizePools(schedule.pool).map(
                                       (pool: Pool) => (
                                         <div
                                           key={pool._id}
-                                          className='overflow-hidden relative p-4 bg-gradient-to-br from-blue-50/80 to-blue-50/60 dark:from-blue-900/15 dark:to-blue-900/10 rounded-lg border border-blue-200/70 dark:border-blue-800/30 hover:border-blue-300 dark:hover:border-blue-700/50 transition-all duration-200 shadow-sm'
+                                          className='p-3 bg-gradient-to-br from-blue-50/80 to-blue-50/60 dark:from-blue-900/15 dark:to-blue-900/10 rounded-lg border border-blue-200/50 dark:border-blue-800/30'
                                         >
-                                          <div className='absolute top-0 right-0 w-24 h-24 bg-blue-100/70 dark:bg-blue-800/10 rounded-full -translate-y-12 translate-x-12 blur-xl'></div>
-
-                                          <div className='relative'>
-                                            <div className='flex items-center justify-between mb-3'>
-                                              <div className='flex items-center gap-2'>
-                                                <div className='h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-800/30 flex items-center justify-center'>
-                                                  <MapPin className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                                                </div>
-                                                <span className='font-medium text-lg text-blue-900 dark:text-blue-100'>
-                                                  {pool.title}
-                                                </span>
-                                              </div>
-                                              <Badge
-                                                variant='outline'
-                                                className={`text-xs px-2 py-0.5 ${
+                                          <div className='flex items-center justify-between mb-2'>
+                                            <span className='font-medium text-blue-900 dark:text-blue-100'>
+                                              {pool.title}
+                                            </span>
+                                            <Badge
+                                              variant='outline'
+                                              className={`text-xs px-2 py-0.5 ${
+                                                pool.maintance_status ===
+                                                "Đang hoạt động"
+                                                  ? "bg-green-50/80 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-700/50"
+                                                  : "bg-amber-50/80 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/50"
+                                              }`}
+                                            >
+                                              <div
+                                                className={`mr-1 h-2 w-2 rounded-full ${
                                                   pool.maintance_status ===
                                                   "Đang hoạt động"
-                                                    ? "bg-green-50/80 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-700/50"
-                                                    : "bg-amber-50/80 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/50"
+                                                    ? "bg-green-500"
+                                                    : "bg-amber-500"
                                                 }`}
-                                              >
-                                                <div
-                                                  className={`mr-1 h-2 w-2 rounded-full ${
-                                                    pool.maintance_status ===
-                                                    "Đang hoạt động"
-                                                      ? "bg-green-500"
-                                                      : "bg-amber-500"
-                                                  }`}
-                                                ></div>
-                                                {pool.maintance_status}
-                                              </Badge>
+                                              ></div>
+                                              {pool.maintance_status}
+                                            </Badge>
+                                          </div>
+                                          <div className='grid grid-cols-2 md:grid-cols-4 gap-2 text-xs'>
+                                            <div className='bg-white/70 dark:bg-white/5 rounded p-2'>
+                                              <div className='text-blue-600 dark:text-blue-400 mb-1'>
+                                                Loại
+                                              </div>
+                                              <div className='font-medium'>
+                                                {pool.type}
+                                              </div>
                                             </div>
-
-                                            <div className='mt-3 grid grid-cols-2 gap-2 text-sm'>
-                                              <div className='bg-white/70 dark:bg-white/5 rounded-md p-2 border border-blue-100 dark:border-blue-800/20'>
-                                                <div className='text-xs text-blue-600 dark:text-blue-400 mb-1'>
-                                                  Loại hồ bơi
-                                                </div>
-                                                <div className='font-medium text-foreground'>
-                                                  {pool.type}
-                                                </div>
+                                            <div className='bg-white/70 dark:bg-white/5 rounded p-2'>
+                                              <div className='text-blue-600 dark:text-blue-400 mb-1'>
+                                                Kích thước
                                               </div>
-
-                                              <div className='bg-white/70 dark:bg-white/5 rounded-md p-2 border border-blue-100 dark:border-blue-800/20'>
-                                                <div className='text-xs text-blue-600 dark:text-blue-400 mb-1'>
-                                                  Kích thước
-                                                </div>
-                                                <div className='font-medium text-foreground'>
-                                                  {pool.dimensions}
-                                                </div>
+                                              <div className='font-medium'>
+                                                {pool.dimensions}
                                               </div>
-
-                                              <div className='bg-white/70 dark:bg-white/5 rounded-md p-2 border border-blue-100 dark:border-blue-800/20'>
-                                                <div className='text-xs text-blue-600 dark:text-blue-400 mb-1'>
-                                                  Độ sâu
-                                                </div>
-                                                <div className='font-medium text-foreground'>
-                                                  {pool.depth}
-                                                </div>
+                                            </div>
+                                            <div className='bg-white/70 dark:bg-white/5 rounded p-2'>
+                                              <div className='text-blue-600 dark:text-blue-400 mb-1'>
+                                                Độ sâu
                                               </div>
-
-                                              <div className='bg-white/70 dark:bg-white/5 rounded-md p-2 border border-blue-100 dark:border-blue-800/20'>
-                                                <div className='text-xs text-blue-600 dark:text-blue-400 mb-1'>
-                                                  Sức chứa
-                                                </div>
-                                                <div className='font-medium text-foreground'>
-                                                  {pool.capacity} người
-                                                </div>
+                                              <div className='font-medium'>
+                                                {pool.depth}
+                                              </div>
+                                            </div>
+                                            <div className='bg-white/70 dark:bg-white/5 rounded p-2'>
+                                              <div className='text-blue-600 dark:text-blue-400 mb-1'>
+                                                Sức chứa
+                                              </div>
+                                              <div className='font-medium'>
+                                                {pool.capacity} người
                                               </div>
                                             </div>
                                           </div>
                                         </div>
                                       )
-                                    )
-                                  ) : (
-                                    <div className='p-6 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30 text-center'>
-                                      <div className='h-12 w-12 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-3'>
-                                        <MapPin className='h-6 w-6 text-muted-foreground' />
-                                      </div>
-                                      <span className='text-sm text-muted-foreground block'>
-                                        Chưa chỉ định hồ bơi
-                                      </span>
-                                      <span className='text-xs text-muted-foreground/70 mt-1 block'>
-                                        Vui lòng quay lại lịch và cập nhật thông
-                                        tin hồ bơi
-                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className='border-t border-blue-100 dark:border-blue-800/30 pt-3'>
+                                    <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                                      <MapPin className='h-4 w-4' />
+                                      <span>Chưa chỉ định hồ bơi</span>
                                     </div>
-                                  )}
-                                </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1093,16 +1063,33 @@ export default function SlotDetailsPage() {
           </div>
         </div>
 
-        {/* Add Class Section */}
+        {/* Inline Add Class Form */}
         {showAddClass && (
-          <div className='space-y-6'>
+          <div className='space-y-6 animate-fade-in-up'>
+            {/* Section Header */}
+            <div className='text-center space-y-2'>
+              <div className='flex items-center justify-center gap-3 mb-4'>
+                <div className='p-3 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800/30 dark:to-green-900/20 rounded-xl shadow-lg shadow-green-500/20'>
+                  <Plus className='h-6 w-6 text-green-600 dark:text-green-400' />
+                </div>
+                <div>
+                  <h2 className='text-3xl font-bold text-foreground'>
+                    Thêm lớp học mới
+                  </h2>
+                  <p className='text-muted-foreground text-lg'>
+                    Hoàn tất thông tin dưới đây để thêm lớp học vào slot này
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Success/Error Messages */}
             {submitStatus === "success" && (
-              <Card className='border-green-200 bg-green-50 dark:bg-green-900/20'>
+              <Card className='border-green-200 bg-green-50 dark:bg-green-900/20 mx-auto max-w-2xl'>
                 <CardContent className='pt-6'>
-                  <div className='flex items-center gap-3 text-green-800 dark:text-green-200'>
-                    <CheckCircle2 className='h-5 w-5' />
-                    <span className='font-medium'>
+                  <div className='flex items-center gap-3 text-green-800 dark:text-green-200 justify-center'>
+                    <CheckCircle2 className='h-6 w-6' />
+                    <span className='font-medium text-lg'>
                       Đã thêm lớp {selectedClass?.name} vào lịch thành công!
                     </span>
                   </div>
@@ -1111,439 +1098,259 @@ export default function SlotDetailsPage() {
             )}
 
             {submitStatus === "error" && errorMessage && (
-              <Card className='border-red-200 bg-red-50 dark:bg-red-900/20'>
+              <Card className='border-red-200 bg-red-50 dark:bg-red-900/20 mx-auto max-w-2xl'>
                 <CardContent className='pt-6'>
-                  <div className='flex items-center gap-3 text-red-800 dark:text-red-200'>
-                    <AlertTriangle className='h-5 w-5' />
-                    <span className='font-medium'>{errorMessage}</span>
+                  <div className='flex items-center gap-3 text-red-800 dark:text-red-200 justify-center'>
+                    <AlertTriangle className='h-6 w-6' />
+                    <span className='font-medium text-lg'>{errorMessage}</span>
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {/* Add Class Form */}
-            <Card className='relative overflow-hidden bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/30 shadow-xl hover:shadow-2xl transition-all duration-300'>
+            <Card className='relative overflow-hidden bg-gradient-to-br from-card/95 to-card/90 backdrop-blur-sm border border-blue-200/50 dark:border-blue-800/30 shadow-2xl hover:shadow-3xl transition-all duration-300 max-w-5xl mx-auto'>
               {/* Decorative elements */}
-              <div className='absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500/80 via-green-500 to-green-500/80'></div>
-              <div className='absolute top-0 right-0 w-40 h-40 bg-green-100/30 dark:bg-green-800/10 rounded-full -translate-y-20 translate-x-20 blur-3xl'></div>
-              <div className='absolute bottom-0 left-0 w-32 h-32 bg-blue-100/30 dark:bg-blue-800/10 rounded-full translate-y-16 -translate-x-16 blur-3xl'></div>
+              <div className='absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-500/80 via-blue-500 to-green-500/80'></div>
+              <div className='absolute top-0 right-0 w-40 h-40 bg-green-100/20 dark:bg-green-800/10 rounded-full -translate-y-20 translate-x-20 blur-3xl'></div>
+              <div className='absolute bottom-0 left-0 w-32 h-32 bg-blue-100/20 dark:bg-blue-800/10 rounded-full translate-y-16 -translate-x-16 blur-3xl'></div>
 
-              <CardHeader className='relative pb-4'>
-                <CardTitle className='flex items-center gap-3'>
-                  <div className='p-2 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800/30 dark:to-green-900/20 rounded-lg shadow-sm'>
-                    <Plus className='h-5 w-5 text-green-600 dark:text-green-400' />
-                  </div>
-                  <span className='text-lg text-foreground'>
-                    Thêm lớp học vào lịch
-                  </span>
-                </CardTitle>
-                <p className='text-sm text-muted-foreground mt-2'>
-                  Điền thông tin để thêm lớp học mới vào khung giờ đã chọn
-                </p>
-              </CardHeader>
-              <CardContent className='relative space-y-6'>
-                {/* Slot and Date Information */}
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-gradient-to-br from-blue-50/50 to-blue-50/30 dark:from-blue-900/10 dark:to-blue-900/5 rounded-xl border border-blue-200/50 dark:border-blue-800/30'>
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <div className='h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-800/30 flex items-center justify-center'>
-                        <CalendarIcon className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                      </div>
-                      <span className='text-sm font-medium text-foreground'>
-                        Ngày học
-                      </span>
+              <CardHeader className='relative pb-6'>
+                <div className='flex items-center justify-between'>
+                  <CardTitle className='flex items-center gap-3'>
+                    <div className='p-2 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-800/30 dark:to-green-900/20 rounded-lg shadow-sm'>
+                      <Plus className='h-5 w-5 text-green-600 dark:text-green-400' />
                     </div>
-                    <p className='text-lg font-semibold text-foreground ml-10'>
-                      {date && new Date(date).toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <div className='h-8 w-8 rounded-lg bg-green-100 dark:bg-green-800/30 flex items-center justify-center'>
-                        <Clock className='h-4 w-4 text-green-600 dark:text-green-400' />
-                      </div>
-                      <span className='text-sm font-medium text-foreground'>
-                        Khung giờ
-                      </span>
-                    </div>
-                    <p className='text-lg font-semibold text-foreground ml-10'>
-                      {slotTitle}
-                    </p>
-                  </div>
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <div className='h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-800/30 flex items-center justify-center'>
-                        <Clock className='h-4 w-4 text-purple-600 dark:text-purple-400' />
-                      </div>
-                      <span className='text-sm font-medium text-foreground'>
-                        Thời gian
-                      </span>
-                    </div>
-                    <p className='text-lg font-semibold text-foreground ml-10'>
-                      {time}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Pool Selection */}
-                <div className='space-y-4'>
-                  {/* Enhanced Header Section */}
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-3'>
-                      <div className='h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20'>
-                        <Waves className='h-4 w-4 text-white' />
-                      </div>
-                      <div className='flex-1'>
-                        <label className='text-base font-semibold text-foreground flex items-center gap-2'>
-                          Chọn hồ bơi
-                          <span className='text-red-500 text-sm'>*</span>
-                        </label>
-                        <p className='text-sm text-muted-foreground mt-0.5'>
-                          Lựa chọn hồ bơi phù hợp cho lớp học dựa trên loại hồ
-                          và sức chứa
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pool Search */}
-                  <div className='space-y-3'>
-                    <div className='space-y-1'>
-                      <label className='text-sm font-medium text-foreground flex items-center gap-2'>
-                        <div className='h-4 w-4 rounded-sm bg-blue-100 dark:bg-blue-800/30 flex items-center justify-center'>
-                          <Search className='h-3 w-3 text-blue-600 dark:text-blue-400' />
-                        </div>
-                        Tìm kiếm hồ bơi
-                      </label>
-                      <p className='text-xs text-muted-foreground'>
-                        Nhập tên hồ bơi hoặc loại hồ để lọc danh sách
-                      </p>
-                    </div>
-                    <div className='relative'>
-                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                      <Input
-                        placeholder='Nhập tên hồ bơi...'
-                        value={poolSearchTerm}
-                        onChange={(e) => setPoolSearchTerm(e.target.value)}
-                        className='pl-10 bg-gradient-to-r from-background to-background/95 border-blue-200/50 dark:border-blue-800/30 focus:border-blue-300 dark:focus:border-blue-700/50 transition-colors'
-                      />
-                    </div>
-                  </div>
-
-                  {/* Enhanced Pool Selection List */}
-                  <div className='space-y-3'>
-                    {filteredPools.length > 0 ? (
-                      <div className='grid gap-4 max-h-96 overflow-y-auto pr-2'>
-                        {filteredPools.map((pool) => (
-                          <div
-                            key={pool._id}
-                            className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
-                              selectedPool === pool._id
-                                ? "border-blue-400 bg-gradient-to-br from-blue-50/80 to-blue-100/50 dark:from-blue-900/30 dark:to-blue-800/20 shadow-lg shadow-blue-200/50 dark:shadow-blue-900/30"
-                                : "border-border/50 bg-gradient-to-br from-background/80 to-background/60 hover:border-blue-200 dark:hover:border-blue-800/50 hover:from-blue-50/30 hover:to-blue-50/20 dark:hover:from-blue-950/20 dark:hover:to-blue-900/10"
-                            }`}
-                            onClick={() => setSelectedPool(pool._id)}
-                          >
-                            {/* Decorative background elements */}
-                            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200/20 to-blue-300/10 dark:from-blue-800/10 dark:to-blue-900/5 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:blur-3xl transition-all duration-500'></div>
-                            <div className='absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-100/30 to-blue-200/20 dark:from-blue-900/10 dark:to-blue-800/5 rounded-full translate-y-12 -translate-x-12 blur-xl group-hover:blur-2xl transition-all duration-500'></div>
-
-                            <div className='relative p-4 space-y-3'>
-                              {/* Pool Header with Name and Selection Status */}
-                              <div className='flex items-center justify-between'>
-                                <div className='flex items-center gap-3 flex-1'>
-                                  <div className='space-y-1 flex-1'>
-                                    <h3 className='text-lg font-bold text-foreground group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors duration-200'>
-                                      {(pool as any).title || pool._id}
-                                    </h3>
-                                    <div className='flex items-center gap-4 text-sm text-muted-foreground'>
-                                      <div className='flex items-center gap-1'>
-                                        <MapPin className='h-3 w-3 text-blue-600 dark:text-blue-400' />
-                                        <span>
-                                          Loại: {(pool as any).type || "N/A"}
-                                        </span>
-                                      </div>
-                                      <div className='flex items-center gap-1'>
-                                        <Users className='h-3 w-3 text-blue-600 dark:text-blue-400' />
-                                        <span>
-                                          Sức chứa:{" "}
-                                          {(pool as any).capacity || 0} người
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Selection Button */}
-                                <Button
-                                  variant={
-                                    selectedPool === pool._id
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  size='sm'
-                                  className={`transition-all duration-200 ${
-                                    selectedPool === pool._id
-                                      ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                                      : "border-blue-200 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedPool(pool._id);
-                                  }}
-                                >
-                                  {selectedPool === pool._id ? (
-                                    <>
-                                      <CheckCircle className='mr-2 h-4 w-4' />
-                                      Đã chọn
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Plus className='mr-2 h-4 w-4' />
-                                      Chọn
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-
-                              {/* Additional Pool Details */}
-                              <div className='grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-blue-200/30 dark:border-blue-700/30'>
-                                <div className='bg-gradient-to-br from-background/90 to-background/70 backdrop-blur-sm rounded-xl p-3 border border-blue-100/60 dark:border-blue-900/40 shadow-sm'>
-                                  <div className='text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1'>
-                                    <div className='h-1.5 w-1.5 rounded-full bg-blue-500'></div>
-                                    Kích thước
-                                  </div>
-                                  <div className='text-sm font-bold text-foreground'>
-                                    {(pool as any).dimensions || "N/A"}
-                                  </div>
-                                </div>
-
-                                <div className='bg-gradient-to-br from-background/90 to-background/70 backdrop-blur-sm rounded-xl p-3 border border-blue-100/60 dark:border-blue-900/40 shadow-sm'>
-                                  <div className='text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1'>
-                                    <div className='h-1.5 w-1.5 rounded-full bg-blue-500'></div>
-                                    Độ sâu
-                                  </div>
-                                  <div className='text-sm font-bold text-foreground'>
-                                    {(pool as any).depth || "N/A"}
-                                  </div>
-                                </div>
-
-                                <div className='bg-gradient-to-br from-background/90 to-background/70 backdrop-blur-sm rounded-xl p-3 border border-blue-100/60 dark:border-blue-900/40 shadow-sm'>
-                                  <div className='text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1'>
-                                    <div className='h-1.5 w-1.5 rounded-full bg-blue-500'></div>
-                                    Trạng thái
-                                  </div>
-                                  <div
-                                    className={`text-sm font-bold ${
-                                      (pool as any).maintance_status ===
-                                      "Đang hoạt động"
-                                        ? "text-green-600 dark:text-green-400"
-                                        : "text-amber-600 dark:text-amber-400"
-                                    }`}
-                                  >
-                                    {(pool as any).maintance_status || "N/A"}
-                                  </div>
-                                </div>
-
-                                <div className='bg-gradient-to-br from-background/90 to-background/70 backdrop-blur-sm rounded-xl p-3 border border-blue-100/60 dark:border-blue-900/40 shadow-sm'>
-                                  <div className='text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-1'>
-                                    <div className='h-1.5 w-1.5 rounded-full bg-blue-500'></div>
-                                    ID
-                                  </div>
-                                  <div className='text-sm font-bold text-foreground font-mono'>
-                                    {pool._id.slice(-8)}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className='text-center py-12 space-y-4'>
-                        <div className='h-16 w-16 bg-gradient-to-br from-muted to-muted/60 rounded-2xl flex items-center justify-center mx-auto shadow-lg'>
-                          <Waves className='h-8 w-8 text-muted-foreground' />
-                        </div>
-                        <div className='space-y-2'>
-                          <h3 className='text-lg font-semibold text-foreground'>
-                            {poolSearchTerm
-                              ? "Không tìm thấy hồ bơi nào phù hợp"
-                              : "Không có hồ bơi nào khả dụng"}
-                          </h3>
-                          <p className='text-sm text-muted-foreground'>
-                            {poolSearchTerm
-                              ? "Thử điều chỉnh từ khóa tìm kiếm hoặc liên hệ quản trị viên"
-                              : "Vui lòng liên hệ quản trị viên để thêm hồ bơi"}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Search */}
-                <div className='space-y-3'>
-                  <div className='space-y-1'>
-                    <label className='text-sm font-medium text-foreground flex items-center gap-2'>
-                      <div className='h-4 w-4 rounded-sm bg-purple-100 dark:bg-purple-800/30 flex items-center justify-center'>
-                        <Search className='h-3 w-3 text-purple-600 dark:text-purple-400' />
-                      </div>
-                      Tìm kiếm lớp học
-                    </label>
-                    <p className='text-xs text-muted-foreground'>
-                      Nhập tên lớp học để lọc danh sách
-                    </p>
-                  </div>
-                  <div className='relative'>
-                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                    <Input
-                      placeholder='Nhập tên lớp học...'
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className='pl-10 bg-gradient-to-r from-background to-background/95 border-purple-200/50 dark:border-purple-800/30 focus:border-purple-300 dark:focus:border-purple-700/50 transition-colors'
-                    />
-                  </div>
-                </div>
-
-                {/* Class Selection */}
-                <div className='space-y-4'>
-                  {/* Enhanced Header Section */}
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-3'>
-                      <div className='h-8 w-8 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/20'>
-                        <School className='h-4 w-4 text-white' />
-                      </div>
-                      <div className='flex-1'>
-                        <label className='text-base font-semibold text-foreground flex items-center gap-2'>
-                          Chọn lớp học
-                          <span className='text-red-500 text-sm'>*</span>
-                        </label>
-                        <p className='text-sm text-muted-foreground mt-0.5'>
-                          Chọn lớp học sẽ được thêm vào khung giờ này
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Enhanced Class Selection Grid */}
-                  <div className='space-y-3'>
-                    {filteredClassrooms.length > 0 ? (
-                      <div className='grid gap-4 max-h-96 overflow-y-auto pr-2'>
-                        {filteredClassrooms.map((classroom) => (
-                          <div
-                            key={classroom._id}
-                            className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer group ${
-                              selectedClass?._id === classroom._id
-                                ? "border-green-400 bg-gradient-to-br from-green-50/80 to-green-100/50 dark:from-green-900/30 dark:to-green-800/20 shadow-lg shadow-green-200/50 dark:shadow-green-900/30"
-                                : "border-border/50 bg-gradient-to-br from-background/80 to-background/60 hover:border-green-200 dark:hover:border-green-800/50 hover:from-green-50/30 hover:to-green-50/20 dark:hover:from-green-950/20 dark:hover:to-green-900/10"
-                            }`}
-                            onClick={() => setSelectedClass(classroom)}
-                          >
-                            {/* Decorative background elements */}
-                            <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200/20 to-green-300/10 dark:from-green-800/10 dark:to-green-900/5 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:blur-3xl transition-all duration-500'></div>
-                            <div className='absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-green-100/30 to-green-200/20 dark:from-green-900/10 dark:to-green-800/5 rounded-full translate-y-12 -translate-x-12 blur-xl group-hover:blur-2xl transition-all duration-500'></div>
-
-                            <div className='relative p-4 space-y-3'>
-                              {/* Simplified Layout: Class Name and Course Only */}
-                              <div className='flex items-center justify-between'>
-                                <div className='flex items-center gap-3 flex-1'>
-                                  <div className='space-y-1 flex-1'>
-                                    <h3 className='text-lg font-bold text-foreground group-hover:text-green-700 dark:group-hover:text-green-300 transition-colors duration-200'>
-                                      {classroom.name}
-                                    </h3>
-                                    <div className='flex items-center gap-2'>
-                                      <Book className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                                      <span className='text-sm text-muted-foreground'>
-                                        Khóa học:{" "}
-                                        {classroom.course?.title ||
-                                          (classroom.course?._id &&
-                                            courseNames[
-                                              classroom.course._id
-                                            ]) ||
-                                          "Chưa có khóa học"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Selection Button */}
-                                <Button
-                                  variant={
-                                    selectedClass?._id === classroom._id
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                  size='sm'
-                                  className={`transition-all duration-200 ${
-                                    selectedClass?._id === classroom._id
-                                      ? "bg-green-600 hover:bg-green-700 text-white shadow-md"
-                                      : "border-green-200 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-700 dark:text-green-300"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedClass(classroom);
-                                  }}
-                                >
-                                  {selectedClass?._id === classroom._id ? (
-                                    <>
-                                      <CheckCircle className='mr-2 h-4 w-4' />
-                                      Đã chọn
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Plus className='mr-2 h-4 w-4' />
-                                      Chọn
-                                    </>
-                                  )}
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className='text-center py-12 space-y-4'>
-                        <div className='h-16 w-16 bg-gradient-to-br from-muted to-muted/60 rounded-2xl flex items-center justify-center mx-auto shadow-lg'>
-                          <AlertCircle className='h-8 w-8 text-muted-foreground' />
-                        </div>
-                        <div className='space-y-2'>
-                          <h3 className='text-lg font-semibold text-foreground'>
-                            Không tìm thấy lớp học nào
-                          </h3>
-                          <p className='text-sm text-muted-foreground'>
-                            Thử điều chỉnh từ khóa tìm kiếm hoặc liên hệ quản
-                            trị viên để thêm lớp học mới
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className='flex justify-between items-center pt-6 border-t border-muted/30'>
+                    <span className='text-xl text-foreground'>
+                      Thêm lớp học vào lịch
+                    </span>
+                  </CardTitle>
                   <Button
                     variant='outline'
                     onClick={() => setShowAddClass(false)}
                     disabled={isSubmitting}
                     className='border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200'
                   >
-                    <ArrowLeft className='mr-2 h-4 w-4' />
+                    <X className='mr-2 h-4 w-4' />
+                    Đóng
+                  </Button>
+                </div>
+                <p className='text-sm text-muted-foreground mt-2 relative'>
+                  Điền thông tin để thêm lớp học mới vào khung giờ đã chọn
+                </p>
+              </CardHeader>
+
+              <CardContent className='relative space-y-8'>
+                {/* Slot and Date Information */}
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gradient-to-br from-blue-50/50 to-blue-50/30 dark:from-blue-900/10 dark:to-blue-900/5 rounded-xl border border-blue-200/50 dark:border-blue-800/30'>
+                  <div className='space-y-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-800/30 flex items-center justify-center'>
+                        <CalendarIcon className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                      </div>
+                      <div>
+                        <span className='text-sm font-medium text-foreground'>
+                          Ngày học
+                        </span>
+                        <p className='text-xl font-bold text-foreground'>
+                          {date && new Date(date).toLocaleDateString("vi-VN")}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='space-y-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='h-10 w-10 rounded-lg bg-green-100 dark:bg-green-800/30 flex items-center justify-center'>
+                        <Clock className='h-5 w-5 text-green-600 dark:text-green-400' />
+                      </div>
+                      <div>
+                        <span className='text-sm font-medium text-foreground'>
+                          Khung giờ
+                        </span>
+                        <p className='text-xl font-bold text-foreground'>
+                          {slotTitle} - {time}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Two Column Layout for Pool and Class Selection */}
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+                  {/* Pool Selection */}
+                  <div className='space-y-6'>
+                    <div className='flex items-center gap-3'>
+                      <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20'>
+                        <Waves className='h-5 w-5 text-white' />
+                      </div>
+                      <div>
+                        <label className='text-lg font-bold text-foreground flex items-center gap-2'>
+                          Chọn hồ bơi
+                          <span className='text-red-500 text-sm'>*</span>
+                        </label>
+                        <p className='text-sm text-muted-foreground'>
+                          Lựa chọn hồ bơi phù hợp cho lớp học
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Pool Search */}
+                    <div className='relative'>
+                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                      <Input
+                        placeholder='Nhập tên hồ bơi...'
+                        value={poolSearchTerm}
+                        onChange={(e) => setPoolSearchTerm(e.target.value)}
+                        className='pl-10 h-12 text-base'
+                      />
+                    </div>
+
+                    {/* Pool Selection List */}
+                    <div className='space-y-3 max-h-80 overflow-y-auto scrollbar-hide'>
+                      {filteredPools.length > 0 ? (
+                        filteredPools.map((pool) => (
+                          <div
+                            key={pool._id}
+                            className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                              selectedPool === pool._id
+                                ? "border-blue-400 bg-blue-50/70 dark:bg-blue-900/30 shadow-lg"
+                                : "border-border hover:border-blue-200 dark:hover:border-blue-800/50"
+                            }`}
+                            onClick={() => setSelectedPool(pool._id)}
+                          >
+                            <div className='flex items-center justify-between'>
+                              <div>
+                                <h4 className='font-semibold text-foreground text-base'>
+                                  {(pool as any).title || pool._id}
+                                </h4>
+                                <div className='flex items-center gap-4 text-sm text-muted-foreground mt-1'>
+                                  <span>
+                                    Loại: {(pool as any).type || "N/A"}
+                                  </span>
+                                  <span>
+                                    Sức chứa: {(pool as any).capacity || 0}{" "}
+                                    người
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedPool === pool._id && (
+                                <CheckCircle className='h-6 w-6 text-blue-600' />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className='text-center py-12'>
+                          <Waves className='h-16 w-16 text-muted-foreground mx-auto mb-4' />
+                          <p className='text-muted-foreground'>
+                            {poolSearchTerm
+                              ? "Không tìm thấy hồ bơi nào phù hợp"
+                              : "Không có hồ bơi nào khả dụng"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Class Selection */}
+                  <div className='space-y-6'>
+                    <div className='flex items-center gap-3'>
+                      <div className='h-10 w-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/20'>
+                        <School className='h-5 w-5 text-white' />
+                      </div>
+                      <div>
+                        <label className='text-lg font-bold text-foreground flex items-center gap-2'>
+                          Chọn lớp học
+                          <span className='text-red-500 text-sm'>*</span>
+                        </label>
+                        <p className='text-sm text-muted-foreground'>
+                          Chọn lớp học sẽ được thêm vào khung giờ này
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Class Search */}
+                    <div className='relative'>
+                      <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                      <Input
+                        placeholder='Nhập tên lớp học...'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className='pl-10 h-12 text-base'
+                      />
+                    </div>
+
+                    {/* Class Selection List */}
+                    <div className='space-y-3 max-h-80 overflow-y-auto scrollbar-hide'>
+                      {filteredClassrooms.length > 0 ? (
+                        filteredClassrooms.map((classroom) => (
+                          <div
+                            key={classroom._id}
+                            className={`p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                              selectedClass?._id === classroom._id
+                                ? "border-green-400 bg-green-50/70 dark:bg-green-900/30 shadow-lg"
+                                : "border-border hover:border-green-200 dark:hover:border-green-800/50"
+                            }`}
+                            onClick={() => setSelectedClass(classroom)}
+                          >
+                            <div className='flex items-center justify-between'>
+                              <div>
+                                <h4 className='font-semibold text-foreground text-base'>
+                                  {classroom.name}
+                                </h4>
+                                <div className='flex items-center gap-2 text-sm text-muted-foreground mt-1'>
+                                  <Book className='h-3 w-3' />
+                                  <span>
+                                    Khóa học:{" "}
+                                    {classroom.course?.title ||
+                                      (classroom.course?._id &&
+                                        courseNames[classroom.course._id]) ||
+                                      "Chưa có khóa học"}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedClass?._id === classroom._id && (
+                                <CheckCircle className='h-6 w-6 text-green-600' />
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className='text-center py-12'>
+                          <AlertCircle className='h-16 w-16 text-muted-foreground mx-auto mb-4' />
+                          <p className='text-muted-foreground'>
+                            Không tìm thấy lớp học nào
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className='flex justify-center items-center gap-4 pt-8 border-t border-muted/30'>
+                  <Button
+                    variant='outline'
+                    onClick={() => setShowAddClass(false)}
+                    disabled={isSubmitting}
+                    className='px-8 py-3 h-auto text-base border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200'
+                  >
+                    <ArrowLeft className='mr-2 h-5 w-5' />
                     Hủy
                   </Button>
                   <Button
                     onClick={handleAddClass}
                     disabled={!selectedClass || !selectedPool || isSubmitting}
-                    className='bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none min-w-[140px]'
+                    className='px-8 py-3 h-auto text-base bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none min-w-[180px]'
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Loader2 className='mr-2 h-5 w-5 animate-spin' />
                         Đang thêm...
                       </>
                     ) : (
                       <>
-                        <Plus className='mr-2 h-4 w-4' />
+                        <Plus className='mr-2 h-5 w-5' />
                         Thêm lớp học
                       </>
                     )}
