@@ -647,6 +647,18 @@ export default function CalendarPage() {
     return date < today;
   };
 
+  const isCurrentDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    return targetDate.getTime() === today.getTime();
+  };
+
+  const isDisabledDate = (date: Date) => {
+    return isPastDate(date) || isCurrentDate(date);
+  };
+
   const isSameDay = (date1: Date, date2: Date) => {
     return date1.toDateString() === date2.toDateString();
   };
@@ -937,7 +949,10 @@ export default function CalendarPage() {
           {/* Header Row */}
           <thead>
             <tr>
-              <th className='w-40 p-4 border-r bg-muted text-left font-bold text-muted-foreground'>
+              <th
+                className='w-40 p-4 border-r-4 bg-muted text-left font-bold text-muted-foreground'
+                style={{ borderColor: "hsl(var(--border))" }}
+              >
                 <div className='flex items-center gap-2'>
                   <Clock className='h-4 w-4 text-muted-foreground' />
                   Khung Giờ
@@ -946,25 +961,21 @@ export default function CalendarPage() {
               {weekDates.map((date, index) => {
                 const isTodayCell = isToday(date);
                 const isPast = isPastDate(date);
+                const isCurrent = isCurrentDate(date);
+                const isDisabled = isDisabledDate(date);
                 const isWeekend = index === 6; // Sunday
                 return (
                   <th
                     key={index}
-                    className={`p-4 border-r text-center font-semibold transition-all duration-200 ${
+                    className={`p-4 border-r-4 text-center font-semibold transition-all duration-200 ${
                       isTodayCell
                         ? "bg-accent text-accent-foreground"
                         : isWeekend
                         ? "bg-muted text-destructive"
                         : "bg-card text-card-foreground"
-                    } ${isPast ? "relative" : ""}`}
+                    } ${isDisabled ? "relative" : ""}`}
+                    style={{ borderColor: "hsl(var(--border))" }}
                   >
-                    {/* Past date indicator in header */}
-                    {isPast && (
-                      <div className='absolute inset-0 opacity-10 pointer-events-none'>
-                        <div className='absolute inset-0 bg-slate-500 pattern-diagonal-lines pattern-slate-600 pattern-bg-transparent pattern-size-2 pattern-opacity-100'></div>
-                      </div>
-                    )}
-
                     <div className='flex flex-col space-y-1 relative'>
                       <span
                         className={`text-sm font-bold ${
@@ -984,11 +995,18 @@ export default function CalendarPage() {
                         {(date.getMonth() + 1).toString().padStart(2, "0")}
                       </span>
 
-                      {/* Past date indicator - fixed positioning */}
+                      {/* Past/Current date indicator - fixed positioning */}
                       {isPast && (
                         <div className='text-center'>
                           <span className='inline-block bg-slate-400 text-white rounded-md py-0.5 px-2 text-[10px] opacity-70 mt-1 whitespace-nowrap'>
                             Đã qua
+                          </span>
+                        </div>
+                      )}
+                      {isCurrent && (
+                        <div className='text-center'>
+                          <span className='inline-block bg-orange-400 text-white rounded-md py-0.5 px-2 text-[10px] opacity-70 mt-1 whitespace-nowrap'>
+                            Hiện tại
                           </span>
                         </div>
                       )}
@@ -1006,7 +1024,10 @@ export default function CalendarPage() {
                 className='hover:bg-muted/50 transition-colors duration-200'
               >
                 {/* Slot Info Column */}
-                <td className='p-4 border-r border-b bg-muted/30'>
+                <td
+                  className='p-4 border-r-4 border-b-4 bg-muted/30'
+                  style={{ borderColor: "hsl(var(--border))" }}
+                >
                   <div className='space-y-2'>
                     <div className='text-sm font-bold text-foreground'>
                       {slot.title}
@@ -1022,18 +1043,28 @@ export default function CalendarPage() {
                   const eventsInCell = getEventsForCell(date, slot._id);
                   const isTodayCell = isToday(date);
                   const isPast = isPastDate(date);
+                  const isCurrent = isCurrentDate(date);
+                  const isDisabled = isDisabledDate(date);
                   return (
                     <td
                       key={dayIndex}
-                      className={`p-2 border-r border-b h-40 align-top transition-all duration-200 hover:bg-muted/30 ${
+                      className={`p-2 border-r-4 border-b-4 border-border h-40 align-top transition-all duration-200 hover:bg-muted/30 ${
                         isTodayCell ? "bg-muted/20" : "bg-background"
-                      } ${isPast ? "relative" : ""}`}
+                      } ${isDisabled ? "relative" : ""}`}
+                      style={{
+                        borderColor: "hsl(var(--border))",
+                      }}
                     >
-                      {/* Past date diagonal pattern overlay */}
-                      {isPast && (
-                        <div className='absolute inset-0 opacity-10 pointer-events-none overflow-hidden'>
-                          <div className='absolute inset-0 bg-slate-500 pattern-diagonal-lines pattern-slate-600 pattern-bg-transparent pattern-size-2 pattern-opacity-100'></div>
-                        </div>
+                      {/* Past/Current date overlay - Striped pattern with preserved wider borders */}
+                      {isDisabled && (
+                        <div
+                          className='absolute top-0 left-0 right-[4px] bottom-[4px] pointer-events-none z-10'
+                          style={{
+                            background:
+                              "repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.25) 0px, rgba(148, 163, 184, 0.25) 6px, transparent 6px, transparent 12px)",
+                            opacity: 1,
+                          }}
+                        />
                       )}
 
                       <div className='h-full flex flex-col relative'>
@@ -1048,13 +1079,13 @@ export default function CalendarPage() {
                                   e.stopPropagation();
                                 }}
                                 className={`w-6 h-6 p-0 bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 hover:text-emerald-800 transition-all duration-200 rounded-full opacity-70 hover:opacity-100 ${
-                                  isPast
+                                  isDisabled
                                     ? "!bg-opacity-50 !text-opacity-50"
                                     : ""
                                 }`}
                                 title={
-                                  isPast
-                                    ? "Chỉ xem được lịch cho các ngày đã qua"
+                                  isDisabled
+                                    ? "Chỉ xem được lịch cho các ngày đã qua và hiện tại"
                                     : "Tùy chọn slot"
                                 }
                               >
@@ -1120,11 +1151,11 @@ export default function CalendarPage() {
                               <div className='h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent my-2'></div>
 
                               <DropdownMenuItem
-                                onClick={async (e) => {
+                                onClick={(e) => {
                                   e.stopPropagation();
 
-                                  // Check if date is in the past - disable action
-                                  if (isPastDate(date)) {
+                                  // Check if date is disabled (past or current) - disable action
+                                  if (isDisabledDate(date)) {
                                     return;
                                   }
 
@@ -1230,21 +1261,21 @@ export default function CalendarPage() {
                                   );
                                 }}
                                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${
-                                  isPastDate(date)
+                                  isDisabledDate(date)
                                     ? "bg-slate-50 dark:bg-slate-900/50 opacity-50 cursor-not-allowed"
                                     : "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:shadow-md focus:bg-slate-100 dark:focus:bg-slate-800/50"
                                 }`}
                               >
                                 <div
                                   className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                                    isPastDate(date)
+                                    isDisabledDate(date)
                                       ? "bg-slate-200/50 dark:bg-slate-700/50"
                                       : "bg-slate-200 dark:bg-slate-700 shadow-sm group-hover:shadow-md group-hover:scale-110"
                                   }`}
                                 >
                                   <Plus
                                     className={`w-4 h-4 ${
-                                      isPastDate(date)
+                                      isDisabledDate(date)
                                         ? "text-slate-400 dark:text-slate-500"
                                         : "text-slate-600 dark:text-slate-300"
                                     }`}
@@ -1253,24 +1284,26 @@ export default function CalendarPage() {
                                 <div className='flex flex-col'>
                                   <span
                                     className={`font-semibold ${
-                                      isPastDate(date)
+                                      isDisabledDate(date)
                                         ? "text-slate-400 dark:text-slate-500"
                                         : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200"
                                     }`}
                                   >
-                                    {isPastDate(date)
+                                    {isDisabledDate(date)
                                       ? "Không thể thêm lớp học"
                                       : "Thêm lớp học"}
                                   </span>
                                   <span
                                     className={`text-xs ${
-                                      isPastDate(date)
+                                      isDisabledDate(date)
                                         ? "text-slate-400 dark:text-slate-600"
                                         : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300"
                                     }`}
                                   >
                                     {isPastDate(date)
                                       ? "Ngày đã qua"
+                                      : isCurrentDate(date)
+                                      ? "Ngày hiện tại"
                                       : "Tạo lớp học mới"}
                                   </span>
                                 </div>
@@ -1280,138 +1313,161 @@ export default function CalendarPage() {
                         </div>
 
                         {/* Content Area */}
-                        <div className='flex-1 flex items-start justify-center ml-4 mr-4 mt-6'>
+                        <div className='flex-1 flex flex-col ml-4 mr-4 mt-6 min-h-0'>
                           {eventsInCell.length > 0 ? (
-                            <div className='w-full max-w-full flex flex-col items-center justify-start gap-2'>
-                              {eventsInCell.map((event, eventIndex) => {
-                                const classrooms = Array.isArray(
-                                  event.classroom
-                                )
-                                  ? event.classroom
-                                  : [event.classroom];
-                                const classroom = classrooms[0];
-                                if (!classroom) return null;
-                                return (
-                                  <div
-                                    key={eventIndex}
-                                    className='w-full'
-                                  >
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <div className='group/trigger bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:hover:from-slate-700 dark:hover:via-slate-600 dark:hover:to-slate-700 text-blue-700 hover:text-blue-800 dark:text-gray-200 dark:hover:text-gray-100 px-2 py-1.5 rounded-xl text-center border border-blue-200/60 hover:border-blue-300/80 dark:border-slate-600/60 dark:hover:border-slate-500/80 shadow-sm hover:shadow-lg dark:shadow-slate-900/20 dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-105 w-full cursor-pointer backdrop-blur-sm relative overflow-hidden'>
-                                          <div className='font-semibold text-xs truncate relative z-10'>
-                                            {classroom.name}
+                            <>
+                              {/* Class Counter Badge */}
+                              {eventsInCell.length > 1 && (
+                                <div className='flex justify-center mb-1'>
+                                  <div className='bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm'>
+                                    {eventsInCell.length} lớp
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Scrollable Classes Container */}
+                              <div className='flex-1 overflow-y-auto max-h-28 space-y-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400'>
+                                {eventsInCell.map((event, eventIndex) => {
+                                  const classrooms = Array.isArray(
+                                    event.classroom
+                                  )
+                                    ? event.classroom
+                                    : [event.classroom];
+                                  const classroom = classrooms[0];
+                                  if (!classroom) return null;
+                                  return (
+                                    <div
+                                      key={eventIndex}
+                                      className='w-full'
+                                    >
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <div className='group/trigger bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 hover:from-blue-100 hover:via-indigo-100 hover:to-purple-100 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 dark:hover:from-slate-700 dark:hover:via-slate-600 dark:hover:to-slate-700 text-blue-700 hover:text-blue-800 dark:text-gray-200 dark:hover:text-gray-100 px-2 py-1 rounded-lg text-center border border-blue-200/60 hover:border-blue-300/80 dark:border-slate-600/60 dark:hover:border-slate-500/80 shadow-sm hover:shadow-md dark:shadow-slate-900/20 dark:hover:shadow-slate-900/40 transition-all duration-200 hover:scale-[1.02] w-full cursor-pointer backdrop-blur-sm relative overflow-hidden'>
+                                            <div className='font-medium text-xs truncate relative z-10'>
+                                              {classroom.name}
+                                            </div>
+                                            {/* Shimmer effect */}
+                                            <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover/trigger:translate-x-full transition-transform duration-700 ease-out'></div>
                                           </div>
-                                          {/* Shimmer effect */}
-                                          <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 -translate-x-full group-hover/trigger:translate-x-full transition-transform duration-1000 ease-out'></div>
-                                          {/* Corner accent */}
-                                          <div className='absolute top-0 right-0 w-0 h-0 border-l-8 border-l-transparent border-t-8 border-t-blue-300/50 dark:border-t-slate-500/50 opacity-0 group-hover/trigger:opacity-100 transition-opacity duration-300'></div>
-                                        </div>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent className='w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-slate-200/60 dark:border-slate-700/60 shadow-2xl rounded-2xl p-2 animate-in fade-in-0 zoom-in-95 duration-200'>
-                                        <DropdownMenuItem
-                                          onClick={() => {
-                                            // Navigate to class detail page
-                                            const classroomId = classroom._id;
-                                            if (classroomId) {
-                                              router.push(
-                                                `/dashboard/manager/class/${classroomId}?from=calendar`
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className='w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-slate-200/60 dark:border-slate-700/60 shadow-2xl rounded-2xl p-2 animate-in fade-in-0 zoom-in-95 duration-200'>
+                                          <DropdownMenuItem
+                                            onClick={() => {
+                                              // Navigate to class detail page
+                                              const classroomId = classroom._id;
+                                              if (classroomId) {
+                                                router.push(
+                                                  `/dashboard/manager/class/${classroomId}?from=calendar`
+                                                );
+                                              }
+                                            }}
+                                            className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-800/50 dark:hover:to-slate-700/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 dark:focus:from-slate-800/50 dark:focus:to-slate-700/50'
+                                          >
+                                            <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
+                                              <Eye className='w-4 h-4 text-white' />
+                                            </div>
+                                            <div className='flex flex-col'>
+                                              <span className='font-semibold text-gray-700 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-gray-100 transition-colors duration-200'>
+                                                Xem lớp học
+                                              </span>
+                                              <span className='text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-gray-300'>
+                                                Chi tiết thông tin lớp
+                                              </span>
+                                            </div>
+                                          </DropdownMenuItem>
+
+                                          <div className='h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent my-2'></div>
+
+                                          <DropdownMenuItem
+                                            onClick={() => {
+                                              // Check if date is disabled (past or current) - disable action
+                                              if (isDisabledDate(date)) {
+                                                return;
+                                              }
+
+                                              // Handle remove class logic here
+                                              console.log(
+                                                "Preparing to remove class:",
+                                                classroom._id,
+                                                "from date:",
+                                                date
+                                                  .toISOString()
+                                                  .split("T")[0],
+                                                "slot:",
+                                                slot.title,
+                                                "schedule event ID:",
+                                                event._id
                                               );
-                                            }
-                                          }}
-                                          className='cursor-pointer group flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-slate-800/50 dark:hover:to-slate-700/50 transition-all duration-300 hover:shadow-md border-0 focus:bg-gradient-to-r focus:from-blue-50 focus:to-indigo-50 dark:focus:from-slate-800/50 dark:focus:to-slate-700/50'
-                                        >
-                                          <div className='w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-slate-600 dark:to-slate-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:scale-110'>
-                                            <Eye className='w-4 h-4 text-white' />
-                                          </div>
-                                          <div className='flex flex-col'>
-                                            <span className='font-semibold text-gray-700 dark:text-gray-200 group-hover:text-blue-700 dark:group-hover:text-gray-100 transition-colors duration-200'>
-                                              Xem lớp học
-                                            </span>
-                                            <span className='text-xs text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-gray-300'>
-                                              Chi tiết thông tin lớp
-                                            </span>
-                                          </div>
-                                        </DropdownMenuItem>
 
-                                        <div className='h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent my-2'></div>
-
-                                        <DropdownMenuItem
-                                          onClick={() => {
-                                            // Check if date is in the past - disable action
-                                            if (isPastDate(date)) {
-                                              return;
-                                            }
-
-                                            // Handle remove class logic here
-                                            console.log(
-                                              "Preparing to remove class:",
-                                              classroom._id,
-                                              "from date:",
-                                              date.toISOString().split("T")[0],
-                                              "slot:",
-                                              slot.title,
-                                              "schedule event ID:",
-                                              event._id
-                                            );
-
-                                            // Set up the delete confirmation dialog
-                                            setScheduleToDelete({
-                                              scheduleId: event._id,
-                                              className: classroom.name,
-                                              date: date.toLocaleDateString(
-                                                "vi-VN"
-                                              ),
-                                              slotTitle: slot.title,
-                                            });
-                                            setDeleteDialogOpen(true);
-                                          }}
-                                          className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${
-                                            isPastDate(date)
-                                              ? "bg-slate-50 dark:bg-slate-900/50 opacity-50 cursor-not-allowed"
-                                              : "cursor-pointer hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 hover:shadow-md focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50"
-                                          }`}
-                                        >
-                                          <div
-                                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                                              isPastDate(date)
-                                                ? "bg-gradient-to-br from-red-300 to-pink-400 dark:from-red-600/30 dark:to-pink-700/30"
-                                                : "bg-gradient-to-br from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 shadow-sm group-hover:shadow-md group-hover:scale-110"
+                                              // Set up the delete confirmation dialog
+                                              setScheduleToDelete({
+                                                scheduleId: event._id,
+                                                className: classroom.name,
+                                                date: date.toLocaleDateString(
+                                                  "vi-VN"
+                                                ),
+                                                slotTitle: slot.title,
+                                              });
+                                              setDeleteDialogOpen(true);
+                                            }}
+                                            className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border-0 ${
+                                              isDisabledDate(date)
+                                                ? "bg-slate-50 dark:bg-slate-900/50 opacity-50 cursor-not-allowed"
+                                                : "cursor-pointer hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 dark:hover:from-red-950/50 dark:hover:to-pink-950/50 hover:shadow-md focus:bg-gradient-to-r focus:from-red-50 focus:to-pink-50 dark:focus:from-red-950/50 dark:focus:to-pink-950/50"
                                             }`}
                                           >
-                                            <Trash2 className='w-4 h-4 text-white' />
-                                          </div>
-                                          <div className='flex flex-col'>
-                                            <span
-                                              className={`font-semibold ${
-                                                isPastDate(date)
-                                                  ? "text-gray-400 dark:text-gray-500"
-                                                  : "text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-200"
+                                            <div
+                                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                                                isDisabledDate(date)
+                                                  ? "bg-gradient-to-br from-red-300 to-pink-400 dark:from-red-600/30 dark:to-pink-700/30"
+                                                  : "bg-gradient-to-br from-red-500 to-pink-600 dark:from-red-400 dark:to-pink-500 shadow-sm group-hover:shadow-md group-hover:scale-110"
                                               }`}
                                             >
-                                              {isPastDate(date)
-                                                ? "Không thể xóa lớp học"
-                                                : "Gỡ lớp học"}
-                                            </span>
-                                            <span
-                                              className={`text-xs ${
-                                                isPastDate(date)
-                                                  ? "text-gray-400 dark:text-gray-600"
-                                                  : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
-                                              }`}
-                                            >
-                                              {isPastDate(date)
-                                                ? "Ngày đã qua"
-                                                : "Xóa khỏi lịch học"}
-                                            </span>
-                                          </div>
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
+                                              <Trash2 className='w-4 h-4 text-white' />
+                                            </div>
+                                            <div className='flex flex-col'>
+                                              <span
+                                                className={`font-semibold ${
+                                                  isDisabledDate(date)
+                                                    ? "text-gray-400 dark:text-gray-500"
+                                                    : "text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors duration-200"
+                                                }`}
+                                              >
+                                                {isDisabledDate(date)
+                                                  ? "Không thể xóa lớp học"
+                                                  : "Gỡ lớp học"}
+                                              </span>
+                                              <span
+                                                className={`text-xs ${
+                                                  isDisabledDate(date)
+                                                    ? "text-gray-400 dark:text-gray-600"
+                                                    : "text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300"
+                                                }`}
+                                              >
+                                                {isPastDate(date)
+                                                  ? "Ngày đã qua"
+                                                  : isCurrentDate(date)
+                                                  ? "Ngày hiện tại"
+                                                  : "Xóa khỏi lịch học"}
+                                              </span>
+                                            </div>
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Scroll Indicator */}
+                              {eventsInCell.length > 3 && (
+                                <div className='flex justify-center mt-1'>
+                                  <div className='text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full'>
+                                    ↕ cuộn xem thêm
                                   </div>
-                                );
-                              })}
-                            </div>
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <div className='text-center text-muted-foreground w-full h-full flex flex-col items-center justify-center'>
                               <div className='w-8 h-8 mx-auto mb-1 rounded-full bg-muted/50 flex items-center justify-center'>
