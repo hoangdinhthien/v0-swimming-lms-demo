@@ -858,42 +858,6 @@ export default function TransactionDetailPage() {
               >
                 {updatingStatus ? "Đang xử lý..." : "Cập nhật"}
               </Button>
-
-              <Separator />
-
-              <div className='space-y-2'>
-                <div className='text-sm text-muted-foreground'>
-                  Thao tác nhanh
-                </div>
-                <div className='grid grid-cols-2 gap-2'>
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                    onClick={() => {
-                      setNewStatus("paid");
-                      setTimeout(() => handleStatusUpdate(), 0);
-                    }}
-                    disabled={updatingStatus || order.status?.[0] === "paid"}
-                  >
-                    <Check className='mr-1 h-4 w-4' />
-                    Xác nhận
-                  </Button>
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                    onClick={() => {
-                      setNewStatus("cancelled");
-                      setTimeout(() => handleStatusUpdate(), 0);
-                    }}
-                    disabled={
-                      updatingStatus || order.status?.[0] === "cancelled"
-                    }
-                  >
-                    <X className='mr-1 h-4 w-4' />
-                    Hủy
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
 

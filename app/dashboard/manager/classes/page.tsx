@@ -43,6 +43,7 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import { fetchClasses, type ClassItem } from "@/api/class-api";
+import { fetchInstructorDetail } from "@/api/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -50,11 +51,59 @@ export default function ClassesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
+  const [instructorNames, setInstructorNames] = useState<{
+    [key: string]: string;
+  }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+
+  // Function to fetch instructor names
+  const fetchInstructorNames = async (classList: ClassItem[]) => {
+    const tenantId = getSelectedTenant();
+    const token = getAuthToken();
+    if (!tenantId || !token) return;
+
+    const instructorMap: { [key: string]: string } = {};
+
+    for (const classItem of classList) {
+      if (classItem.instructor) {
+        const instructorIds = Array.isArray(classItem.instructor)
+          ? classItem.instructor
+          : [classItem.instructor];
+
+        for (const instructorId of instructorIds) {
+          if (instructorId && !instructorMap[instructorId]) {
+            try {
+              const instructorDetail = await fetchInstructorDetail({
+                instructorId,
+                tenantId,
+                token,
+              });
+              if (instructorDetail) {
+                instructorMap[instructorId] =
+                  instructorDetail.user?.username ||
+                  instructorDetail.user?.email ||
+                  instructorDetail.username ||
+                  instructorDetail.email ||
+                  "Không rõ tên";
+              }
+            } catch (error) {
+              console.error(
+                `Error fetching instructor ${instructorId}:`,
+                error
+              );
+              instructorMap[instructorId] = "Lỗi tải tên";
+            }
+          }
+        }
+      }
+    }
+
+    setInstructorNames((prev) => ({ ...prev, ...instructorMap }));
+  };
 
   // Fetch paginated classes data
   useEffect(() => {
@@ -70,6 +119,9 @@ export default function ClassesPage() {
         const result = await fetchClasses(tenantId, token, page, limit);
         setClasses(result.data);
         setTotalCount(result.meta_data.count);
+
+        // Fetch instructor names for the current page
+        await fetchInstructorNames(result.data);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setClasses([]);
@@ -353,11 +405,32 @@ export default function ClassesPage() {
                           <div className='flex items-center gap-2'>
                             <User className='h-4 w-4 text-muted-foreground' />
                             <span className='text-sm text-muted-foreground'>
-                              {classItem.instructor
-                                ? Array.isArray(classItem.instructor)
-                                  ? `${classItem.instructor.length} giáo viên`
-                                  : "1 giáo viên"
-                                : "Chưa phân công"}
+                              {classItem.instructor ? (
+                                Array.isArray(classItem.instructor) ? (
+                                  classItem.instructor.length > 0 ? (
+                                    <div className='flex flex-col gap-1'>
+                                      {classItem.instructor.map(
+                                        (instructorId, index) => (
+                                          <span
+                                            key={instructorId}
+                                            className='text-sm'
+                                          >
+                                            {instructorNames[instructorId] ||
+                                              "Đang tải..."}
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  ) : (
+                                    "Chưa phân công"
+                                  )
+                                ) : (
+                                  instructorNames[classItem.instructor] ||
+                                  "Đang tải..."
+                                )
+                              ) : (
+                                "Chưa phân công"
+                              )}
                             </span>
                           </div>
                         </TableCell>
