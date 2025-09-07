@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -161,6 +161,9 @@ export default function SlotDetailsPage() {
   const [slotDetail, setSlotDetail] = useState<SlotDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Ref for the add class form section
+  const addClassFormRef = useRef<HTMLDivElement>(null);
 
   // Add-class related state
   const [showAddClass, setShowAddClass] = useState(false);
@@ -420,7 +423,12 @@ export default function SlotDetailsPage() {
   useEffect(() => {
     if (mode === "add-class") {
       setShowAddClass(true);
-      loadAddClassData();
+      loadAddClassData().then(() => {
+        // Scroll to form after data is loaded and form is rendered
+        setTimeout(() => {
+          scrollToAddClassForm();
+        }, 200);
+      });
     } else {
       setShowAddClass(false);
     }
@@ -443,10 +451,39 @@ export default function SlotDetailsPage() {
     }
   };
 
+  // Scroll helper functions
+  const scrollToAddClassForm = () => {
+    if (addClassFormRef.current) {
+      addClassFormRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+        inline: "nearest",
+      });
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   // Handle showing add class form and loading data
   const handleShowAddClass = async () => {
     setShowAddClass(true);
     await loadAddClassData();
+
+    // Wait a bit for the form to render, then scroll to it
+    setTimeout(() => {
+      scrollToAddClassForm();
+    }, 100);
+  };
+
+  // Handle closing add class form with scroll to top
+  const handleCloseAddClass = () => {
+    setShowAddClass(false);
+    scrollToTop();
   };
 
   // Filter classrooms based on selected pool and search term
@@ -1065,7 +1102,10 @@ export default function SlotDetailsPage() {
 
         {/* Inline Add Class Form */}
         {showAddClass && (
-          <div className='space-y-6 animate-fade-in-up'>
+          <div
+            ref={addClassFormRef}
+            className='space-y-6 animate-fade-in-up'
+          >
             {/* Section Header */}
             <div className='text-center space-y-2'>
               <div className='flex items-center justify-center gap-3 mb-4'>
@@ -1127,7 +1167,7 @@ export default function SlotDetailsPage() {
                   </CardTitle>
                   <Button
                     variant='outline'
-                    onClick={() => setShowAddClass(false)}
+                    onClick={handleCloseAddClass}
                     disabled={isSubmitting}
                     className='border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200'
                   >
@@ -1331,7 +1371,7 @@ export default function SlotDetailsPage() {
                 <div className='flex justify-center items-center gap-4 pt-8 border-t border-muted/30'>
                   <Button
                     variant='outline'
-                    onClick={() => setShowAddClass(false)}
+                    onClick={handleCloseAddClass}
                     disabled={isSubmitting}
                     className='px-8 py-3 h-auto text-base border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all duration-200'
                   >
