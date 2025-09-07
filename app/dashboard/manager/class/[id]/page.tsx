@@ -153,8 +153,8 @@ export default function ClassDetailPage() {
   const [loadingData, setLoadingData] = useState(false);
 
   // State for dropdown toggles
-  const [showStudentsDropdown, setShowStudentsDropdown] = useState(false);
-  const [showInstructorsDropdown, setShowInstructorsDropdown] = useState(false);
+  const [showStudentsDropdown, setShowStudentsDropdown] = useState(true);
+  const [showInstructorsDropdown, setShowInstructorsDropdown] = useState(true);
 
   const { toast } = useToast();
 
@@ -526,19 +526,6 @@ export default function ClassDetailPage() {
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center gap-3 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg'>
-                    <div className='p-2 bg-emerald-600 rounded-lg'>
-                      <DollarSign className='h-4 w-4 text-white' />
-                    </div>
-                    <div>
-                      <p className='text-sm text-emerald-700 dark:text-emerald-300'>
-                        Học phí
-                      </p>
-                      <p className='font-semibold text-emerald-600 dark:text-emerald-400'>
-                        {formatPrice(classData.course.price)}
-                      </p>
-                    </div>
-                  </div>{" "}
                   <div className='flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
                     <div className='p-2 bg-blue-600 rounded-lg'>
                       <Calendar className='h-4 w-4 text-white' />
@@ -641,15 +628,15 @@ export default function ClassDetailPage() {
                       </div>
                     </div>
 
-                    <div className='flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg'>
-                      <div className='p-2 bg-green-600 rounded-lg'>
+                    <div className='flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg'>
+                      <div className='p-2 bg-red-600 rounded-lg'>
                         <BookOpen className='h-4 w-4 text-white' />
                       </div>
                       <div>
-                        <p className='text-sm text-green-700 dark:text-green-300'>
-                          Buổi học còn lại
+                        <p className='text-sm text-red-700 dark:text-red-300'>
+                          Buổi học còn thiếu
                         </p>
-                        <p className='font-semibold text-green-600 dark:text-green-400'>
+                        <p className='font-semibold text-red-600 dark:text-red-400'>
                           {classData.sessions_remaining || 0} buổi
                         </p>
                       </div>
@@ -754,7 +741,7 @@ export default function ClassDetailPage() {
                     )}
                 </div>
 
-                {/* Instructors Section */}
+                {/* Instructor Section */}
                 <div
                   className='space-y-2'
                   data-section='instructors'
@@ -767,7 +754,7 @@ export default function ClassDetailPage() {
                   >
                     <span className='text-sm font-medium flex items-center gap-2'>
                       <GraduationCap className='h-4 w-4' />
-                      Số giảng viên
+                      Giảng viên
                     </span>
                     <div className='flex items-center gap-2'>
                       <span className='font-bold text-lg'>
@@ -906,7 +893,7 @@ export default function ClassDetailPage() {
 
                 <div className='flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg'>
                   <span className='text-sm font-medium text-green-700 dark:text-green-300'>
-                    Buổi học đã qua
+                    Buổi học đã học qua
                   </span>
                   <span className='font-bold text-lg text-green-600 dark:text-green-400'>
                     {classData.schedule_passed || 0}
