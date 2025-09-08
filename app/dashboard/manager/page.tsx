@@ -548,36 +548,31 @@ function ManagerDashboardPage() {
                 ) : courses.length > 0 ? (
                   <div className='space-y-4'>
                     {/* Header Stats */}
-                    <div className='flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
-                      <div className='flex items-center space-x-3'>
-                        <div className='p-2 bg-blue-500 rounded-full'>
-                          <FileText className='h-5 w-5 text-white' />
-                        </div>
-                        <div>
-                          <p className='text-sm font-medium text-blue-900 dark:text-blue-100'>
-                            Khóa Học Đang Hoạt Động
-                          </p>
-                          <p className='text-xs text-blue-700 dark:text-blue-300'>
-                            Tổng số khóa học hiện tại
-                          </p>
-                        </div>
+                    <div className='flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                      <div>
+                        <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          Khóa Học Đang Hoạt Động
+                        </p>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                          Tổng số khóa học hiện tại
+                        </p>
                       </div>
                       <div className='text-right'>
-                        <div className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
+                        <div className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
                           {courses.filter((c) => c.is_active).length}
                         </div>
-                        <p className='text-xs text-blue-700 dark:text-blue-300'>
+                        <p className='text-xs text-gray-500 dark:text-gray-400'>
                           khóa học
                         </p>
                       </div>
                     </div>
 
                     {/* Course List */}
-                    <div className='space-y-3'>
+                    <div className='space-y-3 ml-4'>
                       {courses.slice(0, 4).map((course: any, index: number) => (
                         <div
                           key={course._id}
-                          className='group relative flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200 cursor-pointer'
+                          className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl transition-all duration-300 cursor-pointer group-hover:scale-[1.02] group-hover:-translate-y-1'
                           onClick={() =>
                             router.push(
                               `/dashboard/manager/courses/${course._id}`
@@ -586,29 +581,6 @@ function ManagerDashboardPage() {
                         >
                           {/* Left side - Course info */}
                           <div className='flex items-center space-x-3 flex-1 min-w-0'>
-                            <div
-                              className={`p-2 rounded-full ${
-                                index === 0
-                                  ? "bg-green-100 dark:bg-green-900"
-                                  : index === 1
-                                  ? "bg-blue-100 dark:bg-blue-900"
-                                  : index === 2
-                                  ? "bg-purple-100 dark:bg-purple-900"
-                                  : "bg-orange-100 dark:bg-orange-900"
-                              }`}
-                            >
-                              <FileText
-                                className={`h-4 w-4 ${
-                                  index === 0
-                                    ? "text-green-600 dark:text-green-400"
-                                    : index === 1
-                                    ? "text-blue-600 dark:text-blue-400"
-                                    : index === 2
-                                    ? "text-purple-600 dark:text-purple-400"
-                                    : "text-orange-600 dark:text-orange-400"
-                                }`}
-                              />
-                            </div>
                             <div className='flex-1 min-w-0'>
                               <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
                                 {course.title}
@@ -654,6 +626,9 @@ function ManagerDashboardPage() {
 
                           {/* Hover effect overlay */}
                           <div className='absolute inset-0 bg-blue-50 dark:bg-blue-900/10 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity duration-200 pointer-events-none'></div>
+
+                          {/* Subtle hover gradient */}
+                          <div className='absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                         </div>
                       ))}
                     </div>
@@ -728,7 +703,7 @@ function ManagerDashboardPage() {
                     ))}
                   </div>
                 ) : newsItems.length > 0 ? (
-                  <div className='space-y-4'>
+                  <div className='space-y-4 ml-4'>
                     {/* Show only the 3 most recent notifications */}
                     {newsItems.slice(0, 3).map((newsItem, index: number) => (
                       <Link
@@ -737,20 +712,6 @@ function ManagerDashboardPage() {
                         className='block group'
                       >
                         <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
-                          <div
-                            className={`relative p-3 rounded-xl flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all duration-300 ${
-                              index === 0
-                                ? "bg-gradient-to-br from-emerald-400 to-teal-500"
-                                : index === 1
-                                ? "bg-gradient-to-br from-blue-400 to-indigo-500"
-                                : "bg-gradient-to-br from-indigo-400 to-blue-500"
-                            }`}
-                          >
-                            <Bell className='h-4 w-4 text-white group-hover:scale-110 transition-transform duration-200' />
-                            <div className='absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200' />
-                            {/* Notification indicator */}
-                            <div className='absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-800' />
-                          </div>
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-start justify-between mb-2'>
                               <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 pr-2'>
@@ -795,7 +756,7 @@ function ManagerDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className='space-y-4'>
+                  <div className='space-y-4 ml-4'>
                     {manager.notifications.map(
                       (notification, index: number) => (
                         <div
@@ -1023,32 +984,18 @@ function ManagerDashboardPage() {
                             {/* Left side - Transaction info */}
                             <div className='flex items-center space-x-3 flex-1 min-w-0'>
                               <div
-                                className={`p-2 rounded-full ${
+                                className={`w-4 h-4 rounded-full ${
                                   index === 0
-                                    ? "bg-emerald-100 dark:bg-emerald-900"
+                                    ? "bg-emerald-400"
                                     : index === 1
-                                    ? "bg-blue-100 dark:bg-blue-900"
+                                    ? "bg-blue-400"
                                     : index === 2
-                                    ? "bg-purple-100 dark:bg-purple-900"
+                                    ? "bg-purple-400"
                                     : index === 3
-                                    ? "bg-orange-100 dark:bg-orange-900"
-                                    : "bg-gray-100 dark:bg-gray-900"
+                                    ? "bg-orange-400"
+                                    : "bg-gray-400"
                                 }`}
-                              >
-                                <DollarSign
-                                  className={`h-4 w-4 ${
-                                    index === 0
-                                      ? "text-emerald-600 dark:text-emerald-400"
-                                      : index === 1
-                                      ? "text-blue-600 dark:text-blue-400"
-                                      : index === 2
-                                      ? "text-purple-600 dark:text-purple-400"
-                                      : index === 3
-                                      ? "text-orange-600 dark:text-orange-400"
-                                      : "text-gray-600 dark:text-gray-400"
-                                  }`}
-                                />
-                              </div>
+                              ></div>
                               <div className='flex-1 min-w-0'>
                                 <div className='flex items-center space-x-2 mb-1'>
                                   <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors'>
@@ -1182,30 +1129,45 @@ function ManagerDashboardPage() {
                     </p>
                   </div>
                 ) : getUpcomingClasses().length > 0 ? (
-                  <div className='space-y-4'>
+                  <div className='space-y-4 ml-4'>
                     {getUpcomingClasses().map((class_) => (
                       <div
                         key={class_.id}
-                        className='flex flex-col gap-1 border-b pb-3 last:border-0 hover:bg-muted/30 rounded-lg p-2 transition-colors'
+                        className='group relative flex flex-col gap-3 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-xl transition-all duration-300 cursor-pointer group-hover:scale-[1.02] group-hover:-translate-y-1'
                       >
-                        <div className='flex justify-between'>
-                          <div className='text-sm font-medium'>
+                        <div className='flex justify-between items-start'>
+                          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors'>
                             {class_.title}
-                          </div>
-                          <Badge variant='outline'>{class_.pool}</Badge>
+                          </h4>
+                          <Badge
+                            variant='outline'
+                            className='bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800'
+                          >
+                            {class_.pool}
+                          </Badge>
                         </div>
-                        <div className='flex items-center gap-2 text-xs'>
+
+                        <div className='flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
                           <Calendar className='h-3 w-3' />
                           <span>
                             {class_.time} • {class_.date}
                           </span>
                         </div>
-                        <div className='text-xs text-muted-foreground'>
-                          Huấn luyện viên: {class_.instructor}
+
+                        <div className='space-y-1'>
+                          <div className='text-xs text-gray-600 dark:text-gray-300'>
+                            Huấn luyện viên: {class_.instructor}
+                          </div>
+                          <div className='text-xs text-gray-600 dark:text-gray-300'>
+                            Học viên: {class_.students}
+                          </div>
                         </div>
-                        <div className='text-xs text-muted-foreground'>
-                          Học viên: {class_.students}
-                        </div>
+
+                        {/* Hover effect overlay */}
+                        <div className='absolute inset-0 bg-purple-50 dark:bg-purple-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-200 pointer-events-none'></div>
+
+                        {/* Subtle hover gradient */}
+                        <div className='absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-indigo-50/30 dark:from-purple-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                       </div>
                     ))}
                   </div>
@@ -1222,11 +1184,11 @@ function ManagerDashboardPage() {
                     </p>
                   </div>
                 )}
-                <div className='mt-4 flex justify-center'>
+                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
                   <Link href='/dashboard/manager/calendar'>
                     <Button
                       variant='outline'
-                      className='w-full'
+                      className='w-full bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:border-purple-300 dark:hover:border-purple-600'
                     >
                       Xem Tất Cả Lịch Học
                       <ArrowRight className='ml-2 h-4 w-4' />

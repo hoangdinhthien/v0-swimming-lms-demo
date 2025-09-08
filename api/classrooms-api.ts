@@ -347,8 +347,8 @@ export async function addUserToClass(
     throw new Error("Class ID and User ID are required");
   }
 
-  // First, fetch the current class details to get existing members
-  let existingMembers: string[] = [];
+  // First, fetch the current class details to get all data needed for update
+  let classData: any = null;
   try {
     const classResponse = await fetch(
       `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
@@ -363,19 +363,14 @@ export async function addUserToClass(
     );
 
     if (classResponse.ok) {
-      const classData = await classResponse.json();
-      // Extract existing members from the nested structure
-      if (classData.data && Array.isArray(classData.data)) {
-        classData.data.forEach((outerArray: any) => {
+      const responseData = await classResponse.json();
+      // Extract class data from the nested structure
+      if (responseData.data && Array.isArray(responseData.data)) {
+        responseData.data.forEach((outerArray: any) => {
           if (Array.isArray(outerArray)) {
             outerArray.forEach((innerArray: any) => {
               if (Array.isArray(innerArray) && innerArray.length > 0) {
-                const classDetails = innerArray[0];
-                if (classDetails.member && Array.isArray(classDetails.member)) {
-                  existingMembers = classDetails.member.map((member: any) =>
-                    typeof member === "string" ? member : member._id
-                  );
-                }
+                classData = innerArray[0];
               }
             });
           }
@@ -383,19 +378,39 @@ export async function addUserToClass(
       }
     }
   } catch (error) {
-    console.warn(
-      "Could not fetch existing members, proceeding with empty array:",
-      error
-    );
+    console.error("Error fetching class details:", error);
+    throw new Error("Không thể tải thông tin lớp học");
   }
+
+  if (!classData) {
+    throw new Error("Không tìm thấy thông tin lớp học");
+  }
+
+  // Extract existing members and other required fields
+  const existingMembers = classData.member
+    ? classData.member.map((member: any) =>
+        typeof member === "string" ? member : member._id
+      )
+    : [];
 
   // Check if user is already in the class
   if (existingMembers.includes(userId)) {
     throw new Error("Học viên đã có trong lớp học này");
   }
 
-  // Add the new user to the existing members array
-  const updatedMembers = [...existingMembers, userId];
+  // Prepare update data with all required fields
+  const updateData = {
+    course:
+      typeof classData.course === "string"
+        ? classData.course
+        : classData.course._id,
+    name: classData.name,
+    instructor:
+      typeof classData.instructor === "string"
+        ? classData.instructor
+        : classData.instructor?._id || "",
+    member: [...existingMembers, userId],
+  };
 
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
@@ -406,9 +421,7 @@ export async function addUserToClass(
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
       },
-      body: JSON.stringify({
-        member: updatedMembers,
-      }),
+      body: JSON.stringify(updateData),
     }
   );
 
