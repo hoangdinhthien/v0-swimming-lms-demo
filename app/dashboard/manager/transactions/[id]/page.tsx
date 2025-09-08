@@ -15,9 +15,11 @@ import {
   X,
   UserPlus,
   UserCheck,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -55,6 +57,7 @@ import {
 import { fetchCourseById } from "../../../../../api/courses-api";
 import {
   fetchClassroomsByCourse,
+  fetchClassroomsByCourseAndSchedule,
   addUserToClass,
 } from "../../../../../api/classrooms-api";
 import ManagerNotFound from "@/components/manager/not-found";
@@ -80,6 +83,10 @@ export default function TransactionDetailPage() {
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [addingToClass, setAddingToClass] = useState(false);
+
+  // Search functionality for class modal
+  const [searchKey, setSearchKey] = useState<string>("");
+  const [haveSchedule, setHaveSchedule] = useState<boolean>(false);
 
   // New state for create student modal
   const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
@@ -183,11 +190,14 @@ export default function TransactionDetailPage() {
                   setLoadingClassrooms(true);
                   const courseId = getOrderCourseId(order);
                   if (courseId) {
-                    const classroomsData = await fetchClassroomsByCourse(
-                      courseId,
-                      tenantId,
-                      token
-                    );
+                    const classroomsData =
+                      await fetchClassroomsByCourseAndSchedule(
+                        courseId,
+                        haveSchedule,
+                        searchKey,
+                        tenantId,
+                        token
+                      );
                     setClassrooms(classroomsData);
                   }
                 } catch (err) {
@@ -295,8 +305,7 @@ export default function TransactionDetailPage() {
         description: "Đã thêm học viên vào lớp học",
       });
 
-      setShowClassModal(false);
-      setSelectedClassId("");
+      handleCloseClassModal();
     } catch (err) {
       console.error("Error adding user to class:", err);
       toast({
@@ -321,8 +330,10 @@ export default function TransactionDetailPage() {
         throw new Error("Không tìm thấy thông tin khóa học");
       }
 
-      const classroomsData = await fetchClassroomsByCourse(
+      const classroomsData = await fetchClassroomsByCourseAndSchedule(
         courseId,
+        haveSchedule,
+        searchKey,
         tenantId,
         token
       );
@@ -339,10 +350,28 @@ export default function TransactionDetailPage() {
     }
   };
 
+  // Auto-reload classrooms when search parameters change
+  useEffect(() => {
+    if (showClassModal && order && token && tenantId) {
+      loadClassrooms();
+    }
+  }, [searchKey, haveSchedule, showClassModal]);
+
   // Handle showing class selection modal
   const handleShowClassModal = () => {
     setShowClassModal(true);
+    // Reset search when opening modal
+    setSearchKey("");
+    setHaveSchedule(false);
+    setSelectedClassId("");
     loadClassrooms();
+  };
+
+  // Handle closing class selection modal
+  const handleCloseClassModal = () => {
+    setShowClassModal(false);
+    setSearchKey("");
+    setSelectedClassId("");
   };
 
   // Handle showing create student modal
@@ -957,7 +986,11 @@ export default function TransactionDetailPage() {
       {/* Class Selection Modal */}
       <Dialog
         open={showClassModal}
-        onOpenChange={setShowClassModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseClassModal();
+          }
+        }}
       >
         <DialogContent className='sm:max-w-[625px]'>
           <DialogHeader>
@@ -971,6 +1004,40 @@ export default function TransactionDetailPage() {
           </DialogHeader>
 
           <div className='space-y-4'>
+            {/* Search Controls */}
+            <div className='space-y-4 p-4 bg-muted/30 rounded-lg border'>
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>Tìm kiếm lớp học:</label>
+                <div className='relative'>
+                  <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                  <Input
+                    placeholder='Nhập tên lớp học...'
+                    value={searchKey}
+                    onChange={(e) => setSearchKey(e.target.value)}
+                    className='pl-10'
+                  />
+                </div>
+              </div>
+
+              <div className='space-y-2'>
+                <label className='text-sm font-medium'>
+                  Lọc theo lịch học:
+                </label>
+                <Select
+                  value={haveSchedule.toString()}
+                  onValueChange={(value) => setHaveSchedule(value === "true")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Chọn loại lớp học' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='true'>Có lịch học</SelectItem>
+                    <SelectItem value='false'>Chưa có lịch học</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {loadingClassrooms ? (
               <div className='flex justify-center py-8'>
                 <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
@@ -978,47 +1045,76 @@ export default function TransactionDetailPage() {
             ) : classrooms.length === 0 ? (
               <div className='text-center py-8'>
                 <p className='text-muted-foreground'>
-                  Chưa có lớp học nào cho khóa học này
+                  {searchKey
+                    ? `Không tìm thấy lớp học nào với từ khóa "${searchKey}"`
+                    : "Chưa có lớp học nào cho khóa học này"}
                 </p>
               </div>
             ) : (
               <>
-                <div className='space-y-2'>
-                  <label className='text-sm font-medium'>Lớp học:</label>
-                  <Select
-                    value={selectedClassId}
-                    onValueChange={setSelectedClassId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn lớp học' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classrooms.map((classroom) => (
-                        <SelectItem
-                          key={classroom._id}
-                          value={classroom._id}
-                        >
-                          <div className='flex flex-col'>
-                            <span className='font-medium'>
-                              {classroom.name}
-                            </span>
-                            <span className='text-sm text-muted-foreground'>
-                              Giảng viên:{" "}
-                              {typeof classroom.instructor === "object"
-                                ? classroom.instructor?.name || "Chưa phân công"
-                                : "Chưa phân công"}
-                            </span>
+                <div className='space-y-3'>
+                  <label className='text-sm font-medium'>
+                    Danh sách lớp học:
+                  </label>
+                  <div className='space-y-2 max-h-64 overflow-y-auto'>
+                    {classrooms.map((classroom) => (
+                      <div
+                        key={classroom._id}
+                        className={`p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                          selectedClassId === classroom._id
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                        onClick={() => setSelectedClassId(classroom._id)}
+                      >
+                        <div className='flex items-center justify-between'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-2'>
+                              <div
+                                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                  selectedClassId === classroom._id
+                                    ? "border-primary bg-primary"
+                                    : "border-muted-foreground"
+                                }`}
+                              >
+                                {selectedClassId === classroom._id && (
+                                  <div className='w-2 h-2 rounded-full bg-white'></div>
+                                )}
+                              </div>
+                              <span className='font-medium text-base'>
+                                {classroom.name}
+                              </span>
+                            </div>
+                            <div className='mt-1 ml-6 space-y-1'>
+                              <div className='text-sm text-muted-foreground'>
+                                Giảng viên:{" "}
+                                {typeof classroom.instructor === "object"
+                                  ? classroom.instructor?.name ||
+                                    "Chưa phân công"
+                                  : "Chưa phân công"}
+                              </div>
+                              {classroom.schedules &&
+                              classroom.schedules.length > 0 ? (
+                                <div className='text-xs text-green-600 font-medium'>
+                                  ✓ {classroom.schedules.length} lịch học đã có
+                                </div>
+                              ) : (
+                                <div className='text-xs text-orange-600 font-medium'>
+                                  Chưa có lịch học
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className='flex justify-end gap-2 pt-4'>
                   <Button
                     variant='outline'
-                    onClick={() => setShowClassModal(false)}
+                    onClick={handleCloseClassModal}
                     disabled={addingToClass}
                   >
                     Hủy

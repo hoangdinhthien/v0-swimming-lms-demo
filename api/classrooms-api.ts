@@ -155,6 +155,74 @@ export async function fetchClassroomsByCourse(
   return [];
 }
 
+/**
+ * Fetch classrooms by course ID with schedule filter and search
+ */
+export async function fetchClassroomsByCourseAndSchedule(
+  courseId: string,
+  haveSchedule?: boolean,
+  searchKey?: string,
+  tenantId?: string,
+  token?: string
+): Promise<Classroom[]> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!courseId) {
+    throw new Error("Course ID is required");
+  }
+
+  // Build query parameters
+  const params = new URLSearchParams({
+    course: courseId,
+  });
+
+  if (haveSchedule !== undefined) {
+    params.append("haveSchedule", haveSchedule.toString());
+  }
+
+  if (searchKey && searchKey.trim()) {
+    params.append("searchKey", searchKey.trim());
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/classes?${params.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch classrooms by course and schedule: ${response.status}`
+    );
+  }
+
+  const result: ClassroomsApiResponse = await response.json();
+
+  // Extract classrooms from the nested structure
+  if (
+    result.data &&
+    result.data[0] &&
+    result.data[0][0] &&
+    result.data[0][0].data
+  ) {
+    return result.data[0][0].data;
+  }
+
+  return [];
+}
+
 export interface ScheduleRequest {
   date: string;
   slot: string;
