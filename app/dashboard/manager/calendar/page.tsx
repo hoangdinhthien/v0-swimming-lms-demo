@@ -1492,81 +1492,21 @@ export default function CalendarPage() {
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []; // Show loading state
   if (loading) {
     return (
-      <div className='min-h-screen bg-background'>
-        <div className='flex items-center justify-center py-32'>
-          <div className='text-center space-y-4'>
-            <div className='relative'>
-              <div className='absolute inset-0 rounded-full bg-muted opacity-20 blur-xl animate-pulse'></div>
-              <Loader2 className='relative h-12 w-12 animate-spin mx-auto text-muted-foreground' />
-            </div>
-            <div className='space-y-2'>
-              <h3 className='text-lg font-semibold text-foreground'>
-                Đang tải lịch học
-              </h3>
-              <p className='text-muted-foreground'>
-                Vui lòng chờ trong giây lát...
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải lịch học...</p>
       </div>
     );
   } // Show error state
   if (error) {
     return (
-      <div className='min-h-screen bg-background'>
-        <div className='flex items-center justify-center py-32'>
-          <div className='text-center space-y-6 max-w-md'>
-            <div className='relative'>
-              <div className='absolute inset-0 rounded-full bg-destructive/20 opacity-20 blur-xl'></div>
-              <div className='relative h-16 w-16 mx-auto bg-destructive rounded-full flex items-center justify-center'>
-                <span className='text-2xl'>⚠️</span>
-              </div>
-            </div>
-            <div className='space-y-4'>
-              <h3 className='text-xl font-semibold text-destructive'>
-                Không thể tải dữ liệu
-              </h3>
-              <p className='text-muted-foreground bg-muted p-3 rounded-lg border'>
-                {error}
-              </p>
-              <Button
-                onClick={async () => {
-                  setLoading(true);
-                  setError(null);
-                  try {
-                    const events = await fetchMonthSchedule(currentDate);
-                    setScheduleEvents(events);
-                  } catch (err) {
-                    console.error("Error fetching schedule:", err);
-                    setError(
-                      err instanceof Error
-                        ? err.message
-                        : "Failed to fetch schedule data"
-                    );
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                className='bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg hover:shadow-xl transition-all duration-200'
-              >
-                <svg
-                  className='mr-2 h-4 w-4'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
-                  />
-                </svg>
-                Thử lại
-              </Button>
-            </div>
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
           </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
     );

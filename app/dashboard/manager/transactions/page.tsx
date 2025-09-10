@@ -11,6 +11,7 @@ import {
   CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -338,23 +339,23 @@ export default function TransactionsPage() {
 
   if (loading && orders.length === 0) {
     return (
-      <div className='flex items-center justify-center h-64'>
-        <p>Đang tải dữ liệu giao dịch...</p>
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải dữ liệu giao dịch...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center h-64'>
-        <p className='text-red-500'>{error}</p>
-        <Button
-          variant='outline'
-          className='mt-4'
-          onClick={() => window.location.reload()}
-        >
-          Thử lại
-        </Button>
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
       </div>
     );
   }

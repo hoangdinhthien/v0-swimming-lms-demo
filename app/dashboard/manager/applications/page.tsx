@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Mail, User } from "lucide-react";
+import { Mail, User, Loader2 } from "lucide-react";
 import {
   getApplications,
   getApplicationDetail,
@@ -32,6 +32,7 @@ import Link from "next/link";
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -39,6 +40,7 @@ export default function ApplicationsPage() {
   useEffect(() => {
     async function fetchApplications() {
       setLoading(true);
+      setError(null);
       try {
         const tenantId = getSelectedTenant();
         const token = getAuthToken();
@@ -46,7 +48,8 @@ export default function ApplicationsPage() {
           throw new Error("Thiếu thông tin tenant hoặc token");
         const apps = await getApplications(tenantId, token);
         setApplications(apps);
-      } catch (e) {
+      } catch (e: any) {
+        setError(e.message || "Failed to fetch applications");
         setApplications([]);
       }
       setLoading(false);
@@ -70,6 +73,29 @@ export default function ApplicationsPage() {
     setDetailLoading(false);
   }
 
+  if (loading) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải danh sách đơn từ...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -85,77 +111,73 @@ export default function ApplicationsPage() {
           <CardTitle>Danh sách đơn từ</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div>Đang tải dữ liệu...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tiêu đề</TableHead>
-                  <TableHead>Nội dung</TableHead>
-                  <TableHead>Người gửi</TableHead>
-                  <TableHead>Ngày gửi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead>Phản hồi</TableHead>
-                  <TableHead>Thao tác</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tiêu đề</TableHead>
+                <TableHead>Nội dung</TableHead>
+                <TableHead>Người gửi</TableHead>
+                <TableHead>Ngày gửi</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Phản hồi</TableHead>
+                <TableHead>Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app) => (
+                <TableRow key={app._id}>
+                  <TableCell className='font-medium'>{app.title}</TableCell>
+                  <TableCell>{app.content}</TableCell>
+                  <TableCell>
+                    <div className='flex items-center gap-2'>
+                      <User className='h-4 w-4' />
+                      <span>
+                        {app.created_by?.username || app.created_by?.email}
+                      </span>
+                      <Mail className='h-4 w-4 ml-2' />
+                      <span>{app.created_by?.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(app.created_at).toLocaleString("vi-VN")}
+                  </TableCell>
+                  <TableCell>
+                    {app.status.map((s) => (
+                      <Badge
+                        key={s}
+                        variant={
+                          s === "Accepted"
+                            ? "default"
+                            : s === "Rejected"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {s}
+                      </Badge>
+                    ))}
+                  </TableCell>
+                  <TableCell>
+                    {app.reply_content || (
+                      <span className='text-muted-foreground'>
+                        Chưa phản hồi
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Link href={`/dashboard/manager/applications/${app._id}`}>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                      >
+                        Xem chi tiết
+                      </Button>
+                    </Link>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow key={app._id}>
-                    <TableCell className='font-medium'>{app.title}</TableCell>
-                    <TableCell>{app.content}</TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <User className='h-4 w-4' />
-                        <span>
-                          {app.created_by?.username || app.created_by?.email}
-                        </span>
-                        <Mail className='h-4 w-4 ml-2' />
-                        <span>{app.created_by?.email}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(app.created_at).toLocaleString("vi-VN")}
-                    </TableCell>
-                    <TableCell>
-                      {app.status.map((s) => (
-                        <Badge
-                          key={s}
-                          variant={
-                            s === "Accepted"
-                              ? "default"
-                              : s === "Rejected"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {s}
-                        </Badge>
-                      ))}
-                    </TableCell>
-                    <TableCell>
-                      {app.reply_content || (
-                        <span className='text-muted-foreground'>
-                          Chưa phản hồi
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/dashboard/manager/applications/${app._id}`}>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                        >
-                          Xem chi tiết
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

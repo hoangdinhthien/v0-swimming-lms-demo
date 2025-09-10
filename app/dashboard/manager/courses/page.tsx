@@ -134,73 +134,23 @@ export default function CoursesPage() {
     return (
       <div className='flex flex-col items-center justify-center py-16'>
         <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <div className='w-full max-w-3xl'>
-          <div className='rounded-md border overflow-hidden'>
-            <table className='w-full'>
-              <thead>
-                <tr className='border-b bg-muted/50'>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Tên khóa học
-                  </th>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Nhóm trình độ
-                  </th>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Giá
-                  </th>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Số buổi
-                  </th>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Thời lượng/buổi
-                  </th>
-                  <th className='py-3 px-4 text-left font-medium text-sm'>
-                    Trạng thái
-                  </th>
-                  <th className='py-3 px-4 text-right font-medium text-sm'>
-                    Thao Tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...Array(4)].map((_, i) => (
-                  <tr
-                    key={i}
-                    className='border-b'
-                  >
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-32' />
-                    </td>
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-24' />
-                    </td>
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-16' />
-                    </td>
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-10' />
-                    </td>
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-16' />
-                    </td>
-                    <td className='py-3 px-4'>
-                      <Skeleton className='h-4 w-20' />
-                    </td>
-                    <td className='py-3 px-4 text-right'>
-                      <Skeleton className='h-8 w-20' />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <p className='text-muted-foreground'>Đang tải danh sách khóa học...</p>
       </div>
     );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
   }
 
   return (

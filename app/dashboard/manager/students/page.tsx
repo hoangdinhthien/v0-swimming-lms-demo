@@ -14,6 +14,7 @@ import {
   Baby,
   Mail,
   Phone,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,6 +232,30 @@ export default function StudentsPage() {
       .toUpperCase()
       .substring(0, 2);
   };
+
+  if (loading) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải danh sách học viên...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className='mb-6'>
@@ -421,25 +446,7 @@ export default function StudentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow key='loading-row'>
-                    <TableCell
-                      colSpan={5}
-                      className='text-center py-8 text-muted-foreground'
-                    >
-                      Đang tải dữ liệu học viên...
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow key='error-row'>
-                    <TableCell
-                      colSpan={5}
-                      className='text-center py-8 text-red-500'
-                    >
-                      {error}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredStudents.length > 0 ? (
+                {filteredStudents.length > 0 ? (
                   filteredStudents.map((student) => {
                     const user = student.user || {};
                     return (

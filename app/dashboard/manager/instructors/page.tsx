@@ -10,6 +10,7 @@ import {
   UserCheck,
   Star,
   GraduationCap,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -404,6 +405,29 @@ export default function InstructorsPage() {
       .substring(0, 2);
   };
 
+  if (loading) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải danh sách giáo viên...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <InstructorDetailModal
@@ -511,218 +535,189 @@ export default function InstructorsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && (
-            <div className='flex items-center justify-center py-16'>
-              <div className='text-center space-y-4'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto'></div>
-                <p className='text-muted-foreground'>
-                  Đang tải danh sách giáo viên...
-                </p>
-              </div>
+          <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
+            <div className='flex-1 relative'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                placeholder='Tìm kiếm giáo viên theo tên, email hoặc số điện thoại...'
+                className='pl-8'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          )}
-          {error && (
-            <div className='flex items-center justify-center py-16'>
-              <div className='text-center space-y-4'>
-                <div className='text-red-500 text-lg font-semibold'>
-                  Lỗi tải dữ liệu
-                </div>
-                <p className='text-muted-foreground'>{error}</p>
-                <Button onClick={() => window.location.reload()}>
-                  Thử lại
-                </Button>
-              </div>
+
+            <div className='grid grid-cols-2 gap-4 w-full md:w-[400px]'>
+              <Select
+                value={statusFilter}
+                onValueChange={setStatusFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Lọc theo trạng thái' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
+                  <SelectItem value='Active'>Đang hoạt động</SelectItem>
+                  <SelectItem value='On Leave'>Đang nghỉ phép</SelectItem>
+                  <SelectItem value='Inactive'>Ngừng hoạt động</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={specialtyFilter}
+                onValueChange={setSpecialtyFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder='Lọc theo chuyên môn' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>Tất cả chuyên môn</SelectItem>
+                  {specialties.map((specialty) => (
+                    <SelectItem
+                      key={specialty}
+                      value={specialty}
+                    >
+                      {specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
-          {!loading && !error && (
-            <>
-              <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-                <div className='flex-1 relative'>
-                  <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                  <Input
-                    placeholder='Tìm kiếm giáo viên theo tên, email hoặc số điện thoại...'
-                    className='pl-8'
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
+          </div>
 
-                <div className='grid grid-cols-2 gap-4 w-full md:w-[400px]'>
-                  <Select
-                    value={statusFilter}
-                    onValueChange={setStatusFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Lọc theo trạng thái' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                      <SelectItem value='Active'>Đang hoạt động</SelectItem>
-                      <SelectItem value='On Leave'>Đang nghỉ phép</SelectItem>
-                      <SelectItem value='Inactive'>Ngừng hoạt động</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={specialtyFilter}
-                    onValueChange={setSpecialtyFilter}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Lọc theo chuyên môn' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='all'>Tất cả chuyên môn</SelectItem>
-                      {specialties.map((specialty) => (
-                        <SelectItem
-                          key={specialty}
-                          value={specialty}
-                        >
-                          {specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className='rounded-md border overflow-hidden bg-card/50'>
-                <Table>
-                  <TableHeader>
-                    <TableRow className='bg-muted/50'>
-                      <TableHead className='font-semibold'>Giáo viên</TableHead>
-                      <TableHead className='font-semibold'>Học viên</TableHead>
-                      <TableHead className='font-semibold'>Lớp học</TableHead>
-                      <TableHead className='font-semibold'>Đánh giá</TableHead>
-                      <TableHead className='font-semibold'>
-                        Trạng thái
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInstructors.length > 0 ? (
-                      filteredInstructors.map((instructor) => {
-                        const {
-                          id,
-                          name,
-                          email,
-                          phone,
-                          specialty,
-                          status,
-                          students,
-                          classes,
-                          joinDate,
-                          rating,
-                          avatar,
-                        } = instructor;
-                        return (
-                          <TableRow
-                            key={id}
-                            className='cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50'
-                            onClick={() =>
-                              (window.location.href = `/dashboard/manager/instructors/${id}`)
-                            }
-                          >
-                            <TableCell className='py-4'>
-                              <div className='flex items-center gap-3'>
-                                <div className='relative'>
-                                  <img
-                                    src={avatar}
-                                    alt={name}
-                                    className='h-10 w-10 rounded-full object-cover border-2 border-border/20'
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = "none";
-                                      const fallback = e.currentTarget
-                                        .nextElementSibling as HTMLElement;
-                                      if (fallback) {
-                                        fallback.style.display = "flex";
-                                      }
-                                    }}
-                                  />
-                                  <div
-                                    className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary'
-                                    style={{ display: "none" }}
-                                  >
-                                    {getInitials(name)}
-                                  </div>
-                                </div>
-                                <div className='min-w-0 flex-1'>
-                                  <div className='font-medium text-foreground truncate'>
-                                    {name}
-                                  </div>
-                                  <div className='text-sm text-muted-foreground truncate'>
-                                    {email}
-                                  </div>
-                                  {specialty.length > 0 && (
-                                    <div className='text-xs text-muted-foreground mt-1'>
-                                      {specialty.slice(0, 2).join(", ")}
-                                      {specialty.length > 2 && "..."}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className='py-4'>
-                              <div className='flex items-center gap-2'>
-                                <Users className='h-4 w-4 text-muted-foreground' />
-                                <span className='font-medium'>{students}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className='py-4'>
-                              <div className='flex items-center gap-2'>
-                                <GraduationCap className='h-4 w-4 text-muted-foreground' />
-                                <span className='font-medium'>{classes}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className='py-4'>
-                              <div className='flex items-center gap-1'>
-                                <Star className='h-4 w-4 text-amber-500 fill-current' />
-                                <span className='font-medium'>{rating}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className='py-4'>
-                              <Badge
-                                variant='outline'
-                                className={
-                                  status === "Active"
-                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
-                                    : status === "On Leave"
-                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800"
-                                }
+          <div className='rounded-md border overflow-hidden bg-card/50'>
+            <Table>
+              <TableHeader>
+                <TableRow className='bg-muted/50'>
+                  <TableHead className='font-semibold'>Giáo viên</TableHead>
+                  <TableHead className='font-semibold'>Học viên</TableHead>
+                  <TableHead className='font-semibold'>Lớp học</TableHead>
+                  <TableHead className='font-semibold'>Đánh giá</TableHead>
+                  <TableHead className='font-semibold'>Trạng thái</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInstructors.length > 0 ? (
+                  filteredInstructors.map((instructor) => {
+                    const {
+                      id,
+                      name,
+                      email,
+                      phone,
+                      specialty,
+                      status,
+                      students,
+                      classes,
+                      joinDate,
+                      rating,
+                      avatar,
+                    } = instructor;
+                    return (
+                      <TableRow
+                        key={id}
+                        className='cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50'
+                        onClick={() =>
+                          (window.location.href = `/dashboard/manager/instructors/${id}`)
+                        }
+                      >
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-3'>
+                            <div className='relative'>
+                              <img
+                                src={avatar}
+                                alt={name}
+                                className='h-10 w-10 rounded-full object-cover border-2 border-border/20'
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = e.currentTarget
+                                    .nextElementSibling as HTMLElement;
+                                  if (fallback) {
+                                    fallback.style.display = "flex";
+                                  }
+                                }}
+                              />
+                              <div
+                                className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary'
+                                style={{ display: "none" }}
                               >
-                                {status === "Active"
-                                  ? "Đang hoạt động"
-                                  : status === "On Leave"
-                                  ? "Đang nghỉ phép"
-                                  : "Ngừng hoạt động"}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className='text-center py-12'
-                        >
-                          <div className='flex flex-col items-center gap-2'>
-                            <Users className='h-8 w-8 text-muted-foreground/50' />
-                            <p className='text-muted-foreground font-medium'>
-                              Không tìm thấy giáo viên phù hợp
-                            </p>
-                            <p className='text-sm text-muted-foreground'>
-                              Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
-                            </p>
+                                {getInitials(name)}
+                              </div>
+                            </div>
+                            <div className='min-w-0 flex-1'>
+                              <div className='font-medium text-foreground truncate'>
+                                {name}
+                              </div>
+                              <div className='text-sm text-muted-foreground truncate'>
+                                {email}
+                              </div>
+                              {specialty.length > 0 && (
+                                <div className='text-xs text-muted-foreground mt-1'>
+                                  {specialty.slice(0, 2).join(", ")}
+                                  {specialty.length > 2 && "..."}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-2'>
+                            <Users className='h-4 w-4 text-muted-foreground' />
+                            <span className='font-medium'>{students}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-2'>
+                            <GraduationCap className='h-4 w-4 text-muted-foreground' />
+                            <span className='font-medium'>{classes}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className='py-4'>
+                          <div className='flex items-center gap-1'>
+                            <Star className='h-4 w-4 text-amber-500 fill-current' />
+                            <span className='font-medium'>{rating}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className='py-4'>
+                          <Badge
+                            variant='outline'
+                            className={
+                              status === "Active"
+                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+                                : status === "On Leave"
+                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                                : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800"
+                            }
+                          >
+                            {status === "Active"
+                              ? "Đang hoạt động"
+                              : status === "On Leave"
+                              ? "Đang nghỉ phép"
+                              : "Ngừng hoạt động"}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </>
-          )}
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className='text-center py-12'
+                    >
+                      <div className='flex flex-col items-center gap-2'>
+                        <Users className='h-8 w-8 text-muted-foreground/50' />
+                        <p className='text-muted-foreground font-medium'>
+                          Không tìm thấy giáo viên phù hợp
+                        </p>
+                        <p className='text-sm text-muted-foreground'>
+                          Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </>
