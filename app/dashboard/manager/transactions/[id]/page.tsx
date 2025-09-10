@@ -60,6 +60,7 @@ import {
   fetchClassroomsByCourseAndSchedule,
   addUserToClass,
 } from "../../../../../api/classrooms-api";
+import { fetchInstructorDetail } from "../../../../../api/instructors-api";
 import ManagerNotFound from "@/components/manager/not-found";
 import CreateStudentModal from "@/components/create-student-modal";
 
@@ -83,6 +84,9 @@ export default function TransactionDetailPage() {
   const [loadingClassrooms, setLoadingClassrooms] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [addingToClass, setAddingToClass] = useState(false);
+  const [instructorDetails, setInstructorDetails] = useState<{
+    [key: string]: any;
+  }>({});
 
   // Search functionality for class modal
   const [searchKey, setSearchKey] = useState<string>("");
@@ -337,7 +341,32 @@ export default function TransactionDetailPage() {
         tenantId,
         token
       );
+
       setClassrooms(classroomsData);
+
+      // Fetch instructor details for each classroom
+      const instructorDetailsMap: { [key: string]: any } = {};
+      for (const classroom of classroomsData) {
+        if (classroom.instructor && typeof classroom.instructor === "string") {
+          try {
+            const instructorDetail = await fetchInstructorDetail({
+              instructorId: classroom.instructor,
+              tenantId,
+              token,
+            });
+            if (instructorDetail) {
+              instructorDetailsMap[classroom.instructor] = instructorDetail;
+            }
+          } catch (err) {
+            console.error(
+              `Error fetching instructor ${classroom.instructor}:`,
+              err
+            );
+            // Continue with other instructors even if one fails
+          }
+        }
+      }
+      setInstructorDetails(instructorDetailsMap);
     } catch (err) {
       console.error("Error loading classrooms:", err);
       toast({
@@ -1088,10 +1117,27 @@ export default function TransactionDetailPage() {
                             <div className='mt-1 ml-6 space-y-1'>
                               <div className='text-sm text-muted-foreground'>
                                 Giảng viên:{" "}
-                                {typeof classroom.instructor === "object"
-                                  ? classroom.instructor?.name ||
-                                    "Chưa phân công"
-                                  : "Chưa phân công"}
+                                {(() => {
+                                  if (
+                                    typeof classroom.instructor === "object" &&
+                                    classroom.instructor?.name
+                                  ) {
+                                    return classroom.instructor.name;
+                                  } else if (
+                                    typeof classroom.instructor === "string" &&
+                                    instructorDetails[classroom.instructor]
+                                  ) {
+                                    return (
+                                      instructorDetails[classroom.instructor]
+                                        .user?.username ||
+                                      instructorDetails[classroom.instructor]
+                                        .user?.name ||
+                                      "Không rõ tên"
+                                    );
+                                  } else {
+                                    return "Chưa phân công";
+                                  }
+                                })()}
                               </div>
                               {classroom.schedules &&
                               classroom.schedules.length > 0 ? (
