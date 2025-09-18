@@ -510,3 +510,71 @@ export async function fetchOrderById({
     throw error;
   }
 }
+
+/**
+ * Add a member to a class using the new backend API
+ * @param classId - The ID of the class
+ * @param memberId - The ID of the member to add
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with the API response
+ */
+export async function addMemberToClass(
+  classId: string,
+  memberId: string,
+  tenantId?: string,
+  token?: string
+): Promise<any> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId =
+    tenantId ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("selectedTenant")
+      : null);
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId || !memberId) {
+    throw new Error("Class ID and Member ID are required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/add-member?id=${classId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+      body: JSON.stringify({
+        member: memberId,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    let errorMessage = `Failed to add member to class: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      try {
+        const errorText = await response.text();
+        errorMessage = `Failed to add member to class: ${response.status}, ${errorText}`;
+      } catch (textError) {
+        errorMessage = `Failed to add member to class: ${response.status}`;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}

@@ -53,12 +53,12 @@ import {
   updateOrderStatus,
   updateOrderWithUser,
   fetchOrderById,
+  addMemberToClass,
 } from "../../../../../api/orders-api";
 import { fetchCourseById } from "../../../../../api/courses-api";
 import {
   fetchClassroomsByCourse,
   fetchClassroomsByCourseAndSchedule,
-  addUserToClass,
 } from "../../../../../api/classrooms-api";
 import { fetchInstructorDetail } from "../../../../../api/instructors-api";
 import ManagerNotFound from "@/components/manager/not-found";
@@ -355,7 +355,7 @@ export default function TransactionDetailPage() {
         throw new Error("Không tìm thấy thông tin người dùng");
       }
 
-      await addUserToClass(selectedClassId, userId, tenantId, token);
+      await addMemberToClass(selectedClassId, userId, tenantId, token);
 
       toast({
         title: "Thành công",
