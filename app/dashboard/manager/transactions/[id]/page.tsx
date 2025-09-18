@@ -95,6 +95,10 @@ export default function TransactionDetailPage() {
   // New state for create student modal
   const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
 
+  // State for assigned class details
+  const [assignedClassDetails, setAssignedClassDetails] = useState<any>(null);
+  const [loadingClassDetails, setLoadingClassDetails] = useState(false);
+
   // Fetch order details and related course
   useEffect(() => {
     async function getOrderDetails() {
@@ -234,6 +238,46 @@ export default function TransactionDetailPage() {
     }
   }, [order, toast, token, tenantId]); // Depend on order so this runs after order is loaded
 
+  // Fetch assigned class details when order has a class field
+  useEffect(() => {
+    async function fetchAssignedClassDetails() {
+      if (!order?.class || !token || !tenantId || !courseDetails) return;
+
+      try {
+        setLoadingClassDetails(true);
+        const courseId = getOrderCourseId(order);
+        if (courseId) {
+          // Use fetchClassroomsByCourseAndSchedule to get all classes for this course
+          const classroomsData = await fetchClassroomsByCourseAndSchedule(
+            courseId,
+            false, // don't filter by schedule
+            "", // no search key
+            tenantId,
+            token
+          );
+
+          // Find the specific class that matches the order's class ID
+          const classId =
+            typeof order.class === "string" ? order.class : order.class?._id;
+          const assignedClass = classroomsData.find(
+            (classroom: any) => classroom._id === classId
+          );
+
+          if (assignedClass) {
+            setAssignedClassDetails(assignedClass);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching assigned class details:", err);
+        // Don't show error to user, just log it
+      } finally {
+        setLoadingClassDetails(false);
+      }
+    }
+
+    fetchAssignedClassDetails();
+  }, [order?.class, token, tenantId, courseDetails, order]);
+
   // Handle status update
   const handleStatusUpdate = async () => {
     if (!order || !newStatus || !token || !tenantId) return;
@@ -271,23 +315,32 @@ export default function TransactionDetailPage() {
   };
 
   // Check if this is a paid member order (scenario 1)
-  // Show this if the order has user data (regardless of guest data)
+  // Show this if the order has user data (regardless of guest data) AND no class assigned yet
   const isPaidMemberOrder = () => {
     if (!order) return false;
     return (
-      order.status?.includes("paid") && order.user // Has user data (converted from guest or original member)
+      order.status?.includes("paid") &&
+      order.user && // Has user data (converted from guest or original member)
+      !order.class // Has NOT been assigned to a class yet
     );
   };
 
   // Check if this is a paid guest order (scenario 2)
-  // Show this only if it has guest data but NO user data
+  // Show this only if it has guest data but NO user data AND no class assigned yet
   const isPaidGuestOrder = () => {
     if (!order) return false;
     return (
       order.status?.includes("paid") &&
       order.guest && // Has guest data
-      !order.user // Does NOT have user data yet
+      !order.user && // Does NOT have user data yet
+      !order.class // Has NOT been assigned to a class yet
     );
+  };
+
+  // Check if student has already been assigned to a class
+  const isAlreadyAssignedToClass = () => {
+    if (!order) return false;
+    return order.status?.includes("paid") && order.class;
   };
 
   // Handle adding member to class
@@ -308,6 +361,19 @@ export default function TransactionDetailPage() {
         title: "Thành công",
         description: "Đã thêm học viên vào lớp học",
       });
+
+      // Refresh the order data to get the updated class field
+      try {
+        const updatedOrder = await fetchOrderById({
+          orderId: order._id,
+          tenantId,
+          token,
+        });
+        setOrder(updatedOrder);
+      } catch (err) {
+        console.error("Error refreshing order data:", err);
+        // Don't show error to user, just log it
+      }
 
       handleCloseClassModal();
     } catch (err) {
@@ -796,6 +862,56 @@ export default function TransactionDetailPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Already Assigned to Class Scenario */}
+                {isAlreadyAssignedToClass() && (
+                  <div className='mt-6'>
+                    <div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <Check className='h-5 w-5 text-gray-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-gray-800'>
+                            Đã được thêm vào lớp học
+                          </h4>
+                          <p className='text-sm text-gray-700 mt-1'>
+                            Học viên {userName} đã được thêm vào lớp học cho
+                            khóa học{" "}
+                            <b>
+                              <u>{courseDetails?.title}.</u>
+                            </b>
+                          </p>
+                          {loadingClassDetails ? (
+                            <div className='mt-2 text-sm text-gray-600'>
+                              <span className='animate-pulse'>
+                                Đang tải thông tin lớp học...
+                              </span>
+                            </div>
+                          ) : assignedClassDetails ? (
+                            <div className='mt-2 space-y-1'>
+                              <div className='text-sm text-gray-600'>
+                                <span className='font-medium'>
+                                  Tên lớp học:
+                                </span>{" "}
+                                <span className='font-medium'>
+                                  {assignedClassDetails.name}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className='mt-2 text-sm text-gray-600'>
+                              Mã lớp học:{" "}
+                              <span className='font-mono'>
+                                {typeof order.class === "string"
+                                  ? order.class
+                                  : order.class?._id || "N/A"}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Paid Member Order Scenario */}
                 {isPaidMemberOrder() && (
