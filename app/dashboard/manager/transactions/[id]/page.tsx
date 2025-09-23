@@ -59,7 +59,8 @@ import { fetchCourseById } from "../../../../../api/courses-api";
 import {
   fetchClassroomsByCourse,
   fetchClassroomsByCourseAndSchedule,
-} from "../../../../../api/classrooms-api";
+  addUserToClass,
+} from "@/api/class-api";
 import { fetchInstructorDetail } from "../../../../../api/instructors-api";
 import ManagerNotFound from "@/components/manager/not-found";
 import CreateStudentModal from "@/components/create-student-modal";

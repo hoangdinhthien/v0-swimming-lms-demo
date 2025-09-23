@@ -65,11 +65,11 @@ import {
   type Pool,
   type Classroom,
 } from "@/api/slot-api";
-import { fetchClassrooms, addClassToSchedule } from "@/api/classrooms-api";
+import { fetchClassrooms, addClassToSchedule } from "@/api/class-api";
 import { fetchPools } from "@/api/pools-api";
 import { deleteScheduleEvent } from "@/api/schedule-api";
 import { fetchCourseById } from "@/api/courses-api";
-import { Classroom as ClassroomType } from "@/api/classrooms-api";
+import { Classroom as ClassroomType } from "@/api/class-api";
 import { Pool as PoolType } from "@/api/pools-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";

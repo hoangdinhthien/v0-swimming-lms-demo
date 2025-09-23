@@ -18,9 +18,9 @@ import {
   AlertTriangle,
   Waves,
 } from "lucide-react";
-import { fetchClassrooms, addClassToSchedule } from "@/api/classrooms-api";
+import { fetchClassrooms, addClassToSchedule } from "@/api/class-api";
 import { fetchPools } from "@/api/pools-api";
-import { Classroom } from "@/api/classrooms-api";
+import { Classroom } from "@/api/class-api";
 import { Pool as PoolType } from "@/api/pools-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
