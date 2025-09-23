@@ -27,7 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -36,6 +36,11 @@ export default function ApplicationsPage() {
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const router = useRouter();
+
+  const handleRowClick = (applicationId: string) => {
+    router.push(`/dashboard/manager/applications/${applicationId}`);
+  };
 
   useEffect(() => {
     async function fetchApplications() {
@@ -120,12 +125,15 @@ export default function ApplicationsPage() {
                 <TableHead>Ngày gửi</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Phản hồi</TableHead>
-                <TableHead>Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {applications.map((app) => (
-                <TableRow key={app._id}>
+                <TableRow
+                  key={app._id}
+                  className='cursor-pointer hover:bg-muted/50 transition-colors'
+                  onClick={() => handleRowClick(app._id)}
+                >
                   <TableCell className='font-medium'>{app.title}</TableCell>
                   <TableCell>{app.content}</TableCell>
                   <TableCell>
@@ -163,16 +171,6 @@ export default function ApplicationsPage() {
                         Chưa phản hồi
                       </span>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <Link href={`/dashboard/manager/applications/${app._id}`}>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                      >
-                        Xem chi tiết
-                      </Button>
-                    </Link>
                   </TableCell>
                 </TableRow>
               ))}

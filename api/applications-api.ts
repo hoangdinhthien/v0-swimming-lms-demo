@@ -28,7 +28,7 @@ export async function getApplications(
   token: string
 ): Promise<Application[]> {
   const response = await apiGet(
-    `${config.API}/v1/workflow-process/applications`,
+    `${config.API}/v1/workflow-process/manager/applications`,
     {
       requireAuth: true,
       includeTenant: false,
@@ -58,7 +58,7 @@ export async function getApplicationDetail(
   token: string
 ): Promise<Application | null> {
   const response = await apiGet(
-    `${config.API}/v1/workflow-process/application?id=${id}`,
+    `${config.API}/v1/workflow-process/manager/application?id=${id}`,
     {
       requireAuth: true,
       includeTenant: false,
