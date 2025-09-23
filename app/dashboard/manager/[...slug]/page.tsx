@@ -17,8 +17,8 @@ import TransactionsPage from "../transactions/page";
 import CalendarPage from "../calendar/page";
 import PromotionsPage from "../promotions/page";
 import SettingsPage from "../settings/page";
-import NotificationsPage from "../notifications/page";
-import NotificationDetailPage from "../notifications/[id]/page";
+import NotificationsPage from "../news/page";
+import NotificationDetailPage from "../news/[id]/page";
 import ReportsPage from "../reports/page";
 import ManagerNotFound from "@/components/manager/not-found";
 
@@ -73,7 +73,7 @@ export default function ManagerCatchAllPage() {
       "calendar",
       "promotions",
       "settings",
-      "notifications",
+      "news",
       "reports",
     ];
 
@@ -137,7 +137,7 @@ export default function ManagerCatchAllPage() {
         setComponent(() => SettingsPage);
         break;
 
-      case "notifications":
+      case "news":
         if (id && !subsection) {
           setComponent(() => NotificationDetailWrapper);
         } else {

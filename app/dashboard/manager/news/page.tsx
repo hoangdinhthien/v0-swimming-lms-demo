@@ -47,7 +47,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function NotificationsListPage() {
+export default function NewsListPage() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -91,8 +91,10 @@ export default function NotificationsListPage() {
 
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input clicked!", e.target.files); // Debug log
     const file = e.target.files?.[0];
     if (file) {
+      console.log("File selected:", file.name); // Debug log
       setFormData((prev) => ({ ...prev, coverFile: file }));
 
       // Create preview
@@ -101,6 +103,17 @@ export default function NotificationsListPage() {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Alternative file upload trigger function
+  const triggerFileUpload = () => {
+    console.log("Triggering file upload..."); // Debug log
+    const fileInput = document.getElementById(
+      "cover-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
     }
   };
 
@@ -214,10 +227,10 @@ export default function NotificationsListPage() {
             </div>
             <div className='flex-1'>
               <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent'>
-                Thông Báo
+                Tin Tức
               </h1>
               <p className='text-lg text-gray-600 dark:text-gray-400 mt-1'>
-                Quản lý và theo dõi tất cả thông báo hệ thống
+                Quản lý và theo dõi tất cả tin tức hệ thống
               </p>
             </div>
             <Dialog
@@ -230,16 +243,16 @@ export default function NotificationsListPage() {
                   size='lg'
                 >
                   <Plus className='h-5 w-5 mr-2' />
-                  Tạo thông báo mới
+                  Tạo tin tức mới
                 </Button>
               </DialogTrigger>
               <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
                 <DialogHeader>
                   <DialogTitle className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-                    Tạo Thông Báo Mới
+                    Tạo Tin Tức Mới
                   </DialogTitle>
                   <DialogDescription>
-                    Tạo thông báo mới để chia sẻ thông tin quan trọng với người
+                    Tạo tin tức mới để chia sẻ thông tin quan trọng với người
                     dùng
                   </DialogDescription>
                 </DialogHeader>
@@ -251,11 +264,11 @@ export default function NotificationsListPage() {
                       htmlFor='title'
                       className='text-sm font-medium'
                     >
-                      Tiêu đề thông báo <span className='text-red-500'>*</span>
+                      Tiêu đề tin tức <span className='text-red-500'>*</span>
                     </Label>
                     <Input
                       id='title'
-                      placeholder='Nhập tiêu đề thông báo...'
+                      placeholder='Nhập tiêu đề tin tức...'
                       value={formData.title}
                       onChange={(e) =>
                         handleInputChange("title", e.target.value)
@@ -270,11 +283,11 @@ export default function NotificationsListPage() {
                       htmlFor='content'
                       className='text-sm font-medium'
                     >
-                      Nội dung thông báo <span className='text-red-500'>*</span>
+                      Nội dung tin tức <span className='text-red-500'>*</span>
                     </Label>
                     <Textarea
                       id='content'
-                      placeholder='Nhập nội dung chi tiết của thông báo...'
+                      placeholder='Nhập nội dung chi tiết của tin tức...'
                       value={formData.content}
                       onChange={(e) =>
                         handleInputChange("content", e.target.value)
@@ -287,7 +300,7 @@ export default function NotificationsListPage() {
                   {/* Target Audience */}
                   <div className='space-y-3'>
                     <Label className='text-sm font-medium'>
-                      Đối tượng xem thông báo{" "}
+                      Đối tượng xem tin tức{" "}
                       <span className='text-red-500'>*</span>
                     </Label>
                     <div className='grid grid-cols-2 gap-3'>
@@ -373,17 +386,17 @@ export default function NotificationsListPage() {
                         <div className='text-center'>
                           <ImageIcon className='mx-auto h-12 w-12 text-gray-400' />
                           <div className='mt-4'>
-                            <Label
-                              htmlFor='cover-upload'
+                            <div
+                              onClick={triggerFileUpload}
                               className='cursor-pointer'
                             >
-                              <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100'>
+                              <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'>
                                 Tải lên ảnh bìa
                               </span>
                               <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
                                 PNG, JPG, JPEG tối đa 5MB
                               </span>
-                            </Label>
+                            </div>
                             <input
                               id='cover-upload'
                               type='file'
@@ -421,7 +434,7 @@ export default function NotificationsListPage() {
                     {isCreating && (
                       <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                     )}
-                    {isCreating ? "Đang tạo..." : "Tạo thông báo"}
+                    {isCreating ? "Đang tạo..." : "Tạo tin tức"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -436,7 +449,7 @@ export default function NotificationsListPage() {
               <div className='flex items-center justify-between'>
                 <div>
                   <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Tổng thông báo
+                    Tổng tin tức
                   </p>
                   <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
                     {isLoading ? (
@@ -502,7 +515,7 @@ export default function NotificationsListPage() {
           </Card>
         </div>
 
-        {/* Notifications List */}
+        {/* News List */}
         <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 shadow-xl'>
           <CardHeader className='border-b border-gray-400 dark:border-gray-800 bg-gray-200/70 dark:bg-black/70'>
             <div className='flex items-center justify-between'>
@@ -512,10 +525,10 @@ export default function NotificationsListPage() {
                 </div>
                 <div>
                   <CardTitle className='text-xl font-bold text-gray-800 dark:text-white'>
-                    Danh Sách Thông Báo
+                    Danh Sách Tin Tức
                   </CardTitle>
                   <p className='text-sm text-gray-700 dark:text-gray-300 mt-1'>
-                    Tất cả thông báo được sắp xếp theo thời gian
+                    Tất cả tin tức được sắp xếp theo thời gian
                   </p>
                 </div>
               </div>
@@ -546,7 +559,7 @@ export default function NotificationsListPage() {
                 {newsItems.map((newsItem, index) => (
                   <Link
                     key={newsItem._id}
-                    href={`/dashboard/manager/notifications/${newsItem._id}`}
+                    href={`/dashboard/manager/news/${newsItem._id}`}
                     className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200'
                   >
                     <div className='flex items-start space-x-4 p-6 group-hover:scale-[1.01] transition-transform duration-200'>
@@ -608,11 +621,11 @@ export default function NotificationsListPage() {
                   <div className='absolute inset-0 bg-gradient-to-br from-blue-200/30 to-indigo-200/30 dark:from-blue-800/20 dark:to-indigo-800/20 rounded-full animate-pulse' />
                 </div>
                 <h3 className='text-xl font-semibold text-gray-800 dark:text-white mb-2'>
-                  Chưa có thông báo nào
+                  Chưa có tin tức nào
                 </h3>
                 <p className='text-gray-600 dark:text-gray-300 max-w-md'>
-                  Thông báo mới từ hệ thống sẽ xuất hiện tại đây. Hãy kiểm tra
-                  lại sau.
+                  Tin tức mới từ hệ thống sẽ xuất hiện tại đây. Hãy kiểm tra lại
+                  sau.
                 </p>
               </div>
             )}

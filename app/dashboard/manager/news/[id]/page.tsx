@@ -48,8 +48,8 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
-// Trang chi tiết thông báo
-export default function NotificationDetailPage() {
+// News detail page
+export default function NewsDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -70,14 +70,15 @@ export default function NotificationDetailPage() {
     type: [] as string[],
     coverFile: null as File | null,
     removeCover: false, // Flag to indicate if cover should be removed
+    existingImages: [] as string[], // Store existing cover images
   });
 
-  // Image preview for editing
+  // Image preview for editing (new uploaded image)
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   useEffect(() => {
     async function fetchNewsDetail() {
       if (typeof params.id !== "string") {
-        setError("ID thông báo không hợp lệ");
+        setError("ID tin tức không hợp lệ");
         setIsLoading(false);
         return;
       }
@@ -86,7 +87,7 @@ export default function NotificationDetailPage() {
         const newsDetail = await getNewsDetail(params.id);
 
         if (!newsDetail) {
-          setError("Không tìm thấy thông báo");
+          setError("Không tìm thấy tin tức");
         } else {
           setNewsItem(newsDetail);
 
@@ -100,8 +101,8 @@ export default function NotificationDetailPage() {
           }
         }
       } catch (err) {
-        setError("Không thể tải thông tin chi tiết thông báo");
-        console.error("Error fetching notification details:", err);
+        setError("Không thể tải thông tin chi tiết tin tức");
+        console.error("Error fetching news details:", err);
       } finally {
         setIsLoading(false);
       }
@@ -119,8 +120,9 @@ export default function NotificationDetailPage() {
         type: newsItem.type,
         coverFile: null,
         removeCover: false,
+        existingImages: coverImages, // Store current cover images
       });
-      setImagePreview(coverImages.length > 0 ? coverImages[0] : null);
+      setImagePreview(null); // Reset new image preview
       setIsEditModalOpen(true);
     }
   };
@@ -135,8 +137,10 @@ export default function NotificationDetailPage() {
 
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input clicked!", e.target.files); // Debug log
     const file = e.target.files?.[0];
     if (file) {
+      console.log("File selected:", file.name); // Debug log
       setFormData((prev) => ({
         ...prev,
         coverFile: file,
@@ -152,6 +156,17 @@ export default function NotificationDetailPage() {
     }
   };
 
+  // Alternative file upload trigger function
+  const triggerFileUpload = () => {
+    console.log("Triggering file upload..."); // Debug log
+    const fileInput = document.getElementById(
+      "edit-cover-upload"
+    ) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  };
+
   // Handle type selection
   const handleTypeChange = (type: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -159,6 +174,14 @@ export default function NotificationDetailPage() {
       type: checked
         ? [...prev.type, type]
         : prev.type.filter((t) => t !== type),
+    }));
+  };
+
+  // Handle removing existing images
+  const handleRemoveExistingImage = (imageUrl: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      existingImages: prev.existingImages.filter((img) => img !== imageUrl),
     }));
   };
 
@@ -187,13 +210,28 @@ export default function NotificationDetailPage() {
         throw new Error("Không tìm thấy thông tin xác thực");
       }
 
-      let coverId = null;
+      let coverIds: string[] = [];
 
-      // Determine cover ID based on user actions
-      if (formData.removeCover) {
-        // User wants to remove cover entirely
-        coverId = null;
-      } else if (formData.coverFile) {
+      // Start with existing images that weren't removed
+      const existingCoverIds: string[] = [];
+
+      // Create a mapping from image URLs to IDs using the original cover data
+      if (Array.isArray(newsItem.cover) && coverImages.length > 0) {
+        const originalCoverIds = newsItem.cover.map((item) =>
+          typeof item === "string" ? item : item._id
+        );
+
+        // For each remaining existing image, find its corresponding ID
+        formData.existingImages.forEach((imageUrl) => {
+          const imageIndex = coverImages.indexOf(imageUrl);
+          if (imageIndex >= 0 && imageIndex < originalCoverIds.length) {
+            existingCoverIds.push(originalCoverIds[imageIndex]);
+          }
+        });
+      }
+
+      // Handle new uploaded image
+      if (formData.coverFile) {
         // User uploaded a new image - upload it first and get the media ID
         const uploadResult = await uploadMedia({
           file: formData.coverFile,
@@ -202,10 +240,11 @@ export default function NotificationDetailPage() {
           tenantId,
           token,
         });
-        coverId = uploadResult.data._id;
+        // Add new image ID to existing ones
+        coverIds = [...existingCoverIds, uploadResult.data._id];
       } else {
-        // Keep existing cover if present
-        coverId = newsItem.cover;
+        // No new image, just use existing ones
+        coverIds = existingCoverIds;
       }
 
       // Update news article - cover field expects an array of media IDs
@@ -213,7 +252,7 @@ export default function NotificationDetailPage() {
         title: formData.title,
         content: formData.content,
         type: formData.type,
-        ...(coverId && { cover: [coverId] }),
+        ...(coverIds.length > 0 && { cover: coverIds }),
       };
 
       await updateNews(newsItem._id, requestBody, token, tenantId);
@@ -239,7 +278,7 @@ export default function NotificationDetailPage() {
 
       toast({
         title: "Thành công",
-        description: "Cập nhật thông báo thành công!",
+        description: "Cập nhật tin tức thành công!",
         variant: "default",
       });
     } catch (error) {
@@ -247,9 +286,7 @@ export default function NotificationDetailPage() {
       toast({
         title: "Lỗi cập nhật",
         description:
-          error instanceof Error
-            ? error.message
-            : "Không thể cập nhật thông báo",
+          error instanceof Error ? error.message : "Không thể cập nhật tin tức",
         variant: "destructive",
       });
     } finally {
@@ -266,6 +303,7 @@ export default function NotificationDetailPage() {
       type: [],
       coverFile: null,
       removeCover: false,
+      existingImages: [],
     });
     setImagePreview(null);
   };
@@ -364,7 +402,7 @@ export default function NotificationDetailPage() {
             </CardHeader>
             <CardContent>
               <p className='text-muted-foreground mb-6'>
-                Không thể tải thông tin chi tiết thông báo.
+                Không thể tải thông tin chi tiết tin tức.
               </p>
               <Button
                 onClick={() => router.push("/dashboard/manager")}
@@ -597,9 +635,9 @@ export default function NotificationDetailPage() {
         <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle className='text-xl font-bold text-gray-900 dark:text-gray-100'>
-              Chỉnh Sửa Thông Báo
+              Chỉnh Sửa Tin Tức
             </DialogTitle>
-            <DialogDescription>Cập nhật thông tin thông báo</DialogDescription>
+            <DialogDescription>Cập nhật thông tin tin tức</DialogDescription>
           </DialogHeader>
 
           <div className='space-y-6 py-4'>
@@ -609,11 +647,11 @@ export default function NotificationDetailPage() {
                 htmlFor='edit-title'
                 className='text-sm font-medium'
               >
-                Tiêu đề thông báo <span className='text-red-500'>*</span>
+                Tiêu đề tin tức <span className='text-red-500'>*</span>
               </Label>
               <Input
                 id='edit-title'
-                placeholder='Nhập tiêu đề thông báo...'
+                placeholder='Nhập tiêu đề tin tức...'
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
                 className='w-full'
@@ -626,11 +664,11 @@ export default function NotificationDetailPage() {
                 htmlFor='edit-content'
                 className='text-sm font-medium'
               >
-                Nội dung thông báo <span className='text-red-500'>*</span>
+                Nội dung tin tức <span className='text-red-500'>*</span>
               </Label>
               <Textarea
                 id='edit-content'
-                placeholder='Nhập nội dung chi tiết của thông báo...'
+                placeholder='Nhập nội dung chi tiết của tin tức...'
                 value={formData.content}
                 onChange={(e) => handleInputChange("content", e.target.value)}
                 className='w-full min-h-32 resize-none'
@@ -641,7 +679,7 @@ export default function NotificationDetailPage() {
             {/* Target Audience */}
             <div className='space-y-3'>
               <Label className='text-sm font-medium'>
-                Đối tượng xem thông báo <span className='text-red-500'>*</span>
+                Đối tượng xem tin tức <span className='text-red-500'>*</span>
               </Label>
               <div className='grid grid-cols-2 gap-3'>
                 {[
@@ -697,12 +735,49 @@ export default function NotificationDetailPage() {
             <div className='space-y-3'>
               <Label className='text-sm font-medium'>Ảnh bìa (tùy chọn)</Label>
 
+              {/* Existing Images */}
+              {formData.existingImages.length > 0 && (
+                <div className='space-y-2'>
+                  <Label className='text-xs text-muted-foreground'>
+                    Ảnh hiện tại ({formData.existingImages.length})
+                  </Label>
+                  <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                    {formData.existingImages.map((imageUrl, index) => (
+                      <div
+                        key={index}
+                        className='relative group'
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Cover ${index + 1}`}
+                          className='w-full h-24 object-cover rounded-lg border'
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                        <Button
+                          type='button'
+                          variant='destructive'
+                          size='sm'
+                          className='absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity'
+                          onClick={() => handleRemoveExistingImage(imageUrl)}
+                        >
+                          <X className='h-3 w-3' />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Image Upload */}
               <div className='border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors'>
                 {imagePreview ? (
                   <div className='relative'>
                     <img
                       src={imagePreview}
-                      alt='Preview'
+                      alt='New Preview'
                       className='w-full h-48 object-cover rounded-lg'
                     />
                     <Button
@@ -711,12 +786,11 @@ export default function NotificationDetailPage() {
                       size='sm'
                       className='absolute top-2 right-2'
                       onClick={() => {
-                        // Remove the image entirely and allow immediate upload
+                        // Remove the new uploaded image
                         setImagePreview(null);
                         setFormData((prev) => ({
                           ...prev,
                           coverFile: null,
-                          removeCover: true,
                         }));
                       }}
                     >
@@ -727,25 +801,27 @@ export default function NotificationDetailPage() {
                   <div className='text-center'>
                     <ImageIcon className='mx-auto h-12 w-12 text-gray-400' />
                     <div className='mt-4'>
-                      <Label
-                        htmlFor='edit-cover-upload'
+                      <div
+                        onClick={triggerFileUpload}
                         className='cursor-pointer'
                       >
-                        <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100'>
-                          Tải lên ảnh bìa
+                        <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'>
+                          {formData.existingImages.length > 0
+                            ? "Thêm ảnh bìa mới"
+                            : "Tải lên ảnh bìa"}
                         </span>
                         <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
                           PNG, JPG, JPEG tối đa 5MB
                         </span>
-                      </Label>
-                      <input
-                        id='edit-cover-upload'
-                        type='file'
-                        className='hidden'
-                        accept='image/*'
-                        onChange={handleFileChange}
-                      />
+                      </div>
                     </div>
+                    <input
+                      id='edit-cover-upload'
+                      type='file'
+                      className='hidden'
+                      accept='image/*'
+                      onChange={handleFileChange}
+                    />
                   </div>
                 )}
               </div>
@@ -773,7 +849,7 @@ export default function NotificationDetailPage() {
               className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
             >
               {isUpdating && <Loader2 className='h-4 w-4 mr-2 animate-spin' />}
-              {isUpdating ? "Đang cập nhật..." : "Cập nhật thông báo"}
+              {isUpdating ? "Đang cập nhật..." : "Cập nhật tin tức"}
             </Button>
           </DialogFooter>
         </DialogContent>

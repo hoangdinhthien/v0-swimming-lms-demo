@@ -708,7 +708,7 @@ function ManagerDashboardPage() {
                     {newsItems.slice(0, 3).map((newsItem, index: number) => (
                       <Link
                         key={newsItem._id}
-                        href={`/dashboard/manager/notifications/${newsItem._id}`}
+                        href={`/dashboard/manager/news/${newsItem._id}`}
                         className='block group'
                       >
                         <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
@@ -858,13 +858,13 @@ function ManagerDashboardPage() {
                   {/* Decorative border gradient */}
                   <div className='absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-700' />
 
-                  <Link href='/dashboard/manager/notifications'>
+                  <Link href='/dashboard/manager/news'>
                     <Button
                       variant='outline'
                       className='w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-indigo-950 dark:to-blue-950 hover:from-indigo-50 hover:via-blue-50 hover:to-blue-100 dark:hover:from-indigo-950 dark:hover:via-blue-950 dark:hover:to-blue-900 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5'
                     >
                       <span className='relative z-10 flex items-center justify-center space-x-2'>
-                        <span>Xem Tất Cả Thông Báo</span>
+                        <span>Xem Tất Cả Tin Tức</span>
                         <ArrowRight className='ml-2 h-4 w-4 group-hover:translate-x-2 transition-transform duration-300' />
                       </span>
 

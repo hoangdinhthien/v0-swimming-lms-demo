@@ -10,7 +10,7 @@ export interface Tenant {
 }
 
 export interface TenantResponse {
-  data: Tenant[][][];
+  data: Tenant[];
   message: string;
   statusCode: number;
 }
@@ -34,9 +34,8 @@ export async function getAvailableTenants(): Promise<Tenant[]> {
   }
   const data: TenantResponse = await response.json();
 
-  // Flatten the nested array structure from the API response
-  const tenants = data.data?.[0]?.[0] || [];
-  return tenants;
+  // Return the data array directly (no longer nested)
+  return data.data || [];
 }
 
 /**

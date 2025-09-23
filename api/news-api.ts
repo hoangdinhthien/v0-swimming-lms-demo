@@ -3,6 +3,24 @@ import { apiGet } from "./api-utils";
 // Import media functions from the new file
 import { getMediaDetails } from "./media-api";
 
+// Media object interface for cover field
+export interface MediaObject {
+  _id: string;
+  filename: string;
+  disk: string;
+  mime: string;
+  size: number;
+  title: string;
+  alt: string;
+  tenant_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  is_draft: boolean;
+  __v: number;
+  path: string;
+}
+
 export interface NewsItem {
   _id: string;
   title: string;
@@ -13,7 +31,7 @@ export interface NewsItem {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
-  cover?: any; // Can be string, string[], or array of media objects
+  cover?: string | string[] | MediaObject[]; // Can be media IDs or full media objects
 }
 
 export interface NewsResponse {
@@ -34,7 +52,7 @@ export interface NewsResponse {
 }
 
 export interface NewsDetailResponse {
-  data: [[[NewsItem]]];
+  data: NewsItem;
   message: string;
   statusCode: number;
 }
@@ -55,7 +73,11 @@ export interface CreateNewsResponse {
 export async function getNews() {
   try {
     const response = await apiGet(
-      `${config.API}/v1/workflow-process/public/news`
+      `${config.API}/v1/workflow-process/manager/news`,
+      {
+        requireAuth: true, // Add authentication header
+        includeTenant: true, // Include tenant header (this is default but being explicit)
+      }
     );
 
     if (!response.ok) {
@@ -78,16 +100,17 @@ export async function getNews() {
 export async function getNewsById(id: string): Promise<NewsItem | null> {
   try {
     // Use apiGet which should handle tenant headers automatically
-    const response = await apiGet(
-      `${config.API}/v1/workflow-process/public/new?id=${id}`
-    );
+    const response = await apiGet(`${config.API}/v1/news/${id}`, {
+      requireAuth: true, // Include authentication since it's no longer a public endpoint
+      includeTenant: true, // Include tenant header
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch news details: ${response.status}`);
     }
 
     const data: NewsDetailResponse = await response.json();
-    return data.data[0][0][0] || null;
+    return data.data || null;
   } catch (error) {
     console.error("Error fetching news details:", error);
     return null;
@@ -131,19 +154,21 @@ export function formatRelativeTime(dateString: string): string {
 }
 
 // Helper function to extract image URLs from news cover field
-export function extractNewsImageUrls(cover: any): string[] {
+export function extractNewsImageUrls(
+  cover: string | string[] | MediaObject[] | undefined
+): string[] {
   if (!cover) return [];
 
   // If cover is an array of media objects with path property
   if (Array.isArray(cover)) {
     return cover
-      .filter((item: any) => item && item.path)
-      .map((item: any) => item.path);
+      .filter((item: any) => item && (item.path || typeof item === "string"))
+      .map((item: any) => (typeof item === "string" ? item : item.path));
   }
 
   // If cover is a single media object with path
-  if (typeof cover === "object" && cover.path) {
-    return [cover.path];
+  if (typeof cover === "object" && (cover as MediaObject).path) {
+    return [(cover as MediaObject).path];
   }
 
   // If cover is a string (media ID or path)
@@ -197,7 +222,7 @@ export async function updateNews(
   tenantId: string
 ): Promise<CreateNewsResponse> {
   try {
-    const response = await fetch(`${config.API}/v1/news/${newsId}`, {
+    const response = await fetch(`${config.API}/v1/news/${newsId}?`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
