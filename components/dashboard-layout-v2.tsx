@@ -190,6 +190,11 @@ export default function DashboardLayout({
         icon: <Users className='h-4 w-4' />,
       },
       {
+        name: "Tin tức",
+        href: "/dashboard/manager/news",
+        icon: <Bell className='h-4 w-4' />,
+      },
+      {
         name: "Lịch",
         href: "/dashboard/manager/calendar",
         icon: <Clock className='h-4 w-4' />,
@@ -553,6 +558,11 @@ export default function DashboardLayout({
                       name: "Lớp Học",
                       href: "/dashboard/manager/classes",
                       icon: <Users className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Tin tức",
+                      href: "/dashboard/manager/news",
+                      icon: <Bell className='h-4 w-4' />,
                     },
                   ].map((item) => {
                     const isActive = pathname === item.href;

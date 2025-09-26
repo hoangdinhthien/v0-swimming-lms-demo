@@ -222,9 +222,6 @@ export default function NewsListPage() {
           </Link>
 
           <div className='flex items-center space-x-4 mb-2'>
-            <div className='p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg'>
-              <Bell className='h-8 w-8 text-white' />
-            </div>
             <div className='flex-1'>
               <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent'>
                 Tin Tức
@@ -239,7 +236,7 @@ export default function NewsListPage() {
             >
               <DialogTrigger asChild>
                 <Button
-                  className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200'
+                  className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black shadow-lg hover:shadow-xl transition-all duration-200'
                   size='lg'
                 >
                   <Plus className='h-5 w-5 mr-2' />
@@ -248,7 +245,7 @@ export default function NewsListPage() {
               </DialogTrigger>
               <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
                 <DialogHeader>
-                  <DialogTitle className='text-xl font-bold text-gray-900 dark:text-gray-100'>
+                  <DialogTitle className='text-xl font-bold text-black dark:text-white'>
                     Tạo Tin Tức Mới
                   </DialogTitle>
                   <DialogDescription>
@@ -429,7 +426,7 @@ export default function NewsListPage() {
                       !formData.content.trim() ||
                       formData.type.length === 0
                     }
-                    className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                    className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black'
                   >
                     {isCreating && (
                       <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -477,7 +474,13 @@ export default function NewsListPage() {
                     {isLoading ? (
                       <Skeleton className='h-8 w-16 bg-gray-300 dark:bg-gray-700' />
                     ) : newsItems.length > 0 ? (
-                      formatRelativeTime(newsItems[0]?.created_at).split(" ")[0]
+                      new Date(newsItems[0]?.created_at).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                        }
+                      )
                     ) : (
                       "0"
                     )}
@@ -520,9 +523,6 @@ export default function NewsListPage() {
           <CardHeader className='border-b border-gray-400 dark:border-gray-800 bg-gray-200/70 dark:bg-black/70'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center space-x-3'>
-                <div className='p-2 bg-indigo-200/80 dark:bg-indigo-900/50 rounded-lg'>
-                  <Bell className='h-5 w-5 text-indigo-700 dark:text-indigo-300' />
-                </div>
                 <div>
                   <CardTitle className='text-xl font-bold text-gray-800 dark:text-white'>
                     Danh Sách Tin Tức
@@ -563,19 +563,6 @@ export default function NewsListPage() {
                     className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200'
                   >
                     <div className='flex items-start space-x-4 p-6 group-hover:scale-[1.01] transition-transform duration-200'>
-                      <div
-                        className={`relative p-3 rounded-xl flex-shrink-0 shadow-md group-hover:shadow-lg transition-all duration-200 ${
-                          index % 3 === 0
-                            ? "bg-gradient-to-br from-emerald-400 to-teal-500"
-                            : index % 3 === 1
-                            ? "bg-gradient-to-br from-blue-400 to-indigo-500"
-                            : "bg-gradient-to-br from-indigo-400 to-blue-500"
-                        }`}
-                      >
-                        <Bell className='h-5 w-5 text-white group-hover:scale-110 transition-transform duration-200' />
-                        <div className='absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-white dark:border-gray-800' />
-                      </div>
-
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-start justify-between mb-2'>
                           <h3 className='text-base font-semibold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors line-clamp-1 pr-4'>
