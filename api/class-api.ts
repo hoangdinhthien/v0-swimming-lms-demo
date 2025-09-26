@@ -597,7 +597,7 @@ export async function addClassToSchedule(
   }
 
   const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/class/schedule`,
+    `${config.API}/v1/workflow-process/manager/schedule`,
     {
       method: "POST",
       headers: {
