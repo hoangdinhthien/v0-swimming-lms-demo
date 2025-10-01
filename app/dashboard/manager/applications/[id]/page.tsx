@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getApplicationDetail } from "@/api/applications-api";
+import { getApplicationDetail, Application } from "@/api/applications-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import {
@@ -28,7 +28,7 @@ import Link from "next/link";
 export default function ApplicationDetailPage() {
   const params = useParams();
   const applicationId = params?.id as string;
-  const [application, setApplication] = useState<any>(null);
+  const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +46,8 @@ export default function ApplicationDetailPage() {
           tenantId,
           token
         );
+        console.log("[ApplicationDetailPage] Loaded application:", appData);
+        console.log("[ApplicationDetailPage] Application type:", appData?.type);
         setApplication(appData);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
@@ -116,21 +118,41 @@ export default function ApplicationDetailPage() {
     );
   }
 
-  // Helper function to get status styling
-  const getStatusStyle = (status: string[]) => {
-    if (status.includes("Accepted")) {
+  // Helper function to get type styling
+  const getTypeStyle = (type?: string[] | string) => {
+    if (!type) {
+      return {
+        variant: "secondary" as const,
+        className:
+          "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800",
+        icon: AlertCircle,
+      };
+    }
+
+    // Handle both array and string types
+    const typeArray = Array.isArray(type) ? type : [type];
+    const typeString = typeof type === "string" ? type : "";
+
+    if (typeArray.includes("instructor") || typeString.includes("instructor")) {
       return {
         variant: "default" as const,
         className:
-          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800",
-        icon: CheckCircle2,
+          "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
+        icon: User,
       };
-    } else if (status.includes("Rejected")) {
+    } else if (typeArray.includes("member") || typeString.includes("member")) {
       return {
-        variant: "destructive" as const,
+        variant: "secondary" as const,
         className:
-          "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800",
-        icon: XCircle,
+          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800",
+        icon: User,
+      };
+    } else if (typeArray.includes("staff") || typeString.includes("staff")) {
+      return {
+        variant: "outline" as const,
+        className:
+          "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800",
+        icon: User,
       };
     } else {
       return {
@@ -141,8 +163,8 @@ export default function ApplicationDetailPage() {
       };
     }
   };
-  const statusStyle = getStatusStyle(application.status);
-  const StatusIcon = statusStyle.icon;
+  const typeStyle = getTypeStyle(application.type);
+  const StatusIcon = typeStyle.icon;
   return (
     <div className='space-y-6 p-4 md:p-6 max-w-7xl mx-auto w-full animate-in fade-in duration-500'>
       {/* Breadcrumb Navigation */}
@@ -179,10 +201,24 @@ export default function ApplicationDetailPage() {
                     <StatusIcon className='h-5 w-5 text-primary' />
                   </div>
                   <Badge
-                    variant={statusStyle.variant}
-                    className={`${statusStyle.className} px-4 py-2 text-sm font-medium shadow-sm`}
+                    variant={typeStyle.variant}
+                    className={`${typeStyle.className} px-4 py-2 text-sm font-medium shadow-sm`}
                   >
-                    {application.status.join(", ")}
+                    {Array.isArray(application.type)
+                      ? application.type
+                          .map((t) =>
+                            t === "instructor"
+                              ? "Giảng viên"
+                              : t === "member"
+                              ? "Thành viên"
+                              : t === "staff"
+                              ? "Nhân viên"
+                              : t
+                          )
+                          .join(", ")
+                      : typeof application.type === "string"
+                      ? "Đơn từ tùy chỉnh"
+                      : "Không xác định"}
                   </Badge>
                 </div>
               </div>
@@ -229,41 +265,119 @@ export default function ApplicationDetailPage() {
           {/* Main Content */}
           <div className='xl:col-span-3 lg:col-span-2 space-y-6'>
             {" "}
-            {/* Application Content */}
+            {/* Application Information */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
               <CardHeader className='pb-3'>
                 <CardTitle className='flex items-center space-x-2 text-lg'>
                   <div className='p-2 rounded-lg bg-primary/10'>
                     <FileText className='h-5 w-5 text-primary' />
                   </div>
-                  <span>Nội dung đơn từ</span>
+                  <span>Thông tin đơn từ</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='prose prose-sm max-w-none dark:prose-invert'>
-                  <div className='whitespace-pre-wrap text-foreground leading-relaxed p-6 bg-muted/40 rounded-xl border text-base shadow-inner'>
-                    {application.content}
+                <div className='space-y-4'>
+                  <div className='p-6 bg-muted/40 rounded-xl border'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-1'>
+                          Tiêu đề đơn từ
+                        </div>
+                        <div className='text-base font-semibold text-foreground'>
+                          {application.title}
+                        </div>
+                      </div>
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-1'>
+                          Loại đơn từ
+                        </div>
+                        <div className='flex flex-wrap gap-1'>
+                          {Array.isArray(application.type) ? (
+                            application.type.map((t: string) => (
+                              <Badge
+                                key={t}
+                                variant='outline'
+                                className='text-xs'
+                              >
+                                {t === "instructor"
+                                  ? "Giảng viên"
+                                  : t === "member"
+                                  ? "Thành viên"
+                                  : t === "staff"
+                                  ? "Nhân viên"
+                                  : t}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge
+                              variant='outline'
+                              className='text-xs'
+                            >
+                              {typeof application.type === "string"
+                                ? "Đơn từ tùy chỉnh"
+                                : "Không xác định"}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-1'>
+                          Ngày tạo
+                        </div>
+                        <div className='text-base text-foreground'>
+                          {new Date(application.created_at).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-1'>
+                          Cập nhật lần cuối
+                        </div>
+                        <div className='text-base text-foreground'>
+                          {new Date(application.updated_at).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            {/* Reply Section */}
+            {/* Status/Progress Section */}
             <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
               <CardHeader className='pb-3'>
                 <CardTitle className='flex items-center space-x-2 text-lg'>
                   <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30'>
                     <MessageSquare className='h-5 w-5 text-blue-600 dark:text-blue-400' />
                   </div>
-                  <span>Phản hồi</span>
+                  <span>Trạng thái xử lý</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {" "}
-                {application.reply_content ? (
-                  <div className='prose prose-sm max-w-none dark:prose-invert'>
-                    <div className='whitespace-pre-wrap text-foreground leading-relaxed p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-xl border border-blue-200 dark:border-blue-800 text-base shadow-inner'>
-                      {application.reply_content}
-                    </div>
+                {application.content || application.reply_content ? (
+                  <div className='space-y-4'>
+                    {application.content && (
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-2'>
+                          Nội dung đơn từ:
+                        </div>
+                        <div className='whitespace-pre-wrap text-foreground leading-relaxed p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-lg border text-sm'>
+                          {application.content}
+                        </div>
+                      </div>
+                    )}
+                    {application.reply_content && (
+                      <div>
+                        <div className='text-sm font-medium text-muted-foreground mb-2'>
+                          Phản hồi:
+                        </div>
+                        <div className='whitespace-pre-wrap text-foreground leading-relaxed p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-lg border border-blue-200 dark:border-blue-800 text-sm'>
+                          {application.reply_content}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className='flex items-center justify-center p-12 bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/30'>
@@ -272,10 +386,10 @@ export default function ApplicationDetailPage() {
                         <MessageSquare className='h-10 w-10 text-muted-foreground' />
                       </div>
                       <div className='text-base font-medium text-muted-foreground'>
-                        Chưa có phản hồi
+                        Đơn từ đang được xử lý
                       </div>
                       <div className='text-sm text-muted-foreground/70 mt-1'>
-                        Phản hồi sẽ hiển thị tại đây khi có
+                        Chi tiết và phản hồi sẽ hiển thị tại đây khi có cập nhật
                       </div>
                     </div>
                   </div>
@@ -389,11 +503,24 @@ export default function ApplicationDetailPage() {
 
                 <div className='flex justify-between items-center py-3 px-2'>
                   <span className='text-sm font-medium text-muted-foreground'>
-                    Giờ tạo:
+                    Cập nhật lần cuối:
                   </span>
                   <span className='text-sm font-medium text-foreground'>
-                    {application.created_at
-                      ? new Date(application.created_at).toLocaleTimeString(
+                    {application.updated_at
+                      ? new Date(application.updated_at).toLocaleDateString(
+                          "vi-VN"
+                        )
+                      : "-"}
+                  </span>
+                </div>
+
+                <div className='flex justify-between items-center py-3 px-2'>
+                  <span className='text-sm font-medium text-muted-foreground'>
+                    Giờ cập nhật:
+                  </span>
+                  <span className='text-sm font-medium text-foreground'>
+                    {application.updated_at
+                      ? new Date(application.updated_at).toLocaleTimeString(
                           "vi-VN"
                         )
                       : "-"}
@@ -404,14 +531,28 @@ export default function ApplicationDetailPage() {
 
                 <div className='flex justify-between items-start py-3 px-2'>
                   <span className='text-sm font-medium text-muted-foreground'>
-                    Trạng thái:
+                    Loại đơn từ:
                   </span>
                   <div className='text-right'>
                     <Badge
-                      variant={statusStyle.variant}
-                      className={`${statusStyle.className} px-3 py-1`}
+                      variant={typeStyle.variant}
+                      className={`${typeStyle.className} px-3 py-1`}
                     >
-                      {application.status.join(", ")}
+                      {Array.isArray(application.type)
+                        ? application.type
+                            .map((t) =>
+                              t === "instructor"
+                                ? "Giảng viên"
+                                : t === "member"
+                                ? "Thành viên"
+                                : t === "staff"
+                                ? "Nhân viên"
+                                : t
+                            )
+                            .join(", ")
+                        : typeof application.type === "string"
+                        ? "Đơn từ tùy chỉnh"
+                        : "Không xác định"}
                     </Badge>
                   </div>
                 </div>

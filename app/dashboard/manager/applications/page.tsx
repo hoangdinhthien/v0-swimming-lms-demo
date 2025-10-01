@@ -13,9 +13,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Mail, User, Loader2 } from "lucide-react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import {
   getApplications,
   getApplicationDetail,
   Application,
+  PaginatedApplicationsResponse,
 } from "@/api/applications-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -36,6 +45,12 @@ export default function ApplicationsPage() {
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Pagination state (matching courses page pattern)
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+
   const router = useRouter();
 
   const handleRowClick = (applicationId: string) => {
@@ -51,16 +66,36 @@ export default function ApplicationsPage() {
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
-        const apps = await getApplications(tenantId, token);
-        setApplications(apps);
+        const response = await getApplications(tenantId, token, page, limit);
+        console.log("[ApplicationsPage] Loaded applications:", response);
+        console.log(
+          "[ApplicationsPage] Applications array:",
+          response.applications
+        );
+        if (response.applications.length > 0) {
+          console.log(
+            "[ApplicationsPage] First app structure:",
+            response.applications[0]
+          );
+          console.log(
+            "[ApplicationsPage] First app type:",
+            response.applications[0].type,
+            typeof response.applications[0].type
+          );
+        }
+        setApplications(response.applications);
+        setTotal(response.totalCount);
       } catch (e: any) {
         setError(e.message || "Failed to fetch applications");
         setApplications([]);
       }
       setLoading(false);
     }
-    fetchApplications();
-  }, []);
+
+    // Add request deduplication like courses page
+    const timeoutId = setTimeout(fetchApplications, 100);
+    return () => clearTimeout(timeoutId);
+  }, [page, limit]);
 
   async function handleShowDetail(id: string) {
     setDetailLoading(true);
@@ -113,18 +148,24 @@ export default function ApplicationsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách đơn từ</CardTitle>
+          <div className='flex items-center justify-between'>
+            <CardTitle>Danh sách đơn từ</CardTitle>
+            {total > 0 && (
+              <div className='text-sm text-muted-foreground'>
+                Tổng cộng: {total} đơn từ
+              </div>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className='relative'>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Tiêu đề</TableHead>
-                <TableHead>Nội dung</TableHead>
+                <TableHead>Loại đơn từ</TableHead>
                 <TableHead>Người gửi</TableHead>
                 <TableHead>Ngày gửi</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Phản hồi</TableHead>
+                <TableHead>Ngày cập nhật</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -135,7 +176,34 @@ export default function ApplicationsPage() {
                   onClick={() => handleRowClick(app._id)}
                 >
                   <TableCell className='font-medium'>{app.title}</TableCell>
-                  <TableCell>{app.content}</TableCell>
+                  <TableCell>
+                    <div className='flex flex-wrap gap-1'>
+                      {Array.isArray(app.type) && app.type.length > 0 ? (
+                        app.type.map((t: string) => (
+                          <Badge
+                            key={t}
+                            variant='outline'
+                            className='text-xs'
+                          >
+                            {t === "instructor"
+                              ? "Giảng viên"
+                              : t === "member"
+                              ? "Thành viên"
+                              : t === "staff"
+                              ? "Nhân viên"
+                              : t}
+                          </Badge>
+                        ))
+                      ) : (
+                        <Badge
+                          variant='outline'
+                          className='text-xs'
+                        >
+                          Không xác định
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className='flex items-center gap-2'>
                       <User className='h-4 w-4' />
@@ -150,32 +218,54 @@ export default function ApplicationsPage() {
                     {new Date(app.created_at).toLocaleString("vi-VN")}
                   </TableCell>
                   <TableCell>
-                    {app.status.map((s) => (
-                      <Badge
-                        key={s}
-                        variant={
-                          s === "Accepted"
-                            ? "default"
-                            : s === "Rejected"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {s}
-                      </Badge>
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    {app.reply_content || (
-                      <span className='text-muted-foreground'>
-                        Chưa phản hồi
-                      </span>
-                    )}
+                    {new Date(app.updated_at).toLocaleString("vi-VN")}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {/* Pagination Controls (same style as courses page) */}
+          <div className='flex justify-center mt-6'>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href='#'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page > 1) setPage(page - 1);
+                    }}
+                    aria-disabled={page === 1}
+                  />
+                </PaginationItem>
+                {Array.from({ length: Math.ceil(total / limit) }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      href='#'
+                      isActive={page === i + 1}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(i + 1);
+                      }}
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href='#'
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (page < Math.ceil(total / limit)) setPage(page + 1);
+                    }}
+                    aria-disabled={page === Math.ceil(total / limit)}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </CardContent>
       </Card>
     </div>
