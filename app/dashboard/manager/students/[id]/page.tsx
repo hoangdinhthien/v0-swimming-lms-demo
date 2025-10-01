@@ -966,48 +966,122 @@ export default function StudentDetailPage() {
                 <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
                 Lớp học đang tham gia
               </h3>
-              {detail.classesAsMember && detail.classesAsMember.length > 0 ? (
+              {detail.classesAsMember &&
+              detail.classesAsMember.filter(
+                (classItem: any) => classItem.status === "attending"
+              ).length > 0 ? (
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  {detail.classesAsMember.map(
-                    (classItem: any, index: number) => (
-                      <div
-                        key={index}
-                        className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-750 dark:border-slate-600'
-                      >
-                        <div className='flex items-start justify-between mb-3'>
-                          <div className='flex-1'>
-                            <h4 className='font-semibold text-blue-900 dark:text-slate-100 mb-1'>
-                              {classItem.name || "Lớp học"}
-                            </h4>
-                            {classItem.description && (
-                              <p className='text-sm text-blue-700/80 dark:text-slate-300 mb-2'>
-                                {classItem.description}
-                              </p>
-                            )}
-                          </div>
-                          <Badge
-                            variant='secondary'
-                            className='bg-blue-100 text-blue-800 border-blue-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600'
-                          >
-                            <GraduationCap className='h-3 w-3 mr-1' />
-                            Học viên
-                          </Badge>
-                        </div>
-
-                        <div className='mt-3 pt-3 border-t border-blue-200 dark:border-slate-600'>
-                          <Link
-                            href={`/dashboard/manager/classes/${
-                              classItem._id || classItem.id
-                            }`}
-                            className='inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors'
-                          >
-                            Xem chi tiết lớp học
-                            <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
-                          </Link>
-                        </div>
-                      </div>
+                  {detail.classesAsMember
+                    .filter(
+                      (classItem: any) => classItem.status === "attending"
                     )
-                  )}
+                    .map((classItem: any, index: number) => {
+                      // Helper function to get status badge styling
+                      const getStatusBadge = (status: string) => {
+                        switch (status) {
+                          case "attending":
+                            return {
+                              text: "Đang học",
+                              className:
+                                "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
+                            };
+                          case "attended":
+                            return {
+                              text: "Đã hoàn thành",
+                              className:
+                                "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800",
+                            };
+                          case "upcoming":
+                            return {
+                              text: "Sắp diễn ra",
+                              className:
+                                "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800",
+                            };
+                          default:
+                            return {
+                              text: "Không xác định",
+                              className:
+                                "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/50 dark:text-gray-300 dark:border-gray-800",
+                            };
+                        }
+                      };
+
+                      // Helper function to get progress percentage display
+                      const getProgressDisplay = (progress: number) => {
+                        const percentage = Math.round(progress * 100);
+                        return percentage;
+                      };
+
+                      // Helper function to get progress bar color
+                      const getProgressBarColor = (progress: number) => {
+                        if (progress >= 0.8) return "bg-green-500";
+                        if (progress >= 0.5) return "bg-yellow-500";
+                        return "bg-red-500";
+                      };
+
+                      const statusBadge = getStatusBadge(classItem.status);
+                      const progressPercentage = getProgressDisplay(
+                        classItem.progress || 0
+                      );
+
+                      return (
+                        <div
+                          key={index}
+                          className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-750 dark:border-slate-600'
+                        >
+                          <div className='flex items-start justify-between mb-3'>
+                            <div className='flex-1'>
+                              <h4 className='font-semibold text-blue-900 dark:text-slate-100 mb-1'>
+                                {classItem.name || "Lớp học"}
+                              </h4>
+                              {classItem.description && (
+                                <p className='text-sm text-blue-700/80 dark:text-slate-300 mb-2'>
+                                  {classItem.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant='outline'
+                              className={statusBadge.className}
+                            >
+                              {statusBadge.text}
+                            </Badge>
+                          </div>
+
+                          {/* Progress Section */}
+                          <div className='mb-3'>
+                            <div className='flex items-center justify-between mb-2'>
+                              <span className='text-sm font-medium text-blue-700 dark:text-slate-300'>
+                                Tiến độ học tập
+                              </span>
+                              <span className='text-sm font-bold text-blue-800 dark:text-slate-200'>
+                                {progressPercentage}%
+                              </span>
+                            </div>
+                            <div className='w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700'>
+                              <div
+                                className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(
+                                  classItem.progress || 0
+                                )}`}
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div className='mt-3 pt-3 border-t border-blue-200 dark:border-slate-600'>
+                            <Link
+                              href={`/dashboard/manager/classes/${
+                                classItem._id || classItem.id
+                              }`}
+                              className='inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors'
+                            >
+                              Xem chi tiết lớp học
+                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               ) : (
                 <div className='bg-blue-50 border border-blue-100 rounded-md p-6 text-center dark:bg-blue-950/30 dark:border-blue-800'>
@@ -1027,6 +1101,222 @@ export default function StudentDetailPage() {
                   >
                     <span className='mr-1'>+</span> Thêm vào lớp học
                   </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Upcoming Classes Section */}
+            <div className='space-y-6'>
+              <h3 className='text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center mb-4 border-b pb-2'>
+                <Calendar className='h-5 w-5 mr-2 text-yellow-600 dark:text-yellow-400' />{" "}
+                Lớp học sắp diễn ra
+              </h3>
+              {detail.classesAsMember &&
+              detail.classesAsMember.filter(
+                (classItem: any) => classItem.status === "upcoming"
+              ).length > 0 ? (
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {detail.classesAsMember
+                    .filter((classItem: any) => classItem.status === "upcoming")
+                    .map((classItem: any, index: number) => {
+                      return (
+                        <div
+                          key={index}
+                          className='bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-800'
+                        >
+                          <div className='flex items-start justify-between mb-3'>
+                            <div className='flex-1'>
+                              <h4 className='font-semibold text-yellow-900 dark:text-yellow-100 mb-1'>
+                                {classItem.name || "Lớp học"}
+                              </h4>
+                              {classItem.description && (
+                                <p className='text-sm text-yellow-700/80 dark:text-yellow-300 mb-2'>
+                                  {classItem.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant='outline'
+                              className='bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800'
+                            >
+                              Sắp diễn ra
+                            </Badge>
+                          </div>
+
+                          {/* Status Info */}
+                          <div className='mb-3 p-3 bg-yellow-100/50 dark:bg-yellow-900/30 rounded-md border border-yellow-200 dark:border-yellow-800'>
+                            <div className='flex items-center gap-2 mb-2'>
+                              <Calendar className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+                              <span className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
+                                Trạng thái
+                              </span>
+                            </div>
+                            <p className='text-sm text-yellow-700 dark:text-yellow-300'>
+                              Đã được thêm vào lớp nhưng lịch học chưa được tạo
+                            </p>
+                          </div>
+
+                          {/* Registration Date */}
+                          {classItem.created_at && (
+                            <div className='mb-3'>
+                              <div className='flex items-center gap-2'>
+                                <User className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
+                                <span className='text-sm text-yellow-700 dark:text-yellow-300'>
+                                  Đăng ký:{" "}
+                                  {new Date(
+                                    classItem.created_at
+                                  ).toLocaleDateString("vi-VN")}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className='mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800'>
+                            <Link
+                              href={`/dashboard/manager/classes/${
+                                classItem._id || classItem.id
+                              }`}
+                              className='inline-flex items-center text-sm text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100 font-medium transition-colors'
+                            >
+                              Xem chi tiết lớp học
+                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className='bg-yellow-50 border border-yellow-100 rounded-md p-6 text-center dark:bg-yellow-950/30 dark:border-yellow-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <Calendar className='h-8 w-8 text-yellow-400' />
+                  </div>
+                  <p className='text-yellow-900 dark:text-yellow-200 font-medium mb-1'>
+                    Không có lớp học sắp diễn ra
+                  </p>
+                  <p className='text-yellow-700/70 dark:text-yellow-300/70 text-sm'>
+                    Học viên chưa đăng ký lớp học nào chưa có lịch
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Classes Attended Section */}
+            <div className='space-y-6'>
+              <h3 className='text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2'>
+                <GraduationCap className='h-5 w-5 mr-2 text-green-600 dark:text-green-400' />{" "}
+                Lớp học đã tham gia
+              </h3>
+              {detail.classesAsMember &&
+              detail.classesAsMember.filter(
+                (classItem: any) => classItem.status === "attended"
+              ).length > 0 ? (
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  {detail.classesAsMember
+                    .filter((classItem: any) => classItem.status === "attended")
+                    .map((classItem: any, index: number) => {
+                      // Helper function to get progress percentage display
+                      const getProgressDisplay = (progress: number) => {
+                        const percentage = Math.round(progress * 100);
+                        return percentage;
+                      };
+
+                      // Helper function to get progress bar color for completed classes
+                      const getProgressBarColor = (progress: number) => {
+                        if (progress >= 0.8) return "bg-green-500";
+                        if (progress >= 0.5) return "bg-yellow-500";
+                        return "bg-red-500";
+                      };
+
+                      const progressPercentage = getProgressDisplay(
+                        classItem.progress || 0
+                      );
+
+                      return (
+                        <div
+                          key={index}
+                          className='bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800'
+                        >
+                          <div className='flex items-start justify-between mb-3'>
+                            <div className='flex-1'>
+                              <h4 className='font-semibold text-green-900 dark:text-green-100 mb-1'>
+                                {classItem.name || "Lớp học"}
+                              </h4>
+                              {classItem.description && (
+                                <p className='text-sm text-green-700/80 dark:text-green-300 mb-2'>
+                                  {classItem.description}
+                                </p>
+                              )}
+                            </div>
+                            <Badge
+                              variant='outline'
+                              className='bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800'
+                            >
+                              Đã hoàn thành
+                            </Badge>
+                          </div>
+
+                          {/* Progress Section */}
+                          <div className='mb-3'>
+                            <div className='flex items-center justify-between mb-2'>
+                              <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                                Kết quả học tập
+                              </span>
+                              <span className='text-sm font-bold text-green-800 dark:text-green-200'>
+                                {progressPercentage}%
+                              </span>
+                            </div>
+                            <div className='w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700'>
+                              <div
+                                className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(
+                                  classItem.progress || 0
+                                )}`}
+                                style={{ width: `${progressPercentage}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Completion Date */}
+                          {classItem.updated_at && (
+                            <div className='mb-3'>
+                              <div className='flex items-center gap-2'>
+                                <Calendar className='h-4 w-4 text-green-600 dark:text-green-400' />
+                                <span className='text-sm text-green-700 dark:text-green-300'>
+                                  Hoàn thành:{" "}
+                                  {new Date(
+                                    classItem.updated_at
+                                  ).toLocaleDateString("vi-VN")}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className='mt-3 pt-3 border-t border-green-200 dark:border-green-800'>
+                            <Link
+                              href={`/dashboard/manager/classes/${
+                                classItem._id || classItem.id
+                              }`}
+                              className='inline-flex items-center text-sm text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-green-100 font-medium transition-colors'
+                            >
+                              Xem chi tiết lớp học
+                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className='bg-green-50 border border-green-100 rounded-md p-6 text-center dark:bg-green-950/30 dark:border-green-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <GraduationCap className='h-8 w-8 text-green-400' />
+                  </div>
+                  <p className='text-green-900 dark:text-green-200 font-medium mb-1'>
+                    Chưa hoàn thành lớp học nào
+                  </p>
+                  <p className='text-green-700/70 dark:text-green-300/70 text-sm'>
+                    Học viên chưa hoàn thành lớp học nào
+                  </p>
                 </div>
               )}
             </div>
