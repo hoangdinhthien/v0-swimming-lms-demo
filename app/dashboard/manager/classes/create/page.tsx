@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createClass, type CreateClassData } from "@/api/class-api";
 import { fetchCourses } from "@/api/courses-api";
 import { fetchInstructors } from "@/api/instructors-api";
-import { fetchStudents } from "@/api/students-api";
+import { fetchStudents, fetchStudentsByCourseOrder } from "@/api/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -214,11 +214,34 @@ export default function CreateClassPage() {
       } finally {
         setLoadingInstructors(false);
       }
+    };
+
+    fetchData();
+  }, []); // ✅ FIX: Empty dependency array - only fetch once on mount
+
+  // Separate useEffect to fetch students when course is selected
+  useEffect(() => {
+    const fetchStudentsByCourseOrderData = async () => {
+      if (!selectedCourse) {
+        setStudents([]);
+        return;
+      }
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        setError("Thiếu thông tin xác thực");
+        return;
+      }
 
       try {
-        // Fetch students
         setLoadingStudents(true);
-        const studentsResult = await fetchStudents({ tenantId, token });
+        const studentsResult = await fetchStudentsByCourseOrder({
+          courseId: selectedCourse,
+          tenantId,
+          token,
+        });
 
         // Process students with avatars
         const studentsWithAvatars = await Promise.all(
@@ -233,19 +256,26 @@ export default function CreateClassPage() {
 
         setStudents(studentsWithAvatars);
       } catch (err: any) {
-        console.error("Error fetching students:", err);
+        console.error("Error fetching students by course:", err);
         toast({
           title: "Lỗi",
-          description: "Không thể tải danh sách học viên",
+          description:
+            "Không thể tải danh sách học viên đã thanh toán khóa học",
           variant: "destructive",
         });
+        setStudents([]);
       } finally {
         setLoadingStudents(false);
       }
     };
 
-    fetchData();
-  }, []); // ✅ FIX: Empty dependency array - only fetch once on mount
+    fetchStudentsByCourseOrderData();
+  }, [selectedCourse, toast]); // Trigger when selectedCourse changes
+
+  // Clear selected members when course changes
+  useEffect(() => {
+    setSelectedMembers([]);
+  }, [selectedCourse]);
 
   // Filter functions
   const filteredCourses = (courses || []).filter((course) =>
@@ -566,14 +596,29 @@ export default function CreateClassPage() {
                 </div>
               )}
 
-              {loadingStudents ? (
+              {!selectedCourse ? (
+                <div className='bg-amber-50 border border-amber-200 rounded-md p-6 text-center dark:bg-amber-950/30 dark:border-amber-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <BookOpen className='h-8 w-8 text-amber-400' />
+                  </div>
+                  <p className='text-amber-900 dark:text-amber-200 font-medium mb-1'>
+                    Vui lòng chọn khóa học trước
+                  </p>
+                  <p className='text-amber-700/70 dark:text-amber-300/70 text-sm'>
+                    Bạn cần chọn khóa học trước để xem danh sách học viên đã
+                    thanh toán
+                  </p>
+                </div>
+              ) : loadingStudents ? (
                 <div className='flex items-center justify-center py-8'>
                   <Loader2 className='h-6 w-6 animate-spin' />
-                  <span className='ml-2'>Đang tải học viên...</span>
+                  <span className='ml-2'>
+                    Đang tải học viên đã thanh toán khóa học...
+                  </span>
                 </div>
               ) : (
                 <div className='space-y-2'>
-                  <Label>Học viên có sẵn</Label>
+                  <Label>Học viên đã thanh toán cho khóa học</Label>
                   <ScrollArea className='h-64 border rounded-md p-4'>
                     <div className='space-y-2'>
                       {filteredStudents.length > 0 ? (
@@ -621,7 +666,15 @@ export default function CreateClassPage() {
                         ))
                       ) : (
                         <div className='text-center py-8 text-muted-foreground'>
-                          Không tìm thấy học viên nào
+                          <div className='bg-background rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                            <Users className='h-6 w-6 text-muted-foreground' />
+                          </div>
+                          <p className='font-medium mb-1'>
+                            Chưa có học viên nào thanh toán
+                          </p>
+                          <p className='text-sm'>
+                            Chưa có học viên nào thanh toán cho khóa học này
+                          </p>
                         </div>
                       )}
                     </div>

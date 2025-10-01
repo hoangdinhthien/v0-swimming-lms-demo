@@ -186,6 +186,134 @@ export interface UpdateStudentData {
 }
 
 /**
+ * Fetches students who have paid for a specific course (by order)
+ * This is used when creating a class to show only students who have paid for the selected course
+ */
+export async function fetchStudentsByCourseOrder({
+  courseId,
+  tenantId,
+  token,
+}: {
+  courseId: string;
+  tenantId: string;
+  token: string;
+}) {
+  if (!courseId || !tenantId || !token) {
+    console.error("Missing courseId, tenantId, or token", {
+      courseId,
+      tenantId,
+      token,
+    });
+    throw new Error("Thiếu thông tin xác thực hoặc ID khóa học");
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/users/get-by-order?course=${courseId}`;
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  console.log("[fetchStudentsByCourse] URL:", url);
+  console.log("[fetchStudentsByCourse] Headers:", headers);
+
+  const res = await fetch(url, {
+    headers,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error("API error:", res.status, errorText);
+    throw new Error("Không thể lấy danh sách học viên đã thanh toán khóa học");
+  }
+
+  const data = await res.json();
+
+  console.log("[fetchStudentsByCourse] Full API response:", data);
+
+  // Extract data from the nested structure: data.data[0][0]
+  // Each item in the array represents a student with their information
+  try {
+    let studentsArray = [];
+
+    // Try different possible structures
+    if (data.data?.[0]?.[0]) {
+      studentsArray = data.data[0][0];
+      console.log(
+        "[fetchStudentsByCourse] Using nested structure data.data[0][0]"
+      );
+    } else if (data.data?.[0]) {
+      studentsArray = data.data[0];
+      console.log("[fetchStudentsByCourse] Using structure data.data[0]");
+    } else if (data.data) {
+      studentsArray = data.data;
+      console.log("[fetchStudentsByCourse] Using structure data.data");
+    } else {
+      console.log("[fetchStudentsByCourse] No valid data structure found");
+      return [];
+    }
+
+    console.log("[fetchStudentsByCourse] Raw students array:", studentsArray);
+
+    // Handle case where each student might be a single object instead of array
+    const transformedStudents = studentsArray
+      .filter((studentData: any) => {
+        // Filter out any null/undefined/invalid entries
+        return studentData != null;
+      })
+      .map((studentData: any) => {
+        let student,
+          additionalInfo: any = {};
+
+        // Check if studentData is an array [userInfo, additionalInfo] or a single object
+        if (Array.isArray(studentData)) {
+          student = studentData[0]; // Main user data
+          additionalInfo = studentData[1] || {}; // Additional info (like featured_image)
+        } else {
+          // studentData is a single object
+          student = studentData;
+        }
+
+        // Safety check for student data
+        if (!student || !student._id) {
+          console.warn(
+            "[fetchStudentsByCourse] Invalid student data:",
+            studentData
+          );
+          return null;
+        }
+
+        // Get featured_image from the main student data or additional info
+        let featured_image = student.featured_image;
+        if (!featured_image && additionalInfo.featured_image) {
+          featured_image = additionalInfo.featured_image;
+        }
+
+        return {
+          _id: student._id,
+          user: {
+            _id: student._id,
+            username: student.username,
+            email: student.email,
+            phone: student.phone,
+            featured_image: featured_image,
+          },
+        };
+      })
+      .filter((student: any) => student !== null); // Remove any null entries
+
+    console.log(
+      "[fetchStudentsByCourse] Transformed students:",
+      transformedStudents
+    );
+    return transformedStudents;
+  } catch (err) {
+    console.error("Error parsing students by course:", err);
+    return [];
+  }
+}
+
+/**
  * Updates an existing student's information
  */
 export async function updateStudent({

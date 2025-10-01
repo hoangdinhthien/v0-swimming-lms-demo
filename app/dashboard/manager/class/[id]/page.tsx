@@ -53,6 +53,7 @@ import {
 import { fetchCourses } from "@/api/courses-api";
 import { fetchInstructors } from "@/api/instructors-api";
 import { fetchOrdersForCourse, type Order } from "@/api/orders-api";
+import { fetchStudentsByCourseOrder } from "@/api/students-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -150,6 +151,7 @@ export default function ClassDetailPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<any[]>([]);
   const [ordersWithUsers, setOrdersWithUsers] = useState<Order[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
 
   // State for dropdown toggles
@@ -216,22 +218,26 @@ export default function ClassDetailPage() {
 
       if (!tenantId || !token || !classData) return;
 
-      const [coursesData, instructorsData, ordersData] = await Promise.all([
+      const [coursesData, instructorsData, studentsData] = await Promise.all([
         fetchCourses({ tenantId, token }),
         fetchInstructors({ tenantId, token }),
-        fetchOrdersForCourse({
+        fetchStudentsByCourseOrder({
+          courseId: classData.course._id,
           tenantId,
           token,
-          courseId: classData.course._id,
-          classId: classroomId,
-          status: "paid",
-          type: "member",
         }),
       ]);
 
       setCourses(coursesData.data || []);
       setInstructors(instructorsData || []);
-      setOrdersWithUsers(ordersData || []);
+      setStudents(studentsData || []);
+
+      console.log("[loadEditData] Students loaded:", studentsData);
+      console.log("[loadEditData] Instructors loaded:", instructorsData);
+      console.log(
+        "[loadEditData] Current formData.instructor:",
+        formData.instructor
+      );
     } catch (error) {
       console.error("Error loading edit data:", error);
       toast({
@@ -247,16 +253,41 @@ export default function ClassDetailPage() {
   // Handle opening edit modal
   const handleEditClick = async () => {
     if (classData) {
+      // Extract instructor user ID properly
+      let instructorId = "";
+      if (typeof classData.instructor === "string") {
+        instructorId = classData.instructor;
+      } else if (
+        Array.isArray(classData.instructor) &&
+        classData.instructor.length > 0
+      ) {
+        // If it's an array, get the first instructor's user ID
+        const firstInstructor = classData.instructor[0];
+        instructorId =
+          typeof firstInstructor === "string"
+            ? firstInstructor
+            : firstInstructor._id || firstInstructor.user?._id || "";
+      } else if (
+        classData.instructor &&
+        typeof classData.instructor === "object"
+      ) {
+        // If it's a single instructor object, get the user ID
+        instructorId =
+          (classData.instructor as any)._id ||
+          (classData.instructor as any).user?._id ||
+          "";
+      }
+
+      console.log(
+        "[handleEditClick] classData.instructor:",
+        classData.instructor
+      );
+      console.log("[handleEditClick] extracted instructorId:", instructorId);
+
       setFormData({
         course: classData.course._id || "",
         name: classData.name || "",
-        instructor:
-          typeof classData.instructor === "string"
-            ? classData.instructor
-            : Array.isArray(classData.instructor) &&
-              classData.instructor.length > 0
-            ? classData.instructor[0]
-            : "",
+        instructor: instructorId,
         member: Array.isArray(classData.member)
           ? classData.member
               .map((m: any) => (typeof m === "string" ? m : m._id))
@@ -1117,38 +1148,34 @@ export default function ClassDetailPage() {
               <div className='space-y-4'>
                 <Label>Học viên ({formData.member.length} đã chọn)</Label>
                 <div className='border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2'>
-                  {ordersWithUsers.length > 0 ? (
-                    ordersWithUsers
-                      .filter((order) => order.user) // Only show orders with user data
-                      .map((order) => (
-                        <div
-                          key={order._id}
-                          className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
-                        >
-                          <Checkbox
-                            id={order.user!._id}
-                            checked={formData.member.includes(order.user!._id)}
-                            onCheckedChange={() =>
-                              handleMemberToggle(order.user!._id)
-                            }
-                          />
-                          <UserAvatar
-                            user={order.user}
-                            className='h-8 w-8'
-                          />
-                          <div className='flex-1'>
-                            <p className='font-medium'>
-                              {order.user!.username}
-                            </p>
-                            <p className='text-sm text-muted-foreground'>
-                              {order.user!.email}
-                            </p>
-                          </div>
+                  {students.length > 0 ? (
+                    students.map((student) => (
+                      <div
+                        key={student._id}
+                        className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
+                      >
+                        <Checkbox
+                          id={student.user._id}
+                          checked={formData.member.includes(student.user._id)}
+                          onCheckedChange={() =>
+                            handleMemberToggle(student.user._id)
+                          }
+                        />
+                        <UserAvatar
+                          user={student.user}
+                          className='h-8 w-8'
+                        />
+                        <div className='flex-1'>
+                          <p className='font-medium'>{student.user.username}</p>
+                          <p className='text-sm text-muted-foreground'>
+                            {student.user.email}
+                          </p>
                         </div>
-                      ))
+                      </div>
+                    ))
                   ) : (
                     <p className='text-muted-foreground text-center py-4'>
-                      Không có học viên nào đã đăng ký khóa học này
+                      Không có học viên nào đã thanh toán khóa học này
                     </p>
                   )}
                 </div>
