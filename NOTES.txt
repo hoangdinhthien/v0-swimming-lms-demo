@@ -1,0 +1,153 @@
+NOTES
+======
+
+schedule (system tự xếp), max 11 slot (7h-6h45) => filter theo date, end time + end minute = thời gian end slot
+
+get info -> me
+
+2 lịch -> lịch chung \\ lịch instructors riêng
+
+/public/users => student/instructor
+
+VIET HAM TRUY CAP ARRAY HAI CHIEU
+ 
+news: type => lọc role
+
+lọc theo tenant id
+
+{
+  "title": "Innovative AI Course",
+  "description": "A comprehensive course exploring modern AI applications in real-world scenarios.",
+  "details": [
+    {
+      "title": "Module 1: AI Fundamentals"
+    },
+    {
+      "title": "Module 2: Machine Learning in Practice"
+    }
+  ],
+  "category": [],
+  "price": 199.99,
+  "session_number": 5,
+  "session_number_duration": "2 hours per session",
+  "is_active": true,
+  "media": "https://example.com/media/ai-course.jpg"
+}
+
+===========================
+
+show message title; ko co => show ten user theo array
+
+====================
+
+List student Theo tenant, dua vao bang user tenant maping
+
+Create user Add
+ user tạo tài khoản vào chi nhánh , bằng cách create user trong bảng user (role_front member), sau đó mapping vào user tenant mapping
+
+lúc add số điện thoại hoặc email thì cũng phải search user đó đã tồn tịa trong hệ thống chưa, nếu rồi thì chỉ add vào tenant mapping thôi
+
+Doi tenant len headerc => dropdown [done]
+
+khoá học thì chỉ được add các instuctor đã được add vào tenant, dựa vào bảng user tenant mapping
+
+Chinh sua khoa học
+
+Add form tạo order 
+
+Them mục lop hoc
+
+add member to class 
+
+muc xep lich nhanh cho lop -> chon lop \ show slot trong tinh tu hien tai 
+
+courses page: them cot waiting list (don da thanh toan dang cho dc xep lop), click => qua trang xep lop/tao lop (status: paid)
+
+push noti => only mess
+
+xóa breadcrump 
+
+bỏ cột chuyên môn (instructor page)
+
+====================================
+
+calendar view -> them 3 chấm neu ds lop hien len trong o do qua dai // done
+
+xoa tao tac nhanh ben trang detail transaction // done
+
+hien them thong tin trong table /dashboard/manager/classes page // done
+
+them grid ngay hien tai trong calendar // done
+
+chon lop hoc -> hien ten lop hoc thoi // done 
+
+// total mac dinh 12 CUA COURSE
+sessions_exceeded -> buoi hoc vuot qua  total mac dinh cua course 
+sessions_remaining -> buoi con thieu
+ "total_schedules" -> tong buoi hoc hien tai
+"schedule_passed" -> buoi hoc DA HOC 
+=====> dones
+
+bo hoc phi -> class detail  | auto mo ra So giang vien vs so hoc vien chinh sua thang tren UI // done
+
+dashboard/manager/classes/create -> them tinh nang search user (students da thanh toan cho khoa hoc do) khi tao lop // done
+
+them thanh search ho boi trong trang them lop hoc // done
+
+=============================
+
+sua thong tin Lớp Học và Hồ Bơi -> theo list don gian // THANG TREN CAC FIELD, KHOI CAN MODAL EDIT // done
+
+sua UI transactions detail sau khi da add member vao lop hoc // pending
+
+bo icon trong trang, hien tai dang co qua nhieu icon -> kho nhin // pending
+
+//api 
+sau khi thanh toan -> add member vao lop hoc, lop hoc do phai chua dc xep lop
+
+api: detail user (lop hoc da qua, dang hoc, chua hoc)attending, attended, upcoming
+// update lai order sau khi add user vào lớp ==> pending
+
+show ten instructor trong modal Chọn lớp học trong transaction detail => pending
+
+check data order co field class => ko add student vao class nua
+
+application (đơn từ): thao tác giống trên fap
+
+==================================
+
+trong order detail: chon lop hoc modal: lam them giao dien tao lop hoc 
+
+class detail và trang create new class khi them member chuyen sang su dung add-member, remove-member khi làm gì thao tác với member trong class
+
+===================================
+
+MANAGER & STAFF
+- staff (staff có bao nhiêu role?) -> mỗi account 1 quyền riêng để quản lý do manager sắp xếp (lưu ý FE: khi staff login thì phải check là role của staff hay manager để show lên UI các chức năng tương ứng)
+- manager làm hết phần management trong 1 chi nhánh (xem hết thông số này kia || thêm UI 1 tab để quản lý staff)
+- TH1 luồng duyệt: staff sửa cái j xong thì manager sẽ check và apply
+- thêm tính năng cho manager & staff: tính năng edit/tạo landing page => kéo thả, chỉnh đc UI
+mcp
+- sẽ có trường hợp staff chưa đc phân quyền -> login vào page manager sẽ ko show/xem đc j hết 
+
+MANAGER SEND NOTI CHO USER -> SỬ DỤNG PUSHER
+
+QUAN TRỌNG: USER VỚI CLASS VỚI COURSE SẼ ĐỔI IS ACTIVE THÀNH  STATUS
+
+===================================
+
+student detail: process: từ 0 -> 1 (vd: 0.5 là học được 50% số buổi của lớp học đó) 
+
+===================================
+
+application get: type: member/instructor => filter list applications theo member/instructor
+application reply status: accept, 
+
+===================================
+
+sửa lại phần loading của hệ thống
+
+===================================
+
+tạo thêm page để quản lý staff
+
