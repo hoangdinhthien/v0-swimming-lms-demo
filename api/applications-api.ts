@@ -1,10 +1,23 @@
 import config from "./config.json";
 import { apiGet } from "./api-utils";
 
+export interface ApplicationType {
+  _id: string;
+  title: string;
+  type: string[];
+  created_at: string;
+  created_by: string;
+  updated_at: string;
+  updated_by: string;
+  tenant_id: string;
+}
+
 export interface Application {
   _id: string;
   title: string;
-  type: string[] | string; // Can be array (from list) or string (from detail)
+  content?: string;
+  type: ApplicationType | string[] | string; // Can be object, array, or string depending on endpoint
+  status?: string[];
   created_at: string;
   updated_at: string;
   updated_by:
@@ -15,6 +28,7 @@ export interface Application {
         username: string;
         phone: string;
         role_front: string[];
+        featured_image?: string | string[];
       };
   created_by: {
     _id: string;
@@ -22,12 +36,11 @@ export interface Application {
     username: string;
     phone: string;
     role_front: string[];
+    featured_image?: string | string[];
   };
   tenant_id: string;
   // Optional fields that might be added later
-  content?: string;
   reply_content?: string;
-  status?: string[]; // Available in detail response
 }
 
 export interface ApplicationsResponse {
@@ -84,7 +97,8 @@ export async function getApplications(
   if (Array.isArray(obj?.data)) {
     applications = obj.data.map((app: any) => ({
       ...app,
-      type: Array.isArray(app.type) ? app.type : [], // Ensure type is always an array
+      // Keep the original type structure - don't force it to be an array
+      type: app.type || [],
     }));
   }
 

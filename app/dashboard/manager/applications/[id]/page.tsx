@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getApplicationDetail, Application } from "@/api/applications-api";
+import {
+  getApplicationDetail,
+  Application,
+  ApplicationType,
+} from "@/api/applications-api";
+import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import {
@@ -20,10 +25,96 @@ import {
   Phone,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+// Profile Image Component
+function ProfileImage({
+  featuredImage,
+  username,
+}: {
+  featuredImage?: string | string[];
+  username: string;
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadImage() {
+      if (!featuredImage) {
+        console.log("[ProfileImage] No featured image provided");
+        return;
+      }
+
+      setLoading(true);
+      try {
+        // Handle both string and array formats
+        const imageId = Array.isArray(featuredImage)
+          ? featuredImage[0]
+          : featuredImage;
+        console.log("[ProfileImage] Loading image for ID:", imageId);
+
+        if (imageId) {
+          const url = await getMediaDetails(imageId);
+          console.log("[ProfileImage] Retrieved URL:", url);
+
+          if (url) {
+            // Ensure the URL is absolute
+            const fullUrl = url.startsWith("http")
+              ? url
+              : `${window.location.origin}${url}`;
+            console.log("[ProfileImage] Setting full URL:", fullUrl);
+            setImageUrl(fullUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading profile image:", error);
+        setImageUrl(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadImage();
+  }, [featuredImage]);
+
+  // Get user initials for fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <div className='h-12 w-12 rounded-full bg-primary/10 ring-2 ring-primary/20 flex items-center justify-center'>
+        <div className='animate-pulse bg-primary/20 h-8 w-8 rounded-full' />
+      </div>
+    );
+  }
+
+  return (
+    <Avatar className='h-12 w-12 ring-2 ring-primary/20'>
+      {imageUrl && (
+        <AvatarImage
+          src={imageUrl}
+          alt={`${username} profile`}
+          className='object-cover'
+          onError={() => setImageUrl(null)}
+        />
+      )}
+      <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
+        {getInitials(username)}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
 
 export default function ApplicationDetailPage() {
   const params = useParams();
@@ -119,7 +210,7 @@ export default function ApplicationDetailPage() {
   }
 
   // Helper function to get type styling
-  const getTypeStyle = (type?: string[] | string) => {
+  const getTypeStyle = (type?: string | string[] | ApplicationType) => {
     if (!type) {
       return {
         variant: "secondary" as const,
@@ -129,25 +220,35 @@ export default function ApplicationDetailPage() {
       };
     }
 
-    // Handle both array and string types
-    const typeArray = Array.isArray(type) ? type : [type];
-    const typeString = typeof type === "string" ? type : "";
+    // Handle different type formats: object with type array, direct array, or string
+    let typeArray: string[] = [];
 
-    if (typeArray.includes("instructor") || typeString.includes("instructor")) {
+    if (typeof type === "object" && type !== null && "type" in type) {
+      // Object format: { _id, title, type: string[] }
+      typeArray = Array.isArray(type.type) ? type.type : [type.type];
+    } else if (Array.isArray(type)) {
+      // Direct array format: string[]
+      typeArray = type;
+    } else if (typeof type === "string") {
+      // String format
+      typeArray = [type];
+    }
+
+    if (typeArray.includes("instructor")) {
       return {
         variant: "default" as const,
         className:
           "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800",
         icon: User,
       };
-    } else if (typeArray.includes("member") || typeString.includes("member")) {
+    } else if (typeArray.includes("member")) {
       return {
         variant: "secondary" as const,
         className:
           "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800",
         icon: User,
       };
-    } else if (typeArray.includes("staff") || typeString.includes("staff")) {
+    } else if (typeArray.includes("staff")) {
       return {
         variant: "outline" as const,
         className:
@@ -197,15 +298,26 @@ export default function ApplicationDetailPage() {
                   {application.title}
                 </CardTitle>
                 <div className='flex items-center space-x-3'>
-                  <div className='p-2 rounded-full bg-primary/10'>
-                    <StatusIcon className='h-5 w-5 text-primary' />
-                  </div>
                   <Badge
                     variant={typeStyle.variant}
                     className={`${typeStyle.className} px-4 py-2 text-sm font-medium shadow-sm`}
                   >
-                    {Array.isArray(application.type)
-                      ? application.type
+                    {(() => {
+                      if (!application.type) return "Không xác định";
+
+                      // Handle object format: { _id, title, type: string[] }
+                      if (
+                        typeof application.type === "object" &&
+                        application.type !== null &&
+                        "title" in application.type
+                      ) {
+                        const typeObj = application.type as ApplicationType;
+                        return typeObj.title || "Không xác định";
+                      }
+
+                      // Handle array format: string[]
+                      if (Array.isArray(application.type)) {
+                        return application.type
                           .map((t) =>
                             t === "instructor"
                               ? "Giảng viên"
@@ -215,10 +327,22 @@ export default function ApplicationDetailPage() {
                               ? "Nhân viên"
                               : t
                           )
-                          .join(", ")
-                      : typeof application.type === "string"
-                      ? "Đơn từ tùy chỉnh"
-                      : "Không xác định"}
+                          .join(", ");
+                      }
+
+                      // Handle string format
+                      if (typeof application.type === "string") {
+                        return application.type === "instructor"
+                          ? "Giảng viên"
+                          : application.type === "member"
+                          ? "Thành viên"
+                          : application.type === "staff"
+                          ? "Nhân viên"
+                          : "Đơn từ tùy chỉnh";
+                      }
+
+                      return "Không xác định";
+                    })()}
                   </Badge>
                 </div>
               </div>
@@ -291,33 +415,89 @@ export default function ApplicationDetailPage() {
                         <div className='text-sm font-medium text-muted-foreground mb-1'>
                           Loại đơn từ
                         </div>
-                        <div className='flex flex-wrap gap-1'>
-                          {Array.isArray(application.type) ? (
-                            application.type.map((t: string) => (
+                        <div className='space-y-2'>
+                          {(() => {
+                            if (!application.type) {
+                              return (
+                                <Badge
+                                  variant='outline'
+                                  className='text-xs'
+                                >
+                                  Không xác định
+                                </Badge>
+                              );
+                            }
+
+                            // Handle object format: { _id, title, type: string[] }
+                            if (
+                              typeof application.type === "object" &&
+                              application.type !== null &&
+                              "title" in application.type
+                            ) {
+                              const typeObj =
+                                application.type as ApplicationType;
+                              return (
+                                <div className='space-y-1'>
+                                  <div className='text-sm font-semibold text-foreground'>
+                                    {typeObj.title}
+                                  </div>
+                                  <div className='flex flex-wrap gap-1'>
+                                    {Array.isArray(typeObj.type) &&
+                                      typeObj.type.map((t: string) => (
+                                        <Badge
+                                          key={t}
+                                          variant='outline'
+                                          className='text-xs'
+                                        >
+                                          {t === "instructor"
+                                            ? "Giảng viên"
+                                            : t === "member"
+                                            ? "Thành viên"
+                                            : t === "staff"
+                                            ? "Nhân viên"
+                                            : t}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Handle array format: string[]
+                            if (Array.isArray(application.type)) {
+                              return (
+                                <div className='flex flex-wrap gap-1'>
+                                  {application.type.map((t: string) => (
+                                    <Badge
+                                      key={t}
+                                      variant='outline'
+                                      className='text-xs'
+                                    >
+                                      {t === "instructor"
+                                        ? "Giảng viên"
+                                        : t === "member"
+                                        ? "Thành viên"
+                                        : t === "staff"
+                                        ? "Nhân viên"
+                                        : t}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              );
+                            }
+
+                            // Handle string format
+                            return (
                               <Badge
-                                key={t}
                                 variant='outline'
                                 className='text-xs'
                               >
-                                {t === "instructor"
-                                  ? "Giảng viên"
-                                  : t === "member"
-                                  ? "Thành viên"
-                                  : t === "staff"
-                                  ? "Nhân viên"
-                                  : t}
+                                {typeof application.type === "string"
+                                  ? "Đơn từ tùy chỉnh"
+                                  : "Không xác định"}
                               </Badge>
-                            ))
-                          ) : (
-                            <Badge
-                              variant='outline'
-                              className='text-xs'
-                            >
-                              {typeof application.type === "string"
-                                ? "Đơn từ tùy chỉnh"
-                                : "Không xác định"}
-                            </Badge>
-                          )}
+                            );
+                          })()}
                         </div>
                       </div>
                       <div>
@@ -326,16 +506,6 @@ export default function ApplicationDetailPage() {
                         </div>
                         <div className='text-base text-foreground'>
                           {new Date(application.created_at).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <div className='text-sm font-medium text-muted-foreground mb-1'>
-                          Cập nhật lần cuối
-                        </div>
-                        <div className='text-base text-foreground'>
-                          {new Date(application.updated_at).toLocaleDateString(
                             "vi-VN"
                           )}
                         </div>
@@ -411,15 +581,13 @@ export default function ApplicationDetailPage() {
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='flex items-center space-x-3 p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-xl border'>
-                  <div className='h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center ring-2 ring-primary/20'>
-                    <User className='h-6 w-6 text-primary' />
-                  </div>
+                  <ProfileImage
+                    featuredImage={application.created_by?.featured_image}
+                    username={application.created_by?.username || "User"}
+                  />
                   <div className='flex-1 min-w-0'>
                     <div className='text-base font-semibold text-foreground truncate'>
                       {application.created_by?.username || "Không có tên"}
-                    </div>
-                    <div className='text-sm text-muted-foreground font-medium'>
-                      Người dùng
                     </div>
                   </div>
                 </div>
@@ -501,59 +669,94 @@ export default function ApplicationDetailPage() {
                   </span>
                 </div>
 
-                <div className='flex justify-between items-center py-3 px-2'>
-                  <span className='text-sm font-medium text-muted-foreground'>
-                    Cập nhật lần cuối:
-                  </span>
-                  <span className='text-sm font-medium text-foreground'>
-                    {application.updated_at
-                      ? new Date(application.updated_at).toLocaleDateString(
-                          "vi-VN"
-                        )
-                      : "-"}
-                  </span>
-                </div>
-
-                <div className='flex justify-between items-center py-3 px-2'>
-                  <span className='text-sm font-medium text-muted-foreground'>
-                    Giờ cập nhật:
-                  </span>
-                  <span className='text-sm font-medium text-foreground'>
-                    {application.updated_at
-                      ? new Date(application.updated_at).toLocaleTimeString(
-                          "vi-VN"
-                        )
-                      : "-"}
-                  </span>
-                </div>
-
                 <Separator />
 
                 <div className='flex justify-between items-start py-3 px-2'>
                   <span className='text-sm font-medium text-muted-foreground'>
                     Loại đơn từ:
                   </span>
-                  <div className='text-right'>
-                    <Badge
-                      variant={typeStyle.variant}
-                      className={`${typeStyle.className} px-3 py-1`}
-                    >
-                      {Array.isArray(application.type)
-                        ? application.type
-                            .map((t) =>
-                              t === "instructor"
-                                ? "Giảng viên"
-                                : t === "member"
-                                ? "Thành viên"
-                                : t === "staff"
-                                ? "Nhân viên"
-                                : t
-                            )
-                            .join(", ")
-                        : typeof application.type === "string"
-                        ? "Đơn từ tùy chỉnh"
-                        : "Không xác định"}
-                    </Badge>
+                  <div className='text-right max-w-[60%]'>
+                    {(() => {
+                      if (!application.type) {
+                        return (
+                          <Badge
+                            variant='secondary'
+                            className='px-3 py-1'
+                          >
+                            Không xác định
+                          </Badge>
+                        );
+                      }
+
+                      // Handle object format: { _id, title, type: string[] }
+                      if (
+                        typeof application.type === "object" &&
+                        application.type !== null &&
+                        "title" in application.type
+                      ) {
+                        const typeObj = application.type as ApplicationType;
+                        return (
+                          <div className='space-y-1'>
+                            <div className='text-sm font-semibold text-foreground'>
+                              {typeObj.title}
+                            </div>
+                            <div className='flex flex-wrap gap-1 justify-end'>
+                              {Array.isArray(typeObj.type) &&
+                                typeObj.type.map((t: string) => (
+                                  <Badge
+                                    key={t}
+                                    variant={typeStyle.variant}
+                                    className={`${typeStyle.className} px-2 py-1 text-xs`}
+                                  >
+                                    {t === "instructor"
+                                      ? "Giảng viên"
+                                      : t === "member"
+                                      ? "Thành viên"
+                                      : t === "staff"
+                                      ? "Nhân viên"
+                                      : t}
+                                  </Badge>
+                                ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Handle array format: string[]
+                      if (Array.isArray(application.type)) {
+                        return (
+                          <div className='flex flex-wrap gap-1 justify-end'>
+                            {application.type.map((t: string) => (
+                              <Badge
+                                key={t}
+                                variant={typeStyle.variant}
+                                className={`${typeStyle.className} px-2 py-1 text-xs`}
+                              >
+                                {t === "instructor"
+                                  ? "Giảng viên"
+                                  : t === "member"
+                                  ? "Thành viên"
+                                  : t === "staff"
+                                  ? "Nhân viên"
+                                  : t}
+                              </Badge>
+                            ))}
+                          </div>
+                        );
+                      }
+
+                      // Handle string format
+                      return (
+                        <Badge
+                          variant={typeStyle.variant}
+                          className={`${typeStyle.className} px-3 py-1`}
+                        >
+                          {typeof application.type === "string"
+                            ? "Đơn từ tùy chỉnh"
+                            : "Không xác định"}
+                        </Badge>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>

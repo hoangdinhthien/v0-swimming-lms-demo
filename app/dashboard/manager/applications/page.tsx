@@ -113,6 +113,18 @@ export default function ApplicationsPage() {
     setDetailLoading(false);
   }
 
+  // Calculate totals for summary cards
+  const totalApplications = total;
+  const totalPending = applications.filter(
+    (app) => app.status && app.status.includes("pending")
+  ).length;
+  const totalApproved = applications.filter(
+    (app) => app.status && app.status.includes("approved")
+  ).length;
+  const totalRejected = applications.filter(
+    (app) => app.status && app.status.includes("rejected")
+  ).length;
+
   if (loading) {
     return (
       <div className='flex flex-col items-center justify-center py-16'>
@@ -146,15 +158,54 @@ export default function ApplicationsPage() {
           </p>
         </div>
       </div>
+
+      {/* Summary Cards */}
+      <div className='grid gap-6 md:grid-cols-4'>
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Tổng số đơn từ
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{totalApplications}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Đang chờ xử lý
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{totalPending}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>Đã duyệt</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{totalApproved}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>Đã từ chối</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>{totalRejected}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <div className='flex items-center justify-between'>
             <CardTitle>Danh sách đơn từ</CardTitle>
-            {total > 0 && (
-              <div className='text-sm text-muted-foreground'>
-                Tổng cộng: {total} đơn từ
-              </div>
-            )}
           </div>
         </CardHeader>
         <CardContent className='relative'>
@@ -163,9 +214,9 @@ export default function ApplicationsPage() {
               <TableRow>
                 <TableHead>Tiêu đề</TableHead>
                 <TableHead>Loại đơn từ</TableHead>
+                <TableHead>Trạng thái</TableHead>
                 <TableHead>Người gửi</TableHead>
                 <TableHead>Ngày gửi</TableHead>
-                <TableHead>Ngày cập nhật</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -178,20 +229,84 @@ export default function ApplicationsPage() {
                   <TableCell className='font-medium'>{app.title}</TableCell>
                   <TableCell>
                     <div className='flex flex-wrap gap-1'>
-                      {Array.isArray(app.type) && app.type.length > 0 ? (
-                        app.type.map((t: string) => (
+                      {(() => {
+                        // Handle different type structures
+                        if (
+                          app.type &&
+                          typeof app.type === "object" &&
+                          "_id" in app.type
+                        ) {
+                          // Type is an object with title and nested type array
+                          const typeObj = app.type as any;
+                          return (
+                            <Badge
+                              variant='outline'
+                              className='text-xs'
+                            >
+                              {typeObj.title || "Đơn từ tùy chỉnh"}
+                            </Badge>
+                          );
+                        } else if (
+                          Array.isArray(app.type) &&
+                          app.type.length > 0
+                        ) {
+                          // Type is an array
+                          return app.type.map((t: string) => (
+                            <Badge
+                              key={t}
+                              variant='outline'
+                              className='text-xs'
+                            >
+                              {t === "instructor"
+                                ? "Giảng viên"
+                                : t === "member"
+                                ? "Thành viên"
+                                : t === "staff"
+                                ? "Nhân viên"
+                                : t}
+                            </Badge>
+                          ));
+                        } else {
+                          return (
+                            <Badge
+                              variant='outline'
+                              className='text-xs'
+                            >
+                              Không xác định
+                            </Badge>
+                          );
+                        }
+                      })()}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className='flex flex-wrap gap-1'>
+                      {app.status &&
+                      Array.isArray(app.status) &&
+                      app.status.length > 0 ? (
+                        app.status.map((status: string) => (
                           <Badge
-                            key={t}
-                            variant='outline'
+                            key={status}
+                            variant={
+                              status === "approved" || status === "completed"
+                                ? "default"
+                                : status === "rejected"
+                                ? "destructive"
+                                : status === "pending"
+                                ? "secondary"
+                                : "outline"
+                            }
                             className='text-xs'
                           >
-                            {t === "instructor"
-                              ? "Giảng viên"
-                              : t === "member"
-                              ? "Thành viên"
-                              : t === "staff"
-                              ? "Nhân viên"
-                              : t}
+                            {status === "pending"
+                              ? "Đang chờ"
+                              : status === "approved"
+                              ? "Đã duyệt"
+                              : status === "rejected"
+                              ? "Từ chối"
+                              : status === "completed"
+                              ? "Hoàn thành"
+                              : status}
                           </Badge>
                         ))
                       ) : (
@@ -199,7 +314,7 @@ export default function ApplicationsPage() {
                           variant='outline'
                           className='text-xs'
                         >
-                          Không xác định
+                          Chưa xử lý
                         </Badge>
                       )}
                     </div>
@@ -216,9 +331,6 @@ export default function ApplicationsPage() {
                   </TableCell>
                   <TableCell>
                     {new Date(app.created_at).toLocaleString("vi-VN")}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(app.updated_at).toLocaleString("vi-VN")}
                   </TableCell>
                 </TableRow>
               ))}
