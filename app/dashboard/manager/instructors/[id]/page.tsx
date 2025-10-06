@@ -456,7 +456,7 @@ export default function InstructorDetailPage() {
     return <div className='text-red-500 p-8'>{error}</div>;
   }
   return (
-    <div className='container mx-auto py-8 px-4'>
+    <div className='container mx-auto py-8 px-4 animate-in fade-in duration-500'>
       {/* Back Button */}
       <div className='mb-6'>
         <Link

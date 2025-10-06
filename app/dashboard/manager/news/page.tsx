@@ -209,13 +209,13 @@ export default function NewsListPage() {
   };
 
   return (
-    <div className='min-h-screen from-gray-50 via-white to-blue-50/30 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300'>
+    <div className='min-h-screen from-gray-50 via-white to-gray-50/30 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300'>
       <div className='container mx-auto px-1 sm:px-2 md:px-4 py-8 max-w-7xl'>
         {/* Header Section */}
         <div className='mb-8'>
           <Link
             href='/dashboard/manager'
-            className='inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 group mb-6'
+            className='inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 group mb-6 focus:outline-none'
           >
             <ArrowLeft className='mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200' />
             Quay lại Trang Chủ
@@ -223,7 +223,7 @@ export default function NewsListPage() {
 
           <div className='flex items-center space-x-4 mb-2'>
             <div className='flex-1'>
-              <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-800 dark:from-white dark:via-blue-200 dark:to-indigo-200 bg-clip-text text-transparent'>
+              <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-indigo-800 dark:from-white dark:via-gray-200 dark:to-indigo-200 bg-clip-text text-transparent'>
                 Tin Tức
               </h1>
               <p className='text-lg text-gray-600 dark:text-gray-400 mt-1'>
@@ -387,7 +387,7 @@ export default function NewsListPage() {
                               onClick={triggerFileUpload}
                               className='cursor-pointer'
                             >
-                              <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'>
+                              <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors'>
                                 Tải lên ảnh bìa
                               </span>
                               <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
@@ -456,8 +456,8 @@ export default function NewsListPage() {
                     )}
                   </div>
                 </div>
-                <div className='p-3 bg-blue-200/80 dark:bg-blue-900/50 rounded-xl'>
-                  <Bell className='h-6 w-6 text-blue-700 dark:text-blue-300' />
+                <div className='p-3 bg-gray-200/80 dark:bg-gray-900/50 rounded-xl'>
+                  <Bell className='h-6 w-6 text-gray-700 dark:text-gray-300' />
                 </div>
               </div>
             </CardContent>
@@ -560,15 +560,15 @@ export default function NewsListPage() {
                   <Link
                     key={newsItem._id}
                     href={`/dashboard/manager/news/${newsItem._id}`}
-                    className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200'
+                    className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200 focus:outline-none focus:ring-0 focus:border-none'
                   >
                     <div className='flex items-start space-x-4 p-6 group-hover:scale-[1.01] transition-transform duration-200'>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-start justify-between mb-2'>
-                          <h3 className='text-base font-semibold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors line-clamp-1 pr-4'>
+                          <h3 className='text-base font-semibold text-gray-800 dark:text-white group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors line-clamp-1 pr-4'>
                             {newsItem.title}
                           </h3>
-                          <ChevronRight className='h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0' />
+                          <ChevronRight className='h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0' />
                         </div>
 
                         <p className='text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors'>
@@ -582,7 +582,7 @@ export default function NewsListPage() {
                               index % 3 === 0
                                 ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
                                 : index % 3 === 1
-                                ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+                                ? "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
                                 : "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800"
                             } shadow-sm`}
                           >
@@ -602,10 +602,10 @@ export default function NewsListPage() {
             ) : (
               <div className='flex flex-col items-center justify-center py-16 text-center'>
                 <div className='relative mb-6'>
-                  <div className='w-20 h-20 bg-gradient-to-br from-gray-200 via-gray-100 to-blue-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center shadow-lg'>
+                  <div className='w-20 h-20 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center shadow-lg'>
                     <Bell className='h-10 w-10 text-gray-500 dark:text-gray-400' />
                   </div>
-                  <div className='absolute inset-0 bg-gradient-to-br from-blue-200/30 to-indigo-200/30 dark:from-blue-800/20 dark:to-indigo-800/20 rounded-full animate-pulse' />
+                  <div className='absolute inset-0 bg-gradient-to-br from-gray-200/30 to-indigo-200/30 dark:from-gray-800/20 dark:to-indigo-800/20 rounded-full animate-pulse' />
                 </div>
                 <h3 className='text-xl font-semibold text-gray-800 dark:text-white mb-2'>
                   Chưa có tin tức nào

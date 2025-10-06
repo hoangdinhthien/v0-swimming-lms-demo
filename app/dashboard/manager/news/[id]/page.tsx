@@ -338,7 +338,7 @@ export default function NewsDetailPage() {
   }, [coverImages, currentImageIndex]);
 
   return (
-    <div className='px-2 sm:px-4 md:px-6 lg:px-8 mx-auto max-w-full space-y-6'>
+    <div className='px-2 sm:px-4 md:px-6 lg:px-8  max-w-full space-y-6 animate-in fade-in duration-500'>
       {/* Header */}
       <div className='relative'>
         <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />

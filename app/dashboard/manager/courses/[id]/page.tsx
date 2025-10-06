@@ -426,7 +426,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     );
   }
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='min-h-screen bg-background animate-in fade-in duration-500'>
       {/* Header Section */}
       <div className='bg-card shadow-sm border-b border-border'>
         <div className='container mx-auto px-4 py-6'>

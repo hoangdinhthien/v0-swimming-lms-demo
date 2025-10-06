@@ -466,7 +466,7 @@ export default function StaffDetailPage() {
   }
 
   return (
-    <div className='container mx-auto py-8 px-4'>
+    <div className='container mx-auto py-8 px-4 animate-in fade-in duration-500'>
       {/* Back Button */}
       <div className='mb-6'>
         <Link

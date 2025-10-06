@@ -461,7 +461,7 @@ export default function ClassDetailPage() {
     });
   };
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='min-h-screen bg-background animate-in fade-in duration-500'>
       <div className='max-w-none mx-auto px-6 py-6 space-y-8'>
         {/* Back Button */}
         <div className='flex items-center space-x-2 text-sm opacity-80 hover:opacity-100 transition-opacity'>
