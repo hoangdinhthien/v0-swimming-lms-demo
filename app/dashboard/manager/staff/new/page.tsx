@@ -36,10 +36,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { uploadMedia } from "@/api/media-api";
 import config from "@/api/config.json";
 
 // Staff creation function using the actual API
-async function createStaffMember(staffData: any) {
+async function createStaffMember(staffData: any, avatarFile: File | null) {
   const tenantId = getSelectedTenant();
   const token = getAuthToken();
 
@@ -47,6 +48,28 @@ async function createStaffMember(staffData: any) {
   if (!token) throw new Error("Not authenticated");
 
   console.log("Creating staff:", staffData);
+
+  let uploadedMediaId = null;
+
+  // Upload avatar image if provided
+  if (avatarFile) {
+    try {
+      console.log("Uploading avatar image...");
+      const uploadResult = await uploadMedia({
+        file: avatarFile,
+        title: `Avatar for ${staffData.username}`,
+        alt: `Profile picture of ${staffData.username}`,
+        tenantId,
+        token,
+      });
+
+      uploadedMediaId = uploadResult.data._id;
+      console.log("Avatar uploaded successfully with ID:", uploadedMediaId);
+    } catch (error) {
+      console.error("Failed to upload avatar:", error);
+      throw new Error("Không thể tải lên ảnh đại diện. Vui lòng thử lại.");
+    }
+  }
 
   // Prepare the request body to match the API expected format
   const requestBody = {
@@ -56,11 +79,9 @@ async function createStaffMember(staffData: any) {
     phone: staffData.phone,
     address: staffData.address,
     is_active: staffData.isActive,
-    role_front: ["staff"], // Default role for staff
+    role: ["staff"], // Default role for staff
     ...(staffData.birthday && { birthday: staffData.birthday }),
-    ...(staffData.featured_image && {
-      featured_image: staffData.featured_image,
-    }),
+    ...(uploadedMediaId && { featured_image: [uploadedMediaId] }),
   };
 
   const response = await fetch(
@@ -101,6 +122,8 @@ export default function NewStaffPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -134,12 +157,40 @@ export default function NewStaffPage() {
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Lỗi",
+          description: "Kích thước file không được vượt quá 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Lỗi",
+          description: "Vui lòng chọn file ảnh hợp lệ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setAvatarFile(file);
+
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveImage = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
   };
 
   const validateForm = () => {
@@ -183,10 +234,9 @@ export default function NewStaffPage() {
     try {
       const staffData = {
         ...formData,
-        featured_image: avatarPreview,
       };
 
-      const result = await createStaffMember(staffData);
+      const result = await createStaffMember(staffData, avatarFile);
 
       if (result) {
         toast({
@@ -194,6 +244,7 @@ export default function NewStaffPage() {
           description: "Nhân viên đã được tạo thành công!",
         });
         router.push("/dashboard/manager/staff");
+        router.refresh(); // Refresh to show the new staff member
       }
     } catch (error: any) {
       toast({
@@ -216,7 +267,7 @@ export default function NewStaffPage() {
   };
 
   return (
-    <div className='max-w-4xl mx-auto'>
+    <div className='container py-8 px-4'>
       <div className='mb-6'>
         <Link
           href='/dashboard/manager/staff'
@@ -251,23 +302,38 @@ export default function NewStaffPage() {
           </CardHeader>
           <CardContent>
             <div className='flex items-center gap-6'>
-              <Avatar className='h-24 w-24 border-4 border-primary/10'>
-                <AvatarImage
-                  src={avatarPreview || "/placeholder-user.jpg"}
-                  alt='Preview'
-                />
-                <AvatarFallback className='bg-primary/10 text-primary text-lg'>
-                  {formData.username ? getInitials(formData.username) : "NV"}
-                </AvatarFallback>
-              </Avatar>
+              <div className='relative'>
+                <Avatar className='h-24 w-24 border-4 border-primary/10'>
+                  <AvatarImage
+                    src={avatarPreview || "/placeholder-user.jpg"}
+                    alt='Preview'
+                  />
+                  <AvatarFallback className='bg-primary/10 text-primary text-lg'>
+                    {formData.username ? getInitials(formData.username) : "NV"}
+                  </AvatarFallback>
+                </Avatar>
+                {avatarPreview && (
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='sm'
+                    className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
+                    onClick={handleRemoveImage}
+                  >
+                    <X className='h-3 w-3' />
+                  </Button>
+                )}
+              </div>
               <div className='space-y-3'>
-                <Label
-                  htmlFor='avatar-upload'
-                  className='cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors'
-                >
-                  <Upload className='h-4 w-4' />
-                  Tải ảnh lên
-                </Label>
+                <div className='flex gap-2'>
+                  <Label
+                    htmlFor='avatar-upload'
+                    className='cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors'
+                  >
+                    <Upload className='h-4 w-4' />
+                    {avatarFile ? "Thay đổi ảnh" : "Tải ảnh lên"}
+                  </Label>
+                </div>
                 <input
                   id='avatar-upload'
                   type='file'
@@ -275,6 +341,12 @@ export default function NewStaffPage() {
                   onChange={handleImageUpload}
                   className='hidden'
                 />
+                {avatarFile && (
+                  <div className='flex items-center gap-2 text-sm text-green-600'>
+                    <Check className='h-4 w-4' />
+                    <span>{avatarFile.name}</span>
+                  </div>
+                )}
                 <p className='text-xs text-muted-foreground'>
                   JPG, PNG hoặc GIF. Tối đa 5MB.
                 </p>
@@ -444,13 +516,13 @@ export default function NewStaffPage() {
           </Link>
           <Button
             type='submit'
-            disabled={loading}
+            disabled={loading || isUploadingImage}
             className='min-w-[120px]'
           >
             {loading ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                Đang tạo...
+                {avatarFile ? "Đang tải ảnh..." : "Đang tạo..."}
               </>
             ) : (
               <>

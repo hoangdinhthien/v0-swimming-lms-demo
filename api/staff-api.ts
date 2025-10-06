@@ -25,7 +25,7 @@ export interface StaffUser {
   email: string;
   phone?: string;
   is_active: boolean;
-  role_front?: string[];
+  role?: string[];
   featured_image?: any;
   created_at: string;
   updated_at?: string;
@@ -62,7 +62,7 @@ export interface CreateStaffRequest {
   emergency_contact?: string;
   address?: string;
   is_active?: boolean;
-  avatar?: string; // Base64 image data
+  avatar?: string[]; // Base64 image data
 }
 
 export interface UpdateStaffRequest {
@@ -340,7 +340,7 @@ export async function updateStaff({
     if (updates.address) requestBody.address = updates.address;
     if (updates.featured_image)
       requestBody.featured_image = updates.featured_image;
-    if (updates.role_front) requestBody.role_front = updates.role_front;
+    // if (updates.role_front) requestBody.role_front = updates.role_front;
     if (typeof updates.is_active === "boolean")
       requestBody.is_active = updates.is_active;
     if (updates.password) requestBody.password = updates.password;
