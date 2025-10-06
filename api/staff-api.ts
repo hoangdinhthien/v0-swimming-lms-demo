@@ -242,7 +242,7 @@ export async function createStaff({
 
   try {
     // Use the workflow-process endpoint pattern for creation
-    const url = buildApiUrl("/v1/workflow-process/manager/users");
+    const url = buildApiUrl("/v1/workflow-process/manager/user");
     console.log("Creating staff at URL:", url);
 
     const requestBody = {
@@ -361,7 +361,7 @@ export async function updateStaff({
     }
 
     const response = await fetch(url, {
-      method: "POST", // Use POST method as specified
+      method: "PUT", // Use POST method as specified
       headers: headers,
       body: JSON.stringify(requestBody),
     });

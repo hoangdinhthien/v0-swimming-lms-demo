@@ -686,7 +686,7 @@ export default function StaffDetailPage() {
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
       >
-        <DialogContent className='sm:max-w-[600px]'>
+        <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle className='text-lg font-semibold'>
               Chỉnh sửa thông tin nhân viên

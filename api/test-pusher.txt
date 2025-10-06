@@ -7,10 +7,6 @@ interface PusherMessage {
   [key: string]: any;
 }
 
-interface ChannelStatus {
-  [channelName: string]: string;
-}
-
 declare global {
   interface Window {
     Pusher: any;
@@ -18,26 +14,22 @@ declare global {
 }
 
 export default function PusherTestPage() {
+  
   const [connectionStatus, setConnectionStatus] = useState<string>('Connecting');
   const [socketId, setSocketId] = useState<string>('Connecting...');
-  const [channelsStatus, setChannelsStatus] = useState<ChannelStatus>({});
   const [messages, setMessages] = useState<Array<{ data: PusherMessage; timestamp: string; eventType?: string }>>([]);
-  const messagesRef = useRef<HTMLDivElement>(null);
   const pusherRef = useRef<any>(null);
   const channelRef = useRef<any>(null);
 
   useEffect(() => {
-    // Load Pusher script dynamically
+    // Load Pusher script
     const script = document.createElement('script');
     script.src = 'https://js.pusher.com/8.4.0/pusher.min.js';
     script.async = true;
-    script.onload = () => {
-      initializePusher();
-    };
+    script.onload = () => initializePusher();
     document.head.appendChild(script);
 
     return () => {
-      // Cleanup
       if (pusherRef.current) {
         pusherRef.current.disconnect();
       }
@@ -48,70 +40,50 @@ export default function PusherTestPage() {
   const initializePusher = () => {
     if (!window.Pusher) return;
 
-    // Enable pusher logging - don't include this in production
     window.Pusher.logToConsole = true;
 
     pusherRef.current = new window.Pusher('26002bf5864a964c0f0e', {
       cluster: 'ap1',
-      authorizer: function(channel: any, options: any) {
+      authorizer: function(channel: any) {
         return {
           authorize: function(socketId: string, callback: any) {
-            console.log('🔐 Authorizing channel:', channel.name, 'with socket ID:', socketId);
-            
             const token = localStorage.getItem('token');
             
-            fetch(${appSettings.URL_API}/pusher/auth, {
+            fetch(`${appSettings.URL_API}/pusher/auth`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': token ? Bearer ${token} : ''
+                'Authorization': token ? `Bearer ${token}` : ''
               },
               body: 'socket_id=' + encodeURIComponent(socketId) + '&channel_name=' + encodeURIComponent(channel.name)
             })
-            .then(response => {
-              console.log('📡 Auth response status:', response.status);
-              return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-              console.log('📋 Auth response data:', data);
-              
-              if (data.data && data.data.auth) {
-                console.log('✅ Auth successful:', data.data.auth);
-                callback(null, { auth: data.data.auth });
-              } else if (data.auth) {
-                // Fallback nếu auth ở root level
-                console.log('✅ Auth successful (root level):', data.auth);
-                callback(null, { auth: data.auth });
+              if (data.data?.auth || data.auth) {
+                callback(null, { auth: data.data?.auth || data.auth });
               } else {
-                console.error('❌ Auth failed - no auth field found in response');
-                callback(new Error('Auth failed - no auth field'), null);
+                callback(new Error('Auth failed'), null);
               }
             })
-            .catch(error => {
-              console.error('💥 Auth request failed:', error);
-              callback(error, null);
-            });
+            .catch(error => callback(error, null));
           }
         };
       }
     });
 
-    // Connection event handlers
+    // Connection handlers
     pusherRef.current.connection.bind('connected', function () {
       const socketId = pusherRef.current.connection.socket_id;
-      console.log('Connected with socket ID:', socketId);
       setSocketId(socketId);
       setConnectionStatus('Connected');
     });
 
     pusherRef.current.connection.bind('disconnected', function () {
-      console.log('Disconnected from Pusher');
       setSocketId('Not connected');
       setConnectionStatus('Disconnected');
     });
 
     pusherRef.current.connection.bind('connecting', function () {
-      console.log('Connecting to Pusher...');
       setSocketId('Connecting...');
       setConnectionStatus('Connecting');
     });
@@ -119,34 +91,9 @@ export default function PusherTestPage() {
     // Subscribe to channel
     const channelName = 'private-6711e8a47b45b2974bd6133c';
     channelRef.current = pusherRef.current.subscribe(channelName);
-    
-    // Update channel status to subscribing
-    setChannelsStatus(prev => ({
-      ...prev,
-      [channelName]: 'Subscribing...'
-    }));
 
-    // Channel subscription handlers
-    channelRef.current.bind('pusher:subscription_succeeded', function() {
-      console.log('Successfully subscribed to', channelName);
-      setChannelsStatus(prev => ({
-        ...prev,
-        [channelName]: 'Subscribed'
-      }));
-    });
-
-    channelRef.current.bind('pusher:subscription_error', function(error: any) {
-      console.error('Failed to subscribe to', channelName, ':', error);
-      setChannelsStatus(prev => ({
-        ...prev,
-        [channelName]: 'Error: ' + (error.error || 'Unknown error')
-      }));
-    });
-
-    // Bind tất cả events với bind_global
+    // Listen to all events
     channelRef.current.bind_global(function (eventName: string, data: PusherMessage) {
-      console.log('Received global event:', eventName, data);
-      
       const newMessage = {
         data: data,
         timestamp: new Date().toLocaleString(),
@@ -157,177 +104,30 @@ export default function PusherTestPage() {
     });
   };
 
-  // Scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const copySocketId = async () => {
-    if (socketId && socketId !== 'Not connected' && socketId !== 'Connecting...') {
-      try {
-        await navigator.clipboard.writeText(socketId);
-        alert('Socket ID copied to clipboard!');
-      } catch (err) {
-        console.error('Could not copy text: ', err);
-      }
-    }
-  };
-
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case 'Connected': return 'green';
-      case 'Disconnected': return 'red';
-      case 'Connecting': return 'orange';
-      default: return '#666';
-    }
-  };
-
-  const getChannelStatusColor = (status: string) => {
-    if (status === 'Subscribed') return 'green';
-    if (status.startsWith('Error')) return 'red';
-    if (status === 'Subscribing...') return 'orange';
-    return '#666';
-  };
-
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+    <div>
       <h1>Pusher Test</h1>
-
-      {/* Connection Info */}
-      <div style={{ 
-        background: '#f0f0f0', 
-        padding: '15px', 
-        margin: '20px 0', 
-        borderRadius: '8px' 
-      }}>
+      
+      <div>
         <h3>Connection Info</h3>
-        <p>
-          <strong>Status:</strong>{' '}
-          <span style={{ color: getConnectionStatusColor() }}>
-            {connectionStatus}
-          </span>
-        </p>
-        <p>
-          <strong>Socket ID:</strong>{' '}
-          <span style={{ 
-            fontFamily: 'monospace', 
-            background: '#e8e8e8', 
-            padding: '3px 6px', 
-            borderRadius: '3px' 
-          }}>
-            {socketId}
-          </span>
-          <button 
-            onClick={copySocketId}
-            style={{ 
-              marginLeft: '10px', 
-              padding: '3px 8px', 
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}
-          >
-            Copy
-          </button>
-        </p>
+        <p>Status: {connectionStatus}</p>
+        <p>Socket ID: {socketId}</p>
       </div>
 
-      {/* Subscribed Channels */}
-      <div style={{ 
-        background: '#f0f0f0', 
-        padding: '15px', 
-        margin: '20px 0', 
-        borderRadius: '8px' 
-      }}>
-        <h3>Subscribed Channels</h3>
-        <div>
-          {Object.keys(channelsStatus).length === 0 ? (
-            <div style={{ color: '#888', fontStyle: 'italic' }}>
-              No channels subscribed
-            </div>
-          ) : (
-            Object.entries(channelsStatus).map(([channelName, status]) => (
-              <div key={channelName} style={{
-                padding: '8px',
-                margin: '5px 0',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9'
-              }}>
-                <div>
-                  <strong>Channel:</strong>{' '}
-                  <code style={{ 
-                    background: '#e8e8e8', 
-                    padding: '2px 4px', 
-                    borderRadius: '3px' 
-                  }}>
-                    {channelName}
-                  </code>
-                </div>
-                <div>
-                  <strong>Status:</strong>{' '}
-                  <span style={{ 
-                    color: getChannelStatusColor(status), 
-                    fontWeight: 'bold' 
-                  }}>
-                    {status}
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Received Messages */}
-      <div style={{ margin: '20px 0' }}>
+      <div>
         <h3>Received Messages</h3>
-        <div 
-          ref={messagesRef}
-          style={{
-            border: '1px solid #ccc',
-            padding: '10px',
-            height: '300px',
-            overflowY: 'auto',
-            background: 'white'
-          }}
-        >
-          {messages.length === 0 ? (
-            <div style={{ color: '#888', fontStyle: 'italic' }}>
-              Waiting for messages...
+        {messages.length === 0 ? (
+          <p>Waiting for messages...</p>
+        ) : (
+          messages.map((message, index) => (
+            <div key={index}>
+              <p>Event: {message.eventType}</p>
+              <pre>{JSON.stringify(message.data, null, 2)}</pre>
+              <p>Time: {message.timestamp}</p>
+              <hr />
             </div>
-          ) : (
-            messages.map((message, index) => (
-              <div key={index} style={{
-                padding: '10px',
-                margin: '5px 0',
-                border: '1px solid #ddd',
-                borderRadius: '5px',
-                backgroundColor: '#f9f9f9'
-              }}>
-                <strong>Event received:</strong> 
-                {message.eventType && (
-                  <span style={{ 
-                    marginLeft: '8px',
-                    padding: '2px 6px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    borderRadius: '3px',
-                    fontSize: '12px'
-                  }}>
-                    {message.eventType}
-                  </span>
-                )}
-                <br/>
-                <pre style={{ margin: '5px 0' }}>
-                  {JSON.stringify(message.data, null, 2)}
-                </pre>
-                <small>Time: {message.timestamp}</small>
-              </div>
-            ))
-          )}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );

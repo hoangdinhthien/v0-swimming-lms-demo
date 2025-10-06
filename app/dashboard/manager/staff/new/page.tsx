@@ -34,9 +34,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { createStaff } from "@/api/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import config from "@/api/config.json";
 
 // Staff creation function using the actual API
 async function createStaffMember(staffData: any) {
@@ -48,52 +48,59 @@ async function createStaffMember(staffData: any) {
 
   console.log("Creating staff:", staffData);
 
-  return await createStaff({
-    tenantId,
-    token,
-    staffData: {
-      username: staffData.username,
-      email: staffData.email,
-      password: staffData.password,
-      phone: staffData.phone,
-      departments: staffData.departments,
-      position: staffData.position,
-      start_date: staffData.startDate,
-      bio: staffData.bio,
-      emergency_contact: staffData.emergencyContact,
-      address: staffData.address,
-      is_active: staffData.isActive,
-      avatar: staffData.avatar,
-    },
-  });
+  // Prepare the request body to match the API expected format
+  const requestBody = {
+    username: staffData.username,
+    email: staffData.email,
+    password: staffData.password,
+    phone: staffData.phone,
+    address: staffData.address,
+    is_active: staffData.isActive,
+    role_front: ["staff"], // Default role for staff
+    ...(staffData.birthday && { birthday: staffData.birthday }),
+    ...(staffData.featured_image && {
+      featured_image: staffData.featured_image,
+    }),
+  };
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/user`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        "x-tenant-id": tenantId,
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage;
+    try {
+      const errorData = JSON.parse(errorText);
+      errorMessage =
+        errorData.message ||
+        `Error (${response.status}): ${response.statusText}`;
+    } catch (e) {
+      errorMessage = `Error (${response.status}): ${
+        errorText || response.statusText
+      }`;
+    }
+    console.error("API error response:", errorText);
+    throw new Error(errorMessage);
+  }
+
+  return await response.json();
 }
-
-const DEPARTMENTS = [
-  "Quản lý",
-  "Giảng dạy",
-  "Lễ tân",
-  "Kế toán",
-  "Bảo trì",
-  "An ninh",
-  "Dọn dẹp",
-  "Khác",
-];
-
-const POSITIONS = [
-  "Quản lý",
-  "Phó quản lý",
-  "Trưởng phòng",
-  "Nhân viên chính",
-  "Nhân viên",
-  "Thực tập sinh",
-];
 
 export default function NewStaffPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -102,12 +109,9 @@ export default function NewStaffPage() {
     phone: "",
     password: "",
     confirmPassword: "",
-    position: "",
-    isActive: true,
-    bio: "",
-    emergencyContact: "",
+    birthday: "",
     address: "",
-    startDate: "",
+    isActive: true,
   });
 
   // Form validation
@@ -125,16 +129,6 @@ export default function NewStaffPage() {
         [field]: "",
       }));
     }
-  };
-
-  const handleDepartmentToggle = (department: string) => {
-    setSelectedDepartments((prev) => {
-      if (prev.includes(department)) {
-        return prev.filter((d) => d !== department);
-      } else {
-        return [...prev, department];
-      }
-    });
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,12 +161,6 @@ export default function NewStaffPage() {
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
     }
-    if (!formData.position) {
-      newErrors.position = "Chức vụ là bắt buộc";
-    }
-    if (selectedDepartments.length === 0) {
-      newErrors.departments = "Phải chọn ít nhất một phòng ban";
-    }
     if (
       formData.phone &&
       !/^\d{10,11}$/.test(formData.phone.replace(/\D/g, ""))
@@ -195,8 +183,7 @@ export default function NewStaffPage() {
     try {
       const staffData = {
         ...formData,
-        departments: selectedDepartments,
-        avatar: avatarPreview,
+        featured_image: avatarPreview,
       };
 
       const result = await createStaffMember(staffData);
@@ -356,14 +343,14 @@ export default function NewStaffPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='emergencyContact'>Liên hệ khẩn cấp</Label>
+                <Label htmlFor='birthday'>Ngày sinh</Label>
                 <Input
-                  id='emergencyContact'
-                  value={formData.emergencyContact}
+                  id='birthday'
+                  type='date'
+                  value={formData.birthday}
                   onChange={(e) =>
-                    handleInputChange("emergencyContact", e.target.value)
+                    handleInputChange("birthday", e.target.value)
                   }
-                  placeholder='Số điện thoại người thân'
                 />
               </div>
             </div>
@@ -441,119 +428,6 @@ export default function NewStaffPage() {
                 }
               />
               <Label htmlFor='isActive'>Kích hoạt tài khoản ngay</Label>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Work Information */}
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Building className='h-5 w-5 text-primary' />
-              Thông tin công việc
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label htmlFor='position'>
-                  Chức vụ <span className='text-red-500'>*</span>
-                </Label>
-                <Select
-                  value={formData.position}
-                  onValueChange={(value) =>
-                    handleInputChange("position", value)
-                  }
-                >
-                  <SelectTrigger
-                    className={errors.position ? "border-red-500" : ""}
-                  >
-                    <SelectValue placeholder='Chọn chức vụ' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {POSITIONS.map((position) => (
-                      <SelectItem
-                        key={position}
-                        value={position}
-                      >
-                        {position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.position && (
-                  <p className='text-red-500 text-sm'>{errors.position}</p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='startDate'>Ngày bắt đầu làm việc</Label>
-                <Input
-                  id='startDate'
-                  type='date'
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    handleInputChange("startDate", e.target.value)
-                  }
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label>
-                Phòng ban <span className='text-red-500'>*</span>
-              </Label>
-              <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
-                {DEPARTMENTS.map((department) => (
-                  <div
-                    key={department}
-                    className='flex items-center space-x-2'
-                  >
-                    <Checkbox
-                      id={`dept-${department}`}
-                      checked={selectedDepartments.includes(department)}
-                      onCheckedChange={() => handleDepartmentToggle(department)}
-                    />
-                    <Label
-                      htmlFor={`dept-${department}`}
-                      className='text-sm cursor-pointer'
-                    >
-                      {department}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              {selectedDepartments.length > 0 && (
-                <div className='flex flex-wrap gap-2 mt-2'>
-                  {selectedDepartments.map((dept) => (
-                    <Badge
-                      key={dept}
-                      variant='secondary'
-                      className='flex items-center gap-1'
-                    >
-                      {dept}
-                      <X
-                        className='h-3 w-3 cursor-pointer'
-                        onClick={() => handleDepartmentToggle(dept)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {errors.departments && (
-                <p className='text-red-500 text-sm'>{errors.departments}</p>
-              )}
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='bio'>Ghi chú</Label>
-              <Textarea
-                id='bio'
-                value={formData.bio}
-                onChange={(e) => handleInputChange("bio", e.target.value)}
-                placeholder='Thông tin bổ sung về nhân viên...'
-                rows={4}
-              />
             </div>
           </CardContent>
         </Card>
