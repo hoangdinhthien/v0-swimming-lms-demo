@@ -132,8 +132,6 @@ mcp
 
 MANAGER SEND NOTI CHO USER -> SỬ DỤNG PUSHER
 
-QUAN TRỌNG: USER VỚI CLASS VỚI COURSE SẼ ĐỔI IS ACTIVE THÀNH  STATUS
-
 ===================================
 
 student detail: process: từ 0 -> 1 (vd: 0.5 là học được 50% số buổi của lớp học đó) 

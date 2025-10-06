@@ -180,6 +180,11 @@ export default function DashboardLayout({
         icon: <UserCheck className='h-4 w-4' />,
       },
       {
+        name: "Nhân Viên",
+        href: "/dashboard/manager/staff",
+        icon: <Users className='h-4 w-4' />,
+      },
+      {
         name: "Khóa Học",
         href: "/dashboard/manager/courses",
         icon: <BookOpen className='h-4 w-4' />,
@@ -548,6 +553,11 @@ export default function DashboardLayout({
                       name: "Giáo Viên",
                       href: "/dashboard/manager/instructors",
                       icon: <UserCheck className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Nhân Viên",
+                      href: "/dashboard/manager/staff",
+                      icon: <Users className='h-4 w-4' />,
                     },
                     {
                       name: "Khóa Học",
