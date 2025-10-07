@@ -210,6 +210,11 @@ export default function DashboardLayout({
         icon: <FileText className='h-4 w-4' />,
       },
       {
+        name: "Loại Đơn Từ",
+        href: "/dashboard/manager/application-types",
+        icon: <Settings className='h-4 w-4' />,
+      },
+      {
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
         icon: <PaymentIcon className='h-4 w-4' />,
@@ -629,6 +634,11 @@ export default function DashboardLayout({
                       name: "Đơn từ",
                       href: "/dashboard/manager/applications",
                       icon: <FileText className='h-4 w-4' />,
+                    },
+                    {
+                      name: "Loại Đơn Từ",
+                      href: "/dashboard/manager/application-types",
+                      icon: <Settings className='h-4 w-4' />,
                     },
                     {
                       name: "Giao Dịch",

@@ -208,6 +208,16 @@ export default function NewsListPage() {
     setImagePreview(null);
   };
 
+  // Loading state similar to other manager pages
+  if (isLoading) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải danh sách tin tức...</p>
+      </div>
+    );
+  }
+
   return (
     <div className='min-h-screen from-gray-50 via-white to-gray-50/30 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300'>
       <div className='container mx-auto px-1 sm:px-2 md:px-4 py-8 max-w-7xl'>

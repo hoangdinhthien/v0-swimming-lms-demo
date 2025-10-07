@@ -193,7 +193,7 @@ export default function StaffPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center py-16'>
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
         <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
         <p className='text-muted-foreground'>Đang tải danh sách nhân viên...</p>
       </div>
@@ -202,7 +202,7 @@ export default function StaffPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center py-16'>
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
         <div className='text-center space-y-4'>
           <div className='text-red-500 text-lg font-semibold'>
             Lỗi tải dữ liệu
