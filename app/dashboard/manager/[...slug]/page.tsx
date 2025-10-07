@@ -10,7 +10,6 @@ import InstructorsPage from "../instructors/page";
 import InstructorDetailPage from "../instructors/[id]/page";
 import CoursesPage from "../courses/page";
 import CourseDetailPage from "../courses/[id]/page";
-import MessagesPage from "../messages/page";
 import ApplicationsPage from "../applications/page";
 import ApplicationDetailPage from "../applications/[id]/page";
 import TransactionsPage from "../transactions/page";
@@ -67,7 +66,6 @@ export default function ManagerCatchAllPage() {
       "students",
       "instructors",
       "courses",
-      "messages",
       "applications",
       "transactions",
       "calendar",
@@ -107,10 +105,6 @@ export default function ManagerCatchAllPage() {
         } else {
           setComponent(() => CoursesPage);
         }
-        break;
-
-      case "messages":
-        setComponent(() => MessagesPage);
         break;
 
       case "applications":

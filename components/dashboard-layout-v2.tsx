@@ -30,7 +30,6 @@ import {
   Clock,
   FileText,
   CreditCard as PaymentIcon,
-  MessageCircle,
   Tag,
   Cog,
 } from "lucide-react";
@@ -218,11 +217,6 @@ export default function DashboardLayout({
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
         icon: <PaymentIcon className='h-4 w-4' />,
-      },
-      {
-        name: "Tin nhắn",
-        href: "/dashboard/manager/messages",
-        icon: <MessageCircle className='h-4 w-4' />,
       },
       {
         name: "Khuyến Mãi",
@@ -644,11 +638,6 @@ export default function DashboardLayout({
                       name: "Giao Dịch",
                       href: "/dashboard/manager/transactions",
                       icon: <PaymentIcon className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Tin nhắn",
-                      href: "/dashboard/manager/messages",
-                      icon: <MessageCircle className='h-4 w-4' />,
                     },
                     {
                       name: "Khuyến Mãi",
