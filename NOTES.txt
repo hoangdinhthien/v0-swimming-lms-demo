@@ -147,7 +147,7 @@ sửa lại phần loading của hệ thống
 
 ===================================
 
-tạo thêm page để quản lý staff
+tạo thêm page để quản lý staff (chat history: adding fade in affect new page)
 
 ===================================
 
