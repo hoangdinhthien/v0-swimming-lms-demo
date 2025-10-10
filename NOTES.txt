@@ -150,29 +150,31 @@ sửa lại phần loading của hệ thống
 tạo thêm page để quản lý staff (chat history: adding fade in affect new page)
 
 ===================================
-
 Thứ tự công việc cần làm:
 
 Warning:
-- Thêm ngày bắt đầu hoc + thời điểm kết thúc khi tạo course ( dựa theo thông tin class chứ không phải course)
 
+Thêm ngày bắt đầu học + thời điểm kết thúc khi tạo course (dựa theo thông tin class chứ không phải course)
 - Lịch cố định: ko thanh toán cho khoá học mà thanh toán cho lớp học.
 => Giữ như luồng cũ
-- Lịch custom: thanh toán theo  khoá học. -> triển khai thêm một kiểu lớp học theo tháng 
+
+- Lịch custom: thanh toán theo khoa học. -> triển khai thêm một kiểu lớp học theo tháng
 => Bổ sung thêm field type (origin|monthly) => chủ yếu để filter
 => Bổ sung field is_monthly: boolean cho bảng classroom => sẽ là tính tiền khóa học theo tháng
-=> Mobile fe sẽ có ui hiện những khóa học cần đóng trong tháng => sau khi đóng manager/staff => kiểm tra 
+=> Mobile fe sẽ có ui hiện những khóa học cần đóng trong tháng => sau khi đóng manager/staff => kiểm tra
 
-* Việc học bơi người ta thường học theo kiểu là tập thể dục thể thao, học lấy tín chỉ, học luyện tập để thi.
+(LÀM UI LỊCH SAO CHO THUẬN TIỆN)
+
+***Việc học bơi người ta thường học theo kiểu là tập thể dục thể thao, học lấy tín chỉ, học luyện tập đề thi.
 Học theo một khóa nhất định (có start-> end)
 => Phát sinh có nhu cầu học như, đặt lịch học riêng, đợi được xếp lớp ( có hai kiểu bên trong là đăng ký rồi thì đợi trung tâm liên hệ sắp xếp)
 Học hàng tháng (tập thể dục thể thao)
 => Thì trung tâm sẽ mở sẵn các khóa và lớp học được lên lịch sẵn => user đóng tiền và được xếp lớp
 
-***=> điểm chung của hai cái này là Trung tâm chủ động xếp ( còn cái việc có course có lớp sẵn hay không để người ta chọn là do trung tâm vô manager làm)
+***=> điểm chung của hai cái này là Trung tâm chủ động xếp (còn cái việc có course có lớp sẵn hay không để người ta chọn là do trung tâm vô manager làm)
 
 Phase 1:
-- Lên phương án cho tính năng xếp lịch, chỉnh UI edit lịch học, tính thêm business rule cho các trường hợp đổi lịch học (Hoàng Fe)
-- Phân quyền staff theo tính năng do manager quản lý (Hoàng fe)
-- Sửa lại phần lịch học trên mobile (api đã có data) (bảo)
-- Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bảo)
+Lên phương án cho tính năng xếp lịch, chỉnh Ul edit lịch học, tính thêm business rule cho các trường hợp đổi lịch học (Hoàng Fe)
+Phân quyền staff theo tính năng do manager quản lý (Hoàng fe)
+Sửa lại phần lịch học trên mobile (api đã có data) (bào)
+Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bào)
