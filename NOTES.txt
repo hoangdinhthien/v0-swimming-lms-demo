@@ -178,3 +178,220 @@ Lên phương án cho tính năng xếp lịch, chỉnh Ul edit lịch học, t�
 Phân quyền staff theo tính năng do manager quản lý (Hoàng fe)
 Sửa lại phần lịch học trên mobile (api đã có data) (bào)
 Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bào)
+
+==========================================================
+
+ok, now we will begin to do the stuffs for the staff functions and UI
+
+MANAGER:
+- when the manager create a new staff, that staff can login into the manager system
+
+- this get method api is for the manager to get the list of all the permissions (modules) that the manager can choose to give which permission (module) for the staffs can use (and see in the UI). NOTE: the staffs can still login into the system even if the manager haven't give them any permission (modules) to use/access.
+  https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/staff-permission/list 
+  
+  here is the response data: 
+      { 
+        "data": [
+            [
+                [
+                    {
+                        "module": [
+                            "Course"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "Order"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "Class"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "User"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "News"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "Blog"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    },
+                    {
+                        "module": [
+                            "Application"
+                        ],
+                        "action": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "DELETE"
+                        ],
+                        "haveReview": true
+                    }
+                ]
+            ]
+        ],
+        "message": "Success",
+        "statusCode": 200
+      }
+
+- like i mentioned, the manager can allow/give access which functions (modules) for the staff too use (GET, POST, PUT, DELETE), for example after the manager created a new staff name staff5, after that the manager give GET and POST and noReview:true permission for staff5, staff5 can access the 'Lớp Học' tab on the UI (user module), which means that staff5 see the list of classes (and the class details) and staff5 can create a new class, and for the noReview: true means that staff5 create a new class directly without the manager approval
+  here is the put method for the manager to Edit a staff's list of permission:
+      https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/staff-permission?user=68e12cd44b476e8659a11b52
+  
+  and here is the example request body:
+      {
+    "permission": [
+        // course
+        {
+            "module": [
+                "Class"
+            ],
+            "action": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE"
+            ],
+            "noReview": true
+        },
+        // order
+        {
+            "module": [
+                "Order"
+            ],
+            "action": [
+                "GET",
+                "PUT"
+            ],
+            "noReview": true
+        },
+          {
+            "module": [
+                "Course"
+            ],
+            "action": [
+                "GET",
+                "PUT",
+                "POST"
+            ],
+            "noReview": true
+        }
+    ]
+}
+
+NOW FOR THE STAFF PART :
+- after the manager have created the staff account and give the permission modules for the staff, or have not the staff the permissions, the staff can login into the system
+
+- after the staff enter the account and password login into the system, there comes this api to get that staff account the list of permission(s) that the manager have allow for the to use in the system (to get staff permissions to show in UI):
+    https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/staff/permission
+
+    here is the response data:
+    {
+    "data": [
+        [
+            [
+                {
+                    "_id": "68e1319dcda336aa1ba8a673",
+                    "user": "68e12e6d7aaffa220aca8835",
+                    "permission": [
+                        {
+                            "module": [
+                                "Class"
+                            ],
+                            "action": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE"
+                            ],
+                            "noReview": true
+                        },
+                        {
+                            "module": [
+                                "Order"
+                            ],
+                            "action": [
+                                "GET",
+                                "PUT"
+                            ],
+                            "noReview": true
+                        },
+                        {
+                            "module": [
+                                "Course"
+                            ],
+                            "action": [
+                                "GET",
+                                "PUT",
+                                "POST"
+                            ],
+                            "noReview": true
+                        }
+                    ],
+                    "created_at": "2025-10-04T21:39:25.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-10-11T17:49:07.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                }
+            ]
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+
+for the api(s) that belongs to the staff i think you should create a separate api folder inside the current api folder of the project to prevent confusions in the future
+
+NOTE THAT ALL THESE APIS YOU HAVE THE PASS THE x-tenant-id TO THE HEADER AND ALSO THE token TOO 

@@ -32,6 +32,31 @@ export interface StaffUser {
   created_by?: string;
   updated_by?: string;
   parent_id?: string | null;
+  role_front?: string[];
+  address?: string;
+}
+
+export interface Permission {
+  module: string[];
+  action: string[];
+  noReview: boolean;
+}
+
+export interface AvailablePermission {
+  module: string[];
+  action: string[];
+  haveReview: boolean;
+}
+
+export interface StaffWithPermissions {
+  _id: string;
+  user: StaffUser;
+  permission: Permission[];
+  created_at: string;
+  updated_at?: string;
+  created_by?: any;
+  updated_by?: any;
+  tenant_id: string;
 }
 
 export interface Staff {
@@ -183,6 +208,88 @@ export async function fetchStaff({
   }
 }
 
+// Fetch staff member detail with permissions
+export async function fetchStaffDetailWithModule({
+  staffId,
+  tenantId,
+  token,
+}: {
+  staffId: string;
+  tenantId: string;
+  token?: string;
+}): Promise<StaffWithPermissions> {
+  console.log(
+    "Fetching staff detail with permissions for user ID:",
+    staffId,
+    "tenant:",
+    tenantId
+  );
+
+  try {
+    const url = buildApiUrl(
+      `/v1/workflow-process/manager/staff-permission?user=${staffId}`
+    );
+    console.log("Fetching staff with permissions from URL:", url);
+
+    // Create headers with both token and tenant ID
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "Failed to fetch staff with permissions:",
+        response.status,
+        errorText
+      );
+      throw new Error(
+        `Failed to fetch staff with permissions: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("Staff with permissions API response:", data);
+
+    // Handle the specific nested array response format
+    // Response structure: { data: [[{ documents: [...] }]], message: "Success", statusCode: 200 }
+    if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      const nestedData = data.data[0];
+      if (Array.isArray(nestedData) && nestedData.length > 0) {
+        const actualData = nestedData[0];
+        if (
+          actualData &&
+          actualData.documents &&
+          Array.isArray(actualData.documents) &&
+          actualData.documents.length > 0
+        ) {
+          console.log(
+            "Found staff with permissions data:",
+            actualData.documents[0]
+          );
+          return actualData.documents[0];
+        }
+      }
+    }
+
+    console.error("Staff member not found with user ID:", staffId);
+    throw new Error(`Staff member not found with user ID: ${staffId}`);
+  } catch (error) {
+    console.error("Error fetching staff detail with permissions:", error);
+    throw error;
+  }
+}
+
 // Fetch staff member detail
 export async function fetchStaffDetail({
   staffId,
@@ -209,14 +316,27 @@ export async function fetchStaffDetail({
     });
 
     console.log("Staff list for detail lookup:", staffList);
+    console.log("Looking for user ID:", staffId);
 
     // Find the staff member with matching user._id
-    const staffMember = staffList.find(
-      (staff: Staff) => staff.user._id === staffId
-    );
+    // Add more specific logging to debug the issue
+    const staffMember = staffList.find((staff: Staff) => {
+      console.log(
+        `Comparing staff ${staff.user?.username}: staff.user._id="${staff.user?._id}" with target="${staffId}"`
+      );
+      return staff.user._id === staffId;
+    });
 
     if (!staffMember) {
       console.error("Staff member not found with user ID:", staffId);
+      console.error(
+        "Available staff user IDs:",
+        staffList.map((s) => ({
+          name: s.user?.username,
+          userId: s.user?._id,
+          staffId: s._id,
+        }))
+      );
       throw new Error(`Staff member not found with user ID: ${staffId}`);
     }
 
@@ -592,6 +712,139 @@ export async function bulkUpdateStaff({
     };
   } catch (error) {
     console.error("Error bulk updating staff:", error);
+    throw error;
+  }
+}
+
+// Fetch available permissions that manager can assign to staff
+export async function fetchAvailablePermissions({
+  tenantId,
+  token,
+}: {
+  tenantId: string;
+  token: string;
+}): Promise<AvailablePermission[]> {
+  console.log("Fetching available permissions for tenant:", tenantId);
+
+  try {
+    const url = buildApiUrl(
+      "/v1/workflow-process/manager/staff-permission/list"
+    );
+    console.log("Fetching available permissions from URL:", url);
+
+    // Create headers with both token and tenant ID
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "Failed to fetch available permissions:",
+        response.status,
+        errorText
+      );
+      throw new Error(
+        `Failed to fetch available permissions: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("Available permissions API response:", data);
+
+    // Handle the nested array response format: { data: [[[...]]], message: "Success", statusCode: 200 }
+    if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      const nestedData = data.data[0];
+      if (Array.isArray(nestedData) && nestedData.length > 0) {
+        const actualData = nestedData[0];
+        if (Array.isArray(actualData)) {
+          console.log("Found available permissions data:", actualData);
+          return actualData;
+        }
+      }
+    }
+
+    console.warn("Unexpected available permissions API response format:", data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching available permissions:", error);
+    throw error;
+  }
+}
+
+// Update staff permissions
+export async function updateStaffPermissions({
+  staffId,
+  tenantId,
+  token,
+  permissions,
+}: {
+  staffId: string;
+  tenantId: string;
+  token: string;
+  permissions: Permission[];
+}): Promise<{ success: boolean }> {
+  console.log(
+    "Updating staff permissions for user ID:",
+    staffId,
+    "with permissions:",
+    permissions
+  );
+
+  try {
+    const url = buildApiUrl(
+      `/v1/workflow-process/manager/staff-permission?user=${staffId}`
+    );
+    console.log("Updating staff permissions at URL:", url);
+
+    const requestBody = {
+      permission: permissions,
+    };
+
+    // Create headers with both token and tenant ID
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "Failed to update staff permissions:",
+        response.status,
+        errorText
+      );
+      throw new Error(
+        `Failed to update staff permissions: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("Update staff permissions API response:", data);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating staff permissions:", error);
     throw error;
   }
 }

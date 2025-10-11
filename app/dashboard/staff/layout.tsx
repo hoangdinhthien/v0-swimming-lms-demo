@@ -3,13 +3,13 @@
 import DashboardLayout from "@/components/dashboard-layout-v2";
 import RoleGuard from "@/components/role-guard";
 
-export default function ManagerDashboardLayout({
+export default function StaffDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <RoleGuard allowedRoles={["manager"]}>
+    <RoleGuard allowedRoles={["staff"]}>
       <DashboardLayout>{children}</DashboardLayout>
     </RoleGuard>
   );

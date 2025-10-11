@@ -49,7 +49,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { fetchStaffDetail, updateStaff } from "@/api/staff-api";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  fetchStaffDetailWithModule,
+  fetchStaffDetail,
+  updateStaff,
+  fetchAvailablePermissions,
+  updateStaffPermissions,
+} from "@/api/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getTenantInfo } from "@/api/tenant-api";
@@ -130,6 +137,13 @@ export default function StaffDetailPage() {
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
+  // Permissions management state
+  const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [selectedPermissions, setSelectedPermissions] = useState<any[]>([]);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+
   const form = useForm<z.infer<typeof staffFormSchema>>({
     resolver: zodResolver(staffFormSchema),
     defaultValues: {
@@ -177,8 +191,9 @@ export default function StaffDetailPage() {
           "[DEBUG] This should be user._id from the staff list (correct)"
         );
 
-        const detailData = await fetchStaffDetail({
-          staffId,
+        // Now we can directly use the user._id to get permissions
+        const detailData = await fetchStaffDetailWithModule({
+          staffId, // This is now user._id from the URL
           tenantId,
           token,
         });
@@ -189,14 +204,7 @@ export default function StaffDetailPage() {
           "[DEBUG] Staff featured_image:",
           detailData.user?.featured_image
         );
-        console.log(
-          "[DEBUG] Staff classes as instructor:",
-          detailData.classesAsInstructor
-        );
-        console.log(
-          "[DEBUG] Staff classes as member:",
-          detailData.classesAsMember
-        );
+        console.log("[DEBUG] Staff permissions:", detailData.permission);
 
         setDetail(detailData);
 
@@ -210,13 +218,11 @@ export default function StaffDetailPage() {
           username: detailData.user?.username || "",
           email: detailData.user?.email || "",
           phone: detailData.user?.phone || "",
-          address: detailData.address || "",
-          bio: detailData.bio || "",
-          emergency_contact: detailData.emergency_contact || "",
-          start_date: detailData.start_date
-            ? new Date(detailData.start_date).toISOString().split("T")[0]
-            : "",
-          position: detailData.position || "",
+          address: detailData.user?.address || "",
+          bio: "", // Note: bio is not in the new API response
+          emergency_contact: "", // Note: emergency_contact is not in the new API response
+          start_date: "", // Note: start_date is not in the new API response
+          position: "", // Note: position is not in the new API response
           is_active: detailData.user?.is_active ?? true,
         });
       } catch (e: any) {
@@ -251,9 +257,9 @@ export default function StaffDetailPage() {
     if (!tenantId || !token) return;
 
     try {
-      console.log("[DEBUG] Updating staff with user ID:", staffId);
+      console.log("[DEBUG] Updating staff with user ID from URL:", staffId);
       console.log("[DEBUG] Staff detail data:", detail);
-      console.log("[DEBUG] User ID from URL:", staffId);
+      console.log("[DEBUG] Using user ID for update:", staffId);
       console.log("[DEBUG] Update data:", data);
 
       // Prepare update data
@@ -273,7 +279,7 @@ export default function StaffDetailPage() {
 
       // Send request to update staff using the user ID from URL
       await updateStaff({
-        staffId: staffId,
+        staffId: staffId, // URL param is now user._id
         tenantId,
         token,
         updates: updateData,
@@ -311,8 +317,9 @@ export default function StaffDetailPage() {
       const token = getAuthToken();
       if (!token) throw new Error("Không có thông tin xác thực");
 
-      const detailData = await fetchStaffDetail({
-        staffId,
+      // Directly use the user._id to get permissions
+      const detailData = await fetchStaffDetailWithModule({
+        staffId, // This is user._id from the URL
         tenantId,
         token,
       });
@@ -327,13 +334,11 @@ export default function StaffDetailPage() {
         username: detailData.user?.username || "",
         email: detailData.user?.email || "",
         phone: detailData.user?.phone || "",
-        address: detailData.address || "",
-        bio: detailData.bio || "",
-        emergency_contact: detailData.emergency_contact || "",
-        start_date: detailData.start_date
-          ? new Date(detailData.start_date).toISOString().split("T")[0]
-          : "",
-        position: detailData.position || "",
+        address: detailData.user?.address || "",
+        bio: "", // Note: bio is not in the new API response
+        emergency_contact: "", // Note: emergency_contact is not in the new API response
+        start_date: "", // Note: start_date is not in the new API response
+        position: "", // Note: position is not in the new API response
         is_active: detailData.user?.is_active ?? true,
       });
 
@@ -428,6 +433,137 @@ export default function StaffDetailPage() {
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  // Load available permissions when opening permissions modal
+  const loadAvailablePermissions = async () => {
+    const tenantId = getSelectedTenant();
+    const token = getAuthToken();
+    if (!tenantId || !token) return;
+
+    setIsLoadingPermissions(true);
+    try {
+      const permissions = await fetchAvailablePermissions({ tenantId, token });
+      setAvailablePermissions(permissions);
+
+      // Initialize selected permissions based on current staff permissions
+      if (detail?.permission) {
+        setSelectedPermissions(detail.permission);
+      } else {
+        setSelectedPermissions([]);
+      }
+    } catch (error) {
+      console.error("Error loading available permissions:", error);
+      toast({
+        title: "Lỗi tải quyền",
+        description: "Không thể tải danh sách quyền khả dụng",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingPermissions(false);
+    }
+  };
+
+  // Handle opening permissions modal
+  const handleOpenPermissionsModal = () => {
+    setIsPermissionsModalOpen(true);
+    loadAvailablePermissions();
+  };
+
+  // Handle permission toggle
+  const handlePermissionToggle = (modulePermission: any, checked: boolean) => {
+    if (checked) {
+      // Add permission with default settings
+      const newPermission = {
+        module: modulePermission.module,
+        action: modulePermission.action, // Start with all available actions
+        noReview: !modulePermission.haveReview, // Inverse of haveReview
+      };
+      setSelectedPermissions([...selectedPermissions, newPermission]);
+    } else {
+      // Remove permission
+      setSelectedPermissions(
+        selectedPermissions.filter(
+          (perm) =>
+            !perm.module.some((m: string) =>
+              modulePermission.module.includes(m)
+            )
+        )
+      );
+    }
+  };
+
+  // Handle action toggle for a specific permission
+  const handleActionToggle = (
+    permissionIndex: number,
+    action: string,
+    checked: boolean
+  ) => {
+    const updatedPermissions = [...selectedPermissions];
+    const permission = updatedPermissions[permissionIndex];
+
+    if (checked) {
+      // Add action if not already present
+      if (!permission.action.includes(action)) {
+        permission.action = [...permission.action, action];
+      }
+    } else {
+      // Remove action
+      permission.action = permission.action.filter((a: string) => a !== action);
+    }
+
+    setSelectedPermissions(updatedPermissions);
+  };
+
+  // Handle review requirement toggle
+  const handleReviewToggle = (permissionIndex: number, noReview: boolean) => {
+    const updatedPermissions = [...selectedPermissions];
+    updatedPermissions[permissionIndex].noReview = noReview;
+    setSelectedPermissions(updatedPermissions);
+  };
+
+  // Save permissions
+  const handleSavePermissions = async () => {
+    const tenantId = getSelectedTenant();
+    const token = getAuthToken();
+    if (!tenantId || !token) return;
+
+    setIsSavingPermissions(true);
+    try {
+      // Filter out permissions with no actions
+      const validPermissions = selectedPermissions.filter(
+        (perm) => perm.action && perm.action.length > 0
+      );
+
+      await updateStaffPermissions({
+        staffId: staffId, // URL param is now user._id
+        tenantId,
+        token,
+        permissions: validPermissions,
+      });
+
+      toast({
+        title: "Cập nhật quyền thành công",
+        description: "Quyền truy cập của nhân viên đã được cập nhật",
+        variant: "default",
+        className:
+          "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
+      });
+
+      setIsPermissionsModalOpen(false);
+
+      // Refresh staff details to show updated permissions
+      await fetchDetailAgain();
+    } catch (error) {
+      console.error("Error saving permissions:", error);
+      toast({
+        title: "Lỗi cập nhật quyền",
+        description: "Không thể cập nhật quyền truy cập",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingPermissions(false);
+    }
   };
 
   if (loading) {
@@ -544,6 +680,14 @@ export default function StaffDetailPage() {
                 >
                   <Edit className='mr-2 h-4 w-4' />
                   Chỉnh sửa thông tin
+                </Button>
+                <Button
+                  onClick={handleOpenPermissionsModal}
+                  variant='outline'
+                  className='w-full'
+                >
+                  <UserCheck className='mr-2 h-4 w-4' />
+                  Quản lý quyền truy cập
                 </Button>
               </div>
             </div>
@@ -675,6 +819,124 @@ export default function StaffDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Permissions Section */}
+            {detail.permission && detail.permission.length > 0 && (
+              <div className='mt-8'>
+                <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2'>
+                  <UserCheck className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />
+                  Quyền truy cập hệ thống
+                </h3>
+                <div className='bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+                  <div className='space-y-4'>
+                    {detail.permission.map((perm: any, index: number) => (
+                      <div
+                        key={index}
+                        className='border-b border-blue-200 dark:border-blue-700 last:border-b-0 pb-4 last:pb-0'
+                      >
+                        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-2 mb-2'>
+                              <h4 className='font-medium text-blue-900 dark:text-blue-200'>
+                                {perm.module
+                                  .map((module: string) => {
+                                    const moduleTranslations: {
+                                      [key: string]: string;
+                                    } = {
+                                      Class: "Quản lý lớp học",
+                                      Order: "Quản lý đơn hàng",
+                                      Course: "Quản lý khóa học",
+                                      Student: "Quản lý học viên",
+                                      Instructor: "Quản lý giảng viên",
+                                      Schedule: "Quản lý lịch học",
+                                      Pool: "Quản lý hồ bơi",
+                                      News: "Quản lý tin tức",
+                                      Media: "Quản lý media",
+                                    };
+                                    return moduleTranslations[module] || module;
+                                  })
+                                  .join(", ")}
+                              </h4>
+                              {perm.noReview && (
+                                <Badge
+                                  variant='outline'
+                                  className='bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700 text-xs'
+                                >
+                                  Không cần duyệt
+                                </Badge>
+                              )}
+                            </div>
+                            <div className='text-sm text-muted-foreground'>
+                              <span className='font-medium'>
+                                Quyền thao tác:{" "}
+                              </span>
+                              {perm.action
+                                .map((action: string) => {
+                                  const actionTranslations: {
+                                    [key: string]: string;
+                                  } = {
+                                    GET: "Xem",
+                                    POST: "Tạo mới",
+                                    PUT: "Chỉnh sửa",
+                                    DELETE: "Xóa",
+                                  };
+                                  return actionTranslations[action] || action;
+                                })
+                                .join(", ")}
+                            </div>
+                          </div>
+                          <div className='flex flex-wrap gap-1'>
+                            {perm.action.map((action: string) => {
+                              const actionConfig: {
+                                [key: string]: {
+                                  label: string;
+                                  className: string;
+                                };
+                              } = {
+                                GET: {
+                                  label: "Xem",
+                                  className:
+                                    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700",
+                                },
+                                POST: {
+                                  label: "Tạo",
+                                  className:
+                                    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700",
+                                },
+                                PUT: {
+                                  label: "Sửa",
+                                  className:
+                                    "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700",
+                                },
+                                DELETE: {
+                                  label: "Xóa",
+                                  className:
+                                    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700",
+                                },
+                              };
+                              const config = actionConfig[action] || {
+                                label: action,
+                                className:
+                                  "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/50 dark:text-gray-300 dark:border-gray-700",
+                              };
+                              return (
+                                <Badge
+                                  key={action}
+                                  variant='outline'
+                                  className={`text-xs ${config.className}`}
+                                >
+                                  {config.label}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Separator className='my-6' />
           </CardContent>
@@ -928,6 +1190,209 @@ export default function StaffDetailPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permissions Management Dialog */}
+      <Dialog
+        open={isPermissionsModalOpen}
+        onOpenChange={setIsPermissionsModalOpen}
+      >
+        <DialogContent className='sm:max-w-[800px] max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle className='text-lg font-semibold'>
+              Quản lý quyền truy cập
+            </DialogTitle>
+            <DialogDescription>
+              Thiết lập quyền truy cập các module cho nhân viên{" "}
+              {detail?.user?.username}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isLoadingPermissions ? (
+            <div className='flex flex-col items-center justify-center py-8'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+              <div>Đang tải danh sách quyền...</div>
+            </div>
+          ) : (
+            <div className='space-y-6 py-4'>
+              {availablePermissions.length === 0 ? (
+                <div className='text-center py-8 text-muted-foreground'>
+                  Không có quyền nào khả dụng
+                </div>
+              ) : (
+                <div className='space-y-4'>
+                  {availablePermissions.map(
+                    (availablePermission: any, index: number) => {
+                      const moduleNames = availablePermission.module || [];
+                      const moduleName = moduleNames[0] || "Unknown";
+
+                      // Check if this module is currently selected
+                      const selectedPermissionIndex =
+                        selectedPermissions.findIndex((perm) =>
+                          perm.module.some((m: string) =>
+                            moduleNames.includes(m)
+                          )
+                        );
+                      const isSelected = selectedPermissionIndex !== -1;
+                      const selectedPermission = isSelected
+                        ? selectedPermissions[selectedPermissionIndex]
+                        : null;
+
+                      // Module name translations
+                      const moduleTranslations: { [key: string]: string } = {
+                        Class: "Quản lý lớp học",
+                        Order: "Quản lý đơn hàng",
+                        Course: "Quản lý khóa học",
+                        User: "Quản lý người dùng",
+                        News: "Quản lý tin tức",
+                        Blog: "Quản lý blog",
+                        Application: "Quản lý đơn đăng ký",
+                      };
+
+                      const translatedModuleName =
+                        moduleTranslations[moduleName] || moduleName;
+
+                      return (
+                        <Card
+                          key={index}
+                          className='border border-muted'
+                        >
+                          <CardContent className='p-4'>
+                            <div className='space-y-4'>
+                              {/* Module Selection */}
+                              <div className='flex items-center space-x-2'>
+                                <Checkbox
+                                  id={`module-${index}`}
+                                  checked={isSelected}
+                                  onCheckedChange={(checked) =>
+                                    handlePermissionToggle(
+                                      availablePermission,
+                                      checked as boolean
+                                    )
+                                  }
+                                />
+                                <Label
+                                  htmlFor={`module-${index}`}
+                                  className='text-base font-semibold text-blue-900 dark:text-blue-200'
+                                >
+                                  {translatedModuleName}
+                                </Label>
+                              </div>
+
+                              {/* Actions and Review Settings - Only show if module is selected */}
+                              {isSelected && selectedPermission && (
+                                <div className='ml-6 space-y-4 border-l-2 border-blue-200 pl-4'>
+                                  {/* Actions */}
+                                  <div>
+                                    <Label className='text-sm font-medium mb-2 block'>
+                                      Quyền thao tác:
+                                    </Label>
+                                    <div className='grid grid-cols-2 gap-2'>
+                                      {(availablePermission.action || []).map(
+                                        (action: string) => {
+                                          const actionTranslations: {
+                                            [key: string]: string;
+                                          } = {
+                                            GET: "Xem",
+                                            POST: "Tạo mới",
+                                            PUT: "Chỉnh sửa",
+                                            DELETE: "Xóa",
+                                          };
+
+                                          const translatedAction =
+                                            actionTranslations[action] ||
+                                            action;
+                                          const isActionSelected =
+                                            selectedPermission.action.includes(
+                                              action
+                                            );
+
+                                          return (
+                                            <div
+                                              key={action}
+                                              className='flex items-center space-x-2'
+                                            >
+                                              <Checkbox
+                                                id={`action-${index}-${action}`}
+                                                checked={isActionSelected}
+                                                onCheckedChange={(checked) =>
+                                                  handleActionToggle(
+                                                    selectedPermissionIndex,
+                                                    action,
+                                                    checked as boolean
+                                                  )
+                                                }
+                                              />
+                                              <Label
+                                                htmlFor={`action-${index}-${action}`}
+                                                className='text-sm'
+                                              >
+                                                {translatedAction}
+                                              </Label>
+                                            </div>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Review Requirement */}
+                                  <div className='flex items-center space-x-2'>
+                                    <Checkbox
+                                      id={`no-review-${index}`}
+                                      checked={selectedPermission.noReview}
+                                      onCheckedChange={(checked) =>
+                                        handleReviewToggle(
+                                          selectedPermissionIndex,
+                                          checked as boolean
+                                        )
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`no-review-${index}`}
+                                      className='text-sm'
+                                    >
+                                      Không cần phê duyệt
+                                    </Label>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setIsPermissionsModalOpen(false)}
+              disabled={isSavingPermissions}
+            >
+              Hủy
+            </Button>
+            <Button
+              type='button'
+              onClick={handleSavePermissions}
+              disabled={isSavingPermissions || isLoadingPermissions}
+            >
+              {isSavingPermissions ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu quyền truy cập"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

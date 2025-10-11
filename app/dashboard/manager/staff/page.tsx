@@ -43,6 +43,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchStaff } from "@/api/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -98,6 +99,11 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Permission modal states
+  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
+  const [selectedStaffForPermission, setSelectedStaffForPermission] =
+    useState<any>(null);
+
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -115,14 +121,25 @@ export default function StaffPage() {
         });
 
         // Process each staff member to get their images
-        const processedStaff = data.map((item: any) => {
+        const processedStaff = data.map((item: any, index: number) => {
           // Extract avatar URL using helper function
           const avatarUrl = extractAvatarUrl(item.user?.featured_image);
           console.log(`Avatar for staff ${item.user?.username}:`, avatarUrl);
 
+          // Debug logging for ID issues
+          console.log(`Processing staff: ${item.user?.username}`);
+          console.log(`- Staff ID (item._id): ${item._id}`);
+          console.log(`- User ID (item.user._id): ${item.user?._id}`);
+          console.log(`- Full item:`, item);
+
+          // Use user._id for navigation since that's what the detail page expects
+          // This ensures consistent ID usage throughout the application
+          const primaryId = item.user?._id || `staff-${index}`;
+
           return {
-            id: item.user?._id, // Use user._id instead of staff._id for detail navigation
+            id: primaryId, // Use user._id for navigation and display
             staffId: item._id, // Keep staff._id for reference
+            userId: item.user?._id, // Keep user._id separately for API calls
             name: item.user?.username || "-",
             email: item.user?.email || "-",
             phone: item.user?.phone || "-",
@@ -141,6 +158,19 @@ export default function StaffPage() {
           };
         });
 
+        console.log("Processed staff array:", processedStaff);
+        console.log(
+          "Staff IDs:",
+          processedStaff.map((s) => ({
+            name: s.name,
+            id: s.id,
+            userId: s.userId,
+            staffId: s.staffId,
+          }))
+        );
+
+        // Since we're now always using staff._id, no need for duplicate checking
+        console.log("Final staff array:", processedStaff);
         setStaff(processedStaff);
       } catch (e: any) {
         setError(e.message || "Failed to fetch staff");
@@ -379,17 +409,15 @@ export default function StaffPage() {
                   <TableHead className='font-semibold'>Phòng ban</TableHead>
                   <TableHead className='font-semibold'>Ngày tham gia</TableHead>
                   <TableHead className='font-semibold'>Trạng thái</TableHead>
+                  <TableHead className='font-semibold'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredStaff.length > 0 ? (
-                  filteredStaff.map((member) => (
+                  filteredStaff.map((member, index) => (
                     <TableRow
-                      key={member.id}
-                      className='hover:bg-muted/50 transition-colors cursor-pointer'
-                      onClick={() => {
-                        router.push(`/dashboard/manager/staff/${member.id}`);
-                      }}
+                      key={`${member.id}-${index}`} // Ensure unique keys even if IDs are duplicated
+                      className='hover:bg-muted/50 transition-colors'
                     >
                       <TableCell>
                         <div className='flex items-center gap-3'>
@@ -408,7 +436,7 @@ export default function StaffPage() {
                               {member.name}
                             </div>
                             <div className='text-sm text-muted-foreground'>
-                              ID: {member.id?.slice(-8) || "N/A"}
+                              ID: {member.userId?.slice(-8) || "N/A"}
                             </div>
                           </div>
                         </div>
@@ -465,12 +493,54 @@ export default function StaffPage() {
                             : "Ngưng hoạt động"}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <div className='flex gap-2'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log(
+                                "Opening permission modal for:",
+                                member
+                              );
+                              setSelectedStaffForPermission({
+                                _id: member.id,
+                                user: {
+                                  username: member.name,
+                                  email: member.email,
+                                },
+                              });
+                              setPermissionModalOpen(true);
+                            }}
+                          >
+                            <Key className='h-4 w-4 mr-1' />
+                            Quyền hạn
+                          </Button>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log(
+                                `Viewing details for staff: ${member.name}, ID: ${member.id}`
+                              );
+                              router.push(
+                                `/dashboard/manager/staff/${member.id}`
+                              );
+                            }}
+                          >
+                            <User className='h-4 w-4 mr-1' />
+                            Chi tiết
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Không tìm thấy nhân viên phù hợp với bộ lọc hiện tại.
@@ -482,6 +552,17 @@ export default function StaffPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Staff Permission Modal */}
+      <StaffPermissionModal
+        open={permissionModalOpen}
+        onOpenChange={setPermissionModalOpen}
+        staffData={selectedStaffForPermission}
+        onSuccess={() => {
+          // Optionally refresh staff data or show success message
+          console.log("Staff permissions updated successfully");
+        }}
+      />
     </>
   );
 }

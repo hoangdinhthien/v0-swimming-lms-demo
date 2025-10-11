@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { logout, getAuthenticatedUser } from "@/api/auth-utils";
 import { getUserFrontendRole } from "@/api/role-utils";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,7 +83,15 @@ export default function DashboardLayout({
   const [selectedTenantId, setSelectedTenantIdState] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
-  const router = useRouter(); // Handle tenant switching
+  const router = useRouter();
+
+  // Staff permissions hook
+  const {
+    allowedNavigationItems,
+    isManager,
+    isStaff,
+    loading: permissionsLoading,
+  } = useStaffPermissions(); // Handle tenant switching
   const handleTenantSwitch = async (newTenantId: string) => {
     try {
       // Set the new tenant ID
@@ -108,8 +117,9 @@ export default function DashboardLayout({
       // Set user name from available fields
       setUserName(user.name || user.fullName || user.username || "User");
 
-      // For this version of the app, we always use manager role
-      setUserRole("manager");
+      // Get the actual user role
+      const actualRole = getUserFrontendRole();
+      setUserRole(actualRole);
     } // Load tenant info and available tenants
     const loadTenantInfo = async () => {
       try {
@@ -272,9 +282,59 @@ export default function DashboardLayout({
         icon: <Settings className='h-4 w-4 mr-2' />,
       },
     ],
-  }; // For this version of the application, we're focusing on manager functionality
+  };
+
+  // Function to filter navigation items based on staff permissions
+  const getFilteredNavItems = (): {
+    name: string;
+    href: string;
+    icon: React.ReactElement;
+  }[] => {
+    const baseNavItems = navItems.manager;
+
+    // If user is manager, show all items with manager routes
+    if (isManager) {
+      return baseNavItems;
+    }
+
+    // If user is staff, filter based on permissions and use staff routes
+    if (isStaff) {
+      return baseNavItems
+        .filter((item) => {
+          // Extract the route from href (e.g., "/dashboard/manager/students" -> "students")
+          const routeParts = item.href.split("/");
+          const route = routeParts[routeParts.length - 1];
+
+          // Always allow dashboard access
+          if (route === "manager") {
+            return true;
+          }
+
+          // Check if staff has permission for this route
+          return allowedNavigationItems.includes(route);
+        })
+        .map((item) => {
+          // Convert manager routes to staff routes for staff users
+          if (isStaff) {
+            const href = item.href.replace(
+              "/dashboard/manager",
+              "/dashboard/staff"
+            );
+            return {
+              ...item,
+              href,
+            };
+          }
+          return item;
+        });
+    }
+
+    // Default to empty for other roles
+    return [];
+  };
+  // For this version of the application, we're focusing on manager functionality
   // Default to manager navigation items unless explicitly overridden  // For this version, we always use manager navigation items
-  const currentNavItems = navItems.manager;
+  const currentNavItems = getFilteredNavItems();
   // Build the content
   const content = (
     <div className='flex min-h-screen flex-col'>
@@ -420,6 +480,11 @@ export default function DashboardLayout({
               <span className='text-sm text-muted-foreground'>
                 Xin chào, {userName || getRoleDisplayName()}
               </span>
+              {isStaff && (
+                <span className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800'>
+                  Nhân viên
+                </span>
+              )}
               <div className='h-6 w-px bg-muted'></div>
               {/* Add ThemeToggle button here */}
               <ThemeToggle />

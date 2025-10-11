@@ -41,6 +41,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
 import { apiCache } from "@/utils/api-cache"; // ✅ Import cache
+import PermissionGuard from "@/components/permission-guard";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -282,12 +283,17 @@ export default function StudentsPage() {
               Nhập danh sách
             </Button>
           </Link>
-          <Link href='/dashboard/manager/students/new'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' />
-              Thêm học viên
-            </Button>
-          </Link>
+          <PermissionGuard
+            module='User'
+            action='POST'
+          >
+            <Link href='/dashboard/manager/students/new'>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' />
+                Thêm học viên
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 

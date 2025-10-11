@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isAuthenticated } from "@/api/auth-utils";
+import { getUserFrontendRole } from "@/api/role-utils";
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -32,17 +33,38 @@ export default function RoleGuard({
     const checkAccess = async () => {
       // Check if authenticated
       if (!isAuthenticated()) {
+        console.log("[RoleGuard] User not authenticated, redirecting to login");
         router.push("/login");
         return;
       }
 
-      // For this version, we're always granting access for manager role development
-      setHasAccess(true);
+      // Get the user's actual role
+      const userRole = getUserFrontendRole();
+      console.log("[RoleGuard] User role:", userRole);
+      console.log("[RoleGuard] Allowed roles:", allowedRoles);
+
+      // Check if user role is in allowed roles or if it's manager/staff accessing manager dashboard
+      const hasValidRole =
+        allowedRoles.includes(userRole) ||
+        (allowedRoles.includes("manager") &&
+          (userRole === "manager" || userRole === "staff"));
+
+      console.log("[RoleGuard] Has valid role:", hasValidRole);
+
+      if (hasValidRole) {
+        setHasAccess(true);
+      } else {
+        // User doesn't have required role, redirect to fallback
+        console.log("[RoleGuard] Access denied, redirecting to:", fallbackUrl);
+        router.push(fallbackUrl);
+        return;
+      }
+
       setIsLoading(false);
     };
 
     checkAccess();
-  }, [router, fallbackUrl]);
+  }, [router, allowedRoles, fallbackUrl]);
 
   // Show loading state
   if (isLoading) {
