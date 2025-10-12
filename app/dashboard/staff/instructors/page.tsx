@@ -37,17 +37,25 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useStaffUsers } from "@/hooks/useStaffData";
+import { useStaffInstructors } from "@/hooks/useStaffData";
 import { parseApiResponse } from "@/utils/api-response-parser";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface InstructorItem {
   _id: string;
-  email?: string;
-  username?: string;
-  phone?: string;
-  is_active?: boolean;
-  created_at?: string;
-  role_front?: string[];
+  user: {
+    _id: string;
+    email?: string;
+    username?: string;
+    phone?: string;
+    is_active?: boolean;
+    created_at?: string;
+    role_front?: string[];
+    featured_image?: any;
+    birthday?: string;
+    address?: string;
+    parent_id?: string[] | null;
+  };
   [key: string]: any;
 }
 
@@ -58,7 +66,7 @@ export default function StaffInstructorsPage() {
     error,
     refetch,
     hasPermission,
-  } = useStaffUsers();
+  } = useStaffInstructors(); // Use the specific hook for instructors
   const [instructors, setInstructors] = useState<InstructorItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -74,9 +82,8 @@ export default function StaffInstructorsPage() {
       // Filter only instructors from the data
       const instructorData = parsedResponse.data.filter(
         (user) =>
-          user.role_front?.includes("instructor") ||
-          user.role_front?.includes("manager") ||
-          user.role_system === "admin"
+          user.user?.role_front?.includes("instructor") ||
+          user.user?.role_front?.includes("manager")
       );
       setInstructors(instructorData);
     }
@@ -86,14 +93,18 @@ export default function StaffInstructorsPage() {
   const filteredInstructors = instructors.filter((instructor) => {
     const matchesSearch =
       searchTerm === "" ||
-      instructor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      instructor.phone?.includes(searchTerm);
+      instructor.user?.username
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      instructor.user?.email
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      instructor.user?.phone?.includes(searchTerm);
 
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "active" && instructor.is_active) ||
-      (statusFilter === "inactive" && !instructor.is_active);
+      (statusFilter === "active" && instructor.user?.is_active) ||
+      (statusFilter === "inactive" && !instructor.user?.is_active);
 
     return matchesSearch && matchesStatus;
   });
@@ -101,10 +112,10 @@ export default function StaffInstructorsPage() {
   // Calculate stats
   const totalInstructors = instructors.length;
   const activeInstructors = instructors.filter(
-    (instructor) => instructor.is_active
+    (instructor) => instructor.user?.is_active
   ).length;
   const inactiveInstructors = instructors.filter(
-    (instructor) => !instructor.is_active
+    (instructor) => !instructor.user?.is_active
   ).length;
 
   const formatDate = (dateString: string) => {
@@ -235,8 +246,8 @@ export default function StaffInstructorsPage() {
               {
                 instructors.filter(
                   (instructor) =>
-                    instructor.created_at &&
-                    new Date(instructor.created_at).toDateString() ===
+                    instructor.user?.created_at &&
+                    new Date(instructor.user.created_at).toDateString() ===
                       new Date().toDateString()
                 ).length
               }
@@ -304,10 +315,11 @@ export default function StaffInstructorsPage() {
                   </TableRow>
                 ) : currentPageData.length > 0 ? (
                   currentPageData.map((instructor) => {
-                    const joinDate = instructor.created_at
-                      ? formatDate(instructor.created_at)
+                    const joinDate = instructor.user?.created_at
+                      ? formatDate(instructor.user.created_at)
                       : "N/A";
-                    const roles = instructor.role_front?.join(", ") || "N/A";
+                    const roles =
+                      instructor.user?.role_front?.join(", ") || "N/A";
 
                     return (
                       <TableRow
@@ -316,12 +328,13 @@ export default function StaffInstructorsPage() {
                       >
                         <TableCell>
                           <div className='flex items-center space-x-3'>
-                            <div className='p-2 bg-muted rounded-full'>
-                              <User className='h-4 w-4' />
-                            </div>
+                            <UserAvatar
+                              user={instructor.user}
+                              size='md'
+                            />
                             <div>
                               <div className='font-medium'>
-                                {instructor.username || "N/A"}
+                                {instructor.user?.username || "N/A"}
                               </div>
                               <div className='text-xs text-muted-foreground'>
                                 ID: {instructor._id.substring(0, 8)}...
@@ -332,13 +345,13 @@ export default function StaffInstructorsPage() {
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Mail className='h-4 w-4 text-muted-foreground' />
-                            <span>{instructor.email || "N/A"}</span>
+                            <span>{instructor.user?.email || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Phone className='h-4 w-4 text-muted-foreground' />
-                            <span>{instructor.phone || "N/A"}</span>
+                            <span>{instructor.user?.phone || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -351,15 +364,19 @@ export default function StaffInstructorsPage() {
                         <TableCell>
                           <Badge
                             variant={
-                              instructor.is_active ? "default" : "secondary"
+                              instructor.user?.is_active
+                                ? "default"
+                                : "secondary"
                             }
                             className={
-                              instructor.is_active
+                              instructor.user?.is_active
                                 ? "bg-green-100 text-green-800 border-green-300"
                                 : "bg-gray-100 text-gray-800 border-gray-300"
                             }
                           >
-                            {instructor.is_active ? "Hoạt động" : "Tạm nghỉ"}
+                            {instructor.user?.is_active
+                              ? "Hoạt động"
+                              : "Tạm nghỉ"}
                           </Badge>
                         </TableCell>
                       </TableRow>

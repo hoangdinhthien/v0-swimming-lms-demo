@@ -135,19 +135,19 @@ export async function fetchStaffOrders({
 export async function fetchStaffUsers({
   tenantId,
   token,
-  userType,
+  role,
   page = 1,
   limit = 10,
 }: {
   tenantId: string;
   token: string;
-  userType?: "student" | "instructor" | "staff"; // Optional filter by user type
+  role?: "member" | "instructor" | "staff" | "manager"; // Optional filter by role
   page?: number;
   limit?: number;
 }) {
   const additionalParams: Record<string, string | number> = { page, limit };
-  if (userType) {
-    additionalParams.type = userType;
+  if (role) {
+    additionalParams.role = role;
   }
 
   return fetchStaffData({

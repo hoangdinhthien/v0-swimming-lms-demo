@@ -18,8 +18,11 @@ export interface ParsedApiResponse<T = any> {
 export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
   // Handle null/undefined response
   if (!response) {
+    console.warn("[parseApiResponse] No response provided");
     return { data: [], total: 0 };
   }
+
+  console.log("[parseApiResponse] Parsing response:", response);
 
   // Type 1: News structure - data[0][0].documents
   if (
@@ -45,7 +48,26 @@ export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
     }
   }
 
-  // Type 2: Courses/Orders structure - data array with meta
+  // Type 2: Nested data structure - data.data array with data.meta_data
+  if (
+    response.data &&
+    response.data.data &&
+    Array.isArray(response.data.data) &&
+    response.data.meta_data
+  ) {
+    console.log("[parseApiResponse] Using Type 2: Nested data structure");
+    return {
+      data: response.data.data,
+      total: response.data.meta_data.count || response.data.data.length,
+      currentPage: response.data.meta_data.page || 1,
+      lastPage: Math.ceil(
+        (response.data.meta_data.count || response.data.data.length) /
+          (response.data.meta_data.limit || 10)
+      ),
+    };
+  }
+
+  // Type 3: Courses/Orders structure - data array with meta
   if (response.data && Array.isArray(response.data) && response.meta) {
     return {
       data: response.data,
@@ -55,7 +77,7 @@ export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
     };
   }
 
-  // Type 3: Direct data array (fallback)
+  // Type 4: Direct data array (fallback)
   if (response.data && Array.isArray(response.data)) {
     return {
       data: response.data,
@@ -65,7 +87,7 @@ export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
     };
   }
 
-  // Type 4: Direct array (fallback)
+  // Type 5: Direct array (fallback)
   if (Array.isArray(response)) {
     return {
       data: response,

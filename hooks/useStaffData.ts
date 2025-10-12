@@ -16,7 +16,7 @@ import {
 interface UseStaffDataOptions {
   page?: number;
   limit?: number;
-  userType?: "student" | "instructor" | "staff";
+  role?: "member" | "instructor" | "staff" | "manager";
   autoFetch?: boolean; // Whether to automatically fetch data on mount
 }
 
@@ -196,7 +196,7 @@ export function useStaffOrders(
 export function useStaffUsers(
   options: UseStaffDataOptions = {}
 ): UseStaffDataReturn<any> {
-  const { page = 1, limit = 10, userType, autoFetch = true } = options;
+  const { page = 1, limit = 10, role, autoFetch = true } = options;
   const { token, tenantId } = useAuth();
   const { staffPermissions, isStaff } = useStaffPermissions();
 
@@ -209,21 +209,42 @@ export function useStaffUsers(
     : true; // Managers have all permissions
 
   const fetchData = async () => {
-    if (!token || !tenantId || !hasPermission) return;
+    console.log("[useStaffUsers] fetchData called", {
+      token: !!token,
+      tenantId: !!tenantId,
+      hasPermission,
+      role,
+    });
+    if (!token || !tenantId || !hasPermission) {
+      console.log("[useStaffUsers] Missing requirements:", {
+        token: !!token,
+        tenantId: !!tenantId,
+        hasPermission,
+      });
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetchStaffUsers({
+      console.log("[useStaffUsers] Calling fetchStaffUsers with:", {
         tenantId,
-        token,
-        userType,
+        role,
         page,
         limit,
       });
+      const response = await fetchStaffUsers({
+        tenantId,
+        token,
+        role,
+        page,
+        limit,
+      });
+      console.log("[useStaffUsers] Response received:", response);
       setData(response);
     } catch (err) {
+      console.error("[useStaffUsers] Error:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch users");
     } finally {
       setLoading(false);
@@ -231,10 +252,16 @@ export function useStaffUsers(
   };
 
   useEffect(() => {
+    console.log("[useStaffUsers] useEffect triggered", {
+      autoFetch,
+      hasPermission,
+      token: !!token,
+      tenantId: !!tenantId,
+    });
     if (autoFetch && hasPermission) {
       fetchData();
     }
-  }, [token, tenantId, page, limit, userType, hasPermission, autoFetch]);
+  }, [token, tenantId, page, limit, role, hasPermission, autoFetch]);
 
   return {
     data,
@@ -243,6 +270,24 @@ export function useStaffUsers(
     refetch: fetchData,
     hasPermission,
   };
+}
+
+/**
+ * Hook for fetching staff students data (members)
+ */
+export function useStaffStudents(
+  options: Omit<UseStaffDataOptions, "role"> = {}
+): UseStaffDataReturn<any> {
+  return useStaffUsers({ ...options, role: "member" });
+}
+
+/**
+ * Hook for fetching staff instructors data
+ */
+export function useStaffInstructors(
+  options: Omit<UseStaffDataOptions, "role"> = {}
+): UseStaffDataReturn<any> {
+  return useStaffUsers({ ...options, role: "instructor" });
 }
 
 /**

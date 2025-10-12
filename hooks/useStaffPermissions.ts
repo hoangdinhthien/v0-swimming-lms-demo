@@ -55,10 +55,19 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
 
   // Fetch permissions when component mounts and user is staff
   useEffect(() => {
+    console.log("[useStaffPermissions] useEffect triggered", {
+      isStaff,
+      isManager,
+      token: !!token,
+      tenantId: !!tenantId,
+    });
     if (isStaff) {
       fetchPermissions();
     } else if (isManager) {
       // Managers have full permissions, no need to fetch
+      console.log(
+        "[useStaffPermissions] Manager detected, setting full permissions"
+      );
       setStaffPermissions(null);
       setLoading(false);
       setError(null);
@@ -67,16 +76,36 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
 
   // Permission checker function
   const checkPermission = (module: string, action: string): boolean => {
+    console.log("[useStaffPermissions] checkPermission called", {
+      module,
+      action,
+      isManager,
+      isStaff,
+      hasStaffPermissions: !!staffPermissions,
+    });
     if (isManager) {
       // Managers have all permissions
+      console.log(
+        "[useStaffPermissions] Manager has permission for",
+        module,
+        action
+      );
       return true;
     }
 
     if (isStaff) {
-      return hasPermission(staffPermissions, module, action);
+      const result = hasPermission(staffPermissions, module, action);
+      console.log("[useStaffPermissions] Staff permission result", {
+        module,
+        action,
+        result,
+        staffPermissions,
+      });
+      return result;
     }
 
     // Other roles default to no permissions
+    console.log("[useStaffPermissions] No permission for other roles");
     return false;
   };
 

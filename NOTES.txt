@@ -455,9 +455,15 @@ NOW FOR THE STAFF PART :
     "statusCode": 200
 }
 
-here is the explanation for the each modules: for now there are total 7 modules: Course, Order, Class, News, Blog, Application, User (the user will be include the students, instructor, staff too they all are user but have different role, so that means if that staff don't have the permission for the User module that means that staff can't not see the students and instructors and staffs)
+về staff api, tôi thấy là bạn đã có fetchStaffData trong file staff-data-api.ts rồi. để tôi giải thích lại về api này. api này sẽ get services từ manager, nghĩa là khi manager cấp quyền gì đó cho staff thì khi staff login vào hệ thống thì staff chỉ được thấy và sử dụng những cái mà manager đã cho phép họ sử dụng. ví dụ: manager give permission module User cho staff thì trên UI staff có thể xem được Học Viên, Giáo Viên, Nhân Viên (students, instructors, staffa), và tương tự như vậy nếu ta thay đổi phần value của phần 'service' trong header của api này từ User thành Class thì ta sẽ get data danh sách lớp học và tương tự như vậy cho các module còn lại nếu như staff được manager cấp quyền sử dụng chúng.
 
-for the api(s) that belongs to the staff i think you should create a separate api folder inside the current api folder of the project to prevent confusions in the future
+- nhưng ta đang có 1 vấn đề lớn ở đây rằng là khi get để lấy data của các service khác nhau, thì phần data structure của mỗi service là khác nhau (sẽ có service có data structure giống nhau nhưng phần lớn là không)
 
-NOTE THAT ALL THESE APIS YOU HAVE THE PASS THE x-tenant-id TO THE HEADER AND ALSO THE token TOO 
+- và việc mà khi ta sử dụng 1 api này để get data cho các service mà có structure data khác nhau như vậy thì 
+
+- tôi có thấy là bạn có phần fetchStaffCourses để fetch course dâta for staff, và tương tự như vậy cho các service còn lại rồi 
+
+CÂU HỎI CỦA TÔI Ở ĐÂY LÀ TA CÓ NÊN DUPLICATE  fetchStaffData THÀNH TỪNG API CỤ THỂ ĐỂ GET DATA THEO ĐÚNG STRUCTURE DATA KHÔNG ? 
+
+HAY CÓ 1 CÁCH TỐI ƯU HƠN NÀO ĐÓ MÀ TA CÓ THỂ CHỈ CẦN DÙNG fetchStaffData MÀ KHÔNG CẦN QUAN TÂM RẰNG DATA STRUCTURE KHI RESPONSE RA NHƯ THẾ NÀO NHỮNG VẪN CÓ THỂ LÀM ĐƯỢC TỰ ĐỘNG CHECK VÀ SHOW LIÊN UI MỖI KHI MÀ BÊN BACKEND CÓ THÊM 1 FIELD NÀO ĐÓ MỚI HOẶC SỬA DATA STRUCTURE MÀ FRONTEND KHÔNG CẦN PHẢI SỬA LẠI CODE KHÔNG? GIỐNG NHIỂU ĐỌC XEM JSON TRẢ RA NHỮNG GÌ RỒI TỪ ĐÓ HIỆN LÊN UI, NHƯ VẬY CÓ ỔN VÀ AN TOÀN KHÔNG?
 

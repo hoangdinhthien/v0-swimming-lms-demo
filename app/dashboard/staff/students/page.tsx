@@ -1,6 +1,6 @@
 "use client";
 
-import { useStaffUsers } from "@/hooks/useStaffData";
+import { useStaffStudents } from "@/hooks/useStaffData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -36,17 +36,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { parseApiResponse } from "@/utils/api-response-parser";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import Link from "next/link";
 import { useState, useMemo } from "react";
 
 interface StudentItem {
   _id: string;
-  username?: string;
-  email?: string;
-  phone?: string;
-  role_front?: string[];
-  is_active?: boolean;
-  created_at?: string;
+  user: {
+    _id: string;
+    username?: string;
+    email?: string;
+    phone?: string;
+    role_front?: string[];
+    is_active?: boolean;
+    created_at?: string;
+    featured_image?: any;
+    birthday?: string;
+    address?: string;
+    parent_id?: string[] | null;
+  };
 }
 
 export default function StaffStudentsPage() {
@@ -56,7 +64,7 @@ export default function StaffStudentsPage() {
     error,
     refetch,
     hasPermission,
-  } = useStaffUsers();
+  } = useStaffStudents(); // Use the specific hook for students
 
   // Parse API response to get students array
   const students = useMemo<StudentItem[]>(() => {
@@ -64,9 +72,9 @@ export default function StaffStudentsPage() {
     const parsedData = parseApiResponse(data);
 
     return parsedData.data.filter((student: StudentItem) =>
-      student.role_front?.some(
-        (role) =>
-          role.toLowerCase().includes("student") ||
+      student.user?.role_front?.some(
+        (role: string) =>
+          role.toLowerCase().includes("member") ||
           role.toLowerCase().includes("học viên")
       )
     );
@@ -95,15 +103,17 @@ export default function StaffStudentsPage() {
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       const matchesSearch =
-        student.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.phone?.includes(searchTerm) ||
+        student.user?.username
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        student.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.user?.phone?.includes(searchTerm) ||
         student._id.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "all" ||
-        (statusFilter === "active" && student.is_active) ||
-        (statusFilter === "inactive" && !student.is_active);
+        (statusFilter === "active" && student.user?.is_active) ||
+        (statusFilter === "inactive" && !student.user?.is_active);
 
       return matchesSearch && matchesStatus;
     });
@@ -120,9 +130,11 @@ export default function StaffStudentsPage() {
 
   // Statistics
   const totalStudents = students.length;
-  const activeStudents = students.filter((student) => student.is_active).length;
+  const activeStudents = students.filter(
+    (student) => student.user?.is_active
+  ).length;
   const inactiveStudents = students.filter(
-    (student) => !student.is_active
+    (student) => !student.user?.is_active
   ).length;
 
   if (isLoading) {
@@ -236,8 +248,8 @@ export default function StaffStudentsPage() {
               {
                 students.filter(
                   (student) =>
-                    student.created_at &&
-                    new Date(student.created_at).toDateString() ===
+                    student.user?.created_at &&
+                    new Date(student.user.created_at).toDateString() ===
                       new Date().toDateString()
                 ).length
               }
@@ -305,10 +317,10 @@ export default function StaffStudentsPage() {
                   </TableRow>
                 ) : currentPageData.length > 0 ? (
                   currentPageData.map((student) => {
-                    const joinDate = student.created_at
-                      ? formatDate(student.created_at)
+                    const joinDate = student.user?.created_at
+                      ? formatDate(student.user.created_at)
                       : "N/A";
-                    const roles = student.role_front?.join(", ") || "N/A";
+                    const roles = student.user?.role_front?.join(", ") || "N/A";
 
                     return (
                       <TableRow
@@ -317,12 +329,13 @@ export default function StaffStudentsPage() {
                       >
                         <TableCell>
                           <div className='flex items-center space-x-3'>
-                            <div className='p-2 bg-muted rounded-full'>
-                              <User className='h-4 w-4' />
-                            </div>
+                            <UserAvatar
+                              user={student.user}
+                              size='md'
+                            />
                             <div>
                               <div className='font-medium'>
-                                {student.username || "N/A"}
+                                {student.user?.username || "N/A"}
                               </div>
                               <div className='text-xs text-muted-foreground'>
                                 ID: {student._id.substring(0, 8)}...
@@ -333,13 +346,13 @@ export default function StaffStudentsPage() {
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Mail className='h-4 w-4 text-muted-foreground' />
-                            <span>{student.email || "N/A"}</span>
+                            <span>{student.user?.email || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Phone className='h-4 w-4 text-muted-foreground' />
-                            <span>{student.phone || "N/A"}</span>
+                            <span>{student.user?.phone || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -352,15 +365,15 @@ export default function StaffStudentsPage() {
                         <TableCell>
                           <Badge
                             variant={
-                              student.is_active ? "default" : "secondary"
+                              student.user?.is_active ? "default" : "secondary"
                             }
                             className={
-                              student.is_active
+                              student.user?.is_active
                                 ? "bg-green-100 text-green-800 border-green-300"
                                 : "bg-gray-100 text-gray-800 border-gray-300"
                             }
                           >
-                            {student.is_active ? "Đang học" : "Tạm nghỉ"}
+                            {student.user?.is_active ? "Đang học" : "Tạm nghỉ"}
                           </Badge>
                         </TableCell>
                       </TableRow>
