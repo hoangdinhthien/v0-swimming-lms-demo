@@ -569,12 +569,13 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && "Tổng Quan"}
                   </div>
                   <Link
-                    href='/dashboard/manager'
+                    href={isStaff ? "/dashboard/staff" : "/dashboard/manager"}
                     className={`group flex items-center ${
                       sidebarCollapsed ? "justify-center" : "gap-3"
                     } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
                       ${
-                        pathname === "/dashboard/manager"
+                        pathname ===
+                        (isStaff ? "/dashboard/staff" : "/dashboard/manager")
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       }`}
@@ -582,7 +583,8 @@ export default function DashboardLayout({
                   >
                     <div
                       className={`flex-shrink-0 ${
-                        pathname === "/dashboard/manager"
+                        pathname ===
+                        (isStaff ? "/dashboard/staff" : "/dashboard/manager")
                           ? "text-primary-foreground"
                           : "group-hover:text-foreground"
                       }`}
@@ -592,13 +594,14 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && (
                       <span className='truncate'>Dashboard</span>
                     )}
-                    {pathname === "/dashboard/manager" && (
+                    {pathname ===
+                      (isStaff ? "/dashboard/staff" : "/dashboard/manager") && (
                       <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
                     )}
                   </Link>
                 </div>
 
-                {/* Management Section */}
+                {/* Management Section - Permission-based for staff */}
                 <div className='space-y-1'>
                   <div
                     className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
@@ -608,36 +611,75 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && "Quản Lý"}
                   </div>
                   {[
-                    {
-                      name: "Học Viên",
-                      href: "/dashboard/manager/students",
-                      icon: <GraduationCap className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Giáo Viên",
-                      href: "/dashboard/manager/instructors",
-                      icon: <UserCheck className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Nhân Viên",
-                      href: "/dashboard/manager/staff",
-                      icon: <Users className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Khóa Học",
-                      href: "/dashboard/manager/courses",
-                      icon: <BookOpen className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Lớp Học",
-                      href: "/dashboard/manager/classes",
-                      icon: <Users className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Tin tức",
-                      href: "/dashboard/manager/news",
-                      icon: <Bell className='h-4 w-4' />,
-                    },
+                    // User module items - only show if has User permission
+                    ...(isManager || allowedNavigationItems.includes("students")
+                      ? [
+                          {
+                            name: "Học Viên",
+                            href: isStaff
+                              ? "/dashboard/staff/students"
+                              : "/dashboard/manager/students",
+                            icon: <GraduationCap className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    ...(isManager || allowedNavigationItems.includes("students")
+                      ? [
+                          {
+                            name: "Giáo Viên",
+                            href: isStaff
+                              ? "/dashboard/staff/instructors"
+                              : "/dashboard/manager/instructors",
+                            icon: <UserCheck className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Staff management - only for managers
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Nhân Viên",
+                            href: "/dashboard/manager/staff",
+                            icon: <Users className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Course module - only show if has Course permission
+                    ...(isManager || allowedNavigationItems.includes("courses")
+                      ? [
+                          {
+                            name: "Khóa Học",
+                            href: isStaff
+                              ? "/dashboard/staff/courses"
+                              : "/dashboard/manager/courses",
+                            icon: <BookOpen className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Class module - only show if has Class permission
+                    ...(isManager || allowedNavigationItems.includes("classes")
+                      ? [
+                          {
+                            name: "Lớp Học",
+                            href: isStaff
+                              ? "/dashboard/staff/classes"
+                              : "/dashboard/manager/classes",
+                            icon: <Users className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // News module - only show if has News permission
+                    ...(isManager || allowedNavigationItems.includes("news")
+                      ? [
+                          {
+                            name: "Tin tức",
+                            href: isStaff
+                              ? "/dashboard/staff/news"
+                              : "/dashboard/manager/news",
+                            icon: <Bell className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
                   ].map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -674,7 +716,7 @@ export default function DashboardLayout({
                   })}
                 </div>
 
-                {/* Operations Section */}
+                {/* Operations Section - Permission-based for staff */}
                 <div className='space-y-1'>
                   <div
                     className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
@@ -684,31 +726,59 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && "Hoạt Động"}
                   </div>
                   {[
+                    // Calendar - available for all staff and managers
                     {
                       name: "Lịch",
-                      href: "/dashboard/manager/calendar",
+                      href: isStaff
+                        ? "/dashboard/staff/calendar"
+                        : "/dashboard/manager/calendar",
                       icon: <Clock className='h-4 w-4' />,
                     },
-                    {
-                      name: "Đơn từ",
-                      href: "/dashboard/manager/applications",
-                      icon: <FileText className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Loại Đơn Từ",
-                      href: "/dashboard/manager/application-types",
-                      icon: <Settings className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Giao Dịch",
-                      href: "/dashboard/manager/transactions",
-                      icon: <PaymentIcon className='h-4 w-4' />,
-                    },
-                    {
-                      name: "Khuyến Mãi",
-                      href: "/dashboard/manager/promotions",
-                      icon: <Tag className='h-4 w-4' />,
-                    },
+                    // Application module - only show if has Application permission
+                    ...(isManager ||
+                    allowedNavigationItems.includes("applications")
+                      ? [
+                          {
+                            name: "Đơn từ",
+                            href: isStaff
+                              ? "/dashboard/staff/applications"
+                              : "/dashboard/manager/applications",
+                            icon: <FileText className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Application types - only for managers
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Loại Đơn Từ",
+                            href: "/dashboard/manager/application-types",
+                            icon: <Settings className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Order module - only show if has Order permission
+                    ...(isManager || allowedNavigationItems.includes("orders")
+                      ? [
+                          {
+                            name: "Giao Dịch",
+                            href: isStaff
+                              ? "/dashboard/staff/orders"
+                              : "/dashboard/manager/transactions",
+                            icon: <PaymentIcon className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Promotions - only for managers
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Khuyến Mãi",
+                            href: "/dashboard/manager/promotions",
+                            icon: <Tag className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
                   ].map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -745,44 +815,46 @@ export default function DashboardLayout({
                   })}
                 </div>
 
-                {/* Settings Section */}
-                <div className='space-y-1'>
-                  <div
-                    className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
-                      sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
-                    }`}
-                  >
-                    {!sidebarCollapsed && "Cài Đặt"}
-                  </div>
-                  <Link
-                    href='/dashboard/manager/settings'
-                    className={`group flex items-center ${
-                      sidebarCollapsed ? "justify-center" : "gap-3"
-                    } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
-                      ${
-                        pathname === "/dashboard/manager/settings"
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                      }`}
-                    title={sidebarCollapsed ? "Cài Đặt Tài Khoản" : undefined}
-                  >
+                {/* Settings Section - Only for managers or specific staff permissions */}
+                {isManager && (
+                  <div className='space-y-1'>
                     <div
-                      className={`flex-shrink-0 ${
-                        pathname === "/dashboard/manager/settings"
-                          ? "text-primary-foreground"
-                          : "group-hover:text-foreground"
+                      className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
+                        sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
                       }`}
                     >
-                      <Cog className='h-4 w-4' />
+                      {!sidebarCollapsed && "Cài Đặt"}
                     </div>
-                    {!sidebarCollapsed && (
-                      <span className='truncate'>Cài Đặt Tài Khoản</span>
-                    )}
-                    {pathname === "/dashboard/manager/settings" && (
-                      <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
-                    )}
-                  </Link>
-                </div>
+                    <Link
+                      href='/dashboard/manager/settings'
+                      className={`group flex items-center ${
+                        sidebarCollapsed ? "justify-center" : "gap-3"
+                      } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
+                        ${
+                          pathname === "/dashboard/manager/settings"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        }`}
+                      title={sidebarCollapsed ? "Cài Đặt Tài Khoản" : undefined}
+                    >
+                      <div
+                        className={`flex-shrink-0 ${
+                          pathname === "/dashboard/manager/settings"
+                            ? "text-primary-foreground"
+                            : "group-hover:text-foreground"
+                        }`}
+                      >
+                        <Cog className='h-4 w-4' />
+                      </div>
+                      {!sidebarCollapsed && (
+                        <span className='truncate'>Cài Đặt Tài Khoản</span>
+                      )}
+                      {pathname === "/dashboard/manager/settings" && (
+                        <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
+                      )}
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
 

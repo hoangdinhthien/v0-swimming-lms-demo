@@ -333,7 +333,70 @@ MANAGER:
 NOW FOR THE STAFF PART :
 - after the manager have created the staff account and give the permission modules for the staff, or have not the staff the permissions, the staff can login into the system
 
-- after the staff enter the account and password login into the system, there comes this api to get that staff account the list of permission(s) that the manager have allow for the to use in the system (to get staff permissions to show in UI):
+- like i already mentioned all the UIs of the staff will be the same with the manager UIs. we will begin to do the get method first.
+
+- the staff have this get method api to get the services from the manager:
+    https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/staff
+- to use this api, beside of passing the x-tenant-id and token to the header, you will need to pass the module from the get staff permissions api to the header to get. 
+- For example, when you use the fetchStaffPermissions to get the permissions: 
+ {
+    "data": [
+        [
+            [
+                {
+                    "_id": "68e1319dcda336aa1ba8a673",
+                    "user": "68e12e6d7aaffa220aca8835",
+                    "permission": [
+                        {
+                            "module": [
+                                "Class"
+                            ],
+                            "action": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "DELETE"
+                            ],
+                            "noReview": true
+                        },
+                        {
+                            "module": [
+                                "Order"
+                            ],
+                            "action": [
+                                "GET",
+                                "PUT"
+                            ],
+                            "noReview": true
+                        },
+                        {
+                            "module": [
+                                "Course"
+                            ],
+                            "action": [
+                                "GET",
+                                "PUT",
+                                "POST"
+                            ],
+                            "noReview": true
+                        }
+                    ],
+                    "created_at": "2025-10-04T21:39:25.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-10-11T17:49:07.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                }
+            ]
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- from the response data of fetchStaffPermissions, you see the "module":["Class"], the Class is the service that you will pass to the header for this api: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/staff
+
+- i noticed that in the dashboard-layout-v2 have the admin part that we didn't use. i think you can reuse it for the staff sidebar but also note that you have to use this api to check which modules does that staff have the permission to access from the manager. Ok?
+
     https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/staff/permission
 
     here is the response data:
@@ -392,6 +455,9 @@ NOW FOR THE STAFF PART :
     "statusCode": 200
 }
 
+here is the explanation for the each modules: for now there are total 7 modules: Course, Order, Class, News, Blog, Application, User (the user will be include the students, instructor, staff too they all are user but have different role, so that means if that staff don't have the permission for the User module that means that staff can't not see the students and instructors and staffs)
+
 for the api(s) that belongs to the staff i think you should create a separate api folder inside the current api folder of the project to prevent confusions in the future
 
 NOTE THAT ALL THESE APIS YOU HAVE THE PASS THE x-tenant-id TO THE HEADER AND ALSO THE token TOO 
+

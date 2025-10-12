@@ -1,32 +1,25 @@
 "use client";
 
-import { useStaffUsers } from "@/hooks/useStaffData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
-  Loader2,
-  RefreshCw,
-  Plus,
   ArrowLeft,
-  Download,
   Search,
+  Filter,
+  Download,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
   User,
   Mail,
   Phone,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -35,133 +28,137 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useStaffUsers } from "@/hooks/useStaffData";
 import { parseApiResponse } from "@/utils/api-response-parser";
-import Link from "next/link";
-import { useState, useMemo } from "react";
 
-interface StudentItem {
+interface InstructorItem {
   _id: string;
-  username?: string;
   email?: string;
+  username?: string;
   phone?: string;
-  role_front?: string[];
   is_active?: boolean;
   created_at?: string;
+  role_front?: string[];
+  [key: string]: any;
 }
 
-export default function StaffStudentsPage() {
+export default function StaffInstructorsPage() {
   const {
-    data,
+    data: staffUsersData,
     loading: isLoading,
     error,
     refetch,
     hasPermission,
   } = useStaffUsers();
-
-  // Parse API response to get students array
-  const students = useMemo<StudentItem[]>(() => {
-    if (!data) return [];
-    const parsedData = parseApiResponse(data);
-
-    return parsedData.data.filter((student: StudentItem) =>
-      student.role_front?.some(
-        (role) =>
-          role.toLowerCase().includes("student") ||
-          role.toLowerCase().includes("học viên")
-      )
-    );
-  }, [data]);
-
-  // Pagination and filtering state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [instructors, setInstructors] = useState<InstructorItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Date formatting function
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
-    } catch {
-      return "N/A";
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  useEffect(() => {
+    if (staffUsersData) {
+      // Use flexible API response parser
+      const parsedResponse = parseApiResponse<InstructorItem>(staffUsersData);
+      // Filter only instructors from the data
+      const instructorData = parsedResponse.data.filter(
+        (user) =>
+          user.role_front?.includes("instructor") ||
+          user.role_front?.includes("manager") ||
+          user.role_system === "admin"
+      );
+      setInstructors(instructorData);
     }
+  }, [staffUsersData]);
+
+  // Filter instructors based on search and status
+  const filteredInstructors = instructors.filter((instructor) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      instructor.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      instructor.phone?.includes(searchTerm);
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && instructor.is_active) ||
+      (statusFilter === "inactive" && !instructor.is_active);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Calculate stats
+  const totalInstructors = instructors.length;
+  const activeInstructors = instructors.filter(
+    (instructor) => instructor.is_active
+  ).length;
+  const inactiveInstructors = instructors.filter(
+    (instructor) => !instructor.is_active
+  ).length;
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
   };
 
-  // Filter students based on search and status
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const matchesSearch =
-        student.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.phone?.includes(searchTerm) ||
-        student._id.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && student.is_active) ||
-        (statusFilter === "inactive" && !student.is_active);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [students, searchTerm, statusFilter]);
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredStudents.length / limit);
-  const startIndex = (currentPage - 1) * limit;
-  const endIndex = Math.min(startIndex + limit, filteredStudents.length);
-  const currentPageData = filteredStudents.slice(startIndex, endIndex);
-
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredInstructors.length / limit);
   const canGoPrevious = currentPage > 1;
   const canGoNext = currentPage < totalPages;
 
-  // Statistics
-  const totalStudents = students.length;
-  const activeStudents = students.filter((student) => student.is_active).length;
-  const inactiveStudents = students.filter(
-    (student) => !student.is_active
-  ).length;
-
-  if (isLoading) {
-    return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <p className='text-muted-foreground'>Đang tải danh sách học viên...</p>
-      </div>
-    );
-  }
+  // Get current page data
+  const startIndex = (currentPage - 1) * limit;
+  const endIndex = startIndex + limit;
+  const currentPageData = filteredInstructors.slice(startIndex, endIndex);
 
   if (!hasPermission) {
     return (
-      <Alert>
-        <AlertDescription>
-          You don't have permission to view students. Please contact your
-          manager.
-        </AlertDescription>
-      </Alert>
+      <div className='container mx-auto px-4 py-8 max-w-7xl'>
+        <Alert>
+          <AlertDescription>
+            Bạn không có quyền xem danh sách giảng viên. Vui lòng liên hệ quản
+            lý.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <div className='flex-1 space-y-4 p-4 md:p-8 pt-6'>
-        <div className='flex items-center justify-between space-y-2'>
-          <h2 className='text-3xl font-bold tracking-tight'>My Students</h2>
-          <Button
-            onClick={refetch}
-            variant='outline'
-            size='sm'
-          >
-            <RefreshCw className='h-4 w-4 mr-2' />
-            Retry
-          </Button>
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error}</p>
+          <Button onClick={refetch}>Thử lại</Button>
         </div>
-        <Alert variant='destructive'>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>
+          Đang tải danh sách giảng viên...
+        </p>
       </div>
     );
   }
@@ -180,9 +177,9 @@ export default function StaffStudentsPage() {
 
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Quản lý Học viên</h1>
+          <h1 className='text-3xl font-bold'>Quản lý Giảng viên</h1>
           <p className='text-muted-foreground'>
-            Quản lý tất cả học viên tại trung tâm bơi lội
+            Quản lý tất cả giảng viên tại trung tâm bơi lội
           </p>
         </div>
         <div className='flex gap-2'>
@@ -201,20 +198,22 @@ export default function StaffStudentsPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Tổng số học viên
+              Tổng số giảng viên
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalStudents}</div>
+            <div className='text-2xl font-bold'>{totalInstructors}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Đang học</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Đang hoạt động
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{activeStudents}</div>
+            <div className='text-2xl font-bold'>{activeInstructors}</div>
           </CardContent>
         </Card>
 
@@ -223,7 +222,7 @@ export default function StaffStudentsPage() {
             <CardTitle className='text-sm font-medium'>Tạm nghỉ</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{inactiveStudents}</div>
+            <div className='text-2xl font-bold'>{inactiveInstructors}</div>
           </CardContent>
         </Card>
 
@@ -234,10 +233,10 @@ export default function StaffStudentsPage() {
           <CardContent>
             <div className='text-2xl font-bold'>
               {
-                students.filter(
-                  (student) =>
-                    student.created_at &&
-                    new Date(student.created_at).toDateString() ===
+                instructors.filter(
+                  (instructor) =>
+                    instructor.created_at &&
+                    new Date(instructor.created_at).toDateString() ===
                       new Date().toDateString()
                 ).length
               }
@@ -248,7 +247,7 @@ export default function StaffStudentsPage() {
 
       <Card className='mt-8'>
         <CardHeader>
-          <CardTitle>Danh sách học viên</CardTitle>
+          <CardTitle>Danh sách giảng viên</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
@@ -272,7 +271,7 @@ export default function StaffStudentsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='active'>Đang học</SelectItem>
+                  <SelectItem value='active'>Đang hoạt động</SelectItem>
                   <SelectItem value='inactive'>Tạm nghỉ</SelectItem>
                 </SelectContent>
               </Select>
@@ -283,16 +282,16 @@ export default function StaffStudentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Học viên</TableHead>
+                  <TableHead>Giảng viên</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Số điện thoại</TableHead>
-                  <TableHead>Ngày đăng ký</TableHead>
+                  <TableHead>Ngày tham gia</TableHead>
                   <TableHead>Vai trò</TableHead>
                   <TableHead>Trạng thái</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading && students.length === 0 ? (
+                {isLoading && instructors.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -304,15 +303,15 @@ export default function StaffStudentsPage() {
                     </TableCell>
                   </TableRow>
                 ) : currentPageData.length > 0 ? (
-                  currentPageData.map((student) => {
-                    const joinDate = student.created_at
-                      ? formatDate(student.created_at)
+                  currentPageData.map((instructor) => {
+                    const joinDate = instructor.created_at
+                      ? formatDate(instructor.created_at)
                       : "N/A";
-                    const roles = student.role_front?.join(", ") || "N/A";
+                    const roles = instructor.role_front?.join(", ") || "N/A";
 
                     return (
                       <TableRow
-                        key={student._id}
+                        key={instructor._id}
                         className='cursor-pointer hover:bg-muted/50 transition-colors'
                       >
                         <TableCell>
@@ -322,10 +321,10 @@ export default function StaffStudentsPage() {
                             </div>
                             <div>
                               <div className='font-medium'>
-                                {student.username || "N/A"}
+                                {instructor.username || "N/A"}
                               </div>
                               <div className='text-xs text-muted-foreground'>
-                                ID: {student._id.substring(0, 8)}...
+                                ID: {instructor._id.substring(0, 8)}...
                               </div>
                             </div>
                           </div>
@@ -333,13 +332,13 @@ export default function StaffStudentsPage() {
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Mail className='h-4 w-4 text-muted-foreground' />
-                            <span>{student.email || "N/A"}</span>
+                            <span>{instructor.email || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center space-x-2'>
                             <Phone className='h-4 w-4 text-muted-foreground' />
-                            <span>{student.phone || "N/A"}</span>
+                            <span>{instructor.phone || "N/A"}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -352,15 +351,15 @@ export default function StaffStudentsPage() {
                         <TableCell>
                           <Badge
                             variant={
-                              student.is_active ? "default" : "secondary"
+                              instructor.is_active ? "default" : "secondary"
                             }
                             className={
-                              student.is_active
+                              instructor.is_active
                                 ? "bg-green-100 text-green-800 border-green-300"
                                 : "bg-gray-100 text-gray-800 border-gray-300"
                             }
                           >
-                            {student.is_active ? "Đang học" : "Tạm nghỉ"}
+                            {instructor.is_active ? "Hoạt động" : "Tạm nghỉ"}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -372,7 +371,7 @@ export default function StaffStudentsPage() {
                       colSpan={6}
                       className='text-center py-8 text-muted-foreground'
                     >
-                      Không tìm thấy học viên phù hợp với bộ lọc hiện tại.
+                      Không tìm thấy giảng viên phù hợp với bộ lọc hiện tại.
                     </TableCell>
                   </TableRow>
                 )}
@@ -383,9 +382,9 @@ export default function StaffStudentsPage() {
           {!isLoading && totalPages > 1 && (
             <div className='flex items-center justify-between mt-4'>
               <div className='text-sm text-muted-foreground'>
-                Hiển thị {Math.min(startIndex + 1, filteredStudents.length)} -{" "}
-                {Math.min(endIndex, filteredStudents.length)} trong tổng số{" "}
-                {filteredStudents.length} học viên
+                Hiển thị {Math.min(startIndex + 1, filteredInstructors.length)}{" "}
+                - {Math.min(endIndex, filteredInstructors.length)} trong tổng số{" "}
+                {filteredInstructors.length} giảng viên
               </div>
               <div className='flex items-center space-x-2'>
                 <Button

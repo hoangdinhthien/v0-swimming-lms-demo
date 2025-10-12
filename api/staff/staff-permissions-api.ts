@@ -231,7 +231,7 @@ export function getAllowedModules(
 export function getModuleNavigationMapping(): Record<string, string> {
   return {
     Course: "courses",
-    Order: "transactions",
+    Order: "orders",
     Class: "classes",
     User: "students", // assuming User module refers to students
     News: "news",
@@ -242,19 +242,46 @@ export function getModuleNavigationMapping(): Record<string, string> {
 
 /**
  * Get allowed navigation items for staff based on permissions
+ * Only includes modules where staff has GET permission
  */
 export function getAllowedNavigationItems(
   staffPermission: StaffPermission | null
 ): string[] {
-  const allowedModules = getAllowedModules(staffPermission);
-  const mapping = getModuleNavigationMapping();
+  if (!staffPermission?.permission) return [];
 
   const allowedNavItems = new Set<string>();
 
-  allowedModules.forEach((module) => {
-    const navItem = mapping[module];
-    if (navItem) {
-      allowedNavItems.add(navItem);
+  staffPermission.permission.forEach((perm) => {
+    // Only include modules where staff has GET permission
+    if (perm.action.includes("GET")) {
+      perm.module.forEach((module) => {
+        switch (module) {
+          case "Course":
+            allowedNavItems.add("courses");
+            break;
+          case "Order":
+            allowedNavItems.add("orders");
+            break;
+          case "Class":
+            allowedNavItems.add("classes");
+            break;
+          case "User":
+            // User module includes students, instructors, and staff management
+            allowedNavItems.add("students");
+            allowedNavItems.add("instructors");
+            // Note: staff management is only for managers, not included here
+            break;
+          case "News":
+            allowedNavItems.add("news");
+            break;
+          case "Blog":
+            allowedNavItems.add("news"); // Blog is part of news
+            break;
+          case "Application":
+            allowedNavItems.add("applications");
+            break;
+        }
+      });
     }
   });
 

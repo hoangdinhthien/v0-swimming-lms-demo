@@ -42,22 +42,15 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
-import { fetchStaffClasses } from "@/api/staff-data/staff-data-api";
+import { fetchClasses, type ClassItem } from "@/api/class-api";
 import { fetchInstructorDetail } from "@/api/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import { useStaffPermissions } from "@/hooks/useStaffPermissions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  parseApiResponse,
-  parsePaginatedResponse,
-} from "@/utils/api-response-parser";
 
-export default function StaffClassesPage() {
-  const { hasPermission, loading: permissionLoading } = useStaffPermissions();
+export default function ClassesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [classes, setClasses] = useState<any[]>([]);
-  const [allClasses, setAllClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [instructorNames, setInstructorNames] = useState<{
     [key: string]: string;
   }>({});
@@ -68,7 +61,7 @@ export default function StaffClassesPage() {
   const [totalCount, setTotalCount] = useState(0);
 
   // Function to fetch instructor names
-  const fetchInstructorNames = async (classList: any[]) => {
+  const fetchInstructorNames = async (classList: ClassItem[]) => {
     const tenantId = getSelectedTenant();
     const token = getAuthToken();
     if (!tenantId || !token) return;
@@ -112,10 +105,9 @@ export default function StaffClassesPage() {
     setInstructorNames((prev) => ({ ...prev, ...instructorMap }));
   };
 
+  // Fetch paginated classes data
   useEffect(() => {
     async function fetchData() {
-      if (!hasPermission("Class", "GET")) return;
-
       setLoading(true);
       setError(null);
       try {
@@ -124,82 +116,62 @@ export default function StaffClassesPage() {
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
 
-        const res = await fetchStaffClasses({ tenantId, token, page, limit });
+        const result = await fetchClasses(tenantId, token, page, limit);
+        setClasses(result.data);
+        setTotalCount(result.meta_data.count);
 
-        // Handle staff API response format
-        if (res) {
-          const parsedResponse = parsePaginatedResponse(res);
-          setClasses(parsedResponse.data);
-          setTotalCount(parsedResponse.total);
-          // Fetch instructor names for the current page
-          await fetchInstructorNames(parsedResponse.data);
-        } else {
-          setClasses([]);
-          setTotalCount(0);
-        }
+        // Fetch instructor names for the current page
+        await fetchInstructorNames(result.data);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setClasses([]);
       }
       setLoading(false);
     }
-
-    if (!permissionLoading) {
-      const timeoutId = setTimeout(fetchData, 100);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [page, limit, permissionLoading]);
+    fetchData();
+  }, [page, limit]);
 
   // Fetch all classes for summary cards
   useEffect(() => {
-    async function fetchAll() {
-      if (!hasPermission("Class", "GET")) return;
-
+    async function fetchAllClasses() {
       try {
         const tenantId = getSelectedTenant();
         const token = getAuthToken();
         if (!tenantId || !token) return;
 
-        const res = await fetchStaffClasses({
-          tenantId,
-          token,
-          page: 1,
-          limit: 1000,
-        });
-
-        // Handle staff API response format
-        if (res) {
-          const parsedResponse = parseApiResponse(res);
-          setAllClasses(parsedResponse.data);
-        } else {
-          setAllClasses([]);
-        }
+        const result = await fetchClasses(tenantId, token, 1, 1000);
+        setAllClasses(result.data);
       } catch {
         setAllClasses([]);
       }
     }
+    fetchAllClasses();
+  }, []);
 
-    if (!permissionLoading) {
-      fetchAll();
-    }
-  }, [permissionLoading]);
+  // Filter classes based on search query
+  const filteredClasses = classes.filter(
+    (classItem) =>
+      classItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      classItem.course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  if (permissionLoading || loading) {
+  // Calculate summary statistics
+  const totalClasses = allClasses.length;
+  const totalStudents = allClasses.reduce((sum, classItem) => {
+    return sum + (classItem.member?.length || 0);
+  }, 0);
+  const averageStudentsPerClass =
+    totalClasses > 0 ? Math.round(totalStudents / totalClasses) : 0;
+  const activeClasses = allClasses.filter(
+    (classItem) => classItem.course.is_active
+  ).length;
+
+  if (loading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen py-16'>
         <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
         <p className='text-muted-foreground'>Đang tải danh sách lớp học...</p>
       </div>
-    );
-  }
-
-  if (!hasPermission("Class", "GET")) {
-    return (
-      <Alert>
-        <AlertDescription>
-          Bạn không có quyền xem lớp học. Vui lòng liên hệ quản lý.
-        </AlertDescription>
-      </Alert>
     );
   }
 
@@ -221,7 +193,7 @@ export default function StaffClassesPage() {
     <>
       <div className='mb-6'>
         <Link
-          href='/dashboard/staff'
+          href='/dashboard/manager'
           className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
           <ArrowLeft className='mr-1 h-4 w-4' />
@@ -233,12 +205,17 @@ export default function StaffClassesPage() {
         <div className='flex items-center justify-between'>
           <div>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Lớp học của tôi
+              Quản lý lớp học
             </h1>
             <p className='text-muted-foreground'>
-              Xem tất cả các lớp học được phân công
+              Quản lý tất cả các lớp học hiện có
             </p>
           </div>
+          <Link href='/dashboard/manager/classes/create'>
+            <Button>
+              <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+            </Button>
+          </Link>
         </div>
 
         <div className='mt-8 grid gap-6 md:grid-cols-4'>
@@ -249,21 +226,19 @@ export default function StaffClassesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>{allClasses.length}</div>
-              <p className='text-xs text-muted-foreground'>Lớp đang quản lý</p>
+              <div className='text-2xl font-bold'>{totalClasses}</div>
+              <p className='text-xs text-muted-foreground'>Tất cả lớp học</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium'>
-                Lớp đang hoạt động
+                Lớp học đang hoạt động
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
-                {allClasses.filter((c) => c.status === "active").length}
-              </div>
+              <div className='text-2xl font-bold'>{activeClasses}</div>
               <p className='text-xs text-muted-foreground'>Đang diễn ra</p>
             </CardContent>
           </Card>
@@ -271,16 +246,14 @@ export default function StaffClassesPage() {
           <Card>
             <CardHeader className='pb-2'>
               <CardTitle className='text-sm font-medium'>
-                Tổng học viên
+                Tổng số học viên
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
-                {allClasses.reduce((sum, classItem) => {
-                  return sum + (classItem.students?.length || 0);
-                }, 0)}
-              </div>
-              <p className='text-xs text-muted-foreground'>Học viên đang học</p>
+              <div className='text-2xl font-bold'>{totalStudents}</div>
+              <p className='text-xs text-muted-foreground'>
+                Học viên đã đăng ký
+              </p>
             </CardContent>
           </Card>
 
@@ -292,13 +265,7 @@ export default function StaffClassesPage() {
             </CardHeader>
             <CardContent>
               <div className='text-2xl font-bold'>
-                {allClasses.length > 0
-                  ? Math.round(
-                      allClasses.reduce((sum, classItem) => {
-                        return sum + (classItem.students?.length || 0);
-                      }, 0) / allClasses.length
-                    )
-                  : 0}
+                {averageStudentsPerClass}
               </div>
               <p className='text-xs text-muted-foreground'>Học viên mỗi lớp</p>
             </CardContent>
@@ -314,7 +281,7 @@ export default function StaffClassesPage() {
               <div className='flex-1 relative'>
                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
                 <Input
-                  placeholder='Tìm kiếm theo tên lớp...'
+                  placeholder='Tìm kiếm theo tên lớp học hoặc khóa học...'
                   className='pl-8'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -326,83 +293,110 @@ export default function StaffClassesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tên lớp</TableHead>
+                    <TableHead>Tên lớp học</TableHead>
                     <TableHead>Khóa học</TableHead>
-                    <TableHead>Giảng viên</TableHead>
-                    <TableHead>Học viên</TableHead>
+                    <TableHead>Số học viên</TableHead>
+                    <TableHead>Giáo viên</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
                     <TableHead>Trạng thái</TableHead>
-                    <TableHead>Thời gian</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className='text-center py-8 text-muted-foreground'
-                      >
-                        Đang tải dữ liệu...
-                      </TableCell>
-                    </TableRow>
-                  ) : error ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className='text-center py-8 text-red-500'
-                      >
-                        {error}
-                      </TableCell>
-                    </TableRow>
-                  ) : classes.length > 0 ? (
-                    classes.map((classItem: any) => (
+                  {filteredClasses.length > 0 ? (
+                    filteredClasses.map((classItem) => (
                       <TableRow
                         key={classItem._id}
                         className='cursor-pointer hover:bg-muted/50 transition-colors'
                         onClick={() =>
-                          (window.location.href = `/dashboard/staff/classes/${classItem._id}`)
+                          (window.location.href = `/dashboard/manager/class/${classItem._id}?from=classes`)
                         }
                       >
                         <TableCell className='font-medium'>
-                          {classItem.name || classItem.title || "Không có tên"}
+                          <div className='flex items-center gap-2'>
+                            <Users className='h-4 w-4 text-muted-foreground' />
+                            <div className='font-medium text-foreground'>
+                              {classItem.name}
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {classItem.course?.title || "Không có khóa học"}
+                          <div className='flex items-center gap-2'>
+                            <BookOpen className='h-4 w-4 text-muted-foreground' />
+                            <div>
+                              <div className='font-medium'>
+                                {classItem.course.title}
+                              </div>
+                              <div className='text-sm text-muted-foreground'>
+                                {classItem.course.session_number} buổi -{" "}
+                                {classItem.course.session_number_duration}
+                              </div>
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {Array.isArray(classItem.instructor)
-                            ? classItem.instructor
-                                .map(
-                                  (id: string) =>
-                                    instructorNames[id] || "Đang tải..."
+                          <div className='flex items-center gap-2'>
+                            <User className='h-4 w-4 text-muted-foreground' />
+                            <span className='font-medium'>
+                              {classItem.member?.length || 0} học viên
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex items-center gap-2'>
+                            <User className='h-4 w-4 text-muted-foreground' />
+                            <span className='text-sm text-muted-foreground'>
+                              {classItem.instructor ? (
+                                Array.isArray(classItem.instructor) ? (
+                                  classItem.instructor.length > 0 ? (
+                                    <div className='flex flex-col gap-1'>
+                                      {classItem.instructor.map(
+                                        (instructorId, index) => (
+                                          <span
+                                            key={instructorId}
+                                            className='text-sm'
+                                          >
+                                            {instructorNames[instructorId] ||
+                                              "Đang tải..."}
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  ) : (
+                                    "Chưa phân công"
+                                  )
+                                ) : (
+                                  instructorNames[classItem.instructor] ||
+                                  "Đang tải..."
                                 )
-                                .join(", ")
-                            : instructorNames[classItem.instructor] ||
-                              "Không có giảng viên"}
+                              ) : (
+                                "Chưa phân công"
+                              )}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <div className='flex items-center gap-1'>
-                            <Users className='h-4 w-4' />
-                            {classItem.students?.length || 0}
+                          <div className='flex items-center gap-2'>
+                            <Clock className='h-4 w-4 text-muted-foreground' />
+                            <span className='text-sm text-muted-foreground'>
+                              {new Date(
+                                classItem.created_at
+                              ).toLocaleDateString("vi-VN")}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant='outline'
                             className={
-                              classItem.status === "active"
+                              classItem.course.is_active
                                 ? "bg-green-50 text-green-700 border-green-200"
                                 : "bg-gray-50 text-gray-700 border-gray-200"
                             }
                           >
-                            {classItem.status === "active"
+                            {classItem.course.is_active
                               ? "Đang hoạt động"
                               : "Đã kết thúc"}
                           </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {classItem.schedule?.start_time ||
-                            classItem.start_time ||
-                            "Chưa xác định"}
                         </TableCell>
                       </TableRow>
                     ))
@@ -412,7 +406,9 @@ export default function StaffClassesPage() {
                         colSpan={6}
                         className='text-center py-8 text-muted-foreground'
                       >
-                        Không tìm thấy lớp học nào.
+                        {searchQuery
+                          ? "Không tìm thấy lớp học phù hợp với từ khóa tìm kiếm."
+                          : "Chưa có lớp học nào được tạo."}
                       </TableCell>
                     </TableRow>
                   )}
@@ -421,50 +417,52 @@ export default function StaffClassesPage() {
             </div>
 
             {/* Pagination Controls */}
-            <div className='flex justify-center mt-6'>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href='#'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page > 1) setPage(page - 1);
-                      }}
-                      aria-disabled={page === 1}
-                    />
-                  </PaginationItem>
-                  {Array.from(
-                    { length: Math.ceil(totalCount / limit) },
-                    (_, i) => (
-                      <PaginationItem key={i}>
-                        <PaginationLink
-                          href='#'
-                          isActive={page === i + 1}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPage(i + 1);
-                          }}
-                        >
-                          {i + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      href='#'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page < Math.ceil(totalCount / limit))
-                          setPage(page + 1);
-                      }}
-                      aria-disabled={page === Math.ceil(totalCount / limit)}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            {totalCount > limit && (
+              <div className='flex justify-center mt-6'>
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page > 1) setPage(page - 1);
+                        }}
+                        aria-disabled={page === 1}
+                      />
+                    </PaginationItem>
+                    {Array.from(
+                      { length: Math.ceil(totalCount / limit) },
+                      (_, i) => (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            href='#'
+                            isActive={page === i + 1}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPage(i + 1);
+                            }}
+                          >
+                            {i + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (page < Math.ceil(totalCount / limit))
+                            setPage(page + 1);
+                        }}
+                        aria-disabled={page === Math.ceil(totalCount / limit)}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
