@@ -7,6 +7,7 @@ interface UserAvatarProps {
   user: {
     username?: string;
     featured_image?:
+      | string[] // Array of media IDs (new format)
       | Array<{
           _id: string;
           filename?: string;
@@ -29,25 +30,34 @@ export function UserAvatar({
   className = "",
 }: UserAvatarProps) {
   // Handle different featured_image formats
-  let featuredImage = null;
+  let mediaId = null;
+  let directImageUrl = null;
+
   if (user.featured_image) {
     if (Array.isArray(user.featured_image) && user.featured_image.length > 0) {
-      featuredImage = user.featured_image[0];
+      const firstImage = user.featured_image[0];
+
+      // Check if it's a string (media ID) or object
+      if (typeof firstImage === "string") {
+        // New format: array of media IDs
+        mediaId = firstImage;
+      } else if (typeof firstImage === "object" && firstImage._id) {
+        // Old format: array of objects with _id
+        mediaId = firstImage._id;
+        directImageUrl = firstImage.path;
+      }
     } else if (
       !Array.isArray(user.featured_image) &&
-      (user.featured_image as any)?.path
+      typeof user.featured_image === "object" &&
+      user.featured_image
     ) {
-      // Handle case where featured_image is an object with path
-      featuredImage = user.featured_image as any;
+      // Handle case where featured_image is a single object
+      mediaId = (user.featured_image as any)._id;
+      directImageUrl = (user.featured_image as any).path;
     }
   }
 
-  // Get the media ID and direct path
-  const mediaId = featuredImage?._id || null;
   const { imageUrl, loading } = useMediaDetails(mediaId);
-
-  // Use direct path if available (fallback)
-  const directImageUrl = featuredImage?.path;
 
   // Final image URL priority: fetched URL > direct path > null
   const finalImageUrl = imageUrl || directImageUrl || null;

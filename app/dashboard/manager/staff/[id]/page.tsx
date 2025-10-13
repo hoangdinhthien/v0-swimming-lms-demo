@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -63,51 +62,7 @@ import { getTenantInfo } from "@/api/tenant-api";
 import { uploadMedia, getMediaDetails } from "@/api/media-api";
 import { useToast } from "@/hooks/use-toast";
 import ManagerNotFound from "@/components/manager/not-found";
-
-// Helper function to extract avatar URL from featured_image
-function extractAvatarUrl(featuredImage: any): string {
-  console.log("Extracting avatar from featured_image:", featuredImage);
-
-  if (!featuredImage) {
-    console.log("No featured_image provided");
-    return "/placeholder.svg";
-  }
-
-  // Handle empty array - return placeholder immediately
-  if (Array.isArray(featuredImage) && featuredImage.length === 0) {
-    console.log("Empty featured_image array, using placeholder");
-    return "/placeholder.svg";
-  }
-
-  // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
-  if (Array.isArray(featuredImage) && featuredImage.length > 0) {
-    console.log("Handling array format featured_image");
-    const firstImage = featuredImage[0];
-    if (firstImage?.path) {
-      if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
-        console.log("Found URL in array path:", firstImage.path[0]);
-        return firstImage.path[0];
-      } else if (typeof firstImage.path === "string") {
-        console.log("Found URL in string path:", firstImage.path);
-        return firstImage.path;
-      }
-    }
-  }
-  // Handle Object format: featured_image: { path: "url" } or { path: ["url"] }
-  else if (typeof featuredImage === "object" && featuredImage.path) {
-    console.log("Handling object format featured_image");
-    if (Array.isArray(featuredImage.path) && featuredImage.path.length > 0) {
-      console.log("Found URL in object array path:", featuredImage.path[0]);
-      return featuredImage.path[0];
-    } else if (typeof featuredImage.path === "string") {
-      console.log("Found URL in object string path:", featuredImage.path);
-      return featuredImage.path;
-    }
-  }
-
-  console.log("No valid avatar URL found, using placeholder");
-  return "/placeholder.svg";
-}
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const staffFormSchema = z.object({
   username: z.string().min(1, { message: "Tên nhân viên là bắt buộc" }),
@@ -128,7 +83,6 @@ export default function StaffDetailPage() {
   const [detail, setDetail] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>("/placeholder.svg");
   const [tenantName, setTenantName] = useState<string>("");
   const [isFetchingTenant, setIsFetchingTenant] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -186,47 +140,60 @@ export default function StaffDetailPage() {
         const token = getAuthToken();
         if (!token) throw new Error("Không có thông tin xác thực");
 
-        console.log("[DEBUG] Fetching staff with user ID:", staffId);
-        console.log(
-          "[DEBUG] This should be user._id from the staff list (correct)"
-        );
-
-        // Now we can directly use the user._id to get permissions
+        // Try to fetch staff detail with permissions first
         const detailData = await fetchStaffDetailWithModule({
           staffId, // This is now user._id from the URL
           tenantId,
           token,
         });
 
-        console.log("[DEBUG] Fetched staff data:", detailData);
-        console.log("[DEBUG] Staff user data:", detailData.user);
-        console.log(
-          "[DEBUG] Staff featured_image:",
-          detailData.user?.featured_image
-        );
-        console.log("[DEBUG] Staff permissions:", detailData.permission);
+        // Check if the response data is empty or null (no staff data found)
+        if (!detailData || !detailData.user) {
+          // Fallback to fetchStaffDetail if no data found
+          const fallbackData = await fetchStaffDetail({
+            staffId,
+            tenantId,
+            token,
+          });
 
-        setDetail(detailData);
+          // Convert to expected format and add empty permission array
+          // fallbackData already has the structure: { _id, user: {...}, classesAsInstructor, classesAsMember }
+          const finalDetailData = {
+            user: fallbackData.user, // Extract user from fallbackData
+            permission: [],
+          };
 
-        // Extract avatar URL using helper function
-        const avatarUrl = extractAvatarUrl(detailData.user?.featured_image);
-        console.log("Setting avatar URL for staff detail:", avatarUrl);
-        setAvatarUrl(avatarUrl);
+          setDetail(finalDetailData);
 
-        // Set form default values
-        form.reset({
-          username: detailData.user?.username || "",
-          email: detailData.user?.email || "",
-          phone: detailData.user?.phone || "",
-          address: detailData.user?.address || "",
-          bio: "", // Note: bio is not in the new API response
-          emergency_contact: "", // Note: emergency_contact is not in the new API response
-          start_date: "", // Note: start_date is not in the new API response
-          position: "", // Note: position is not in the new API response
-          is_active: detailData.user?.is_active ?? true,
-        });
+          // Set form default values for fallback data
+          form.reset({
+            username: fallbackData?.user?.username || "",
+            email: fallbackData?.user?.email || "",
+            phone: fallbackData?.user?.phone || "",
+            address: fallbackData?.user?.address || "",
+            bio: "", // Note: bio is not in the new API response
+            emergency_contact: "", // Note: emergency_contact is not in the new API response
+            start_date: "", // Note: start_date is not in the new API response
+            position: "", // Note: position is not in the new API response
+            is_active: fallbackData?.user?.is_active ?? true,
+          });
+        } else {
+          setDetail(detailData);
+
+          // Set form default values for normal data
+          form.reset({
+            username: detailData.user?.username || "",
+            email: detailData.user?.email || "",
+            phone: detailData.user?.phone || "",
+            address: detailData.user?.address || "",
+            bio: "", // Note: bio is not in the new API response
+            emergency_contact: "", // Note: emergency_contact is not in the new API response
+            start_date: "", // Note: start_date is not in the new API response
+            position: "", // Note: position is not in the new API response
+            is_active: detailData.user?.is_active ?? true,
+          });
+        }
       } catch (e: any) {
-        console.error("[DEBUG] Error fetching staff detail:", e);
         // Check if it's a 404 error (staff not found)
         if (
           e.message?.includes("404") ||
@@ -257,11 +224,6 @@ export default function StaffDetailPage() {
     if (!tenantId || !token) return;
 
     try {
-      console.log("[DEBUG] Updating staff with user ID from URL:", staffId);
-      console.log("[DEBUG] Staff detail data:", detail);
-      console.log("[DEBUG] Using user ID for update:", staffId);
-      console.log("[DEBUG] Update data:", data);
-
       // Prepare update data
       let updateData: any = {
         ...data,
@@ -273,9 +235,6 @@ export default function StaffDetailPage() {
       if (uploadedAvatarId) {
         updateData.featured_image = [uploadedAvatarId];
       }
-
-      console.log("[DEBUG] Final update data being sent:", updateData);
-      console.log("[DEBUG] Using user ID for update:", staffId);
 
       // Send request to update staff using the user ID from URL
       await updateStaff({
@@ -317,30 +276,58 @@ export default function StaffDetailPage() {
       const token = getAuthToken();
       if (!token) throw new Error("Không có thông tin xác thực");
 
-      // Directly use the user._id to get permissions
+      // Try to fetch staff detail with permissions first
       const detailData = await fetchStaffDetailWithModule({
         staffId, // This is user._id from the URL
         tenantId,
         token,
       });
-      setDetail(detailData);
 
-      // Extract avatar URL using helper function
-      const avatarUrl = extractAvatarUrl(detailData.user?.featured_image);
-      setAvatarUrl(avatarUrl);
+      // Check if the response data is empty or null (no staff data found)
+      if (!detailData || !detailData.user) {
+        // Fallback to fetchStaffDetail if no data found
+        const fallbackData = await fetchStaffDetail({
+          staffId,
+          tenantId,
+          token,
+        });
 
-      // Reset form with new values
-      form.reset({
-        username: detailData.user?.username || "",
-        email: detailData.user?.email || "",
-        phone: detailData.user?.phone || "",
-        address: detailData.user?.address || "",
-        bio: "", // Note: bio is not in the new API response
-        emergency_contact: "", // Note: emergency_contact is not in the new API response
-        start_date: "", // Note: start_date is not in the new API response
-        position: "", // Note: position is not in the new API response
-        is_active: detailData.user?.is_active ?? true,
-      });
+        // Convert to expected format and add empty permission array
+        const finalDetailData = {
+          user: fallbackData.user, // Extract user from fallbackData
+          permission: [],
+        };
+
+        setDetail(finalDetailData);
+
+        // Reset form with fallback values
+        form.reset({
+          username: fallbackData?.user?.username || "",
+          email: fallbackData?.user?.email || "",
+          phone: fallbackData?.user?.phone || "",
+          address: fallbackData?.user?.address || "",
+          bio: "", // Note: bio is not in the new API response
+          emergency_contact: "", // Note: emergency_contact is not in the new API response
+          start_date: "", // Note: start_date is not in the new API response
+          position: "", // Note: position is not in the new API response
+          is_active: fallbackData?.user?.is_active ?? true,
+        });
+      } else {
+        setDetail(detailData);
+
+        // Reset form with normal values
+        form.reset({
+          username: detailData.user?.username || "",
+          email: detailData.user?.email || "",
+          phone: detailData.user?.phone || "",
+          address: detailData.user?.address || "",
+          bio: "", // Note: bio is not in the new API response
+          emergency_contact: "", // Note: emergency_contact is not in the new API response
+          start_date: "", // Note: start_date is not in the new API response
+          position: "", // Note: position is not in the new API response
+          is_active: detailData.user?.is_active ?? true,
+        });
+      }
 
       // Clear the uploaded avatar ID after successful update
       setUploadedAvatarId(null);
@@ -396,12 +383,6 @@ export default function StaffDetailPage() {
           },
         };
         setDetail(updatedDetail);
-      }
-
-      // Update the avatar URL immediately to show the change
-      const mediaPath = await getMediaDetails(mediaId);
-      if (mediaPath) {
-        setAvatarUrl(mediaPath);
       }
 
       setUploadedAvatarId(mediaId);
@@ -626,16 +607,13 @@ export default function StaffDetailPage() {
         <Card className='md:col-span-1 overflow-hidden border-0 shadow-md'>
           <div className='bg-gradient-to-r from-green-500 to-emerald-400 h-24 dark:from-green-600 dark:to-emerald-500'></div>
           <CardContent className='flex flex-col items-center text-center pt-0 relative pb-6'>
-            <Avatar className='h-32 w-32 border-4 border-background shadow-md absolute -top-16'>
-              <AvatarImage
-                src={avatarUrl}
-                alt={detail.user?.username || "Staff"}
-                className='object-cover'
-              />
-              <AvatarFallback className='text-2xl bg-gradient-to-br from-green-500 to-emerald-500 text-white'>
-                {getInitials(detail.user?.username || "NV")}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              user={{
+                username: detail.user?.username || "NV",
+                featured_image: detail.user?.featured_image,
+              }}
+              className='h-32 w-32 border-4 border-background shadow-md absolute -top-16'
+            />
             <div className='mt-16 w-full'>
               <h2 className='text-2xl font-bold mt-2'>
                 {detail.user?.username || "Không có tên"}
@@ -965,15 +943,13 @@ export default function StaffDetailPage() {
               <div className='grid gap-6 py-4'>
                 {/* Avatar Upload Section */}
                 <div className='flex flex-col items-center gap-4'>
-                  <Avatar className='h-24 w-24 border-4 border-primary/10'>
-                    <AvatarImage
-                      src={avatarUrl}
-                      alt='Staff Avatar'
-                    />
-                    <AvatarFallback className='bg-primary/10 text-primary text-lg'>
-                      {getInitials(detail.user?.username || "NV")}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    user={{
+                      username: detail.user?.username || "NV",
+                      featured_image: detail.user?.featured_image,
+                    }}
+                    className='h-24 w-24 border-4 border-primary/10'
+                  />
                   <div className='flex flex-col items-center gap-2'>
                     <Label
                       htmlFor='avatar-upload'

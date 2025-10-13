@@ -217,7 +217,7 @@ export async function fetchStaffDetailWithModule({
   staffId: string;
   tenantId: string;
   token?: string;
-}): Promise<StaffWithPermissions> {
+}): Promise<StaffWithPermissions | null> {
   console.log(
     "Fetching staff detail with permissions for user ID:",
     staffId,
@@ -262,19 +262,32 @@ export async function fetchStaffDetailWithModule({
     console.log("Staff with permissions API response:", data);
 
     // Handle the specific nested array response format
-    // Response structure: { data: [[{ documents: [...] }]], message: "Success", statusCode: 200 }
+    // Response structure: { data: [[[{ _id, user, permission, ... }]]], message: "Success", statusCode: 200 }
+    // or when empty: { data: [[[]]], message: "Success", statusCode: 200 }
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
       const nestedData = data.data[0];
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
-        if (
+        if (Array.isArray(actualData)) {
+          // Check if actualData is an empty array (no permissions/staff data)
+          if (actualData.length === 0) {
+            console.log(
+              "Staff with permissions returned empty array - staff has no permissions"
+            );
+            return null; // Return null to trigger fallback to fetchStaffDetail
+          }
+          // This is the new format: triple nested arrays with data
+          console.log("Found staff with permissions data:", actualData[0]);
+          return actualData[0];
+        } else if (
           actualData &&
           actualData.documents &&
           Array.isArray(actualData.documents) &&
           actualData.documents.length > 0
         ) {
+          // Fallback to old format with documents property
           console.log(
-            "Found staff with permissions data:",
+            "Found staff with permissions data (documents format):",
             actualData.documents[0]
           );
           return actualData.documents[0];
@@ -282,11 +295,14 @@ export async function fetchStaffDetailWithModule({
       }
     }
 
-    console.error("Staff member not found with user ID:", staffId);
-    throw new Error(`Staff member not found with user ID: ${staffId}`);
+    // Staff member not found - this is expected behavior when staff has no permissions
+    return null; // Return null instead of throwing error
   } catch (error) {
-    console.error("Error fetching staff detail with permissions:", error);
-    throw error;
+    // Only log actual errors, not 404s which are expected
+    if (error instanceof Error && !error.message.includes("404")) {
+      console.error("Error fetching staff detail with permissions:", error);
+    }
+    return null; // Return null on error too
   }
 }
 
@@ -308,40 +324,55 @@ export async function fetchStaffDetail({
   );
 
   try {
-    // Since we're getting the user._id, we need to find the staff record by filtering the list
-    // First get all staff and find the one with matching user._id
-    const staffList = await fetchStaff({
-      tenantId,
-      token: token || "",
-    });
+    // Use the direct endpoint to get staff detail by user ID
+    const url = buildApiUrl(`/v1/workflow-process/manager/user?id=${staffId}`);
+    console.log("Fetching staff detail from URL:", url);
 
-    console.log("Staff list for detail lookup:", staffList);
-    console.log("Looking for user ID:", staffId);
+    // Create headers with both token and tenant ID
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
 
-    // Find the staff member with matching user._id
-    // Add more specific logging to debug the issue
-    const staffMember = staffList.find((staff: Staff) => {
-      console.log(
-        `Comparing staff ${staff.user?.username}: staff.user._id="${staff.user?._id}" with target="${staffId}"`
-      );
-      return staff.user._id === staffId;
-    });
-
-    if (!staffMember) {
-      console.error("Staff member not found with user ID:", staffId);
-      console.error(
-        "Available staff user IDs:",
-        staffList.map((s) => ({
-          name: s.user?.username,
-          userId: s.user?._id,
-          staffId: s._id,
-        }))
-      );
-      throw new Error(`Staff member not found with user ID: ${staffId}`);
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
-    console.log("Found staff detail data:", staffMember);
-    return staffMember;
+    const response = await fetch(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "Failed to fetch staff detail:",
+        response.status,
+        errorText
+      );
+      throw new Error(
+        `Failed to fetch staff detail: ${response.status} ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+    console.log("Staff detail API response:", data);
+
+    // Handle the specific nested array response format
+    // Response structure: { data: [[[{ _id, user, classesAsInstructor, classesAsMember }]]], message: "Success", statusCode: 200 }
+    if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      const nestedData = data.data[0];
+      if (Array.isArray(nestedData) && nestedData.length > 0) {
+        const actualData = nestedData[0];
+        if (Array.isArray(actualData) && actualData.length > 0) {
+          console.log("Found staff detail data:", actualData[0]);
+          return actualData[0];
+        }
+      }
+    }
+
+    console.error("Staff member not found with user ID:", staffId);
+    throw new Error(`Staff member not found with user ID: ${staffId}`);
   } catch (error) {
     console.error("Error fetching staff detail:", error);
     throw error;
