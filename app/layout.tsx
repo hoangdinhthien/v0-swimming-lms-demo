@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import AuthProvider from "@/components/auth-provider";
 import { TenantProvider } from "@/components/tenant-provider";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { Loader2 } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -33,20 +34,22 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={inter.className}>
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='light'
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <TenantProvider>
-              <React.Suspense fallback={<GlobalLoading />}>
-                {children}
-              </React.Suspense>
-            </TenantProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <AntdRegistry>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='light'
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <TenantProvider>
+                <React.Suspense fallback={<GlobalLoading />}>
+                  {children}
+                </React.Suspense>
+              </TenantProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </AntdRegistry>
       </body>
     </html>
   );

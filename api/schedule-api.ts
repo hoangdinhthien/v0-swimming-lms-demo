@@ -48,16 +48,16 @@ export interface Pool {
 export interface ScheduleEvent {
   _id: string;
   date: string;
-  day_of_week: number; // Monday-based: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
-  slot: Slot[];
-  classroom: Classroom[];
-  course: string[];
+  day_of_week?: number; // Monday-based: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
+  slot: Slot; // Single slot object, not array
+  classroom: Classroom; // Single classroom object, not array
+  pool: Pool; // Single pool object, not array
   created_at: string;
   created_by: string;
   updated_at: string;
   updated_by: string;
   tenant_id: string;
-  pool?: Pool[]; // Pool information - optional since it might not always be present
+  instructor?: any[]; // Optional instructor array
 }
 
 export interface ScheduleApiResponse {
