@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* React Big Calendar base styles */
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+
 /* Use the Inter font from Next.js (already defined in layout.tsx) */
 
 @layer utilities {

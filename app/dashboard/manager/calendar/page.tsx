@@ -1649,6 +1649,28 @@ export default function CalendarPage() {
                 </p>
               </div>
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
+                {/* Calendar Alternatives */}
+                <div className='flex items-center gap-2'>
+                  <Link href='/dashboard/manager/calendar-big'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='bg-gradient-to-r from-emerald-500 to-blue-600 text-white border-0 hover:from-emerald-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300'
+                    >
+                      🗓️ BigCalendar
+                    </Button>
+                  </Link>
+
+                  <Link href='/dashboard/manager/calendar-unified'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      className='bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 hover:from-purple-600 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300'
+                    >
+                      ✨ Unified Calendar
+                    </Button>
+                  </Link>
+                </div>
                 {/* View Mode Toggle */}
                 <div className='flex items-center gap-1 p-1 bg-muted rounded-xl'>
                   <Button
