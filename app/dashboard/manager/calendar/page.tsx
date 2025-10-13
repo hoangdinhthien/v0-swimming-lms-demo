@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar as CalendarIcon,
@@ -62,13 +62,20 @@ import {
   convertJsDayToApiDay,
 } from "@/api/schedule-api";
 import { fetchAllSlots, type SlotDetail } from "@/api/slot-api";
+import {
+  useCachedAPI,
+  usePerformanceMonitor,
+  apiCache,
+} from "@/hooks/use-api-cache";
 
 export default function CalendarPage() {
+  usePerformanceMonitor("CalendarPage");
+
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
-  const [allSlots, setAllSlots] = useState<SlotDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week">("week");
@@ -83,27 +90,66 @@ export default function CalendarPage() {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Use cached API for slots (they don't change often)
+  const {
+    data: allSlots,
+    loading: slotsLoading,
+    error: slotsError,
+  } = useCachedAPI(
+    "all-slots",
+    fetchAllSlots,
+    [],
+    10 * 60 * 1000 // Cache for 10 minutes
+  );
+
+  // Function to update URL with current state
+  const updateUrl = (week: string) => {
+    const url = new URL(window.location.href);
+    if (week) {
+      url.searchParams.set("week", week);
+    } else {
+      url.searchParams.delete("week");
+    }
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  // Function to handle week selection with URL update
+  const handleWeekChange = (weekValue: string) => {
+    setSelectedWeek(weekValue);
+    updateUrl(weekValue);
+  };
+
   // Initialize with current week on component mount
   useEffect(() => {
     const today = new Date();
     const weeks = getWeeksInYear(today);
     setAvailableWeeks(weeks);
 
-    // Find and set the current week that contains today
-    const currentWeek = weeks.find((week) => {
-      if (week.start && week.end) {
-        return today >= week.start && today <= week.end;
-      }
-      return false;
-    });
+    // Check if there's a week in URL params
+    const weekFromUrl = searchParams.get("week");
 
-    if (currentWeek) {
-      setSelectedWeek(currentWeek.value);
-    } else if (weeks.length > 0) {
-      // Fallback to first week if no matching week found
-      setSelectedWeek(weeks[0].value);
+    if (weekFromUrl && weeks.find((w) => w.value === weekFromUrl)) {
+      // Use week from URL if valid
+      setSelectedWeek(weekFromUrl);
+    } else {
+      // Find and set the current week that contains today
+      const currentWeek = weeks.find((week) => {
+        if (week.start && week.end) {
+          return today >= week.start && today <= week.end;
+        }
+        return false;
+      });
+
+      if (currentWeek) {
+        setSelectedWeek(currentWeek.value);
+        updateUrl(currentWeek.value);
+      } else if (weeks.length > 0) {
+        // Fallback to first week if no matching week found
+        setSelectedWeek(weeks[0].value);
+        updateUrl(weeks[0].value);
+      }
     }
-  }, []); // Run only on component mount
+  }, [searchParams]); // Add searchParams dependency
 
   // Effect to fetch data when component mounts or current date changes
   useEffect(() => {
@@ -114,7 +160,7 @@ export default function CalendarPage() {
       try {
         // Fetch all slots first
         const slots = await fetchAllSlots();
-        setAllSlots(slots);
+        // Slots are now loaded via cached API hook
 
         console.log(
           "🎯 All slots fetched:",
@@ -229,16 +275,6 @@ export default function CalendarPage() {
     });
   };
 
-  // Debug function for week selection
-  const handleWeekChange = (weekValue: string) => {
-    console.log("📝 Week selection changed:", {
-      previousWeek: selectedWeek,
-      newWeek: weekValue,
-      selectedWeekObject: availableWeeks.find((w) => w.value === weekValue),
-    });
-    setSelectedWeek(weekValue);
-  };
-
   // Handle view mode change
   const handleViewModeChange = (mode: "month" | "week") => {
     setViewMode(mode);
@@ -272,6 +308,9 @@ export default function CalendarPage() {
       await deleteScheduleEvent(scheduleToDelete.scheduleId);
 
       console.log("✅ Schedule event deleted successfully");
+
+      // Invalidate cache to ensure fresh data
+      apiCache.clear();
 
       // Refresh the calendar data
       setLoading(true);
@@ -361,7 +400,7 @@ export default function CalendarPage() {
   }; // Get all unique slots from schedule events, or return default slots if no data
   const getAllSlots = () => {
     // Use the real slot data fetched from API
-    if (allSlots.length > 0) {
+    if (allSlots && allSlots.length > 0) {
       console.log(
         "🎯 Using real slots from API:",
         allSlots.map((s) => ({ id: s._id, title: s.title }))
@@ -1055,16 +1094,14 @@ export default function CalendarPage() {
                         borderColor: "hsl(var(--border))",
                       }}
                     >
-                      {/* Past/Current date overlay - Striped pattern with preserved wider borders */}
+                      {/* Past/Current date overlay - Modern clean design */}
                       {isDisabled && (
-                        <div
-                          className='absolute top-0 left-0 right-[4px] bottom-[4px] pointer-events-none z-10'
-                          style={{
-                            background:
-                              "repeating-linear-gradient(45deg, rgba(148, 163, 184, 0.25) 0px, rgba(148, 163, 184, 0.25) 6px, transparent 6px, transparent 12px)",
-                            opacity: 1,
-                          }}
-                        />
+                        <div className='absolute inset-0 bg-gradient-to-br from-slate-100/80 to-slate-200/60 backdrop-blur-[0.5px] pointer-events-none z-10 rounded-sm'>
+                          <div className='absolute inset-0 bg-slate-50/40 rounded-sm' />
+                          <div className='absolute top-2 right-2 bg-slate-400/80 text-white text-xs px-2 py-1 rounded-full font-medium'>
+                            {isPast ? "Đã qua" : "Hiện tại"}
+                          </div>
+                        </div>
                       )}
 
                       <div className='h-full flex flex-col relative'>
@@ -1171,8 +1208,10 @@ export default function CalendarPage() {
                                     `🔍 Looking for slot "${targetSlotTitle}" on date ${formattedDate}`
                                   );
                                   console.log(
-                                    `📊 Available allSlots: ${allSlots.length}`,
-                                    allSlots.map((s) => ({
+                                    `📊 Available allSlots: ${
+                                      allSlots?.length || 0
+                                    }`,
+                                    allSlots?.map((s) => ({
                                       id: s._id,
                                       title: s.title,
                                     }))
@@ -1181,7 +1220,7 @@ export default function CalendarPage() {
                                   let actualSlotId = slot._id; // Default fallback
 
                                   // First priority: find the slot from our fetched slots data (this should always work)
-                                  const realSlot = allSlots.find(
+                                  const realSlot = allSlots?.find(
                                     (s) => s.title === targetSlotTitle
                                   );
 
@@ -1194,7 +1233,7 @@ export default function CalendarPage() {
                                     // This should not happen if fetchAllSlots is working correctly
                                     console.error(
                                       `❌ No slot found in allSlots for "${targetSlotTitle}". Available slots:`,
-                                      allSlots.map((s) => ({
+                                      allSlots?.map((s) => ({
                                         id: s._id,
                                         title: s.title,
                                       }))
@@ -1489,23 +1528,95 @@ export default function CalendarPage() {
     );
   };
 
-  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : []; // Show loading state
-  if (loading) {
+  const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
+
+  // Calendar Skeleton Loading Component
+  const CalendarSkeleton = () => (
+    <div className='overflow-x-auto rounded-xl border shadow-inner'>
+      <table className='w-full border-collapse bg-card'>
+        <thead className='bg-muted/50'>
+          <tr>
+            <th className='p-4 text-left font-semibold border-r-4 border-b-4 border-border w-32'>
+              <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+            </th>
+            {[...Array(7)].map((_, i) => (
+              <th
+                key={i}
+                className='p-4 text-center font-semibold border-r-4 border-b-4 border-border min-w-40'
+              >
+                <div className='space-y-2'>
+                  <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                  <div className='h-3 bg-gray-200 rounded animate-pulse'></div>
+                </div>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {[...Array(5)].map((_, rowIndex) => (
+            <tr
+              key={rowIndex}
+              className='hover:bg-muted/50'
+            >
+              <td className='p-4 border-r-4 border-b-4 border-border bg-muted/20'>
+                <div className='space-y-2'>
+                  <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                  <div className='h-3 bg-gray-200 rounded animate-pulse'></div>
+                </div>
+              </td>
+              {[...Array(7)].map((_, colIndex) => (
+                <td
+                  key={colIndex}
+                  className='p-2 border-r-4 border-b-4 border-border h-40'
+                >
+                  <div className='h-full space-y-2'>
+                    <div className='h-6 bg-gray-200 rounded animate-pulse'></div>
+                    <div className='h-16 bg-gray-100 rounded animate-pulse'></div>
+                    <div className='h-4 bg-gray-200 rounded animate-pulse'></div>
+                  </div>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  // Show skeleton loading state
+  if (loading || slotsLoading) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <p className='text-muted-foreground'>Đang tải lịch học...</p>
+      <div className='container mx-auto py-6 space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div className='h-8 w-48 bg-gray-200 rounded animate-pulse'></div>
+          <div className='flex gap-2'>
+            <div className='h-10 w-32 bg-gray-200 rounded animate-pulse'></div>
+            <div className='h-10 w-24 bg-gray-200 rounded animate-pulse'></div>
+          </div>
+        </div>
+
+        <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+          <div className='h-10 w-64 bg-gray-200 rounded animate-pulse'></div>
+          <div className='h-10 w-48 bg-gray-200 rounded animate-pulse'></div>
+        </div>
+
+        <CalendarSkeleton />
+
+        <div className='text-center text-muted-foreground flex items-center justify-center gap-2'>
+          <Loader2 className='h-4 w-4 animate-spin' />
+          Đang tải lịch học...
+        </div>
       </div>
     );
   } // Show error state
-  if (error) {
+  if (error || slotsError) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen py-16'>
         <div className='text-center space-y-4'>
           <div className='text-red-500 text-lg font-semibold'>
             Lỗi tải dữ liệu
           </div>
-          <p className='text-muted-foreground'>{error}</p>
+          <p className='text-muted-foreground'>{error || slotsError}</p>
           <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
