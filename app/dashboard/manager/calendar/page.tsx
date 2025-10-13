@@ -97,7 +97,7 @@ export default function ImprovedAntdCalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerDate, setDrawerDate] = useState<Dayjs | null>(null);
-  const [courseCache, setCourseCache] = useState<{[key: string]: any}>({});
+  const [courseCache, setCourseCache] = useState<{ [key: string]: any }>({});
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<{
@@ -145,7 +145,7 @@ export default function ImprovedAntdCalendarPage() {
         });
 
         setScheduleEvents(events);
-        
+
         // Log data structure for debugging
         if (events.length > 0) {
           console.log("📊 First event structure:", {
@@ -174,9 +174,9 @@ export default function ImprovedAntdCalendarPage() {
   useEffect(() => {
     const fetchCourseDetails = async () => {
       const courseIds = new Set<string>();
-      
+
       // Collect all unique course IDs
-      scheduleEvents.forEach(event => {
+      scheduleEvents.forEach((event) => {
         if (event.classroom?.course && !courseCache[event.classroom.course]) {
           courseIds.add(event.classroom.course);
         }
@@ -185,7 +185,7 @@ export default function ImprovedAntdCalendarPage() {
       // Fetch course details for missing courses
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
-      
+
       if (!tenantId || !token) {
         console.warn("Missing tenant or token for course fetch");
         return;
@@ -193,21 +193,21 @@ export default function ImprovedAntdCalendarPage() {
 
       for (const courseId of courseIds) {
         try {
-          const course = await fetchCourseById({ 
-            courseId, 
-            tenantId, 
-            token 
+          const course = await fetchCourseById({
+            courseId,
+            tenantId,
+            token,
           });
-          setCourseCache(prev => ({
+          setCourseCache((prev) => ({
             ...prev,
-            [courseId]: course
+            [courseId]: course,
           }));
         } catch (error) {
           console.error(`Failed to fetch course ${courseId}:`, error);
           // Set a fallback name for failed fetches
-          setCourseCache(prev => ({
+          setCourseCache((prev) => ({
             ...prev,
-            [courseId]: { title: `Khóa học ${courseId.slice(-4)}` }
+            [courseId]: { title: `Khóa học ${courseId.slice(-4)}` },
           }));
         }
       }
@@ -254,9 +254,7 @@ export default function ImprovedAntdCalendarPage() {
             .toString()
             .padStart(2, "0")} - ${Math.floor(slot.end_time)
             .toString()
-            .padStart(2, "0")}:${slot.end_minute
-            .toString()
-            .padStart(2, "0")}`
+            .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
         : "",
       course: getCourseName(classroom?.course || ""), // Resolve course name
       poolTitle: pool?.title || "Không xác định",
@@ -274,20 +272,29 @@ export default function ImprovedAntdCalendarPage() {
       "Bơi cơ bản": "#52c41a",
       "Bơi nâng cao": "#1890ff",
       "Bơi trẻ em": "#fa8c16",
-      "Aerobic": "#eb2f96",
+      Aerobic: "#eb2f96",
       "Bơi người lớn": "#722ed1",
       "Bơi tự do": "#13c2c2",
     };
-    
+
     // Try to match by course name first, then fallback to a hash-based color
     if (colorMap[courseName]) {
       return colorMap[courseName];
     }
-    
+
     // Generate consistent color based on courseId
-    const colors = ["#1890ff", "#52c41a", "#fa8c16", "#eb2f96", "#722ed1", "#13c2c2", "#f5222d", "#fa541c"];
-    const hash = courseId.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
+    const colors = [
+      "#1890ff",
+      "#52c41a",
+      "#fa8c16",
+      "#eb2f96",
+      "#722ed1",
+      "#13c2c2",
+      "#f5222d",
+      "#fa541c",
+    ];
+    const hash = courseId.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
       return a & a;
     }, 0);
     return colors[Math.abs(hash) % colors.length];
