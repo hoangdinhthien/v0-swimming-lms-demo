@@ -70,6 +70,8 @@ import {
   type Classroom,
 } from "@/api/class-api";
 import { fetchPools, type Pool } from "@/api/pools-api";
+import { fetchInstructors } from "@/api/instructors-api";
+import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import {
@@ -87,6 +89,20 @@ const { TabPane } = Tabs;
 // Set Vietnamese locale for dayjs
 dayjs.locale("vi");
 
+interface Instructor {
+  _id: string;
+  username: string;
+  email: string;
+  phone?: string;
+  is_active?: boolean;
+  role_front?: string[];
+  featured_image?: any[];
+  birthday?: string;
+  address?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface CalendarEvent {
   id: string;
   className: string;
@@ -94,6 +110,9 @@ interface CalendarEvent {
   slotTime: string;
   course: string;
   poolTitle: string;
+  poolId: string;
+  instructorId: string;
+  instructorName: string;
   scheduleId: string;
   slotId: string;
   type: "class" | "event";
@@ -124,9 +143,16 @@ export default function ImprovedAntdCalendarPage() {
     []
   );
   const [availablePools, setAvailablePools] = useState<Pool[]>([]);
+  const [availableInstructors, setAvailableInstructors] = useState<
+    Instructor[]
+  >([]);
+  const [instructorAvatars, setInstructorAvatars] = useState<{
+    [key: string]: string;
+  }>({});
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [selectedClassroom, setSelectedClassroom] = useState<string>("");
   const [selectedPool, setSelectedPool] = useState<string>("");
+  const [selectedInstructor, setSelectedInstructor] = useState<string>("");
   const [classManagementLoading, setClassManagementLoading] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
@@ -273,6 +299,7 @@ export default function ImprovedAntdCalendarPage() {
     const slot = scheduleEvent.slot;
     const classroom = scheduleEvent.classroom;
     const pool = scheduleEvent.pool;
+    const instructor = scheduleEvent.instructor?.[0]; // Get first instructor
 
     return {
       id: scheduleEvent._id,
@@ -289,6 +316,10 @@ export default function ImprovedAntdCalendarPage() {
         : "",
       course: getCourseName(classroom?.course || ""), // Resolve course name
       poolTitle: pool?.title || "Không xác định",
+      poolId: pool?._id || "",
+      instructorId: instructor?._id || "",
+      instructorName:
+        instructor?.username || instructor?.name || "Không xác định",
       scheduleId: scheduleEvent._id,
       slotId: slot?._id || "",
       type: "class",
@@ -418,6 +449,39 @@ export default function ImprovedAntdCalendarPage() {
     }
   };
 
+  // Load instructor avatars
+  const loadInstructorAvatars = async (instructors: Instructor[]) => {
+    const avatarMap: { [key: string]: string } = {};
+
+    for (const instructor of instructors) {
+      try {
+        // Check if instructor has featured_image
+        if (instructor.featured_image && instructor.featured_image.length > 0) {
+          const imageData = instructor.featured_image[0];
+          if (imageData.path && imageData.path.length > 0) {
+            // If path is already a URL, use it directly
+            if (imageData.path[0].startsWith("http")) {
+              avatarMap[instructor._id] = imageData.path[0];
+            } else {
+              // Otherwise, fetch media details
+              const mediaPath = await getMediaDetails(imageData.path[0]);
+              if (mediaPath) {
+                avatarMap[instructor._id] = mediaPath;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Error loading avatar for instructor ${instructor.username}:`,
+          error
+        );
+      }
+    }
+
+    setInstructorAvatars(avatarMap);
+  };
+
   // Handle quick add class
   const handleQuickAddClass = (date?: Dayjs) => {
     const targetDate = date || dayjs();
@@ -431,31 +495,74 @@ export default function ImprovedAntdCalendarPage() {
   const loadClassManagementData = async () => {
     setClassManagementLoading(true);
     try {
-      const [slotsData, classroomsData, poolsData] = await Promise.all([
-        fetchAllSlots(),
-        fetchClassrooms(),
-        fetchPools(),
-      ]);
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      console.log("🔍 Loading class management data...");
+      console.log("🔍 Tenant ID:", tenantId);
+      console.log("🔍 Token:", token ? "Present" : "Missing");
+
+      const [slotsData, classroomsData, poolsData, instructorsData] =
+        await Promise.all([
+          fetchAllSlots(),
+          fetchClassrooms(),
+          fetchPools(),
+          fetchInstructors({
+            tenantId: tenantId || undefined,
+            token: token || undefined,
+            role: "instructor", // Try with explicit role first
+          }).catch(async (error) => {
+            console.warn(
+              "Failed to fetch with role 'instructor', trying without role filter:",
+              error
+            );
+            // Fallback: try without role filter or with different roles
+            return fetchInstructors({
+              tenantId: tenantId || undefined,
+              token: token || undefined,
+            }).catch(() => []);
+          }),
+        ]);
+
+      console.log("🔍 Slots loaded:", slotsData.length);
+      console.log("🔍 Classrooms loaded:", classroomsData.length);
+      console.log("🔍 Pools loaded:", poolsData.length);
+      console.log("🔍 Instructors loaded:", instructorsData.length);
+      console.log("🔍 Instructors data:", instructorsData);
 
       setAvailableSlots(slotsData);
       setAvailableClassrooms(classroomsData);
       setAvailablePools(poolsData);
+      setAvailableInstructors(instructorsData);
+
+      // Load instructor avatars
+      if (instructorsData.length > 0) {
+        await loadInstructorAvatars(instructorsData);
+      }
 
       // Set default selections
       if (slotsData.length > 0) setSelectedSlot(slotsData[0]._id);
       if (poolsData.length > 0) setSelectedPool(poolsData[0]._id);
+      if (instructorsData.length > 0)
+        setSelectedInstructor(instructorsData[0]._id);
     } catch (error) {
       console.error("Error loading class management data:", error);
       message.error("Không thể tải dữ liệu quản lý lớp học");
     } finally {
       setClassManagementLoading(false);
     }
-  };
-
-  // Handle add new class
+  }; // Handle add new class
   const handleAddNewClass = async () => {
-    if (!selectedSlot || !selectedClassroom || !selectedPool || !drawerDate) {
-      message.error("Vui lòng chọn đầy đủ thông tin");
+    if (
+      !selectedSlot ||
+      !selectedClassroom ||
+      !selectedPool ||
+      !selectedInstructor ||
+      !drawerDate
+    ) {
+      message.error(
+        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, giáo viên)"
+      );
       return;
     }
 
@@ -466,6 +573,7 @@ export default function ImprovedAntdCalendarPage() {
         slot: selectedSlot,
         classroom: selectedClassroom,
         pool: selectedPool,
+        instructor: selectedInstructor,
       });
 
       message.success("Đã thêm lớp học vào lịch thành công");
@@ -478,6 +586,8 @@ export default function ImprovedAntdCalendarPage() {
       setClassManagementMode("view");
       setSelectedSlot(availableSlots[0]?._id || "");
       setSelectedClassroom("");
+      setSelectedPool(availablePools[0]?._id || "");
+      setSelectedInstructor(availableInstructors[0]?._id || "");
       setSelectedPool(availablePools[0]?._id || "");
     } catch (error) {
       console.error("Error adding class:", error);
@@ -494,6 +604,8 @@ export default function ImprovedAntdCalendarPage() {
     // Load current values
     setSelectedSlot(event.slotId);
     setSelectedClassroom(event.id); // Assuming this maps to classroom ID
+    setSelectedPool(event.poolId);
+    setSelectedInstructor(event.instructorId);
     // Load class management data if not loaded
     if (availableSlots.length === 0) {
       loadClassManagementData();
@@ -502,8 +614,16 @@ export default function ImprovedAntdCalendarPage() {
 
   // Handle update class
   const handleUpdateClass = async () => {
-    if (!editingEvent || !selectedSlot || !selectedClassroom || !selectedPool) {
-      message.error("Vui lòng chọn đầy đủ thông tin");
+    if (
+      !editingEvent ||
+      !selectedSlot ||
+      !selectedClassroom ||
+      !selectedPool ||
+      !selectedInstructor
+    ) {
+      message.error(
+        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, giáo viên)"
+      );
       return;
     }
 
@@ -518,6 +638,7 @@ export default function ImprovedAntdCalendarPage() {
         slot: selectedSlot,
         classroom: selectedClassroom,
         pool: selectedPool,
+        instructor: selectedInstructor,
       });
 
       message.success("Đã cập nhật lớp học thành công");
@@ -544,6 +665,7 @@ export default function ImprovedAntdCalendarPage() {
     setSelectedSlot(availableSlots[0]?._id || "");
     setSelectedClassroom("");
     setSelectedPool(availablePools[0]?._id || "");
+    setSelectedInstructor(availableInstructors[0]?._id || "");
   };
 
   // Enhanced date cell with drawer trigger
@@ -905,6 +1027,23 @@ export default function ImprovedAntdCalendarPage() {
                                                   <EnvironmentOutlined />
                                                   <span>{event.poolTitle}</span>
                                                 </div>
+                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                                                  <UserOutlined />
+                                                  <div className='flex items-center gap-2'>
+                                                    <Avatar
+                                                      size={16}
+                                                      src={
+                                                        instructorAvatars[
+                                                          event.instructorId
+                                                        ]
+                                                      }
+                                                      icon={<UserOutlined />}
+                                                    />
+                                                    <span>
+                                                      {event.instructorName}
+                                                    </span>
+                                                  </div>
+                                                </div>
                                               </div>
                                             </div>
                                           </div>
@@ -984,6 +1123,16 @@ export default function ImprovedAntdCalendarPage() {
                                   className='mb-4'
                                 />
 
+                                {availableInstructors.length === 0 && (
+                                  <Alert
+                                    message='Không có giáo viên nào'
+                                    description='Vui lòng thêm giáo viên vào hệ thống trước khi tạo lớp học.'
+                                    type='warning'
+                                    showIcon
+                                    className='mb-4'
+                                  />
+                                )}
+
                                 {classManagementLoading ? (
                                   <div className='text-center py-8'>
                                     <Spin size='large' />
@@ -1080,6 +1229,51 @@ export default function ImprovedAntdCalendarPage() {
                                       </AntdSelect>
                                     </Form.Item>
 
+                                    <Form.Item
+                                      label='Giáo viên'
+                                      required
+                                    >
+                                      <AntdSelect
+                                        value={selectedInstructor}
+                                        onChange={setSelectedInstructor}
+                                        placeholder='Chọn giáo viên'
+                                        showSearch
+                                        optionFilterProp='children'
+                                      >
+                                        {availableInstructors.map(
+                                          (instructor) => (
+                                            <Option
+                                              key={instructor._id}
+                                              value={instructor._id}
+                                            >
+                                              <div className='flex items-center gap-2'>
+                                                <Avatar
+                                                  size={24}
+                                                  src={
+                                                    instructorAvatars[
+                                                      instructor._id
+                                                    ]
+                                                  }
+                                                  icon={<UserOutlined />}
+                                                />
+                                                <span>
+                                                  {instructor.username} (
+                                                  {instructor.email})
+                                                  {instructor.is_active ===
+                                                    false && (
+                                                    <span className='text-red-500'>
+                                                      {" "}
+                                                      - Không hoạt động
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </Option>
+                                          )
+                                        )}
+                                      </AntdSelect>
+                                    </Form.Item>
+
                                     <div className='flex gap-2 pt-4'>
                                       <AntdButton
                                         type='primary'
@@ -1089,7 +1283,14 @@ export default function ImprovedAntdCalendarPage() {
                                         disabled={
                                           !selectedSlot ||
                                           !selectedClassroom ||
-                                          !selectedPool
+                                          !selectedPool ||
+                                          !selectedInstructor ||
+                                          availableInstructors.length === 0
+                                        }
+                                        title={
+                                          availableInstructors.length === 0
+                                            ? "Không thể thêm lớp học: Không có giáo viên nào"
+                                            : ""
                                         }
                                       >
                                         Thêm lớp học
@@ -1122,6 +1323,16 @@ export default function ImprovedAntdCalendarPage() {
                                   className='mb-4'
                                 />
 
+                                {availableInstructors.length === 0 && (
+                                  <Alert
+                                    message='Không có giáo viên nào'
+                                    description='Vui lòng thêm giáo viên vào hệ thống trước khi chỉnh sửa lớp học.'
+                                    type='error'
+                                    showIcon
+                                    className='mb-4'
+                                  />
+                                )}
+
                                 {classManagementLoading ? (
                                   <div className='text-center py-8'>
                                     <Spin size='large' />
@@ -1218,6 +1429,51 @@ export default function ImprovedAntdCalendarPage() {
                                       </AntdSelect>
                                     </Form.Item>
 
+                                    <Form.Item
+                                      label='Giáo viên'
+                                      required
+                                    >
+                                      <AntdSelect
+                                        value={selectedInstructor}
+                                        onChange={setSelectedInstructor}
+                                        placeholder='Chọn giáo viên'
+                                        showSearch
+                                        optionFilterProp='children'
+                                      >
+                                        {availableInstructors.map(
+                                          (instructor) => (
+                                            <Option
+                                              key={instructor._id}
+                                              value={instructor._id}
+                                            >
+                                              <div className='flex items-center gap-2'>
+                                                <Avatar
+                                                  size={24}
+                                                  src={
+                                                    instructorAvatars[
+                                                      instructor._id
+                                                    ]
+                                                  }
+                                                  icon={<UserOutlined />}
+                                                />
+                                                <span>
+                                                  {instructor.username} (
+                                                  {instructor.email})
+                                                  {instructor.is_active ===
+                                                    false && (
+                                                    <span className='text-red-500'>
+                                                      {" "}
+                                                      - Không hoạt động
+                                                    </span>
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </Option>
+                                          )
+                                        )}
+                                      </AntdSelect>
+                                    </Form.Item>
+
                                     <div className='flex gap-2 pt-4'>
                                       <AntdButton
                                         type='primary'
@@ -1227,7 +1483,14 @@ export default function ImprovedAntdCalendarPage() {
                                         disabled={
                                           !selectedSlot ||
                                           !selectedClassroom ||
-                                          !selectedPool
+                                          !selectedPool ||
+                                          !selectedInstructor ||
+                                          availableInstructors.length === 0
+                                        }
+                                        title={
+                                          availableInstructors.length === 0
+                                            ? "Không thể cập nhật lớp học: Không có giáo viên nào"
+                                            : ""
                                         }
                                       >
                                         Cập nhật

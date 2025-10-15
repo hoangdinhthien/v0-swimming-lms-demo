@@ -159,6 +159,7 @@ export interface ScheduleRequest {
   slot: string;
   classroom: string;
   pool: string;
+  instructor: string;
 }
 
 // Interface for creating a new class
