@@ -81,6 +81,7 @@ import {
 } from "@/hooks/use-api-cache";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ClassDetailModal from "@/components/manager/class-detail-modal";
 
 const { Option } = AntdSelect;
 const { Text, Title } = Typography;
@@ -155,6 +156,11 @@ export default function ImprovedAntdCalendarPage() {
   const [selectedInstructor, setSelectedInstructor] = useState<string>("");
   const [classManagementLoading, setClassManagementLoading] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+
+  // Class detail modal states
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedScheduleEvent, setSelectedScheduleEvent] =
+    useState<ScheduleEvent | null>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<{
@@ -360,6 +366,20 @@ export default function ImprovedAntdCalendarPage() {
       return a & a;
     }, 0);
     return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Find original ScheduleEvent by schedule ID
+  const findScheduleEventById = (scheduleId: string): ScheduleEvent | null => {
+    return scheduleEvents.find((event) => event._id === scheduleId) || null;
+  };
+
+  // Handle opening class detail modal
+  const handleOpenDetailModal = (event: CalendarEvent) => {
+    const scheduleEvent = findScheduleEventById(event.scheduleId);
+    if (scheduleEvent) {
+      setSelectedScheduleEvent(scheduleEvent);
+      setDetailModalOpen(true);
+    }
   };
 
   // Handle date select from calendar
@@ -1057,19 +1077,7 @@ export default function ImprovedAntdCalendarPage() {
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   e.stopPropagation();
-                                                  // Open in new tab/window instead of navigating
-                                                  window.open(
-                                                    `/dashboard/manager/schedule/slot-details?slotId=${
-                                                      event.slotId
-                                                    }&date=${drawerDate.format(
-                                                      "YYYY-MM-DD"
-                                                    )}&slotTitle=${encodeURIComponent(
-                                                      event.slotTitle
-                                                    )}&time=${encodeURIComponent(
-                                                      event.slotTime
-                                                    )}`,
-                                                    "_blank"
-                                                  );
+                                                  handleOpenDetailModal(event);
                                                 }}
                                               />
                                             </Tooltip>
@@ -1577,6 +1585,32 @@ export default function ImprovedAntdCalendarPage() {
             </div>
           )}
         </Modal>
+
+        {/* Class Detail Modal */}
+        <ClassDetailModal
+          open={detailModalOpen}
+          onClose={() => {
+            setDetailModalOpen(false);
+            setSelectedScheduleEvent(null);
+          }}
+          scheduleEvent={selectedScheduleEvent}
+          onEdit={(event) => {
+            // Convert ScheduleEvent back to CalendarEvent format if needed for editing
+            const calendarEvent = formatScheduleEvent(event);
+            setEditingEvent(calendarEvent);
+            setClassManagementMode("edit");
+            loadClassManagementData();
+          }}
+          onDelete={(event) => {
+            setScheduleToDelete({
+              scheduleId: event._id,
+              className: event.classroom?.name || "Không xác định",
+              date: event.date.split("T")[0],
+              slotTitle: event.slot?.title || "Không xác định",
+            });
+            setDeleteDialogOpen(true);
+          }}
+        />
       </div>
     </ConfigProvider>
   );
