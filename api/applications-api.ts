@@ -1,5 +1,5 @@
 import config from "./config.json";
-import { apiGet } from "./api-utils";
+import { apiGet, apiPut } from "./api-utils";
 
 export interface ApplicationType {
   _id: string;
@@ -29,6 +29,8 @@ export interface Application {
         phone: string;
         role_front: string[];
         featured_image?: string | string[];
+        address?: string;
+        birthday?: string;
       };
   created_by: {
     _id: string;
@@ -37,9 +39,12 @@ export interface Application {
     phone: string;
     role_front: string[];
     featured_image?: string | string[];
+    address?: string;
+    birthday?: string;
   };
   tenant_id: string;
   // Optional fields that might be added later
+  reply?: string;
   reply_content?: string;
 }
 
@@ -143,4 +148,36 @@ export async function getApplicationDetail(
   }
 
   return app || null;
+}
+
+export interface ReplyApplicationRequest {
+  reply: string;
+  status: string[];
+}
+
+export async function replyToApplication(
+  id: string,
+  tenantId: string,
+  token: string,
+  replyData: ReplyApplicationRequest
+): Promise<boolean> {
+  try {
+    const response = await apiPut(
+      `${config.API}/v1/workflow-process/manager/application?id=${id}`,
+      replyData,
+      {
+        requireAuth: true,
+        includeTenant: false,
+        headers: {
+          "x-tenant-id": tenantId,
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.ok;
+  } catch (error) {
+    console.error("Error replying to application:", error);
+    return false;
+  }
 }

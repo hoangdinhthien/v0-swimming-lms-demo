@@ -18,31 +18,69 @@ export interface Slot {
   tenant_id: string;
 }
 
+export interface Course {
+  _id: string;
+  title: string;
+  description?: string;
+  price?: number;
+  category?: string[];
+  session_number?: number;
+  session_number_duration?: string;
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
+  tenant_id?: string;
+  is_active?: boolean;
+  slug?: string;
+  media?: string[];
+}
+
 export interface Classroom {
   _id: string;
   name: string;
-  course: string;
+  course: Course | string; // Can be Course object or string ID
   created_at: string;
   created_by: string;
   updated_at: string;
   updated_by: string;
   tenant_id: string;
   member?: string[]; // Optional member array
+  instructor?: string; // Optional instructor ID
 }
 
 export interface Pool {
   _id: string;
   title: string;
-  type: string;
-  dimensions: string;
-  depth: string;
-  capacity: number;
-  maintance_status: string;
+  type?: string;
+  dimensions?: string;
+  depth?: string;
+  capacity?: number;
+  maintance_status?: string;
   created_at: string;
   created_by: string;
   updated_at: string;
   updated_by: string;
   tenant_id: string;
+}
+
+export interface Instructor {
+  _id: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  featured_image?: string[];
+  password?: string;
+  role_front?: string[];
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
+  is_active?: boolean;
+  parent_id?: any;
+  role?: string[];
+  address?: string;
+  birthday?: string;
 }
 
 export interface ScheduleEvent {
@@ -57,7 +95,7 @@ export interface ScheduleEvent {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
-  instructor?: any; // Optional instructor object (not array)
+  instructor?: Instructor; // Optional instructor object
 }
 
 export interface ScheduleApiResponse {

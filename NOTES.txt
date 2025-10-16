@@ -186,3 +186,7 @@ Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bào
 - sửa màu sidebar
 - trang lớp học: thêm cột được xếp lịch hay chưa -> qua trang detail click nút tự động xếp lịch
 - logo: Aqualearn, thêm favicon
+
+- fetching riêng api trong lịch (test lại)
+- sửa lại fade in effect của application type
+- đồng bộ loading 

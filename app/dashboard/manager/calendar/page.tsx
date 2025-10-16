@@ -60,11 +60,12 @@ import {
   getWeeksInYear,
   deleteScheduleEvent,
   type ScheduleEvent,
+  type Course,
+  type Instructor as ScheduleInstructor,
   convertApiDayToJsDay,
   convertJsDayToApiDay,
 } from "@/api/schedule-api";
 import { fetchAllSlots, type SlotDetail } from "@/api/slot-api";
-import { fetchCourseById } from "@/api/courses-api";
 import {
   fetchClassrooms,
   addClassToSchedule,
@@ -135,7 +136,6 @@ export default function ImprovedAntdCalendarPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerDate, setDrawerDate] = useState<Dayjs | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
-  const [courseCache, setCourseCache] = useState<{ [key: string]: any }>({});
 
   // Performance optimization: Track last load time to avoid redundant calls
   const [lastClassDataLoad, setLastClassDataLoad] = useState<number>(0);
@@ -177,23 +177,16 @@ export default function ImprovedAntdCalendarPage() {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Use cached API for slots (they don't change often)
-  const {
-    data: allSlots,
-    loading: slotsLoading,
-    error: slotsError,
-  } = useCachedAPI(
-    "all-slots",
-    fetchAllSlots,
-    [],
-    10 * 60 * 1000 // Cache for 10 minutes
-  );
+  // NOTE: defer loading slots/classrooms/pools until manager opens drawer to add/edit
+  // This reduces initial page load time. Data will be fetched by `loadClassManagementData()`
+  // which is triggered when user opens the Add/Edit UI.
+  const allSlots = undefined;
+  const slotsLoading = false;
+  const slotsError = null;
 
-  // Effect to pre-load class management data when component mounts
-  useEffect(() => {
-    // Pre-load class management data in background
-    loadClassManagementData(false);
-  }, []); // Run only once on mount
+  // NOTE: we intentionally DO NOT pre-load class management data on mount.
+  // That prevents extra API calls and speeds up initial calendar rendering.
+  // loadClassManagementData(false) is called when manager opens Add/Edit in the drawer.
 
   // Effect to fetch data when component mounts or current date changes
   useEffect(() => {
@@ -245,54 +238,6 @@ export default function ImprovedAntdCalendarPage() {
     loadScheduleData();
   }, [currentDate]);
 
-  // Effect to fetch course details when scheduleEvents change
-  useEffect(() => {
-    const fetchCourseDetails = async () => {
-      const courseIds = new Set<string>();
-
-      // Collect all unique course IDs
-      scheduleEvents.forEach((event) => {
-        if (event.classroom?.course && !courseCache[event.classroom.course]) {
-          courseIds.add(event.classroom.course);
-        }
-      });
-
-      // Fetch course details for missing courses
-      const tenantId = getSelectedTenant();
-      const token = getAuthToken();
-
-      if (!tenantId || !token) {
-        console.warn("Missing tenant or token for course fetch");
-        return;
-      }
-
-      for (const courseId of courseIds) {
-        try {
-          const course = await fetchCourseById({
-            courseId,
-            tenantId,
-            token,
-          });
-          setCourseCache((prev) => ({
-            ...prev,
-            [courseId]: course,
-          }));
-        } catch (error) {
-          console.error(`Failed to fetch course ${courseId}:`, error);
-          // Set a fallback name for failed fetches
-          setCourseCache((prev) => ({
-            ...prev,
-            [courseId]: { title: `Khóa học ${courseId.slice(-4)}` },
-          }));
-        }
-      }
-    };
-
-    if (scheduleEvents.length > 0) {
-      fetchCourseDetails();
-    }
-  }, [scheduleEvents, courseCache]);
-
   // Get events for a specific date
   const getEventsForDate = (date: Dayjs): CalendarEvent[] => {
     const dateStr = date.format("YYYY-MM-DD");
@@ -304,12 +249,15 @@ export default function ImprovedAntdCalendarPage() {
     return dayEvents.map(formatScheduleEvent);
   };
 
-  // Get course name from cache or return course ID
-  const getCourseName = (courseId: string): string => {
-    if (courseCache[courseId]) {
-      return courseCache[courseId].title || courseId;
+  // Get course name from course object
+  const getCourseName = (course: any): string => {
+    if (course && typeof course === "object" && course.title) {
+      return course.title;
     }
-    return courseId; // Return ID if not cached yet
+    if (typeof course === "string") {
+      return course; // Fallback for old format
+    }
+    return "Không xác định";
   };
 
   // Transform schedule event to display format
@@ -332,24 +280,26 @@ export default function ImprovedAntdCalendarPage() {
             .toString()
             .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
         : "",
-      course: getCourseName(classroom?.course || ""), // Resolve course name
+      course: getCourseName(classroom?.course), // Resolve course name
       poolTitle: pool?.title || "Không xác định",
       poolId: pool?._id || "",
       classroomId: classroom?._id || "", // Add classroom ID for editing
       instructorId: instructor?._id || "",
-      instructorName:
-        instructor?.username || instructor?.name || "Không xác định",
+      instructorName: instructor?.username || "Không xác định",
       scheduleId: scheduleEvent._id,
       slotId: slot?._id || "",
       type: "class",
-      color: getEventColor(classroom?.course || ""),
+      color: getEventColor(classroom?.course),
     };
   };
 
   // Get color for event based on course type
-  const getEventColor = (courseId: string): string => {
-    const courseName = getCourseName(courseId);
+  const getEventColor = (course: any): string => {
+    const courseName = getCourseName(course);
     const colorMap: { [key: string]: string } = {
+      "Khóa bơi phụ huynh và bé": "#52c41a",
+      "Khóa bơi nâng cao cho thiếu niên": "#1890ff",
+      "Khóa bơi cho người lớn mới bắt đầu": "#fa8c16",
       "Bơi cơ bản": "#52c41a",
       "Bơi nâng cao": "#1890ff",
       "Bơi trẻ em": "#fa8c16",
@@ -363,7 +313,7 @@ export default function ImprovedAntdCalendarPage() {
       return colorMap[courseName];
     }
 
-    // Generate consistent color based on courseId
+    // Generate consistent color based on course name or ID
     const colors = [
       "#1890ff",
       "#52c41a",
@@ -374,7 +324,8 @@ export default function ImprovedAntdCalendarPage() {
       "#f5222d",
       "#fa541c",
     ];
-    const hash = courseId.split("").reduce((a, b) => {
+    const courseId = course?._id || courseName || "default";
+    const hash = courseId.split("").reduce((a: number, b: string) => {
       a = (a << 5) - a + b.charCodeAt(0);
       return a & a;
     }, 0);
@@ -1419,26 +1370,9 @@ export default function ImprovedAntdCalendarPage() {
                       ? [
                           {
                             key: "edit",
-                            label: "Chỉnh sửa lớp học",
+                            label: "Chỉnh sửa buổi học",
                             children: (
                               <div className='space-y-4'>
-                                <Alert
-                                  message={`Chỉnh sửa lớp học: ${editingEvent.className}`}
-                                  type='warning'
-                                  showIcon
-                                  className='mb-4'
-                                />
-
-                                {availableInstructors.length === 0 && (
-                                  <Alert
-                                    message='Không có giáo viên nào'
-                                    description='Vui lòng thêm giáo viên vào hệ thống trước khi chỉnh sửa lớp học.'
-                                    type='error'
-                                    showIcon
-                                    className='mb-4'
-                                  />
-                                )}
-
                                 {classManagementLoading ? (
                                   <div className='text-center py-8'>
                                     <Spin size='large' />
@@ -1536,7 +1470,7 @@ export default function ImprovedAntdCalendarPage() {
                                     </Form.Item>
 
                                     <Form.Item
-                                      label='Giáo viên'
+                                      label='Giáo viên phụ trách buổi học'
                                       required
                                     >
                                       <AntdSelect

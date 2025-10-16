@@ -647,7 +647,7 @@ export default function ClassDetailModal({
         <div className='flex items-center gap-3'>
           <InfoCircleOutlined className='text-blue-500' />
           <div>
-            <div className='text-lg font-semibold'>Chi tiết lớp học</div>
+            <div className='text-lg font-semibold'>Chi tiết buổi học</div>
             <div className='text-sm text-gray-500 font-normal'>
               Thông tin chi tiết về buổi học
             </div>
