@@ -105,13 +105,10 @@ interface Course {
 
 interface Instructor {
   _id: string;
-  user: {
-    _id: string;
-    username: string;
-    email: string;
-    phone?: string;
-    featured_image?: any; // Can be array, object, or undefined
-  };
+  username: string;
+  email: string;
+  phone?: string;
+  featured_image?: any; // Can be array, object, or undefined
   avatarUrl?: string; // Resolved avatar URL
 }
 
@@ -193,9 +190,7 @@ export default function CreateClassPage() {
         // Process instructors with avatars
         const instructorsWithAvatars = await Promise.all(
           (instructorsResult || []).map(async (instructor: any) => {
-            const avatarUrl = await getAvatarUrl(
-              instructor.user?.featured_image
-            );
+            const avatarUrl = await getAvatarUrl(instructor?.featured_image);
             return {
               ...instructor,
               avatarUrl,
@@ -505,30 +500,26 @@ export default function CreateClassPage() {
                         filteredInstructors.map((instructor) => (
                           <SelectItem
                             key={instructor._id}
-                            value={instructor.user._id}
+                            value={instructor._id}
                           >
                             <div className='flex items-center gap-3'>
                               <Avatar className='h-8 w-8'>
                                 <AvatarImage
                                   src={instructor.avatarUrl}
-                                  alt={
-                                    instructor?.user?.username || "Giáo viên"
-                                  }
+                                  alt={instructor?.username || "Giáo viên"}
                                 />
                                 <AvatarFallback>
-                                  {instructor?.user?.username
+                                  {instructor?.username
                                     ?.charAt(0)
                                     ?.toUpperCase() || "G"}
                                 </AvatarFallback>
                               </Avatar>
                               <div className='flex flex-col'>
                                 <span className='font-medium'>
-                                  {instructor?.user?.username ||
-                                    "Tên không xác định"}
+                                  {instructor?.username || "Tên không xác định"}
                                 </span>
                                 <span className='text-sm text-muted-foreground'>
-                                  {instructor?.user?.email ||
-                                    "Email không xác định"}
+                                  {instructor?.email || "Email không xác định"}
                                 </span>
                               </div>
                             </div>

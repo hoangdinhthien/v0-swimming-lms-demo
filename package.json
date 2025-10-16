@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "build:analyze": "ANALYZE=true npm run build",
-    "build:vercel": "npm run build && npm run analyze-functions"
+    "build:vercel": "npm run build && npm run analyze-functions",
+    "analyze": "cross-env ANALYZE=true next build",
+    "bundle-analyzer": "npx @next/bundle-analyzer"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",

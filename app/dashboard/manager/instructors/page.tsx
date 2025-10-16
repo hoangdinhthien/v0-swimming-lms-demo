@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -31,10 +31,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { fetchInstructors, fetchInstructorDetail } from "@/api/instructors-api";
+import { fetchInstructorDetail } from "@/api/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
+import {
+  useOptimizedInstructors,
+  useOptimizedAvatars,
+} from "@/hooks/useOptimizedAPI";
 import React from "react";
 import {
   Dialog,
@@ -285,72 +289,48 @@ export default function InstructorsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [instructors, setInstructors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedInstructorId, setSelectedInstructorId] = useState<
     string | null
   >(null);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId) throw new Error("No tenant selected");
-        if (!token) throw new Error("Not authenticated");
+  // Use optimized hooks for better performance
+  const {
+    data: rawInstructors,
+    loading,
+    error,
+    refetch,
+  } = useOptimizedInstructors();
 
-        // Update the API implementation to accept a token and role
-        const data = await fetchInstructors({
-          tenantId,
-          token,
-          role: "instructor",
-        });
+  // Use optimized avatar loading
+  const avatars = useOptimizedAvatars(rawInstructors || []);
 
-        // Process each instructor to get their images
-        const processedInstructors = data.map((item: any) => {
-          // Extract avatar URL using helper function
-          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-          console.log(
-            `Avatar for instructor ${item.user?.username}:`,
-            avatarUrl
-          );
+  // Process instructors data with memoization
+  const instructors = useMemo(() => {
+    if (!rawInstructors) return [];
 
-          return {
-            id: item._id,
-            name: item.user?.username || "-",
-            email: item.user?.email || "-",
-            phone: item.user?.phone || "-",
-            specialty: item.user?.role_front || [],
-            status: item.user?.is_active ? "Active" : "Inactive",
-            students: 0, // API does not provide
-            classes: 0, // API does not provide
-            joinDate: item.user?.created_at
-              ? new Date(item.user.created_at).toLocaleString("vi-VN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  timeZone: "UTC", // Use UTC timezone for consistency
-                })
-              : "-",
-            rating: 0, // API does not provide
-            avatar: avatarUrl,
-            // Store the original image data for reference if needed
-            featuredImageData: item.user?.featured_image?.[0] || null,
-          };
-        });
-
-        setInstructors(processedInstructors);
-      } catch (e: any) {
-        setError(e.message || "Failed to fetch instructors");
-      }
-      setLoading(false);
-    }
-    load();
-  }, []);
+    return rawInstructors.map((item: any) => ({
+      id: item._id,
+      name: item?.username || "-",
+      email: item?.email || "-",
+      phone: item?.phone || "-",
+      specialty: item?.role_front || [],
+      status: item?.is_active ? "Active" : "Inactive",
+      students: 0, // API does not provide
+      classes: 0, // API does not provide
+      joinDate: item?.created_at
+        ? new Date(item.created_at).toLocaleString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            timeZone: "UTC",
+          })
+        : "-",
+      rating: 0, // API does not provide
+      avatar: avatars[item._id] || "/placeholder.svg",
+      featuredImageData: item?.featured_image?.[0] || null,
+    }));
+  }, [rawInstructors, avatars]);
 
   // Get unique specialties for filter
   const specialties = Array.from(

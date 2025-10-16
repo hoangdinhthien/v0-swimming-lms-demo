@@ -57,7 +57,7 @@ export interface ScheduleEvent {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
-  instructor?: any[]; // Optional instructor array
+  instructor?: any; // Optional instructor object (not array)
 }
 
 export interface ScheduleApiResponse {

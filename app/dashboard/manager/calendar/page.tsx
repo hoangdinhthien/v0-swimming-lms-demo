@@ -112,6 +112,7 @@ interface CalendarEvent {
   course: string;
   poolTitle: string;
   poolId: string;
+  classroomId: string; // Add classroom ID for editing
   instructorId: string;
   instructorName: string;
   scheduleId: string;
@@ -134,6 +135,10 @@ export default function ImprovedAntdCalendarPage() {
   const [drawerDate, setDrawerDate] = useState<Dayjs | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [courseCache, setCourseCache] = useState<{ [key: string]: any }>({});
+
+  // Performance optimization: Track last load time to avoid redundant calls
+  const [lastClassDataLoad, setLastClassDataLoad] = useState<number>(0);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
   // Class management states
   const [classManagementMode, setClassManagementMode] = useState<
@@ -182,6 +187,12 @@ export default function ImprovedAntdCalendarPage() {
     [],
     10 * 60 * 1000 // Cache for 10 minutes
   );
+
+  // Effect to pre-load class management data when component mounts
+  useEffect(() => {
+    // Pre-load class management data in background
+    loadClassManagementData(false);
+  }, []); // Run only once on mount
 
   // Effect to fetch data when component mounts or current date changes
   useEffect(() => {
@@ -305,7 +316,7 @@ export default function ImprovedAntdCalendarPage() {
     const slot = scheduleEvent.slot;
     const classroom = scheduleEvent.classroom;
     const pool = scheduleEvent.pool;
-    const instructor = scheduleEvent.instructor?.[0]; // Get first instructor
+    const instructor = scheduleEvent.instructor; // Get instructor object directly
 
     return {
       id: scheduleEvent._id,
@@ -323,6 +334,7 @@ export default function ImprovedAntdCalendarPage() {
       course: getCourseName(classroom?.course || ""), // Resolve course name
       poolTitle: pool?.title || "Không xác định",
       poolId: pool?._id || "",
+      classroomId: classroom?._id || "", // Add classroom ID for editing
       instructorId: instructor?._id || "",
       instructorName:
         instructor?.username || instructor?.name || "Không xác định",
@@ -469,7 +481,58 @@ export default function ImprovedAntdCalendarPage() {
     }
   };
 
-  // Load instructor avatars
+  // Load instructor avatars in parallel (optimized)
+  const loadInstructorAvatarsOptimized = async (instructors: Instructor[]) => {
+    try {
+      // Process all avatars in parallel instead of sequential
+      const avatarPromises = instructors.map(async (instructor) => {
+        try {
+          if (
+            instructor.featured_image &&
+            instructor.featured_image.length > 0
+          ) {
+            const imageData = instructor.featured_image[0];
+            if (imageData.path && imageData.path.length > 0) {
+              if (imageData.path[0].startsWith("http")) {
+                return { [instructor._id]: imageData.path[0] };
+              } else {
+                const mediaPath = await getMediaDetails(imageData.path[0]);
+                if (mediaPath) {
+                  return { [instructor._id]: mediaPath };
+                }
+              }
+            }
+          }
+          return null;
+        } catch (error) {
+          console.error(
+            `Error loading avatar for instructor ${instructor.username}:`,
+            error
+          );
+          return null;
+        }
+      });
+
+      // Wait for all avatar requests to complete
+      const avatarResults = await Promise.all(avatarPromises);
+
+      // Merge all results into single object
+      const avatarMap = avatarResults
+        .filter((result) => result !== null)
+        .reduce((acc, result) => ({ ...acc, ...result }), {});
+
+      setInstructorAvatars(avatarMap);
+      console.log(
+        "🖼️ Loaded avatars for",
+        Object.keys(avatarMap).length,
+        "instructors"
+      );
+    } catch (error) {
+      console.error("Error loading instructor avatars:", error);
+    }
+  };
+
+  // Load instructor avatars (old sequential version - keeping for fallback)
   const loadInstructorAvatars = async (instructors: Instructor[]) => {
     const avatarMap: { [key: string]: string } = {};
 
@@ -511,16 +574,33 @@ export default function ImprovedAntdCalendarPage() {
     );
   };
 
-  // Load data for class management
-  const loadClassManagementData = async () => {
+  // Load data for class management with caching and performance optimization
+  const loadClassManagementData = async (forceReload = false) => {
+    const now = Date.now();
+
+    // Check cache duration and existing data
+    if (
+      !forceReload &&
+      now - lastClassDataLoad < CACHE_DURATION &&
+      availableSlots.length > 0 &&
+      availableClassrooms.length > 0 &&
+      availablePools.length > 0 &&
+      availableInstructors.length > 0
+    ) {
+      console.log(
+        "🚀 Using cached class management data (",
+        Math.round((now - lastClassDataLoad) / 1000),
+        "s ago)"
+      );
+      return;
+    }
+
     setClassManagementLoading(true);
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
 
       console.log("🔍 Loading class management data...");
-      console.log("🔍 Tenant ID:", tenantId);
-      console.log("🔍 Token:", token ? "Present" : "Missing");
 
       const [slotsData, classroomsData, poolsData, instructorsData] =
         await Promise.all([
@@ -530,40 +610,39 @@ export default function ImprovedAntdCalendarPage() {
           fetchInstructors({
             tenantId: tenantId || undefined,
             token: token || undefined,
-            role: "instructor", // Try with explicit role first
-          }).catch(async (error) => {
-            console.warn(
-              "Failed to fetch with role 'instructor', trying without role filter:",
-              error
-            );
-            // Fallback: try without role filter or with different roles
-            return fetchInstructors({
+            role: "instructor",
+          }).catch(() =>
+            fetchInstructors({
               tenantId: tenantId || undefined,
               token: token || undefined,
-            }).catch(() => []);
-          }),
+            }).catch(() => [])
+          ),
         ]);
 
-      console.log("🔍 Slots loaded:", slotsData.length);
-      console.log("🔍 Classrooms loaded:", classroomsData.length);
-      console.log("🔍 Pools loaded:", poolsData.length);
-      console.log("🔍 Instructors loaded:", instructorsData.length);
-      console.log("🔍 Instructors data:", instructorsData);
+      console.log("🔍 Data loaded:", {
+        slots: slotsData.length,
+        classrooms: classroomsData.length,
+        pools: poolsData.length,
+        instructors: instructorsData.length,
+      });
 
       setAvailableSlots(slotsData);
       setAvailableClassrooms(classroomsData);
       setAvailablePools(poolsData);
       setAvailableInstructors(instructorsData);
+      setLastClassDataLoad(now); // Update last load time
 
-      // Load instructor avatars
+      // Load instructor avatars in parallel (optimized)
       if (instructorsData.length > 0) {
-        await loadInstructorAvatars(instructorsData);
+        loadInstructorAvatarsOptimized(instructorsData);
       }
 
-      // Set default selections
-      if (slotsData.length > 0) setSelectedSlot(slotsData[0]._id);
-      if (poolsData.length > 0) setSelectedPool(poolsData[0]._id);
-      if (instructorsData.length > 0)
+      // Set default selections only if not already set
+      if (!selectedSlot && slotsData.length > 0)
+        setSelectedSlot(slotsData[0]._id);
+      if (!selectedPool && poolsData.length > 0)
+        setSelectedPool(poolsData[0]._id);
+      if (!selectedInstructor && instructorsData.length > 0)
         setSelectedInstructor(instructorsData[0]._id);
     } catch (error) {
       console.error("Error loading class management data:", error);
@@ -571,7 +650,9 @@ export default function ImprovedAntdCalendarPage() {
     } finally {
       setClassManagementLoading(false);
     }
-  }; // Handle add new class
+  };
+
+  // Handle add new class
   const handleAddNewClass = async () => {
     if (
       !selectedSlot ||
@@ -588,13 +669,17 @@ export default function ImprovedAntdCalendarPage() {
 
     setClassManagementLoading(true);
     try {
-      await addClassToSchedule({
+      const newClassData = {
         date: drawerDate.format("YYYY-MM-DD"),
         slot: selectedSlot,
         classroom: selectedClassroom,
         pool: selectedPool,
         instructor: selectedInstructor,
-      });
+      };
+      console.log("➕ Adding new class with data:", newClassData);
+
+      await addClassToSchedule(newClassData);
+      console.log("✅ New class added successfully");
 
       message.success("Đã thêm lớp học vào lịch thành công");
 
@@ -619,20 +704,27 @@ export default function ImprovedAntdCalendarPage() {
 
   // Handle edit class
   const handleEditClass = (event: CalendarEvent) => {
+    console.log("🔧 handleEditClass called with event:", event);
+
     setEditingEvent(event);
     setClassManagementMode("edit");
-    // Load current values
+
+    // Load current values using proper IDs
     setSelectedSlot(event.slotId);
-    setSelectedClassroom(event.id); // Assuming this maps to classroom ID
+    setSelectedClassroom(event.classroomId); // Use classroomId instead of id
     setSelectedPool(event.poolId);
     setSelectedInstructor(event.instructorId);
-    // Load class management data if not loaded
-    if (availableSlots.length === 0) {
-      loadClassManagementData();
-    }
-  };
 
-  // Handle update class
+    console.log("🔧 Pre-filled form with:", {
+      slot: event.slotId,
+      classroom: event.classroomId,
+      pool: event.poolId,
+      instructor: event.instructorId,
+    });
+
+    // Only load class management data if not already loaded (optimized)
+    loadClassManagementData(false); // false = don't force reload, use cache if available
+  }; // Handle update class
   const handleUpdateClass = async () => {
     if (
       !editingEvent ||
@@ -649,30 +741,44 @@ export default function ImprovedAntdCalendarPage() {
 
     setClassManagementLoading(true);
     try {
+      console.log("🔄 Starting class update process...");
+
       // First delete the old one
+      console.log("🗑️ Deleting old schedule event:", editingEvent.scheduleId);
       await deleteScheduleEvent(editingEvent.scheduleId);
+      console.log("✅ Old schedule event deleted successfully");
 
       // Then add the new one
-      await addClassToSchedule({
+      const newClassData = {
         date: drawerDate!.format("YYYY-MM-DD"),
         slot: selectedSlot,
         classroom: selectedClassroom,
         pool: selectedPool,
         instructor: selectedInstructor,
-      });
+      };
+      console.log("➕ Adding new class with data:", newClassData);
+
+      await addClassToSchedule(newClassData);
+      console.log("✅ New class added successfully");
 
       message.success("Đã cập nhật lớp học thành công");
 
       // Refresh schedule data
+      console.log("🔄 Refreshing schedule data...");
       const events = await fetchMonthSchedule(currentDate.toDate());
       setScheduleEvents(events);
+      console.log("✅ Schedule data refreshed");
 
       // Reset form
       setClassManagementMode("view");
       setEditingEvent(null);
     } catch (error) {
-      console.error("Error updating class:", error);
-      message.error("Có lỗi xảy ra khi cập nhật lớp học");
+      console.error("❌ Error updating class:", error);
+      message.error(
+        `Có lỗi xảy ra khi cập nhật lớp học: ${
+          error instanceof Error ? error.message : "Lỗi không xác định"
+        }`
+      );
     } finally {
       setClassManagementLoading(false);
     }
@@ -757,7 +863,7 @@ export default function ImprovedAntdCalendarPage() {
             </div>
           </div>
 
-          <div className='flex items-center gap-3'>
+          {/* <div className='flex items-center gap-3'>
             <AntdButton
               type='primary'
               icon={<PlusOutlined />}
@@ -765,7 +871,7 @@ export default function ImprovedAntdCalendarPage() {
             >
               Thêm lớp học
             </AntdButton>
-          </div>
+          </div> */}
         </div>
 
         {/* Statistics Cards */}
@@ -941,7 +1047,7 @@ export default function ImprovedAntdCalendarPage() {
                                             icon={<PlusOutlined />}
                                             onClick={() => {
                                               setClassManagementMode("add");
-                                              loadClassManagementData();
+                                              loadClassManagementData(false); // Use cache
                                             }}
                                           >
                                             {isToday
@@ -998,7 +1104,7 @@ export default function ImprovedAntdCalendarPage() {
                                       icon={<PlusOutlined />}
                                       onClick={() => {
                                         setClassManagementMode("add");
-                                        loadClassManagementData();
+                                        loadClassManagementData(false); // Use cache
                                       }}
                                     >
                                       Thêm lớp
@@ -1050,15 +1156,6 @@ export default function ImprovedAntdCalendarPage() {
                                                 <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
                                                   <UserOutlined />
                                                   <div className='flex items-center gap-2'>
-                                                    <Avatar
-                                                      size={16}
-                                                      src={
-                                                        instructorAvatars[
-                                                          event.instructorId
-                                                        ]
-                                                      }
-                                                      icon={<UserOutlined />}
-                                                    />
                                                     <span>
                                                       {event.instructorName}
                                                     </span>
@@ -1597,9 +1694,22 @@ export default function ImprovedAntdCalendarPage() {
           onEdit={(event) => {
             // Convert ScheduleEvent back to CalendarEvent format if needed for editing
             const calendarEvent = formatScheduleEvent(event);
-            setEditingEvent(calendarEvent);
-            setClassManagementMode("edit");
-            loadClassManagementData();
+            console.log("🔧 Editing event - CalendarEvent:", calendarEvent);
+            console.log("🔧 Original ScheduleEvent:", event);
+
+            // Set drawer date to the event date for editing
+            setDrawerDate(dayjs(event.date));
+
+            // Use handleEditClass to properly pre-fill form data
+            handleEditClass(calendarEvent);
+
+            // Open drawer if it's not already open
+            if (!drawerOpen) {
+              setDrawerOpen(true);
+            }
+
+            // Close the modal after switching to edit mode
+            setDetailModalOpen(false);
           }}
           onDelete={(event) => {
             setScheduleToDelete({

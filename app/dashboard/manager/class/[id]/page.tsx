@@ -1126,16 +1126,16 @@ export default function ClassDetailPage() {
                     {instructors.map((instructor) => (
                       <SelectItem
                         key={instructor._id}
-                        value={instructor.user._id}
+                        value={instructor._id}
                       >
                         <div className='flex items-center gap-2'>
                           <UserAvatar
                             user={instructor}
                             className='h-6 w-6'
                           />
-                          <span>{instructor.user.username}</span>
+                          <span>{instructor.username}</span>
                           <span className='text-muted-foreground text-sm'>
-                            ({instructor.user.email})
+                            ({instructor.email})
                           </span>
                         </div>
                       </SelectItem>
