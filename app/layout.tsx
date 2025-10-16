@@ -10,9 +10,14 @@ import { Loader2 } from "lucide-react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "AquaLearn - Trung Tâm Học Bơi",
+  title: "AquaLearn",
   description: "Hệ thống quản lý học tập toàn diện cho việc dạy bơi",
   generator: "v0.dev",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 function GlobalLoading() {

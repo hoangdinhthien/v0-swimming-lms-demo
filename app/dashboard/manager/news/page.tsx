@@ -1,33 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
-  Bell,
-  Calendar,
-  ChevronRight,
-  Loader2,
   Plus,
+  Search,
+  Filter,
+  FileText,
+  Megaphone,
+  Clock,
+  Tag,
+  Users,
+  Loader2,
+  Calendar,
+  Image as ImageIcon,
   Upload,
   X,
-  Image as ImageIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -35,23 +36,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import {
-  getNews,
-  type NewsItem,
-  formatRelativeTime,
-  createNews,
-} from "@/api/news-api";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { getNews, createNews, type NewsItem } from "@/api/news-api";
 import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewsListPage() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState("all");
 
   // Form state
   const [formData, setFormData] = useState({
@@ -69,7 +78,6 @@ export default function NewsListPage() {
       try {
         setIsLoading(true);
         const news = await getNews();
-        // Managers have access to see all notifications/news
         setNewsItems(news);
       } catch (error) {
         console.error("Error fetching news:", error);
@@ -91,29 +99,14 @@ export default function NewsListPage() {
 
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input clicked!", e.target.files); // Debug log
     const file = e.target.files?.[0];
     if (file) {
-      console.log("File selected:", file.name); // Debug log
       setFormData((prev) => ({ ...prev, coverFile: file }));
-
-      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
-    }
-  };
-
-  // Alternative file upload trigger function
-  const triggerFileUpload = () => {
-    console.log("Triggering file upload..."); // Debug log
-    const fileInput = document.getElementById(
-      "cover-upload"
-    ) as HTMLInputElement;
-    if (fileInput) {
-      fileInput.click();
     }
   };
 
@@ -161,7 +154,7 @@ export default function NewsListPage() {
         coverId = uploadResult.data._id;
       }
 
-      // Create news article using the new API function
+      // Create news article
       const requestBody = {
         title: formData.title,
         content: formData.content,
@@ -208,7 +201,68 @@ export default function NewsListPage() {
     setImagePreview(null);
   };
 
-  // Loading state similar to other manager pages
+  // Filter and search news
+  const filteredNews = newsItems.filter((news) => {
+    const searchMatch =
+      searchQuery === "" ||
+      news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      news.content.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const typeMatch =
+      filter === "all" ||
+      (Array.isArray(news.type) && news.type.includes(filter));
+
+    return searchMatch && typeMatch;
+  });
+
+  // Calculate summary statistics
+  const totalNews = newsItems.length;
+  const announcementNews = newsItems.filter((news) =>
+    Array.isArray(news.type) ? news.type.includes("announcement") : false
+  ).length;
+  const notificationNews = newsItems.filter((news) =>
+    Array.isArray(news.type) ? news.type.includes("notification") : false
+  ).length;
+  const eventNews = newsItems.filter((news) =>
+    Array.isArray(news.type) ? news.type.includes("event") : false
+  ).length;
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Get news type display
+  const getNewsTypeDisplay = (types: string[]) => {
+    if (!Array.isArray(types)) return "";
+    return types
+      .map((type) => {
+        switch (type) {
+          case "announcement":
+            return "Thông báo";
+          case "notification":
+            return "Tin tức";
+          case "event":
+            return "Sự kiện";
+          default:
+            return type;
+        }
+      })
+      .join(", ");
+  };
+
+  // Get content preview
+  const getContentPreview = (content: string, maxLength = 100) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + "...";
+  };
+
   if (isLoading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen py-16'>
@@ -219,416 +273,404 @@ export default function NewsListPage() {
   }
 
   return (
-    <div className='min-h-screen from-gray-50 via-white to-gray-50/30 dark:from-black dark:via-gray-900 dark:to-gray-800 transition-colors duration-300'>
-      <div className='container mx-auto px-1 sm:px-2 md:px-4 py-8 max-w-7xl'>
-        {/* Header Section */}
-        <div className='mb-8'>
-          <Link
-            href='/dashboard/manager'
-            className='inline-flex items-center text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200 group mb-6 focus:outline-none'
+    <>
+      <div className='mb-6'>
+        <Link
+          href='/dashboard/manager'
+          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+        >
+          <ArrowLeft className='mr-1 h-4 w-4' />
+          Quay về trang quản lý
+        </Link>
+      </div>
+
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+        <div>
+          <h1 className='text-3xl font-bold'>Quản lý tin tức</h1>
+          <p className='text-muted-foreground'>
+            Quản lý tất cả tin tức, thông báo và sự kiện của trung tâm
+          </p>
+        </div>
+        <div className='flex gap-2'>
+          <Dialog
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
           >
-            <ArrowLeft className='mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform duration-200' />
-            Quay lại Trang Chủ
-          </Link>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' />
+                Tạo tin tức
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+              <DialogHeader>
+                <DialogTitle>Tạo tin tức mới</DialogTitle>
+                <DialogDescription>
+                  Tạo tin tức, thông báo hoặc sự kiện mới cho trung tâm
+                </DialogDescription>
+              </DialogHeader>
+              <div className='space-y-6'>
+                <div className='space-y-2'>
+                  <Label htmlFor='title'>Tiêu đề *</Label>
+                  <Input
+                    id='title'
+                    placeholder='Nhập tiêu đề tin tức...'
+                    value={formData.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                  />
+                </div>
 
-          <div className='flex items-center space-x-4 mb-2'>
-            <div className='flex-1'>
-              <h1 className='text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-700 to-indigo-800 dark:from-white dark:via-gray-200 dark:to-indigo-200 bg-clip-text text-transparent'>
-                Tin Tức
-              </h1>
-              <p className='text-lg text-gray-600 dark:text-gray-400 mt-1'>
-                Quản lý và theo dõi tất cả tin tức hệ thống
-              </p>
-            </div>
-            <Dialog
-              open={isModalOpen}
-              onOpenChange={setIsModalOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black shadow-lg hover:shadow-xl transition-all duration-200'
-                  size='lg'
-                >
-                  <Plus className='h-5 w-5 mr-2' />
-                  Tạo tin tức mới
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
-                <DialogHeader>
-                  <DialogTitle className='text-xl font-bold text-black dark:text-white'>
-                    Tạo Tin Tức Mới
-                  </DialogTitle>
-                  <DialogDescription>
-                    Tạo tin tức mới để chia sẻ thông tin quan trọng với người
-                    dùng
-                  </DialogDescription>
-                </DialogHeader>
+                <div className='space-y-2'>
+                  <Label htmlFor='content'>Nội dung *</Label>
+                  <Textarea
+                    id='content'
+                    placeholder='Nhập nội dung tin tức...'
+                    className='min-h-[150px]'
+                    value={formData.content}
+                    onChange={(e) =>
+                      handleInputChange("content", e.target.value)
+                    }
+                  />
+                </div>
 
-                <div className='space-y-6 py-4'>
-                  {/* Title */}
+                <div className='space-y-3'>
+                  <Label>Loại tin tức *</Label>
                   <div className='space-y-2'>
-                    <Label
-                      htmlFor='title'
-                      className='text-sm font-medium'
-                    >
-                      Tiêu đề tin tức <span className='text-red-500'>*</span>
-                    </Label>
-                    <Input
-                      id='title'
-                      placeholder='Nhập tiêu đề tin tức...'
-                      value={formData.title}
-                      onChange={(e) =>
-                        handleInputChange("title", e.target.value)
+                    {[
+                      { value: "announcement", label: "Thông báo" },
+                      { value: "notification", label: "Tin tức" },
+                      { value: "event", label: "Sự kiện" },
+                    ].map((type) => (
+                      <div
+                        key={type.value}
+                        className='flex items-center space-x-2'
+                      >
+                        <Checkbox
+                          id={type.value}
+                          checked={formData.type.includes(type.value)}
+                          onCheckedChange={(checked) =>
+                            handleTypeChange(type.value, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={type.value}>{type.label}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className='space-y-3'>
+                  <Label>Ảnh đại diện</Label>
+                  <div className='space-y-3'>
+                    <input
+                      type='file'
+                      id='cover-upload'
+                      accept='image/*'
+                      onChange={handleFileChange}
+                      className='hidden'
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() =>
+                        document.getElementById("cover-upload")?.click()
                       }
                       className='w-full'
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className='space-y-2'>
-                    <Label
-                      htmlFor='content'
-                      className='text-sm font-medium'
                     >
-                      Nội dung tin tức <span className='text-red-500'>*</span>
-                    </Label>
-                    <Textarea
-                      id='content'
-                      placeholder='Nhập nội dung chi tiết của tin tức...'
-                      value={formData.content}
-                      onChange={(e) =>
-                        handleInputChange("content", e.target.value)
-                      }
-                      className='w-full min-h-32 resize-none'
-                      rows={6}
-                    />
-                  </div>
-
-                  {/* Target Audience */}
-                  <div className='space-y-3'>
-                    <Label className='text-sm font-medium'>
-                      Đối tượng xem tin tức{" "}
-                      <span className='text-red-500'>*</span>
-                    </Label>
-                    <div className='grid grid-cols-2 gap-3'>
-                      {[
-                        {
-                          id: "manager",
-                          label: "Quản lý",
-                          description: "Chỉ quản lý có thể xem",
-                        },
-                        {
-                          id: "instructor",
-                          label: "Giảng viên",
-                          description: "Quản lý và giảng viên",
-                        },
-                        {
-                          id: "member",
-                          label: "Học viên",
-                          description: "Quản lý và học viên",
-                        },
-                        {
-                          id: "public",
-                          label: "Công khai",
-                          description: "Tất cả mọi người",
-                        },
-                      ].map((type) => (
-                        <div
-                          key={type.id}
-                          className='flex items-start space-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                      <Upload className='mr-2 h-4 w-4' />
+                      Chọn ảnh
+                    </Button>
+                    {imagePreview && (
+                      <div className='relative'>
+                        <img
+                          src={imagePreview}
+                          alt='Preview'
+                          className='w-full h-48 object-cover rounded-lg border'
+                        />
+                        <Button
+                          type='button'
+                          variant='destructive'
+                          size='sm'
+                          className='absolute top-2 right-2'
+                          onClick={() => {
+                            setImagePreview(null);
+                            setFormData((prev) => ({
+                              ...prev,
+                              coverFile: null,
+                            }));
+                          }}
                         >
-                          <Checkbox
-                            id={type.id}
-                            checked={formData.type.includes(type.id)}
-                            onCheckedChange={(checked) =>
-                              handleTypeChange(type.id, checked as boolean)
-                            }
-                          />
-                          <div className='grid gap-1.5 leading-none'>
-                            <Label
-                              htmlFor={type.id}
-                              className='text-sm font-medium cursor-pointer'
-                            >
-                              {type.label}
-                            </Label>
-                            <p className='text-xs text-muted-foreground'>
-                              {type.description}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Cover Image */}
-                  <div className='space-y-3'>
-                    <Label className='text-sm font-medium'>
-                      Ảnh bìa (tùy chọn)
-                    </Label>
-                    <div className='border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors'>
-                      {imagePreview ? (
-                        <div className='relative'>
-                          <img
-                            src={imagePreview}
-                            alt='Preview'
-                            className='w-full h-48 object-cover rounded-lg'
-                          />
-                          <Button
-                            type='button'
-                            variant='destructive'
-                            size='sm'
-                            className='absolute top-2 right-2'
-                            onClick={() => {
-                              setImagePreview(null);
-                              setFormData((prev) => ({
-                                ...prev,
-                                coverFile: null,
-                              }));
-                            }}
-                          >
-                            <X className='h-4 w-4' />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className='text-center'>
-                          <ImageIcon className='mx-auto h-12 w-12 text-gray-400' />
-                          <div className='mt-4'>
-                            <div
-                              onClick={triggerFileUpload}
-                              className='cursor-pointer'
-                            >
-                              <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-300 transition-colors'>
-                                Tải lên ảnh bìa
-                              </span>
-                              <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
-                                PNG, JPG, JPEG tối đa 5MB
-                              </span>
-                            </div>
-                            <input
-                              id='cover-upload'
-                              type='file'
-                              className='hidden'
-                              accept='image/*'
-                              onChange={handleFileChange}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter className='flex gap-2'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={handleModalClose}
-                    disabled={isCreating}
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    type='button'
-                    onClick={handleCreateNews}
-                    disabled={
-                      isCreating ||
-                      !formData.title.trim() ||
-                      !formData.content.trim() ||
-                      formData.type.length === 0
-                    }
-                    className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black'
-                  >
-                    {isCreating && (
-                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                    )}
-                    {isCreating ? "Đang tạo..." : "Tạo tin tức"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-
-        {/* Stats Section */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
-          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Tổng tin tức
-                  </p>
-                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-12 bg-gray-300 dark:bg-gray-700' />
-                    ) : (
-                      newsItems.length
-                    )}
-                  </div>
-                </div>
-                <div className='p-3 bg-gray-200/80 dark:bg-gray-900/50 rounded-xl'>
-                  <Bell className='h-6 w-6 text-gray-700 dark:text-gray-300' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Mới nhất
-                  </p>
-                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-16 bg-gray-300 dark:bg-gray-700' />
-                    ) : newsItems.length > 0 ? (
-                      new Date(newsItems[0]?.created_at).toLocaleDateString(
-                        "vi-VN",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                        }
-                      )
-                    ) : (
-                      "0"
-                    )}
-                  </div>
-                </div>
-                <div className='p-3 bg-green-200/80 dark:bg-green-900/50 rounded-xl'>
-                  <Calendar className='h-6 w-6 text-green-700 dark:text-green-300' />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 hover:shadow-xl hover:bg-gray-200/90 dark:hover:bg-black transition-all duration-300'>
-            <CardContent className='p-6'>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Trạng thái
-                  </p>
-                  <div className='text-2xl font-bold text-gray-800 dark:text-white mt-1'>
-                    {isLoading ? (
-                      <Skeleton className='h-8 w-20 bg-gray-300 dark:bg-gray-700' />
-                    ) : (
-                      "Hoạt động"
-                    )}
-                  </div>
-                </div>
-                <div className='p-3 bg-emerald-200/80 dark:bg-emerald-900/50 rounded-xl'>
-                  <div className='h-6 w-6 bg-emerald-600 dark:bg-emerald-500 rounded-full flex items-center justify-center'>
-                    <div className='h-2 w-2 bg-white rounded-full animate-pulse' />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* News List */}
-        <Card className='bg-gray-100/90 dark:bg-black/95 backdrop-blur-sm border-gray-300 dark:border-gray-800 shadow-xl'>
-          <CardHeader className='border-b border-gray-400 dark:border-gray-800 bg-gray-200/70 dark:bg-black/70'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center space-x-3'>
-                <div>
-                  <CardTitle className='text-xl font-bold text-gray-800 dark:text-white'>
-                    Danh Sách Tin Tức
-                  </CardTitle>
-                  <p className='text-sm text-gray-700 dark:text-gray-300 mt-1'>
-                    Tất cả tin tức được sắp xếp theo thời gian
-                  </p>
-                </div>
-              </div>
-              {isLoading && (
-                <Loader2 className='h-5 w-5 animate-spin text-gray-500 dark:text-gray-400' />
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className='p-0'>
-            {isLoading ? (
-              <div className='p-6 space-y-4'>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className='flex items-start space-x-4 p-4 bg-gray-200/50 dark:bg-gray-900/50 rounded-xl animate-pulse'
-                  >
-                    <div className='w-12 h-12 bg-gray-400 dark:bg-gray-700 rounded-full flex-shrink-0' />
-                    <div className='flex-1 space-y-2'>
-                      <div className='h-4 w-3/4 bg-gray-400 dark:bg-gray-700 rounded' />
-                      <div className='h-3 w-full bg-gray-400 dark:bg-gray-700 rounded' />
-                      <div className='h-3 w-1/4 bg-gray-400 dark:bg-gray-700 rounded' />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : newsItems.length > 0 ? (
-              <div className='divide-y divide-gray-300 dark:divide-gray-800'>
-                {newsItems.map((newsItem, index) => (
-                  <Link
-                    key={newsItem._id}
-                    href={`/dashboard/manager/news/${newsItem._id}`}
-                    className='block group hover:bg-gray-200/60 dark:hover:bg-gray-900/50 transition-all duration-200 focus:outline-none focus:ring-0 focus:border-none'
-                  >
-                    <div className='flex items-start space-x-4 p-6 group-hover:scale-[1.01] transition-transform duration-200'>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-start justify-between mb-2'>
-                          <h3 className='text-base font-semibold text-gray-800 dark:text-white group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors line-clamp-1 pr-4'>
-                            {newsItem.title}
-                          </h3>
-                          <ChevronRight className='h-5 w-5 text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0' />
-                        </div>
-
-                        <p className='text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors'>
-                          {newsItem.content}
-                        </p>
-
-                        <div className='flex items-center justify-between'>
-                          <Badge
-                            variant='secondary'
-                            className={`${
-                              index % 3 === 0
-                                ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
-                                : index % 3 === 1
-                                ? "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
-                                : "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800"
-                            } shadow-sm`}
-                          >
-                            <Calendar className='h-3 w-3 mr-1.5' />
-                            {formatRelativeTime(newsItem.created_at)}
-                          </Badge>
-
-                          <span className='text-xs text-gray-500 dark:text-gray-400 font-medium'>
-                            Mới
-                          </span>
-                        </div>
+                          <X className='h-4 w-4' />
+                        </Button>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className='flex flex-col items-center justify-center py-16 text-center'>
-                <div className='relative mb-6'>
-                  <div className='w-20 h-20 bg-gradient-to-br from-gray-200 via-gray-100 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center shadow-lg'>
-                    <Bell className='h-10 w-10 text-gray-500 dark:text-gray-400' />
+                    )}
                   </div>
-                  <div className='absolute inset-0 bg-gradient-to-br from-gray-200/30 to-indigo-200/30 dark:from-gray-800/20 dark:to-indigo-800/20 rounded-full animate-pulse' />
                 </div>
-                <h3 className='text-xl font-semibold text-gray-800 dark:text-white mb-2'>
-                  Chưa có tin tức nào
-                </h3>
-                <p className='text-gray-600 dark:text-gray-300 max-w-md'>
-                  Tin tức mới từ hệ thống sẽ xuất hiện tại đây. Hãy kiểm tra lại
-                  sau.
-                </p>
               </div>
-            )}
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={handleModalClose}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleCreateNews}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    "Tạo tin tức"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className='mt-8 grid gap-6 md:grid-cols-4'>
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <FileText className='h-4 w-4 text-primary' />
+              Tổng số tin tức
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-foreground'>
+              {totalNews}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>Đã đăng</p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Megaphone className='h-4 w-4 text-blue-600' />
+              Thông báo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-blue-600'>
+              {announcementNews}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalNews > 0
+                ? Math.round((announcementNews / totalNews) * 100)
+                : 0}
+              % tổng số
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <FileText className='h-4 w-4 text-green-600' />
+              Tin tức
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-green-600'>
+              {notificationNews}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalNews > 0
+                ? Math.round((notificationNews / totalNews) * 100)
+                : 0}
+              % tổng số
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium flex items-center gap-2'>
+              <Calendar className='h-4 w-4 text-orange-600' />
+              Sự kiện
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold text-orange-600'>
+              {eventNews}
+            </div>
+            <p className='text-xs text-muted-foreground mt-1'>
+              {totalNews > 0 ? Math.round((eventNews / totalNews) * 100) : 0}%
+              tổng số
+            </p>
           </CardContent>
         </Card>
       </div>
-    </div>
+
+      <Card className='mt-8 bg-card/80 backdrop-blur-sm border shadow-lg'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-3'>
+            <FileText className='h-5 w-5 text-primary' />
+            Danh sách tin tức
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
+            <div className='flex-1 relative'>
+              <Search className='absolute left-3 top-3 h-4 w-4 text-muted-foreground' />
+              <Input
+                placeholder='Tìm kiếm tin tức theo tiêu đề hoặc nội dung...'
+                className='pl-10 h-11 border-muted-foreground/20 focus:border-primary transition-colors'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className='w-full md:w-[200px]'>
+              <Select
+                value={filter}
+                onValueChange={setFilter}
+              >
+                <SelectTrigger className='h-11 border-muted-foreground/20 focus:border-primary transition-colors'>
+                  <SelectValue placeholder='Lọc theo loại' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>
+                    <div className='flex items-center gap-2'>
+                      <FileText className='h-4 w-4' />
+                      Tất cả tin tức
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='announcement'>
+                    <div className='flex items-center gap-2'>
+                      <Megaphone className='h-4 w-4 text-blue-600' />
+                      Thông báo
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='notification'>
+                    <div className='flex items-center gap-2'>
+                      <FileText className='h-4 w-4 text-green-600' />
+                      Tin tức
+                    </div>
+                  </SelectItem>
+                  <SelectItem value='event'>
+                    <div className='flex items-center gap-2'>
+                      <Calendar className='h-4 w-4 text-orange-600' />
+                      Sự kiện
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className='rounded-lg border border-border/50 overflow-hidden shadow-sm'>
+            <Table>
+              <TableHeader>
+                <TableRow className='bg-muted/30 hover:bg-muted/40 border-border/50'>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <FileText className='h-4 w-4' />
+                      Tiêu đề
+                    </div>
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <FileText className='h-4 w-4' />
+                      Nội dung
+                    </div>
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <Tag className='h-4 w-4' />
+                      Loại
+                    </div>
+                  </TableHead>
+                  <TableHead className='font-semibold text-foreground py-4'>
+                    <div className='flex items-center gap-2'>
+                      <Clock className='h-4 w-4' />
+                      Ngày tạo
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredNews.length > 0 ? (
+                  filteredNews.map((news) => (
+                    <TableRow
+                      key={news._id}
+                      className='cursor-pointer hover:bg-muted/50 transition-colors border-border/30'
+                      onClick={() =>
+                        (window.location.href = `/dashboard/manager/news/${news._id}`)
+                      }
+                    >
+                      <TableCell className='py-4'>
+                        <div className='flex items-start gap-3'>
+                          <div className='min-w-0 flex-1'>
+                            <div className='font-medium text-foreground line-clamp-2'>
+                              {news.title}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className='py-4 max-w-xs'>
+                        <div className='text-sm text-muted-foreground line-clamp-3'>
+                          {getContentPreview(news.content)}
+                        </div>
+                      </TableCell>
+                      <TableCell className='py-4'>
+                        <div className='flex flex-wrap gap-1'>
+                          {Array.isArray(news.type) &&
+                            news.type.map((type) => (
+                              <Badge
+                                key={type}
+                                variant='outline'
+                                className={
+                                  type === "announcement"
+                                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800"
+                                    : type === "notification"
+                                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+                                    : type === "event"
+                                    ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800"
+                                    : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800"
+                                }
+                              >
+                                {type === "announcement"
+                                  ? "Thông báo"
+                                  : type === "notification"
+                                  ? "Tin tức"
+                                  : type === "event"
+                                  ? "Sự kiện"
+                                  : type}
+                              </Badge>
+                            ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className='py-4'>
+                        <div className='flex items-center gap-2'>
+                          <Clock className='h-3 w-3 text-muted-foreground' />
+                          <span className='text-sm text-muted-foreground'>
+                            {formatDate(news.created_at)}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow key='empty-row'>
+                    <TableCell
+                      colSpan={4}
+                      className='text-center py-8 text-muted-foreground'
+                    >
+                      Không tìm thấy tin tức phù hợp với bộ lọc hiện tại.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

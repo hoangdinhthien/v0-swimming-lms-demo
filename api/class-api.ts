@@ -25,8 +25,22 @@ export interface Course {
 export interface Instructor {
   _id: string;
   name?: string;
+  username?: string;
   email?: string;
   phone?: string;
+  password?: string;
+  role_system?: string;
+  role?: string[];
+  role_front?: string[];
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  featured_image?: string[];
+  birthday?: string;
+  cover?: string[];
+  parent_id?: any;
+  address?: string;
+  updated_by?: string;
 }
 
 export interface Schedule {
@@ -67,8 +81,8 @@ export interface ClassItem {
   _id: string;
   name: string;
   course: Course;
-  member?: string[];
-  instructor?: string | string[];
+  member?: any[];
+  instructor?: string | string[] | Instructor;
   created_at: string;
   created_by: string;
   updated_at: string;
@@ -88,20 +102,6 @@ export interface Classroom {
   updated_at?: string;
   updated_by?: string;
   tenant_id?: string;
-}
-
-// New interfaces for classes list
-export interface ClassItem {
-  _id: string;
-  name: string;
-  course: Course;
-  member?: string[];
-  instructor?: string | string[];
-  created_at: string;
-  created_by: string;
-  updated_at: string;
-  updated_by: string;
-  tenant_id: string;
 }
 
 export interface ClassesResponse {
