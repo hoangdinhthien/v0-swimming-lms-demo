@@ -572,7 +572,7 @@ function ManagerDashboardPage() {
                       {courses.slice(0, 4).map((course: any, index: number) => (
                         <div
                           key={course._id}
-                          className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl transition-all duration-300 cursor-pointer group-hover:scale-[1.02] group-hover:-translate-y-1'
+                          className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
                           onClick={() =>
                             router.push(
                               `/dashboard/manager/courses/${course._id}`
@@ -621,13 +621,10 @@ function ManagerDashboardPage() {
                                 ? "Đang hoạt động"
                                 : "Đã kết thúc"}
                             </Badge>
-                            <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-200' />
+                            <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-2 transition-all duration-300' />
                           </div>
 
-                          {/* Hover effect overlay */}
-                          <div className='absolute inset-0 bg-blue-50 dark:bg-blue-900/10 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity duration-200 pointer-events-none'></div>
-
-                          {/* Subtle hover gradient */}
+                          {/* Unified hover effect overlay */}
                           <div className='absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                         </div>
                       ))}
@@ -974,7 +971,7 @@ function ManagerDashboardPage() {
                         return (
                           <div
                             key={order._id}
-                            className='group relative flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-md transition-all duration-200 cursor-pointer'
+                            className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-200 dark:hover:border-emerald-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
                             onClick={() =>
                               router.push(
                                 `/dashboard/manager/transactions/${order._id}`
@@ -1037,11 +1034,11 @@ function ManagerDashboardPage() {
                               >
                                 {getStatusName(order.status)}
                               </Badge>
-                              <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-200' />
+                              <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-2 transition-all duration-300' />
                             </div>
 
-                            {/* Hover effect overlay */}
-                            <div className='absolute inset-0 bg-emerald-50 dark:bg-emerald-900/10 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity duration-200 pointer-events-none'></div>
+                            {/* Unified hover effect overlay */}
+                            <div className='absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-green-50/30 dark:from-emerald-900/10 dark:to-green-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                           </div>
                         );
                       })}
@@ -1133,7 +1130,7 @@ function ManagerDashboardPage() {
                     {getUpcomingClasses().map((class_) => (
                       <div
                         key={class_.id}
-                        className='group relative flex flex-col gap-3 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-xl transition-all duration-300 cursor-pointer group-hover:scale-[1.02] group-hover:-translate-y-1'
+                        className='group relative flex flex-col gap-3 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
                       >
                         <div className='flex justify-between items-start'>
                           <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors'>
@@ -1163,10 +1160,7 @@ function ManagerDashboardPage() {
                           </div>
                         </div>
 
-                        {/* Hover effect overlay */}
-                        <div className='absolute inset-0 bg-purple-50 dark:bg-purple-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-200 pointer-events-none'></div>
-
-                        {/* Subtle hover gradient */}
+                        {/* Unified hover effect overlay */}
                         <div className='absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-indigo-50/30 dark:from-purple-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
                       </div>
                     ))}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import "../../../../styles/calendar-dark-mode.css";
 import {
   Calendar,
   Badge as AntdBadge,

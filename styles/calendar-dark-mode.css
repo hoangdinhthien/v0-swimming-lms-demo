@@ -1,0 +1,101 @@
+/* Calendar Dark Mode Styles */
+
+/* Dark mode calendar styling fixes */
+.dark .ant-picker-calendar {
+  background: transparent;
+}
+
+/* Fix weekday headers in dark mode */
+.dark .ant-picker-calendar-header .ant-picker-calendar-year-select,
+.dark .ant-picker-calendar-header .ant-picker-calendar-month-select {
+  color: #e5e7eb !important;
+}
+
+/* Fix date numbers in dark mode */
+.dark .ant-picker-cell .ant-picker-cell-inner {
+  color: #e5e7eb !important;
+}
+
+/* Fix weekday column headers (Thứ 2, Thứ 3, etc.) - THIS IS THE MAIN FIX */
+.dark .ant-picker-calendar thead th {
+  color: #e5e7eb !important;
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Fix calendar table headers specifically */
+.dark .ant-picker-calendar .ant-picker-calendar-header table th {
+  color: #e5e7eb !important;
+}
+
+/* Fix today's date styling in dark mode */
+.dark .ant-picker-cell-today .ant-picker-cell-inner {
+  background: #1d4ed8 !important;
+  color: white !important;
+}
+
+/* Fix selected date in dark mode */
+.dark .ant-picker-cell-selected .ant-picker-cell-inner {
+  background: #2563eb !important;
+  color: white !important;
+}
+
+/* Fix hover effect in dark mode */
+.dark .ant-picker-cell:hover .ant-picker-cell-inner {
+  background: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+/* Fix calendar panel border in dark mode */
+.dark .ant-picker-calendar {
+  border-color: #4b5563 !important;
+}
+
+/* Fix calendar cell borders in dark mode */
+.dark .ant-picker-cell {
+  border-color: #4b5563 !important;
+}
+
+/* Fix disabled dates in dark mode */
+.dark .ant-picker-cell-disabled .ant-picker-cell-inner {
+  color: #6b7280 !important;
+}
+
+/* Fix month/year selection dropdown in dark mode */
+.dark .ant-picker-dropdown {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .ant-picker-dropdown .ant-picker-cell-inner {
+  color: #e5e7eb !important;
+}
+
+/* Fix calendar header text (month/year) */
+.dark .ant-picker-calendar-header {
+  color: #e5e7eb !important;
+}
+
+/* Fix all table header cells */
+.dark .ant-picker-calendar table thead th {
+  color: #e5e7eb !important;
+  background-color: #374151 !important;
+}
+
+/* Ensure all calendar text is visible in dark mode */
+.dark .ant-picker-calendar .ant-picker-content {
+  color: #e5e7eb;
+}
+
+/* Fix navigation buttons */
+.dark .ant-picker-calendar .ant-picker-header-super-prev-btn,
+.dark .ant-picker-calendar .ant-picker-header-prev-btn,
+.dark .ant-picker-calendar .ant-picker-header-next-btn,
+.dark .ant-picker-calendar .ant-picker-header-super-next-btn {
+  color: #e5e7eb !important;
+}
+
+/* Fix calendar body background */
+.dark .ant-picker-calendar .ant-picker-panel {
+  background: transparent !important;
+}
