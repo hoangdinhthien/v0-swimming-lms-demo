@@ -526,7 +526,7 @@ export default function DashboardLayout({
       </header>{" "}
       <div className='flex flex-1'>
         <nav
-          className={`hidden border-r bg-gradient-to-b from-background/95 to-muted/20 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:flex h-[calc(100vh-64px)] fixed top-16 z-20 shadow-sm border-r-border/50 transition-all duration-300 ${
+          className={`hidden border-r bg-gradient-to-b from-slate-50/90 to-slate-100/50 dark:from-slate-800/90 dark:to-slate-900/50 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 dark:supports-[backdrop-filter]:bg-slate-800/60 md:flex h-[calc(100vh-64px)] fixed top-16 z-20 shadow-sm border-r-border/50 transition-all duration-300 ${
             sidebarCollapsed ? "w-[70px]" : "w-[260px]"
           }`}
         >
@@ -859,7 +859,7 @@ export default function DashboardLayout({
             </div>
 
             {/* Sidebar Footer */}
-            <div className='p-4 border-t border-border/50 mt-auto bg-muted/30'>
+            <div className='p-4 border-t border-border/50 mt-auto bg-slate-100/40 dark:bg-slate-900/40'>
               <div
                 className={`flex items-center text-xs text-muted-foreground transition-all duration-200 ${
                   sidebarCollapsed ? "justify-center" : "gap-2 justify-center"
