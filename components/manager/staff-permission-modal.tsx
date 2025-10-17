@@ -80,9 +80,36 @@ export default function StaffPermissionModal({
         tenantId,
         token,
       });
-      setAvailablePermissions(permissions);
+
+      // Ensure permissions is always an array
+      const validPermissions = Array.isArray(permissions) ? permissions : [];
+
+      // Remove any duplicates based on module name
+      const uniquePermissions = validPermissions.filter(
+        (permission, index, self) => {
+          const moduleName = permission.module?.[0];
+          if (!moduleName) return false;
+
+          // Keep only the first occurrence of each module
+          return index === self.findIndex((p) => p.module?.[0] === moduleName);
+        }
+      );
+
+      console.log("Loaded permissions:", validPermissions);
+      console.log("Unique permissions after deduplication:", uniquePermissions);
+      if (validPermissions.length !== uniquePermissions.length) {
+        console.warn(
+          "Removed",
+          validPermissions.length - uniquePermissions.length,
+          "duplicate permissions"
+        );
+      }
+
+      setAvailablePermissions(uniquePermissions);
     } catch (error) {
       console.error("Error loading available permissions:", error);
+      // Set empty array on error to prevent map error
+      setAvailablePermissions([]);
       toast({
         title: "Lỗi",
         description: "Không thể tải danh sách quyền hạn có sẵn",
@@ -209,132 +236,141 @@ export default function StaffPermissionModal({
         ) : (
           <div className='space-y-6'>
             <div className='grid gap-4'>
-              {availablePermissions.map((modulePermission) => {
-                const moduleName = modulePermission.module[0];
-                const isModuleSelected = selectedPermissions.some((perm) =>
-                  perm.module.includes(moduleName)
-                );
-                const selectedModuleIndex = selectedPermissions.findIndex(
-                  (perm) => perm.module.includes(moduleName)
-                );
+              {Array.isArray(availablePermissions) &&
+              availablePermissions.length > 0 ? (
+                availablePermissions.map(
+                  (modulePermission, permissionIndex) => {
+                    const moduleName = modulePermission.module[0];
+                    const isModuleSelected = selectedPermissions.some((perm) =>
+                      perm.module.includes(moduleName)
+                    );
+                    const selectedModuleIndex = selectedPermissions.findIndex(
+                      (perm) => perm.module.includes(moduleName)
+                    );
 
-                return (
-                  <Card
-                    key={moduleName}
-                    className='border'
-                  >
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center space-x-2'>
-                        <Checkbox
-                          id={`module-${moduleName}`}
-                          checked={isModuleSelected}
-                          onCheckedChange={() =>
-                            handleModuleToggle(modulePermission)
-                          }
-                        />
-                        <Label
-                          htmlFor={`module-${moduleName}`}
-                          className='text-lg font-medium cursor-pointer'
-                        >
-                          {getModuleDisplayName(moduleName)}
-                        </Label>
-                      </div>
-                    </CardHeader>
-
-                    {isModuleSelected && selectedModuleIndex >= 0 && (
-                      <CardContent>
-                        <div className='space-y-4'>
-                          {/* Actions */}
-                          <div>
-                            <Label className='text-sm font-medium mb-2 block'>
-                              Hành động được phép:
+                    return (
+                      <Card
+                        key={`${moduleName}-${permissionIndex}`} // Use index to ensure unique keys
+                        className='border'
+                      >
+                        <CardHeader className='pb-3'>
+                          <div className='flex items-center space-x-2'>
+                            <Checkbox
+                              id={`module-${moduleName}`}
+                              checked={isModuleSelected}
+                              onCheckedChange={() =>
+                                handleModuleToggle(modulePermission)
+                              }
+                            />
+                            <Label
+                              htmlFor={`module-${moduleName}`}
+                              className='text-lg font-medium cursor-pointer'
+                            >
+                              {getModuleDisplayName(moduleName)}
                             </Label>
-                            <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
-                              {modulePermission.action.map((action) => (
-                                <div
-                                  key={action}
-                                  className='flex items-center space-x-2'
-                                >
-                                  <Checkbox
-                                    id={`${moduleName}-${action}`}
-                                    checked={selectedPermissions[
-                                      selectedModuleIndex
-                                    ].action.includes(action)}
-                                    onCheckedChange={(checked) =>
-                                      handleActionToggle(
-                                        selectedModuleIndex,
-                                        action,
-                                        checked as boolean
-                                      )
-                                    }
-                                  />
-                                  <Label
-                                    htmlFor={`${moduleName}-${action}`}
-                                    className='cursor-pointer'
-                                  >
-                                    {getActionDisplayName(action)}
-                                  </Label>
+                          </div>
+                        </CardHeader>
+
+                        {isModuleSelected && selectedModuleIndex >= 0 && (
+                          <CardContent>
+                            <div className='space-y-4'>
+                              {/* Actions */}
+                              <div>
+                                <Label className='text-sm font-medium mb-2 block'>
+                                  Hành động được phép:
+                                </Label>
+                                <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
+                                  {modulePermission.action.map((action) => (
+                                    <div
+                                      key={action}
+                                      className='flex items-center space-x-2'
+                                    >
+                                      <Checkbox
+                                        id={`${moduleName}-${action}`}
+                                        checked={selectedPermissions[
+                                          selectedModuleIndex
+                                        ].action.includes(action)}
+                                        onCheckedChange={(checked) =>
+                                          handleActionToggle(
+                                            selectedModuleIndex,
+                                            action,
+                                            checked as boolean
+                                          )
+                                        }
+                                      />
+                                      <Label
+                                        htmlFor={`${moduleName}-${action}`}
+                                        className='cursor-pointer'
+                                      >
+                                        {getActionDisplayName(action)}
+                                      </Label>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          </div>
+                              </div>
 
-                          {/* Review Settings */}
-                          <div>
-                            <Label className='text-sm font-medium mb-2 block'>
-                              Quy trình phê duyệt:
-                            </Label>
-                            <div className='flex gap-4'>
-                              <div className='flex items-center space-x-2'>
-                                <Checkbox
-                                  id={`${moduleName}-no-review`}
-                                  checked={
-                                    selectedPermissions[selectedModuleIndex]
-                                      .noReview === true
-                                  }
-                                  onCheckedChange={(checked) =>
-                                    handleReviewToggle(
-                                      selectedModuleIndex,
-                                      checked as boolean
-                                    )
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`${moduleName}-no-review`}
-                                  className='cursor-pointer'
-                                >
-                                  Không cần phê duyệt
+                              {/* Review Settings */}
+                              <div>
+                                <Label className='text-sm font-medium mb-2 block'>
+                                  Quy trình phê duyệt:
                                 </Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <Checkbox
-                                  id={`${moduleName}-need-review`}
-                                  checked={
-                                    selectedPermissions[selectedModuleIndex]
-                                      .noReview === false
-                                  }
-                                  onCheckedChange={(checked) =>
-                                    handleReviewToggle(
-                                      selectedModuleIndex,
-                                      !(checked as boolean)
-                                    )
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`${moduleName}-need-review`}
-                                  className='cursor-pointer'
-                                >
-                                  Cần phê duyệt từ quản lý
-                                </Label>
+                                <div className='flex gap-4'>
+                                  <div className='flex items-center space-x-2'>
+                                    <Checkbox
+                                      id={`${moduleName}-no-review`}
+                                      checked={
+                                        selectedPermissions[selectedModuleIndex]
+                                          .noReview === true
+                                      }
+                                      onCheckedChange={(checked) =>
+                                        handleReviewToggle(
+                                          selectedModuleIndex,
+                                          checked as boolean
+                                        )
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`${moduleName}-no-review`}
+                                      className='cursor-pointer'
+                                    >
+                                      Không cần phê duyệt
+                                    </Label>
+                                  </div>
+                                  <div className='flex items-center space-x-2'>
+                                    <Checkbox
+                                      id={`${moduleName}-need-review`}
+                                      checked={
+                                        selectedPermissions[selectedModuleIndex]
+                                          .noReview === false
+                                      }
+                                      onCheckedChange={(checked) =>
+                                        handleReviewToggle(
+                                          selectedModuleIndex,
+                                          !(checked as boolean)
+                                        )
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`${moduleName}-need-review`}
+                                      className='cursor-pointer'
+                                    >
+                                      Cần phê duyệt từ quản lý
+                                    </Label>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              })}
+                          </CardContent>
+                        )}
+                      </Card>
+                    );
+                  }
+                )
+              ) : (
+                <div className='text-center py-8 text-muted-foreground'>
+                  Không có quyền hạn nào có sẵn để cấp cho nhân viên.
+                </div>
+              )}
             </div>
 
             {selectedPermissions.length === 0 && (

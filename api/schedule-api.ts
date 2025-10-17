@@ -511,3 +511,74 @@ export const deleteScheduleEvent = async (
   const result = await response.json();
   return result;
 };
+
+// Interface for auto schedule request
+export interface AutoScheduleRequest {
+  min_time: number; // Minimum hour (e.g., 7)
+  max_time: number; // Maximum hour (e.g., 14)
+  session_in_week: number; // Number of sessions per week
+  array_number_in_week: number[]; // Days of week (0=Thứ 6, 1=Thứ 7, 2=CN, 3=Thứ 2, 4=Thứ 3, 5=Thứ 4, 6=Thứ 5)
+  class_id: string; // Class ID
+}
+
+/**
+ * Auto schedule classes
+ * @param requestData - The auto schedule request data
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with auto schedule result
+ */
+export const autoScheduleClass = async (
+  requestData: AutoScheduleRequest,
+  tenantId?: string,
+  token?: string
+): Promise<{ message: string; statusCode: number; data?: any }> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  // Validate that session_in_week equals array_number_in_week length
+  if (requestData.session_in_week !== requestData.array_number_in_week.length) {
+    throw new Error("Số buổi học trong tuần phải bằng với số ngày được chọn");
+  }
+
+  // Validate time range
+  if (requestData.min_time >= requestData.max_time) {
+    throw new Error("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc");
+  }
+
+  // Validate days of week (0-7 range based on backend mapping)
+  const invalidDays = requestData.array_number_in_week.filter(
+    (day) => day < 0 || day > 7
+  );
+  if (invalidDays.length > 0) {
+    throw new Error("Ngày trong tuần không hợp lệ");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/schedule/auto`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+      body: JSON.stringify(requestData),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Failed to auto schedule: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};

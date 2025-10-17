@@ -75,11 +75,60 @@ export async function fetchAvailablePermissions({
   }
 
   const data: AvailablePermissionsResponse = await res.json();
-  console.log("[fetchAvailablePermissions] Response:", data);
+  console.log(
+    "[fetchAvailablePermissions] Raw API Response:",
+    JSON.stringify(data, null, 2)
+  );
 
   // Unwrap the nested structure to get the permissions array
-  const permissions = data.data?.[0]?.[0]?.[0] || [];
-  return permissions;
+  // Handle multiple possible response structures
+  let permissions: AvailablePermission[] = [];
+
+  if (data?.data) {
+    // Try different nested levels
+    const nestedData =
+      data.data?.[0]?.[0]?.[0] ||
+      data.data?.[0]?.[0] ||
+      data.data?.[0] ||
+      data.data;
+
+    if (Array.isArray(nestedData)) {
+      permissions = nestedData;
+    } else if (nestedData && typeof nestedData === "object") {
+      // If it's an object, try to extract array from common property names
+      const objectData = nestedData as any;
+      permissions = objectData.permissions || objectData.modules || [];
+    }
+  }
+
+  // Ensure we always return an array
+  if (!Array.isArray(permissions)) {
+    console.warn(
+      "[fetchAvailablePermissions] Invalid permissions data:",
+      permissions
+    );
+    permissions = [];
+  }
+
+  // Remove duplicates based on module name
+  const uniquePermissions = permissions.filter((permission, index, self) => {
+    const moduleName = permission.module?.[0];
+    if (!moduleName) return false;
+
+    // Keep only the first occurrence of each module
+    return index === self.findIndex((p) => p.module?.[0] === moduleName);
+  });
+
+  console.log(
+    "[fetchAvailablePermissions] Deduplicated permissions:",
+    uniquePermissions
+  );
+  console.log(
+    "[fetchAvailablePermissions] Removed duplicates:",
+    permissions.length - uniquePermissions.length
+  );
+
+  return uniquePermissions;
 }
 
 /**

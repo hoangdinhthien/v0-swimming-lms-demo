@@ -48,13 +48,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   fetchStaffDetailWithModule,
   fetchStaffDetail,
   updateStaff,
-  fetchAvailablePermissions,
-  updateStaffPermissions,
 } from "@/api/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -63,6 +60,7 @@ import { uploadMedia, getMediaDetails } from "@/api/media-api";
 import { useToast } from "@/hooks/use-toast";
 import ManagerNotFound from "@/components/manager/not-found";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 
 const staffFormSchema = z.object({
   username: z.string().min(1, { message: "Tên nhân viên là bắt buộc" }),
@@ -91,12 +89,10 @@ export default function StaffDetailPage() {
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
-  // Permissions management state
-  const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
-  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
-  const [selectedPermissions, setSelectedPermissions] = useState<any[]>([]);
-  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
-  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  // Staff Permission Modal state
+  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
+  const [selectedStaffForPermission, setSelectedStaffForPermission] =
+    useState<any>(null);
 
   const form = useForm<z.infer<typeof staffFormSchema>>({
     resolver: zodResolver(staffFormSchema),
@@ -416,135 +412,28 @@ export default function StaffDetailPage() {
       .substring(0, 2);
   };
 
-  // Load available permissions when opening permissions modal
-  const loadAvailablePermissions = async () => {
-    const tenantId = getSelectedTenant();
-    const token = getAuthToken();
-    if (!tenantId || !token) return;
-
-    setIsLoadingPermissions(true);
-    try {
-      const permissions = await fetchAvailablePermissions({ tenantId, token });
-      setAvailablePermissions(permissions);
-
-      // Initialize selected permissions based on current staff permissions
-      if (detail?.permission) {
-        setSelectedPermissions(detail.permission);
-      } else {
-        setSelectedPermissions([]);
-      }
-    } catch (error) {
-      console.error("Error loading available permissions:", error);
-      toast({
-        title: "Lỗi tải quyền",
-        description: "Không thể tải danh sách quyền khả dụng",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingPermissions(false);
-    }
-  };
-
   // Handle opening permissions modal
   const handleOpenPermissionsModal = () => {
-    setIsPermissionsModalOpen(true);
-    loadAvailablePermissions();
+    if (!detail) return;
+
+    // Prepare staff data for the permission modal
+    const staffData = {
+      _id: staffId, // Use the staff ID from URL params
+      user: {
+        username: detail.user?.username || "",
+        email: detail.user?.email || "",
+      },
+      currentPermissions: detail.permission || [],
+    };
+
+    setSelectedStaffForPermission(staffData);
+    setPermissionModalOpen(true);
   };
 
-  // Handle permission toggle
-  const handlePermissionToggle = (modulePermission: any, checked: boolean) => {
-    if (checked) {
-      // Add permission with default settings
-      const newPermission = {
-        module: modulePermission.module,
-        action: modulePermission.action, // Start with all available actions
-        noReview: !modulePermission.haveReview, // Inverse of haveReview
-      };
-      setSelectedPermissions([...selectedPermissions, newPermission]);
-    } else {
-      // Remove permission
-      setSelectedPermissions(
-        selectedPermissions.filter(
-          (perm) =>
-            !perm.module.some((m: string) =>
-              modulePermission.module.includes(m)
-            )
-        )
-      );
-    }
-  };
-
-  // Handle action toggle for a specific permission
-  const handleActionToggle = (
-    permissionIndex: number,
-    action: string,
-    checked: boolean
-  ) => {
-    const updatedPermissions = [...selectedPermissions];
-    const permission = updatedPermissions[permissionIndex];
-
-    if (checked) {
-      // Add action if not already present
-      if (!permission.action.includes(action)) {
-        permission.action = [...permission.action, action];
-      }
-    } else {
-      // Remove action
-      permission.action = permission.action.filter((a: string) => a !== action);
-    }
-
-    setSelectedPermissions(updatedPermissions);
-  };
-
-  // Handle review requirement toggle
-  const handleReviewToggle = (permissionIndex: number, noReview: boolean) => {
-    const updatedPermissions = [...selectedPermissions];
-    updatedPermissions[permissionIndex].noReview = noReview;
-    setSelectedPermissions(updatedPermissions);
-  };
-
-  // Save permissions
-  const handleSavePermissions = async () => {
-    const tenantId = getSelectedTenant();
-    const token = getAuthToken();
-    if (!tenantId || !token) return;
-
-    setIsSavingPermissions(true);
-    try {
-      // Filter out permissions with no actions
-      const validPermissions = selectedPermissions.filter(
-        (perm) => perm.action && perm.action.length > 0
-      );
-
-      await updateStaffPermissions({
-        staffId: staffId, // URL param is now user._id
-        tenantId,
-        token,
-        permissions: validPermissions,
-      });
-
-      toast({
-        title: "Cập nhật quyền thành công",
-        description: "Quyền truy cập của nhân viên đã được cập nhật",
-        variant: "default",
-        className:
-          "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
-      });
-
-      setIsPermissionsModalOpen(false);
-
-      // Refresh staff details to show updated permissions
-      await fetchDetailAgain();
-    } catch (error) {
-      console.error("Error saving permissions:", error);
-      toast({
-        title: "Lỗi cập nhật quyền",
-        description: "Không thể cập nhật quyền truy cập",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingPermissions(false);
-    }
+  // Handle permission modal success
+  const handlePermissionSuccess = () => {
+    // Refresh staff details to show updated permissions
+    fetchDetailAgain();
   };
 
   if (loading) {
@@ -1169,208 +1058,12 @@ export default function StaffDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Permissions Management Dialog */}
-      <Dialog
-        open={isPermissionsModalOpen}
-        onOpenChange={setIsPermissionsModalOpen}
-      >
-        <DialogContent className='sm:max-w-[800px] max-h-[90vh] overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle className='text-lg font-semibold'>
-              Quản lý quyền truy cập
-            </DialogTitle>
-            <DialogDescription>
-              Thiết lập quyền truy cập các module cho nhân viên{" "}
-              {detail?.user?.username}
-            </DialogDescription>
-          </DialogHeader>
-
-          {isLoadingPermissions ? (
-            <div className='flex flex-col items-center justify-center py-8'>
-              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
-              <div>Đang tải danh sách quyền...</div>
-            </div>
-          ) : (
-            <div className='space-y-6 py-4'>
-              {availablePermissions.length === 0 ? (
-                <div className='text-center py-8 text-muted-foreground'>
-                  Không có quyền nào khả dụng
-                </div>
-              ) : (
-                <div className='space-y-4'>
-                  {availablePermissions.map(
-                    (availablePermission: any, index: number) => {
-                      const moduleNames = availablePermission.module || [];
-                      const moduleName = moduleNames[0] || "Unknown";
-
-                      // Check if this module is currently selected
-                      const selectedPermissionIndex =
-                        selectedPermissions.findIndex((perm) =>
-                          perm.module.some((m: string) =>
-                            moduleNames.includes(m)
-                          )
-                        );
-                      const isSelected = selectedPermissionIndex !== -1;
-                      const selectedPermission = isSelected
-                        ? selectedPermissions[selectedPermissionIndex]
-                        : null;
-
-                      // Module name translations
-                      const moduleTranslations: { [key: string]: string } = {
-                        Class: "Quản lý lớp học",
-                        Order: "Quản lý đơn hàng",
-                        Course: "Quản lý khóa học",
-                        User: "Quản lý người dùng",
-                        News: "Quản lý tin tức",
-                        Blog: "Quản lý blog",
-                        Application: "Quản lý đơn đăng ký",
-                      };
-
-                      const translatedModuleName =
-                        moduleTranslations[moduleName] || moduleName;
-
-                      return (
-                        <Card
-                          key={index}
-                          className='border border-muted'
-                        >
-                          <CardContent className='p-4'>
-                            <div className='space-y-4'>
-                              {/* Module Selection */}
-                              <div className='flex items-center space-x-2'>
-                                <Checkbox
-                                  id={`module-${index}`}
-                                  checked={isSelected}
-                                  onCheckedChange={(checked) =>
-                                    handlePermissionToggle(
-                                      availablePermission,
-                                      checked as boolean
-                                    )
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`module-${index}`}
-                                  className='text-base font-semibold text-blue-900 dark:text-blue-200'
-                                >
-                                  {translatedModuleName}
-                                </Label>
-                              </div>
-
-                              {/* Actions and Review Settings - Only show if module is selected */}
-                              {isSelected && selectedPermission && (
-                                <div className='ml-6 space-y-4 border-l-2 border-blue-200 pl-4'>
-                                  {/* Actions */}
-                                  <div>
-                                    <Label className='text-sm font-medium mb-2 block'>
-                                      Quyền thao tác:
-                                    </Label>
-                                    <div className='grid grid-cols-2 gap-2'>
-                                      {(availablePermission.action || []).map(
-                                        (action: string) => {
-                                          const actionTranslations: {
-                                            [key: string]: string;
-                                          } = {
-                                            GET: "Xem",
-                                            POST: "Tạo mới",
-                                            PUT: "Chỉnh sửa",
-                                            DELETE: "Xóa",
-                                          };
-
-                                          const translatedAction =
-                                            actionTranslations[action] ||
-                                            action;
-                                          const isActionSelected =
-                                            selectedPermission.action.includes(
-                                              action
-                                            );
-
-                                          return (
-                                            <div
-                                              key={action}
-                                              className='flex items-center space-x-2'
-                                            >
-                                              <Checkbox
-                                                id={`action-${index}-${action}`}
-                                                checked={isActionSelected}
-                                                onCheckedChange={(checked) =>
-                                                  handleActionToggle(
-                                                    selectedPermissionIndex,
-                                                    action,
-                                                    checked as boolean
-                                                  )
-                                                }
-                                              />
-                                              <Label
-                                                htmlFor={`action-${index}-${action}`}
-                                                className='text-sm'
-                                              >
-                                                {translatedAction}
-                                              </Label>
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Review Requirement */}
-                                  <div className='flex items-center space-x-2'>
-                                    <Checkbox
-                                      id={`no-review-${index}`}
-                                      checked={selectedPermission.noReview}
-                                      onCheckedChange={(checked) =>
-                                        handleReviewToggle(
-                                          selectedPermissionIndex,
-                                          checked as boolean
-                                        )
-                                      }
-                                    />
-                                    <Label
-                                      htmlFor={`no-review-${index}`}
-                                      className='text-sm'
-                                    >
-                                      Không cần phê duyệt
-                                    </Label>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    }
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => setIsPermissionsModalOpen(false)}
-              disabled={isSavingPermissions}
-            >
-              Hủy
-            </Button>
-            <Button
-              type='button'
-              onClick={handleSavePermissions}
-              disabled={isSavingPermissions || isLoadingPermissions}
-            >
-              {isSavingPermissions ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Đang lưu...
-                </>
-              ) : (
-                "Lưu quyền truy cập"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <StaffPermissionModal
+        open={permissionModalOpen}
+        onOpenChange={setPermissionModalOpen}
+        staffData={selectedStaffForPermission}
+        onSuccess={fetchDetailAgain}
+      />
     </div>
   );
 }
