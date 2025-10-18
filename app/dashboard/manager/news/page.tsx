@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -55,6 +56,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 
 export default function NewsListPage() {
+  const router = useRouter();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -274,16 +276,6 @@ export default function NewsListPage() {
 
   return (
     <>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' />
-          Quay về trang quản lý
-        </Link>
-      </div>
-
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='text-3xl font-bold'>Quản lý tin tức</h1>
@@ -601,7 +593,7 @@ export default function NewsListPage() {
                       key={news._id}
                       className='cursor-pointer hover:bg-muted/50 transition-colors border-border/30'
                       onClick={() =>
-                        (window.location.href = `/dashboard/manager/news/${news._id}`)
+                        router.push(`/dashboard/manager/news/${news._id}`)
                       }
                     >
                       <TableCell className='py-4'>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -9,6 +10,7 @@ import {
   Filter,
   Calendar,
   Loader2,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +45,7 @@ import {
 } from "@/components/ui/pagination";
 
 export default function CoursesPage() {
+  const router = useRouter();
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -367,43 +370,60 @@ export default function CoursesPage() {
                     displayedCourses.map((course: any) => (
                       <TableRow
                         key={course._id}
-                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
                         onClick={() =>
-                          (window.location.href = `/dashboard/manager/courses/${course._id}`)
+                          router.push(
+                            `/dashboard/manager/courses/${course._id}`
+                          )
                         }
                       >
-                        <TableCell className='font-medium'>
-                          <div className='font-medium text-foreground'>
+                        <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <div className='font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                             {course.title}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {Array.isArray(course.category)
-                            ? course.category
-                                .map((cat: any) => cat.title)
-                                .join(", ")
-                            : ""}
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {Array.isArray(course.category)
+                              ? course.category
+                                  .map((cat: any) => cat.title)
+                                  .join(", ")
+                              : ""}
+                          </span>
                         </TableCell>
-                        <TableCell>
-                          {course.price
-                            ? course.price.toLocaleString() + "₫"
-                            : ""}
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {course.price
+                              ? course.price.toLocaleString() + "₫"
+                              : ""}
+                          </span>
                         </TableCell>
-                        <TableCell>{course.session_number}</TableCell>
-                        <TableCell>{course.session_number_duration}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant='outline'
-                            className={
-                              course.is_active
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-gray-50 text-gray-700 border-gray-200"
-                            }
-                          >
-                            {course.is_active
-                              ? "Đang hoạt động"
-                              : "Đã kết thúc"}
-                          </Badge>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {course.session_number}
+                          </span>
+                        </TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {course.session_number_duration}
+                          </span>
+                        </TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <div className='flex items-center justify-between'>
+                            <Badge
+                              variant='outline'
+                              className={`transition-all duration-200 ${
+                                course.is_active
+                                  ? "bg-green-50 text-green-700 border-green-200 group-hover:bg-green-100 group-hover:border-green-300"
+                                  : "bg-gray-50 text-gray-700 border-gray-200 group-hover:bg-gray-100 group-hover:border-gray-300"
+                              }`}
+                            >
+                              {course.is_active
+                                ? "Đang hoạt động"
+                                : "Đã kết thúc"}
+                            </Badge>
+                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

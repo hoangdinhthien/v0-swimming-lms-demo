@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -11,6 +12,7 @@ import {
   Star,
   GraduationCap,
   Loader2,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -286,6 +288,7 @@ function InstructorDetailModal({
 }
 
 export default function InstructorsPage() {
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -594,18 +597,18 @@ export default function InstructorsPage() {
                     return (
                       <TableRow
                         key={id}
-                        className='cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/50'
+                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200 border-b border-border/50'
                         onClick={() =>
-                          (window.location.href = `/dashboard/manager/instructors/${id}`)
+                          router.push(`/dashboard/manager/instructors/${id}`)
                         }
                       >
-                        <TableCell className='py-4'>
+                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-3'>
-                            <div className='relative'>
+                            <div className='relative group-hover:scale-105 transition-transform duration-200'>
                               <img
                                 src={avatar}
                                 alt={name}
-                                className='h-10 w-10 rounded-full object-cover border-2 border-border/20'
+                                className='h-10 w-10 rounded-full object-cover border-2 border-border/20 group-hover:border-blue-300 dark:group-hover:border-blue-600 transition-colors duration-200'
                                 onError={(e) => {
                                   e.currentTarget.style.display = "none";
                                   const fallback = e.currentTarget
@@ -616,21 +619,21 @@ export default function InstructorsPage() {
                                 }}
                               />
                               <div
-                                className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary'
+                                className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:bg-blue-100 dark:group-hover:bg-blue-900 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-all duration-200'
                                 style={{ display: "none" }}
                               >
                                 {getInitials(name)}
                               </div>
                             </div>
                             <div className='min-w-0 flex-1'>
-                              <div className='font-medium text-foreground truncate'>
+                              <div className='font-medium text-foreground truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {name}
                               </div>
-                              <div className='text-sm text-muted-foreground truncate'>
+                              <div className='text-sm text-muted-foreground truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {email}
                               </div>
                               {specialty.length > 0 && (
-                                <div className='text-xs text-muted-foreground mt-1'>
+                                <div className='text-xs text-muted-foreground mt-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                   {specialty.slice(0, 2).join(", ")}
                                   {specialty.length > 2 && "..."}
                                 </div>
@@ -638,41 +641,50 @@ export default function InstructorsPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className='py-4'>
+                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <Users className='h-4 w-4 text-muted-foreground' />
-                            <span className='font-medium'>{students}</span>
+                            <Users className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                              {students}
+                            </span>
                           </div>
                         </TableCell>
-                        <TableCell className='py-4'>
+                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <GraduationCap className='h-4 w-4 text-muted-foreground' />
-                            <span className='font-medium'>{classes}</span>
+                            <GraduationCap className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                              {classes}
+                            </span>
                           </div>
                         </TableCell>
-                        <TableCell className='py-4'>
+                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-1'>
-                            <Star className='h-4 w-4 text-amber-500 fill-current' />
-                            <span className='font-medium'>{rating}</span>
+                            <Star className='h-4 w-4 text-amber-500 fill-current group-hover:text-amber-600 transition-colors duration-200' />
+                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                              {rating}
+                            </span>
                           </div>
                         </TableCell>
-                        <TableCell className='py-4'>
-                          <Badge
-                            variant='outline'
-                            className={
-                              status === "Active"
-                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <div className='flex items-center justify-between'>
+                            <Badge
+                              variant='outline'
+                              className={`transition-all duration-200 ${
+                                status === "Active"
+                                  ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 group-hover:bg-green-100 group-hover:border-green-300"
+                                  : status === "On Leave"
+                                  ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 group-hover:bg-amber-100 group-hover:border-amber-300"
+                                  : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800 group-hover:bg-gray-100 group-hover:border-gray-300"
+                              }`}
+                            >
+                              {status === "Active"
+                                ? "Đang hoạt động"
                                 : status === "On Leave"
-                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
-                                : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800"
-                            }
-                          >
-                            {status === "Active"
-                              ? "Đang hoạt động"
-                              : status === "On Leave"
-                              ? "Đang nghỉ phép"
-                              : "Ngừng hoạt động"}
-                          </Badge>
+                                ? "Đang nghỉ phép"
+                                : "Ngừng hoạt động"}
+                            </Badge>
+                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

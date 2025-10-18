@@ -181,15 +181,15 @@ Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bào
 
 ==========================================================
 
-- trang lớp học đang load chậm (do get api nhiều) -> done
-- sửa lại table news, sửa lại navigate
-- sửa màu sidebar
+- trang lớp học đang load chậm (do get api nhiều) => done
+- sửa lại table news, sửa lại navigate => done
+- sửa màu sidebar => done
 - trang lớp học: thêm cột được xếp lịch hay chưa -> qua trang detail click nút tự động xếp lịch
-- logo: Aqualearn, thêm favicon
+- logo: Aqualearn, thêm favicon =>
 
-- fetching riêng api trong lịch (test lại)
-- sửa lại fade in effect của application type
-- đồng bộ loading 
+- fetching riêng api trong lịch (test lại) => done
+- sửa lại fade in effect của application type => done
+- đồng bộ loading => done
 - chưa có UI cho manager/pool
 
 ==========================================================

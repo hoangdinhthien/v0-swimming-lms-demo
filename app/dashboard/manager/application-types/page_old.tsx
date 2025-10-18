@@ -214,7 +214,7 @@ export default function ApplicationTypesPage() {
     return acc;
   }, {} as Record<string, number>);
 
-  // Loading state similar to other pages
+  // Loading state similar to applications page
   if (isLoading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen py-16'>
@@ -312,10 +312,7 @@ export default function ApplicationTypesPage() {
                 >
                   <option value=''>Tất cả vai trò</option>
                   {AVAILABLE_ROLES.map((role) => (
-                    <option
-                      key={role}
-                      value={role}
-                    >
+                    <option key={role} value={role}>
                       {getRoleDisplayName(role)}
                     </option>
                   ))}
@@ -357,9 +354,7 @@ export default function ApplicationTypesPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {new Date(type.created_at).toLocaleDateString(
-                            "vi-VN"
-                          )}
+                          {new Date(type.created_at).toLocaleDateString('vi-VN')}
                         </TableCell>
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
@@ -388,13 +383,10 @@ export default function ApplicationTypesPage() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Xác nhận xóa
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Bạn có chắc chắn muốn xóa loại đơn từ "
-                                    {type.title}"? Hành động này không thể hoàn
-                                    tác.
+                                    Bạn có chắc chắn muốn xóa loại đơn từ "{type.title}"? 
+                                    Hành động này không thể hoàn tác.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -409,7 +401,7 @@ export default function ApplicationTypesPage() {
                                     {isSubmitting && (
                                       <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                                     )}
-                                    {isSubmitting ? "Đang xóa..." : "Xóa"}
+                                    {isSubmitting ? 'Đang xóa...' : 'Xóa'}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -417,7 +409,7 @@ export default function ApplicationTypesPage() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
+                    ))}
                   ) : (
                     <TableRow>
                       <TableCell
@@ -425,8 +417,8 @@ export default function ApplicationTypesPage() {
                         className='text-center py-8 text-muted-foreground'
                       >
                         {searchTerm || selectedRoleFilter
-                          ? "Không tìm thấy kết quả phù hợp"
-                          : "Chưa có loại đơn từ nào"}
+                          ? 'Không tìm thấy kết quả phù hợp'
+                          : 'Chưa có loại đơn từ nào'}
                       </TableCell>
                     </TableRow>
                   )}
@@ -435,6 +427,9 @@ export default function ApplicationTypesPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+    </>
+  );
 
         {/* Create Modal */}
         <Dialog
@@ -443,18 +438,25 @@ export default function ApplicationTypesPage() {
         >
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
-              <DialogTitle>Tạo loại đơn từ mới</DialogTitle>
+              <DialogTitle className='text-xl font-bold text-black dark:text-white'>
+                Tạo Loại Đơn Từ Mới
+              </DialogTitle>
               <DialogDescription>
-                Thêm loại đơn từ mới cho hệ thống
+                Tạo một loại đơn từ mới để người dùng có thể sử dụng
               </DialogDescription>
             </DialogHeader>
 
             <div className='space-y-6 py-4'>
               <div className='space-y-2'>
-                <Label htmlFor='title'>Tên loại đơn từ</Label>
+                <Label
+                  htmlFor='title'
+                  className='text-sm font-medium'
+                >
+                  Tên loại đơn từ <span className='text-red-500'>*</span>
+                </Label>
                 <Input
                   id='title'
-                  placeholder='Nhập tên loại đơn từ...'
+                  placeholder='Ví dụ: Đơn xin nghỉ phép, Đăng ký khóa học...'
                   value={formData.title}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
@@ -463,12 +465,15 @@ export default function ApplicationTypesPage() {
               </div>
 
               <div className='space-y-3'>
-                <Label>Vai trò được phép sử dụng</Label>
-                <div className='grid grid-cols-2 gap-4'>
+                <Label className='text-sm font-medium'>
+                  Vai trò được phép sử dụng{" "}
+                  <span className='text-red-500'>*</span>
+                </Label>
+                <div className='grid grid-cols-2 gap-3'>
                   {AVAILABLE_ROLES.map((role) => (
                     <div
                       key={role}
-                      className='flex items-center space-x-2'
+                      className='flex items-center space-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
                     >
                       <Checkbox
                         id={`create-${role}`}
@@ -479,7 +484,7 @@ export default function ApplicationTypesPage() {
                       />
                       <Label
                         htmlFor={`create-${role}`}
-                        className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                        className='text-sm font-medium cursor-pointer'
                       >
                         {getRoleDisplayName(role)}
                       </Label>
@@ -489,7 +494,7 @@ export default function ApplicationTypesPage() {
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className='flex gap-2'>
               <Button
                 variant='outline'
                 onClick={() => setIsCreateModalOpen(false)}
@@ -504,6 +509,7 @@ export default function ApplicationTypesPage() {
                   !formData.title.trim() ||
                   formData.type.length === 0
                 }
+                className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black'
               >
                 {isSubmitting && (
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -521,7 +527,9 @@ export default function ApplicationTypesPage() {
         >
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
-              <DialogTitle>Chỉnh sửa loại đơn từ</DialogTitle>
+              <DialogTitle className='text-xl font-bold text-black dark:text-white'>
+                Chỉnh Sửa Loại Đơn Từ
+              </DialogTitle>
               <DialogDescription>
                 Cập nhật thông tin loại đơn từ
               </DialogDescription>
@@ -529,10 +537,15 @@ export default function ApplicationTypesPage() {
 
             <div className='space-y-6 py-4'>
               <div className='space-y-2'>
-                <Label htmlFor='edit-title'>Tên loại đơn từ</Label>
+                <Label
+                  htmlFor='edit-title'
+                  className='text-sm font-medium'
+                >
+                  Tên loại đơn từ <span className='text-red-500'>*</span>
+                </Label>
                 <Input
                   id='edit-title'
-                  placeholder='Nhập tên loại đơn từ...'
+                  placeholder='Ví dụ: Đơn xin nghỉ phép, Đăng ký khóa học...'
                   value={formData.title}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, title: e.target.value }))
@@ -541,12 +554,15 @@ export default function ApplicationTypesPage() {
               </div>
 
               <div className='space-y-3'>
-                <Label>Vai trò được phép sử dụng</Label>
-                <div className='grid grid-cols-2 gap-4'>
+                <Label className='text-sm font-medium'>
+                  Vai trò được phép sử dụng{" "}
+                  <span className='text-red-500'>*</span>
+                </Label>
+                <div className='grid grid-cols-2 gap-3'>
                   {AVAILABLE_ROLES.map((role) => (
                     <div
                       key={role}
-                      className='flex items-center space-x-2'
+                      className='flex items-center space-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
                     >
                       <Checkbox
                         id={`edit-${role}`}
@@ -557,7 +573,7 @@ export default function ApplicationTypesPage() {
                       />
                       <Label
                         htmlFor={`edit-${role}`}
-                        className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                        className='text-sm font-medium cursor-pointer'
                       >
                         {getRoleDisplayName(role)}
                       </Label>
@@ -567,7 +583,7 @@ export default function ApplicationTypesPage() {
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className='flex gap-2'>
               <Button
                 variant='outline'
                 onClick={() => setIsEditModalOpen(false)}
@@ -582,6 +598,7 @@ export default function ApplicationTypesPage() {
                   !formData.title.trim() ||
                   formData.type.length === 0
                 }
+                className='bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black'
               >
                 {isSubmitting && (
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -591,7 +608,37 @@ export default function ApplicationTypesPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Modal */}
+        <AlertDialog
+          open={isDeleteModalOpen}
+          onOpenChange={setIsDeleteModalOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa loại đơn từ "
+                <strong>{currentItem?.title}</strong>"? Hành động này không thể
+                hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSubmitting}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isSubmitting}
+                className='bg-red-600 hover:bg-red-700 focus:ring-red-600'
+              >
+                {isSubmitting && (
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                )}
+                {isSubmitting ? "Đang xóa..." : "Xóa"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
-    </>
+    </div>
   );
 }

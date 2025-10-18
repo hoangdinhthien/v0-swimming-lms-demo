@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -15,6 +16,7 @@ import {
   Mail,
   Phone,
   Loader2,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +111,7 @@ function calculateAge(birthdayStr: string | null | undefined): number | null {
 }
 
 export default function StudentsPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState<any[]>([]);
@@ -449,6 +452,7 @@ export default function StudentsPage() {
                   <TableHead className='font-semibold text-foreground py-4'>
                     Phụ Huynh
                   </TableHead>
+                  <TableHead className='w-8'></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -458,31 +462,31 @@ export default function StudentsPage() {
                     return (
                       <TableRow
                         key={student._id}
-                        className='cursor-pointer hover:bg-muted/50 transition-colors border-border/30'
+                        className='cursor-pointer hover:bg-muted/50 transition-all duration-200 border-border/30 group hover:shadow-sm'
                         onClick={() =>
-                          (window.location.href = `/dashboard/manager/students/${user._id}`)
+                          router.push(`/dashboard/manager/students/${user._id}`)
                         }
                       >
                         <TableCell className='py-4'>
                           <div className='flex items-center gap-3'>
-                            <Avatar className='h-10 w-10 border-2 border-primary/10 shadow-sm'>
+                            <Avatar className='h-10 w-10 border-2 border-primary/10 shadow-sm group-hover:border-primary/30 transition-colors duration-200'>
                               <AvatarImage
                                 src={student.avatar}
                                 alt={user.username || "avatar"}
                                 className='object-cover'
                               />
-                              <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-sm'>
+                              <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-sm group-hover:from-primary/30 group-hover:to-primary/20 transition-colors duration-200'>
                                 {user.username
                                   ? getUserInitials(user.username)
                                   : "ST"}
                               </AvatarFallback>
                             </Avatar>
                             <div className='min-w-0 flex-1'>
-                              <div className='font-medium text-foreground truncate'>
+                              <div className='font-medium text-foreground truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {user.username}
                               </div>
-                              <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1'>
-                                <Mail className='h-3 w-3' />
+                              <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1 group-hover:text-muted-foreground/80'>
+                                <Mail className='h-3 w-3 group-hover:text-blue-500 transition-colors duration-200' />
                                 <span className='truncate'>{user.email}</span>
                               </div>
                             </div>
@@ -490,29 +494,31 @@ export default function StudentsPage() {
                         </TableCell>
                         <TableCell className='py-4'>
                           <div className='flex items-center gap-2'>
-                            <span className='font-medium text-foreground'>
+                            <span className='font-medium text-foreground group-hover:text-foreground/90 transition-colors duration-200'>
                               {calculateAge(user.birthday) !== null
                                 ? calculateAge(user.birthday)
                                 : "-"}
                             </span>
                             {calculateAge(user.birthday) !== null && (
-                              <span className='text-xs text-muted-foreground'>
+                              <span className='text-xs text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200'>
                                 tuổi
                               </span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell className='py-4'>
-                          <span className='text-muted-foreground'>-</span>
+                          <span className='text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200'>
+                            -
+                          </span>
                         </TableCell>
                         <TableCell className='py-4'>
                           <Badge
                             variant='outline'
-                            className={
+                            className={`transition-all duration-200 ${
                               user.is_active
-                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-                                : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800"
-                            }
+                                ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 group-hover:bg-green-100 group-hover:border-green-300 dark:group-hover:bg-green-900"
+                                : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800 group-hover:bg-gray-100 group-hover:border-gray-300 dark:group-hover:bg-gray-900"
+                            }`}
                           >
                             {user.is_active
                               ? "Đang hoạt động"
@@ -522,16 +528,19 @@ export default function StudentsPage() {
                         <TableCell className='py-4'>
                           {student.parentName ? (
                             <div className='flex items-center gap-2'>
-                              <Users className='h-3 w-3 text-blue-600' />
-                              <span className='text-sm font-medium text-blue-700 dark:text-blue-400'>
+                              <Users className='h-3 w-3 text-blue-600 group-hover:text-blue-700 transition-colors duration-200' />
+                              <span className='text-sm font-medium text-blue-700 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-300 transition-colors duration-200'>
                                 {student.parentName}
                               </span>
                             </div>
                           ) : (
-                            <span className='text-sm text-muted-foreground italic'>
+                            <span className='text-sm text-muted-foreground italic group-hover:text-muted-foreground/80 transition-colors duration-200'>
                               Không có
                             </span>
                           )}
+                        </TableCell>
+                        <TableCell className='py-4 w-8'>
+                          <ChevronRight className='h-4 w-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200' />
                         </TableCell>
                       </TableRow>
                     );
@@ -539,7 +548,7 @@ export default function StudentsPage() {
                 ) : (
                   <TableRow key='empty-row'>
                     <TableCell
-                      colSpan={5}
+                      colSpan={6}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Không tìm thấy học viên phù hợp với bộ lọc hiện tại.

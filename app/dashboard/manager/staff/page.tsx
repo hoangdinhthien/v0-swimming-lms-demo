@@ -19,6 +19,7 @@ import {
   Key,
   Book,
   Filter,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -417,25 +418,28 @@ export default function StaffPage() {
                   filteredStaff.map((member, index) => (
                     <TableRow
                       key={`${member.id}-${index}`} // Ensure unique keys even if IDs are duplicated
-                      className='hover:bg-muted/50 transition-colors'
+                      className='cursor-pointer hover:bg-muted/50 transition-all duration-200 border-border/30 group hover:shadow-sm'
+                      onClick={() =>
+                        router.push(`/dashboard/manager/staff/${member.userId}`)
+                      }
                     >
                       <TableCell>
                         <div className='flex items-center gap-3'>
-                          <Avatar className='h-10 w-10 border-2 border-primary/10'>
+                          <Avatar className='h-10 w-10 border-2 border-primary/10 group-hover:border-primary/30 transition-colors duration-200'>
                             <AvatarImage
                               src={member.avatar}
                               alt={member.name}
                               className='object-cover'
                             />
-                            <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
+                            <AvatarFallback className='bg-primary/10 text-primary font-semibold group-hover:bg-primary/20 transition-colors duration-200'>
                               {getInitials(member.name)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className='font-medium text-foreground'>
+                            <div className='font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {member.name}
                             </div>
-                            <div className='text-sm text-muted-foreground'>
+                            <div className='text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200'>
                               ID: {member.userId?.slice(-8) || "N/A"}
                             </div>
                           </div>
@@ -444,95 +448,102 @@ export default function StaffPage() {
                       <TableCell>
                         <div className='space-y-1'>
                           <div className='flex items-center gap-2 text-sm'>
-                            <Mail className='h-3 w-3 text-muted-foreground' />
-                            <span>{member.email}</span>
+                            <Mail className='h-3 w-3 text-muted-foreground group-hover:text-blue-500 transition-colors duration-200' />
+                            <span className='group-hover:text-foreground/90 transition-colors duration-200'>
+                              {member.email}
+                            </span>
                           </div>
                           {member.phone !== "-" && (
                             <div className='flex items-center gap-2 text-sm'>
-                              <Phone className='h-3 w-3 text-muted-foreground' />
-                              <span>{member.phone}</span>
+                              <Phone className='h-3 w-3 text-muted-foreground group-hover:text-blue-500 transition-colors duration-200' />
+                              <span className='group-hover:text-foreground/90 transition-colors duration-200'>
+                                {member.phone}
+                              </span>
                             </div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                         <div className='flex flex-wrap gap-1'>
                           {member.department.length > 0 ? (
                             member.department.map((dept: string) => (
                               <Badge
                                 key={dept}
                                 variant='outline'
-                                className='text-xs'
+                                className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
                               >
                                 {dept}
                               </Badge>
                             ))
                           ) : (
-                            <span className='text-muted-foreground text-sm'>
+                            <span className='text-muted-foreground text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               Chưa phân công
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <span className='text-sm text-muted-foreground'>
+                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                        <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                           {member.joinDate}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                         <Badge
                           variant='outline'
-                          className={
+                          className={`transition-all duration-200 ${
                             member.status === "Active"
-                              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
-                              : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800"
-                          }
+                              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 group-hover:bg-green-100 group-hover:border-green-300"
+                              : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800 group-hover:bg-gray-100 group-hover:border-gray-300"
+                          }`}
                         >
                           {member.status === "Active"
                             ? "Hoạt động"
                             : "Ngưng hoạt động"}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <div className='flex gap-2'>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log(
-                                "Opening permission modal for:",
-                                member
-                              );
-                              setSelectedStaffForPermission({
-                                _id: member.id,
-                                user: {
-                                  username: member.name,
-                                  email: member.email,
-                                },
-                              });
-                              setPermissionModalOpen(true);
-                            }}
-                          >
-                            <Key className='h-4 w-4 mr-1' />
-                            Quyền hạn
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              console.log(
-                                `Viewing details for staff: ${member.name}, ID: ${member.id}`
-                              );
-                              router.push(
-                                `/dashboard/manager/staff/${member.id}`
-                              );
-                            }}
-                          >
-                            <User className='h-4 w-4 mr-1' />
-                            Chi tiết
-                          </Button>
+                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                        <div className='flex items-center justify-between'>
+                          <div className='flex gap-2'>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(
+                                  "Opening permission modal for:",
+                                  member
+                                );
+                                setSelectedStaffForPermission({
+                                  _id: member.id,
+                                  user: {
+                                    username: member.name,
+                                    email: member.email,
+                                  },
+                                });
+                                setPermissionModalOpen(true);
+                              }}
+                            >
+                              <Key className='h-4 w-4 mr-1' />
+                              Quyền hạn
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(
+                                  `Viewing details for staff: ${member.name}, ID: ${member.id}`
+                                );
+                                router.push(
+                                  `/dashboard/manager/staff/${member.id}`
+                                );
+                              }}
+                            >
+                              <User className='h-4 w-4 mr-1' />
+                              Chi tiết
+                            </Button>
+                          </div>
+                          <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
                         </div>
                       </TableCell>
                     </TableRow>

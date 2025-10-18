@@ -31,7 +31,6 @@ import {
   TimePicker,
   Tabs,
   Radio,
-  Spin,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -48,6 +47,7 @@ import {
   SaveOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
+import { Loader2 } from "lucide-react";
 import type { CalendarProps } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
@@ -766,33 +766,23 @@ export default function ImprovedAntdCalendarPage() {
 
   if (loading || slotsLoading) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='text-center'>
-          <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400'></div>
-          <p className='mt-4 text-gray-600 dark:text-gray-300'>
-            Đang tải lịch học...
-          </p>
-        </div>
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải lịch học...</p>
       </div>
     );
   }
 
   if (error || slotsError) {
     return (
-      <div className='container mx-auto py-8'>
-        <Alert
-          message='Lỗi tải dữ liệu'
-          description={error || slotsError}
-          type='error'
-          action={
-            <AntdButton
-              size='small'
-              onClick={() => window.location.reload()}
-            >
-              Thử lại
-            </AntdButton>
-          }
-        />
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
+            Lỗi tải dữ liệu
+          </div>
+          <p className='text-muted-foreground'>{error || slotsError}</p>
+          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+        </div>
       </div>
     );
   }
@@ -934,13 +924,9 @@ export default function ImprovedAntdCalendarPage() {
           className='calendar-drawer'
         >
           {drawerLoading ? (
-            <div className='flex items-center justify-center py-12'>
-              <div className='text-center'>
-                <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400'></div>
-                <p className='mt-4 text-gray-600 dark:text-gray-300'>
-                  Đang tải chi tiết...
-                </p>
-              </div>
+            <div className='flex flex-col items-center justify-center py-12'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+              <p className='text-muted-foreground'>Đang tải chi tiết...</p>
             </div>
           ) : (
             drawerDate && (
@@ -1191,9 +1177,9 @@ export default function ImprovedAntdCalendarPage() {
                                 )}
 
                                 {classManagementLoading ? (
-                                  <div className='text-center py-8'>
-                                    <Spin size='large' />
-                                    <p className='mt-4 text-gray-600'>
+                                  <div className='flex flex-col items-center justify-center py-8'>
+                                    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+                                    <p className='text-muted-foreground'>
                                       Đang tải dữ liệu...
                                     </p>
                                   </div>
@@ -1374,9 +1360,9 @@ export default function ImprovedAntdCalendarPage() {
                             children: (
                               <div className='space-y-4'>
                                 {classManagementLoading ? (
-                                  <div className='text-center py-8'>
-                                    <Spin size='large' />
-                                    <p className='mt-4 text-gray-600'>
+                                  <div className='flex flex-col items-center justify-center py-8'>
+                                    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+                                    <p className='text-muted-foreground'>
                                       Đang tải dữ liệu...
                                     </p>
                                   </div>

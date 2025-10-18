@@ -345,11 +345,11 @@ export default function NewsDetailPage() {
         <div className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 rounded-xl p-6 shadow-lg'>
           <div className='flex items-center justify-between'>
             <Link
-              href='/dashboard/manager'
+              href='/dashboard/manager/news'
               className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 group'
             >
               <ArrowLeft className='mr-2 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1' />
-              Trở về Trang Quản Lý
+              Quay về danh sách
             </Link>
 
             {newsItem && !isLoading && !error && (

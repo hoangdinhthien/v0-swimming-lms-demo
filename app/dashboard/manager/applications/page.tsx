@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Mail, User, Loader2 } from "lucide-react";
+import { Mail, User, Loader2, ChevronRight } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -223,11 +223,15 @@ export default function ApplicationsPage() {
               {applications.map((app) => (
                 <TableRow
                   key={app._id}
-                  className='cursor-pointer hover:bg-muted/50 transition-colors'
+                  className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
                   onClick={() => handleRowClick(app._id)}
                 >
-                  <TableCell className='font-medium'>{app.title}</TableCell>
-                  <TableCell>
+                  <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                    <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                      {app.title}
+                    </span>
+                  </TableCell>
+                  <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                     <div className='flex flex-wrap gap-1'>
                       {(() => {
                         // Handle different type structures
@@ -241,7 +245,7 @@ export default function ApplicationsPage() {
                           return (
                             <Badge
                               variant='outline'
-                              className='text-xs'
+                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
                             >
                               {typeObj.title || "Đơn từ tùy chỉnh"}
                             </Badge>
@@ -255,7 +259,7 @@ export default function ApplicationsPage() {
                             <Badge
                               key={t}
                               variant='outline'
-                              className='text-xs'
+                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
                             >
                               {t === "instructor"
                                 ? "Giảng viên"
@@ -270,7 +274,7 @@ export default function ApplicationsPage() {
                           return (
                             <Badge
                               variant='outline'
-                              className='text-xs'
+                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
                             >
                               Không xác định
                             </Badge>
@@ -279,7 +283,7 @@ export default function ApplicationsPage() {
                       })()}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                     <div className='flex flex-wrap gap-1'>
                       {app.status &&
                       Array.isArray(app.status) &&
@@ -296,7 +300,7 @@ export default function ApplicationsPage() {
                                 ? "secondary"
                                 : "outline"
                             }
-                            className='text-xs'
+                            className='text-xs transition-all duration-200'
                           >
                             {status === "pending"
                               ? "Đang chờ"
@@ -312,25 +316,32 @@ export default function ApplicationsPage() {
                       ) : (
                         <Badge
                           variant='outline'
-                          className='text-xs'
+                          className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
                         >
                           Chưa xử lý
                         </Badge>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                     <div className='flex items-center gap-2'>
-                      <User className='h-4 w-4' />
-                      <span>
+                      <User className='h-4 w-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                      <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                         {app.created_by?.username || app.created_by?.email}
                       </span>
-                      <Mail className='h-4 w-4 ml-2' />
-                      <span>{app.created_by?.email}</span>
+                      <Mail className='h-4 w-4 ml-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                      <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        {app.created_by?.email}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {new Date(app.created_at).toLocaleString("vi-VN")}
+                  <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                    <div className='flex items-center justify-between'>
+                      <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        {new Date(app.created_at).toLocaleString("vi-VN")}
+                      </span>
+                      <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

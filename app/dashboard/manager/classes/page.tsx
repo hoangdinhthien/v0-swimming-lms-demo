@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -13,6 +14,7 @@ import {
   BookOpen,
   Clock,
   User,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +49,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
 export default function ClassesPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
@@ -305,72 +308,77 @@ export default function ClassesPage() {
                     filteredClasses.map((classItem) => (
                       <TableRow
                         key={classItem._id}
-                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
                         onClick={() =>
-                          (window.location.href = `/dashboard/manager/class/${classItem._id}?from=classes`)
+                          router.push(
+                            `/dashboard/manager/class/${classItem._id}?from=classes`
+                          )
                         }
                       >
-                        <TableCell className='font-medium'>
+                        <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <Users className='h-4 w-4 text-muted-foreground' />
-                            <div className='font-medium text-foreground'>
+                            <Users className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <div className='font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {classItem.name}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <BookOpen className='h-4 w-4 text-muted-foreground' />
+                            <BookOpen className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
                             <div>
-                              <div className='font-medium'>
+                              <div className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {classItem.course.title}
                               </div>
-                              <div className='text-sm text-muted-foreground'>
+                              <div className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {classItem.course.session_number} buổi -{" "}
                                 {classItem.course.session_number_duration}
                               </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <User className='h-4 w-4 text-muted-foreground' />
-                            <span className='font-medium'>
+                            <User className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {classItem.member?.length || 0} học viên
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <User className='h-4 w-4 text-muted-foreground' />
-                            <span className='text-sm text-muted-foreground'>
+                            <User className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {getInstructorName(classItem)}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <Clock className='h-4 w-4 text-muted-foreground' />
-                            <span className='text-sm text-muted-foreground'>
+                            <Clock className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {new Date(
                                 classItem.created_at
                               ).toLocaleDateString("vi-VN")}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant='outline'
-                            className={
-                              classItem.course.is_active
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-gray-50 text-gray-700 border-gray-200"
-                            }
-                          >
-                            {classItem.course.is_active
-                              ? "Đang hoạt động"
-                              : "Đã kết thúc"}
-                          </Badge>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <div className='flex items-center justify-between'>
+                            <Badge
+                              variant='outline'
+                              className={`transition-all duration-200 ${
+                                classItem.course.is_active
+                                  ? "bg-green-50 text-green-700 border-green-200 group-hover:bg-green-100 group-hover:border-green-300"
+                                  : "bg-gray-50 text-gray-700 border-gray-200 group-hover:bg-gray-100 group-hover:border-gray-300"
+                              }`}
+                            >
+                              {classItem.course.is_active
+                                ? "Đang hoạt động"
+                                : "Đã kết thúc"}
+                            </Badge>
+                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

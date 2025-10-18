@@ -570,43 +570,66 @@ export default function TransactionsPage() {
                     return (
                       <TableRow
                         key={order._id}
-                        className='cursor-pointer hover:bg-muted/50 transition-colors'
+                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
                         onClick={() =>
                           router.push(
                             `/dashboard/manager/transactions/${order._id}`
                           )
                         }
                       >
-                        <TableCell className='font-medium'>
-                          {order._id.substring(0, 8)}...
+                        <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {order._id.substring(0, 8)}...
+                          </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-start flex-col'>
-                            <div className='font-medium'>{userName}</div>
-                            <div className='text-xs text-muted-foreground'>
+                            <div className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                              {userName}
+                            </div>
+                            <div className='text-xs text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                               {userContact}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           {isLoadingCourse ? (
                             <div className='flex items-center'>
-                              <span className='animate-pulse bg-muted rounded h-4 w-24 block'></span>
+                              <span className='animate-pulse bg-muted rounded h-4 w-24 block group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors duration-200'></span>
                             </div>
                           ) : (
-                            courseName
+                            <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                              {courseName}
+                            </span>
                           )}
                         </TableCell>
-                        <TableCell>{formatPrice(order.price)}</TableCell>
-                        <TableCell>{formattedDate}</TableCell>
-                        <TableCell>{getOrderTypeDisplayName(order)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant='outline'
-                            className={getStatusClass(order.status)}
-                          >
-                            {getStatusName(order.status)}
-                          </Badge>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {formatPrice(order.price)}
+                          </span>
+                        </TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {formattedDate}
+                          </span>
+                        </TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            {getOrderTypeDisplayName(order)}
+                          </span>
+                        </TableCell>
+                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                          <div className='flex items-center justify-between'>
+                            <Badge
+                              variant='outline'
+                              className={`${getStatusClass(
+                                order.status
+                              )} transition-all duration-200`}
+                            >
+                              {getStatusName(order.status)}
+                            </Badge>
+                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
