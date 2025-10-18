@@ -266,8 +266,10 @@ export async function fetchStaffDetailWithModule({
     // or when empty: { data: [[[]]], message: "Success", statusCode: 200 }
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
       const nestedData = data.data[0];
+      console.log("First level nested data:", nestedData);
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
+        console.log("Second level nested data:", actualData);
         if (Array.isArray(actualData)) {
           // Check if actualData is an empty array (no permissions/staff data)
           if (actualData.length === 0) {
@@ -291,11 +293,21 @@ export async function fetchStaffDetailWithModule({
             actualData.documents[0]
           );
           return actualData.documents[0];
+        } else if (actualData && actualData._id) {
+          // Direct object format
+          console.log(
+            "Found staff with permissions data (direct object):",
+            actualData
+          );
+          return actualData;
         }
       }
     }
 
     // Staff member not found - this is expected behavior when staff has no permissions
+    console.log(
+      "No staff permissions data found, will fallback to fetchStaffDetail"
+    );
     return null; // Return null instead of throwing error
   } catch (error) {
     // Only log actual errors, not 404s which are expected

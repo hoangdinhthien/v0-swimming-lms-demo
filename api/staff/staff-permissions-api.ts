@@ -33,7 +33,7 @@ export interface StaffPermissionResponse {
 }
 
 export interface AvailablePermissionsResponse {
-  data: [[[AvailablePermission[]]]];
+  data: [[AvailablePermission[]]];
   message: string;
   statusCode: number;
 }
@@ -81,25 +81,34 @@ export async function fetchAvailablePermissions({
   );
 
   // Unwrap the nested structure to get the permissions array
-  // Handle multiple possible response structures
+  // Based on the actual API response: { data: [[[permissions_array]]], message: "Success", statusCode: 200 }
   let permissions: AvailablePermission[] = [];
 
   if (data?.data) {
-    // Try different nested levels
-    const nestedData =
-      data.data?.[0]?.[0]?.[0] ||
-      data.data?.[0]?.[0] ||
-      data.data?.[0] ||
-      data.data;
+    console.log("[fetchAvailablePermissions] data.data:", data.data);
 
-    if (Array.isArray(nestedData)) {
-      permissions = nestedData;
-    } else if (nestedData && typeof nestedData === "object") {
-      // If it's an object, try to extract array from common property names
-      const objectData = nestedData as any;
-      permissions = objectData.permissions || objectData.modules || [];
+    // The response structure is: data[0][0] contains the array of permissions
+    if (Array.isArray(data.data) && data.data.length > 0) {
+      const firstLevel = data.data[0];
+      console.log("[fetchAvailablePermissions] firstLevel:", firstLevel);
+
+      if (Array.isArray(firstLevel) && firstLevel.length > 0) {
+        const secondLevel = firstLevel[0];
+        console.log("[fetchAvailablePermissions] secondLevel:", secondLevel);
+
+        // secondLevel should be the array of permissions
+        if (Array.isArray(secondLevel)) {
+          // secondLevel is directly the array of permissions objects
+          permissions = secondLevel;
+        }
+      }
     }
   }
+
+  console.log(
+    "[fetchAvailablePermissions] Extracted permissions:",
+    permissions
+  );
 
   // Ensure we always return an array
   if (!Array.isArray(permissions)) {

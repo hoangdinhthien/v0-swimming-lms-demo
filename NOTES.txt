@@ -190,3 +190,12 @@ Mục chat giờ sẽ là chỗ theo dõi thông tin học cũng như chat (bào
 - fetching riêng api trong lịch (test lại)
 - sửa lại fade in effect của application type
 - đồng bộ loading 
+- chưa có UI cho manager/pool
+
+==========================================================
+-tính năng còn thiếu:
+--manager/staff:
+--- block (UI kéo thả)
+--- staff gửi request update module cho manager, manager duyệt update request của staff
+--- hiện tại là đang đăng ký cho khóa học á, có đổi thành đăng ký cho lớp học ko hay khỏi
+---

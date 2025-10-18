@@ -55,8 +55,17 @@ export default function StaffPermissionModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Debug logs
+  console.log("StaffPermissionModal props:", {
+    open,
+    staffData,
+    token,
+    tenantId,
+  });
+
   // Load available permissions when modal opens
   useEffect(() => {
+    console.log("Modal open effect triggered:", { open, token, tenantId });
     if (open && token && tenantId) {
       loadAvailablePermissions();
     }
@@ -64,9 +73,15 @@ export default function StaffPermissionModal({
 
   // Initialize selected permissions when staff data changes
   useEffect(() => {
+    console.log("Staff data changed:", staffData);
     if (staffData?.currentPermissions) {
+      console.log(
+        "Setting selected permissions:",
+        staffData.currentPermissions
+      );
       setSelectedPermissions([...staffData.currentPermissions]);
     } else {
+      console.log("No current permissions, setting empty array");
       setSelectedPermissions([]);
     }
   }, [staffData]);
@@ -76,13 +91,17 @@ export default function StaffPermissionModal({
 
     setLoading(true);
     try {
+      console.log("Loading available permissions...");
       const permissions = await fetchAvailablePermissions({
         tenantId,
         token,
       });
 
+      console.log("Raw permissions from API:", permissions);
+
       // Ensure permissions is always an array
       const validPermissions = Array.isArray(permissions) ? permissions : [];
+      console.log("Valid permissions after array check:", validPermissions);
 
       // Remove any duplicates based on module name
       const uniquePermissions = validPermissions.filter(
@@ -147,6 +166,7 @@ export default function StaffPermissionModal({
     action: string,
     checked: boolean
   ) => {
+    console.log("Toggle action:", { moduleIndex, action, checked });
     setSelectedPermissions((prev) => {
       const newPermissions = [...prev];
       if (checked) {
@@ -166,6 +186,7 @@ export default function StaffPermissionModal({
           ),
         };
       }
+      console.log("Updated permissions:", newPermissions);
       return newPermissions;
     });
   };
@@ -182,7 +203,20 @@ export default function StaffPermissionModal({
   };
 
   const handleSave = async () => {
-    if (!staffData || !token || !tenantId) return;
+    if (!staffData || !token || !tenantId) {
+      console.log("Missing required data for save:", {
+        staffData,
+        token,
+        tenantId,
+      });
+      return;
+    }
+
+    console.log("Saving permissions:", {
+      userId: staffData._id,
+      permissions: selectedPermissions,
+      tenantId,
+    });
 
     setSaving(true);
     try {
@@ -256,18 +290,21 @@ export default function StaffPermissionModal({
                         <CardHeader className='pb-3'>
                           <div className='flex items-center space-x-2'>
                             <Checkbox
-                              id={`module-${moduleName}`}
+                              id={`module-${moduleName}-${permissionIndex}`}
                               checked={isModuleSelected}
                               onCheckedChange={() =>
                                 handleModuleToggle(modulePermission)
                               }
                             />
                             <Label
-                              htmlFor={`module-${moduleName}`}
+                              htmlFor={`module-${moduleName}-${permissionIndex}`}
                               className='text-lg font-medium cursor-pointer'
                             >
                               {getModuleDisplayName(moduleName)}
                             </Label>
+                            <div className='text-xs text-gray-500'>
+                              ({modulePermission.action.join(", ")})
+                            </div>
                           </div>
                         </CardHeader>
 
@@ -286,10 +323,12 @@ export default function StaffPermissionModal({
                                       className='flex items-center space-x-2'
                                     >
                                       <Checkbox
-                                        id={`${moduleName}-${action}`}
-                                        checked={selectedPermissions[
-                                          selectedModuleIndex
-                                        ].action.includes(action)}
+                                        id={`${moduleName}-${action}-${permissionIndex}`}
+                                        checked={
+                                          selectedPermissions[
+                                            selectedModuleIndex
+                                          ]?.action?.includes(action) || false
+                                        }
                                         onCheckedChange={(checked) =>
                                           handleActionToggle(
                                             selectedModuleIndex,
@@ -299,7 +338,7 @@ export default function StaffPermissionModal({
                                         }
                                       />
                                       <Label
-                                        htmlFor={`${moduleName}-${action}`}
+                                        htmlFor={`${moduleName}-${action}-${permissionIndex}`}
                                         className='cursor-pointer'
                                       >
                                         {getActionDisplayName(action)}
@@ -317,10 +356,10 @@ export default function StaffPermissionModal({
                                 <div className='flex gap-4'>
                                   <div className='flex items-center space-x-2'>
                                     <Checkbox
-                                      id={`${moduleName}-no-review`}
+                                      id={`${moduleName}-no-review-${permissionIndex}`}
                                       checked={
                                         selectedPermissions[selectedModuleIndex]
-                                          .noReview === true
+                                          ?.noReview === true
                                       }
                                       onCheckedChange={(checked) =>
                                         handleReviewToggle(
@@ -330,7 +369,7 @@ export default function StaffPermissionModal({
                                       }
                                     />
                                     <Label
-                                      htmlFor={`${moduleName}-no-review`}
+                                      htmlFor={`${moduleName}-no-review-${permissionIndex}`}
                                       className='cursor-pointer'
                                     >
                                       Không cần phê duyệt
@@ -338,10 +377,10 @@ export default function StaffPermissionModal({
                                   </div>
                                   <div className='flex items-center space-x-2'>
                                     <Checkbox
-                                      id={`${moduleName}-need-review`}
+                                      id={`${moduleName}-need-review-${permissionIndex}`}
                                       checked={
                                         selectedPermissions[selectedModuleIndex]
-                                          .noReview === false
+                                          ?.noReview === false
                                       }
                                       onCheckedChange={(checked) =>
                                         handleReviewToggle(
@@ -351,7 +390,7 @@ export default function StaffPermissionModal({
                                       }
                                     />
                                     <Label
-                                      htmlFor={`${moduleName}-need-review`}
+                                      htmlFor={`${moduleName}-need-review-${permissionIndex}`}
                                       className='cursor-pointer'
                                     >
                                       Cần phê duyệt từ quản lý
@@ -369,16 +408,42 @@ export default function StaffPermissionModal({
               ) : (
                 <div className='text-center py-8 text-muted-foreground'>
                   Không có quyền hạn nào có sẵn để cấp cho nhân viên.
+                  <br />
+                  <small className='text-xs'>
+                    Available permissions: {availablePermissions.length}
+                  </small>
                 </div>
               )}
             </div>
 
-            {selectedPermissions.length === 0 && (
-              <div className='text-center py-8 text-muted-foreground'>
-                Chưa có quyền hạn nào được chọn. Nhân viên vẫn có thể đăng nhập
-                nhưng không thể truy cập các chức năng.
-              </div>
-            )}
+            <div className='mt-4 p-3 bg-blue-50 rounded-lg'>
+              <h4 className='font-medium text-blue-800 mb-2'>
+                Quyền hạn hiện tại:
+              </h4>
+              {selectedPermissions.length > 0 ? (
+                <div className='space-y-2'>
+                  {selectedPermissions.map((perm, index) => (
+                    <div
+                      key={index}
+                      className='text-sm text-blue-700'
+                    >
+                      <strong>{getModuleDisplayName(perm.module[0])}:</strong>{" "}
+                      {perm.action
+                        .map((action) => getActionDisplayName(action))
+                        .join(", ")}{" "}
+                      <span className='text-xs'>
+                        ({perm.noReview ? "Không cần duyệt" : "Cần phê duyệt"})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className='text-sm text-blue-600'>
+                  Chưa có quyền hạn nào được chọn. Nhân viên vẫn có thể đăng
+                  nhập nhưng không thể truy cập các chức năng.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
