@@ -219,6 +219,35 @@ export default function NewStaffPage() {
       newErrors.phone = "Số điện thoại không hợp lệ";
     }
 
+    // Validate birthday if provided
+    if (formData.birthday) {
+      const birthDate = new Date(formData.birthday);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Check if date is valid
+      if (isNaN(birthDate.getTime())) {
+        newErrors.birthday = "Ngày sinh không hợp lệ";
+      }
+      // Check if date is not in the future
+      else if (birthDate > today) {
+        newErrors.birthday = "Ngày sinh không hợp lệ";
+      }
+      // Check if age is reasonable (between 0 and 120 years)
+      else if (age < 0 || age > 120) {
+        newErrors.birthday = "Ngày sinh không hợp lệ";
+      }
+      // If age is exactly 120, check month and day
+      else if (
+        age === 120 &&
+        (monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+      ) {
+        newErrors.birthday = "Ngày sinh không hợp lệ";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -424,6 +453,9 @@ export default function NewStaffPage() {
                     handleInputChange("birthday", e.target.value)
                   }
                 />
+                {errors.birthday && (
+                  <p className='text-red-500 text-sm'>{errors.birthday}</p>
+                )}
               </div>
             </div>
 

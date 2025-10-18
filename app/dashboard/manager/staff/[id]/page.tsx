@@ -62,17 +62,55 @@ import ManagerNotFound from "@/components/manager/not-found";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 
-const staffFormSchema = z.object({
-  username: z.string().min(1, { message: "Tên nhân viên là bắt buộc" }),
-  email: z.string().min(1, { message: "Email là bắt buộc" }).email(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  bio: z.string().optional(),
-  emergency_contact: z.string().optional(),
-  start_date: z.string().optional(),
-  position: z.string().optional(),
-  is_active: z.boolean().optional(),
-});
+const staffFormSchema = z
+  .object({
+    username: z.string().min(1, { message: "Tên nhân viên là bắt buộc" }),
+    email: z.string().min(1, { message: "Email là bắt buộc" }).email(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    birthday: z.string().optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate birthday if provided
+      if (data.birthday) {
+        const birthDate = new Date(data.birthday);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // Check if date is valid
+        if (isNaN(birthDate.getTime())) {
+          return false;
+        }
+
+        // Check if date is not in the future
+        if (birthDate > today) {
+          return false;
+        }
+
+        // Check if age is reasonable (between 0 and 120 years)
+        if (age < 0 || age > 120) {
+          return false;
+        }
+
+        // If age is exactly 120, check month and day
+        if (
+          age === 120 &&
+          (monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: "Ngày sinh không hợp lệ",
+      path: ["birthday"],
+    }
+  );
 
 export default function StaffDetailPage() {
   const params = useParams();
@@ -101,10 +139,7 @@ export default function StaffDetailPage() {
       email: "",
       phone: "",
       address: "",
-      bio: "",
-      emergency_contact: "",
-      start_date: "",
-      position: "",
+      birthday: "",
       is_active: true,
     },
   });
@@ -167,10 +202,11 @@ export default function StaffDetailPage() {
             email: fallbackData?.user?.email || "",
             phone: fallbackData?.user?.phone || "",
             address: fallbackData?.user?.address || "",
-            bio: "", // Note: bio is not in the new API response
-            emergency_contact: "", // Note: emergency_contact is not in the new API response
-            start_date: "", // Note: start_date is not in the new API response
-            position: "", // Note: position is not in the new API response
+            birthday: (fallbackData?.user as any)?.birthday
+              ? new Date((fallbackData.user as any).birthday)
+                  .toISOString()
+                  .split("T")[0]
+              : "",
             is_active: fallbackData?.user?.is_active ?? true,
           });
         } else {
@@ -182,10 +218,11 @@ export default function StaffDetailPage() {
             email: detailData.user?.email || "",
             phone: detailData.user?.phone || "",
             address: detailData.user?.address || "",
-            bio: "", // Note: bio is not in the new API response
-            emergency_contact: "", // Note: emergency_contact is not in the new API response
-            start_date: "", // Note: start_date is not in the new API response
-            position: "", // Note: position is not in the new API response
+            birthday: (detailData.user as any)?.birthday
+              ? new Date((detailData.user as any).birthday)
+                  .toISOString()
+                  .split("T")[0]
+              : "",
             is_active: detailData.user?.is_active ?? true,
           });
         }
@@ -302,10 +339,11 @@ export default function StaffDetailPage() {
           email: fallbackData?.user?.email || "",
           phone: fallbackData?.user?.phone || "",
           address: fallbackData?.user?.address || "",
-          bio: "", // Note: bio is not in the new API response
-          emergency_contact: "", // Note: emergency_contact is not in the new API response
-          start_date: "", // Note: start_date is not in the new API response
-          position: "", // Note: position is not in the new API response
+          birthday: (fallbackData?.user as any)?.birthday
+            ? new Date((fallbackData.user as any).birthday)
+                .toISOString()
+                .split("T")[0]
+            : "",
           is_active: fallbackData?.user?.is_active ?? true,
         });
       } else {
@@ -317,10 +355,11 @@ export default function StaffDetailPage() {
           email: detailData.user?.email || "",
           phone: detailData.user?.phone || "",
           address: detailData.user?.address || "",
-          bio: "", // Note: bio is not in the new API response
-          emergency_contact: "", // Note: emergency_contact is not in the new API response
-          start_date: "", // Note: start_date is not in the new API response
-          position: "", // Note: position is not in the new API response
+          birthday: (detailData.user as any)?.birthday
+            ? new Date((detailData.user as any).birthday)
+                .toISOString()
+                .split("T")[0]
+            : "",
           is_active: detailData.user?.is_active ?? true,
         });
       }
@@ -921,47 +960,13 @@ export default function StaffDetailPage() {
 
                   <FormField
                     control={form.control}
-                    name='position'
+                    name='birthday'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Chức vụ</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Nhập chức vụ'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='start_date'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ngày bắt đầu làm việc</FormLabel>
+                        <FormLabel>Ngày sinh</FormLabel>
                         <FormControl>
                           <Input
                             type='date'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name='emergency_contact'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Liên hệ khẩn cấp</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder='Số điện thoại người thân'
                             {...field}
                           />
                         </FormControl>
@@ -981,24 +986,6 @@ export default function StaffDetailPage() {
                         <Textarea
                           placeholder='Nhập địa chỉ thường trú'
                           rows={3}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='bio'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ghi chú</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder='Thông tin bổ sung về nhân viên...'
-                          rows={4}
                           {...field}
                         />
                       </FormControl>

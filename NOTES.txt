@@ -1,11 +1,12 @@
 NOTES:
 
 FIX:
-  QUAN TRỌNG
+  QUAN TRỌNG:
 - thêm bảng so sánh auto xếp lịch, hiện số buổi học đã được xếp, khung thời gian học
 - chỉnh responsive scroll ngang table
 - làm phân quyền cho staff (deadline: tối mai)
 - làm logic auto xếp lịch kỹ hơn nữa 
+
 - validate ngày sinh khi tạo users => done
 - map birthday của instructor vào 'Chỉnh sửa thông tin giáo viên' => done
 - get lại list mới nhất sau khi create xong

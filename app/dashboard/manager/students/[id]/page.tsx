@@ -81,6 +81,9 @@ export default function StudentDetailPage() {
     password: "", // Optional for update
   });
 
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   // Fetch tenant name function
   const fetchTenantName = async (tenantId: string) => {
     if (!tenantId) return;
@@ -225,6 +228,15 @@ export default function StudentDetailPage() {
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+
     if (type === "checkbox") {
       setFormData({
         ...formData,
@@ -249,6 +261,66 @@ export default function StudentDetailPage() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setFormErrors({});
+
+    // Validate birthday if provided
+    if (formData.birthday) {
+      const birthDate = new Date(formData.birthday);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+      // Check if date is valid
+      if (isNaN(birthDate.getTime())) {
+        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
+        toast({
+          title: "Ngày sinh không hợp lệ",
+          description: "Vui lòng nhập ngày sinh hợp lệ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if date is not in the future
+      if (birthDate > today) {
+        setFormErrors({ birthday: "Ngày sinh không thể là ngày tương lai" });
+        toast({
+          title: "Ngày sinh không hợp lệ",
+          description: "Ngày sinh không thể là ngày tương lai",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if age is reasonable (between 0 and 120 years)
+      if (age < 0 || age > 120) {
+        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
+        toast({
+          title: "Ngày sinh không hợp lệ",
+          description: "Ngày sinh không hợp lệ",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // If age is exactly 120, check month and day
+      if (
+        age === 120 &&
+        (monthDiff < 0 ||
+          (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+      ) {
+        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
+        toast({
+          title: "Ngày sinh không hợp lệ",
+          description: "Ngày sinh không hợp lệ",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     // Prepare update data - only include fields that have values
@@ -629,14 +701,21 @@ export default function StudentDetailPage() {
                 >
                   Ngày sinh
                 </Label>
-                <Input
-                  id='birthday'
-                  name='birthday'
-                  type='date'
-                  value={formData.birthday}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='birthday'
+                    name='birthday'
+                    type='date'
+                    value={formData.birthday}
+                    onChange={handleInputChange}
+                    className={formErrors.birthday ? "border-red-500" : ""}
+                  />
+                  {formErrors.birthday && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.birthday}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label

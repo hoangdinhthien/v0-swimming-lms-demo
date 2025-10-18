@@ -66,7 +66,47 @@ const studentFormSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      // Validate birthday if provided
+      if (data.birthday) {
+        const birthDate = new Date(data.birthday);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // Check if date is valid
+        if (isNaN(birthDate.getTime())) {
+          return false;
+        }
+
+        // Check if date is not in the future
+        if (birthDate > today) {
+          return false;
+        }
+
+        // Check if age is reasonable (between 0 and 120 years)
+        if (age < 0 || age > 120) {
+          return false;
+        }
+
+        // If age is exactly 120, check month and day
+        if (
+          age === 120 &&
+          (monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: "Ngày sinh không hợp lệ",
+      path: ["birthday"],
+    }
+  );
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 

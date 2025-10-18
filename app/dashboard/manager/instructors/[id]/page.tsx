@@ -70,16 +70,57 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import ManagerNotFound from "@/components/manager/not-found";
 
-const instructorFormSchema = z.object({
-  username: z.string().min(1, { message: "Tên đăng nhập là bắt buộc" }),
-  email: z.string().min(1, { message: "Email là bắt buộc" }).email(),
-  phone: z.string().optional(),
-  birthday: z.string().optional(),
-  address: z.string().optional(),
-  is_active: z.boolean().optional(),
-  // Adding avatar field for the form schema
-  avatar: z.any().optional(),
-});
+const instructorFormSchema = z
+  .object({
+    username: z.string().min(1, { message: "Tên đăng nhập là bắt buộc" }),
+    email: z.string().min(1, { message: "Email là bắt buộc" }).email(),
+    phone: z.string().optional(),
+    birthday: z.string().optional(),
+    address: z.string().optional(),
+    is_active: z.boolean().optional(),
+    // Adding avatar field for the form schema
+    avatar: z.any().optional(),
+  })
+  .refine(
+    (data) => {
+      // Validate birthday if provided
+      if (data.birthday) {
+        const birthDate = new Date(data.birthday);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        // Check if date is valid
+        if (isNaN(birthDate.getTime())) {
+          return false;
+        }
+
+        // Check if date is not in the future
+        if (birthDate > today) {
+          return false;
+        }
+
+        // Check if age is reasonable (between 0 and 120 years)
+        if (age < 0 || age > 120) {
+          return false;
+        }
+
+        // If age is exactly 120, check month and day
+        if (
+          age === 120 &&
+          (monthDiff < 0 ||
+            (monthDiff === 0 && today.getDate() < birthDate.getDate()))
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message: "Ngày sinh không hợp lệ",
+      path: ["birthday"],
+    }
+  );
 
 export default function InstructorDetailPage() {
   const params = useParams();
@@ -199,7 +240,9 @@ export default function InstructorDetailPage() {
           username: detailData.user?.username || "",
           email: detailData.user?.email || "",
           phone: detailData.user?.phone || "",
-          birthday: detailData.user?.birthday || "",
+          birthday: detailData.user?.birthday
+            ? new Date(detailData.user.birthday).toISOString().split("T")[0]
+            : "",
           address: detailData.user?.address || "",
           is_active: detailData.user?.is_active ?? true, // Use nullish coalescing to preserve false values
         });
