@@ -299,7 +299,7 @@ export default function ClassesPage() {
                     <TableHead>Khóa học</TableHead>
                     <TableHead>Số học viên</TableHead>
                     <TableHead>Giáo viên</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Buổi học đã xếp</TableHead>
                     <TableHead>Trạng thái</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -355,12 +355,30 @@ export default function ClassesPage() {
                         </TableCell>
                         <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>
-                            <Clock className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {new Date(
-                                classItem.created_at
-                              ).toLocaleDateString("vi-VN")}
-                            </span>
+                            <div>
+                              <div className='flex items-center gap-1'>
+                                <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                                  {classItem.schedules?.length || 0}
+                                </span>
+                                <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                                  / {classItem.course.session_number || 0}
+                                </span>
+                              </div>
+                              <div className='text-xs text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                                {(() => {
+                                  const scheduled =
+                                    classItem.schedules?.length || 0;
+                                  const total =
+                                    classItem.course.session_number || 0;
+                                  const remaining = total - scheduled;
+                                  return remaining > 0
+                                    ? `Còn thiếu ${remaining} buổi`
+                                    : remaining === 0 && total > 0
+                                    ? "Đã xếp đủ lịch"
+                                    : "Chưa có lịch";
+                                })()}
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>

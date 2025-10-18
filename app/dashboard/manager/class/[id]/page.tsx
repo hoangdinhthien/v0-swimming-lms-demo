@@ -21,6 +21,7 @@ import {
   Phone,
   CalendarPlus,
   Settings,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1349,146 +1350,317 @@ export default function ClassDetailPage() {
         open={isAutoScheduleModalOpen}
         onOpenChange={setIsAutoScheduleModalOpen}
       >
-        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+        <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle className='flex items-center gap-2'>
-              <CalendarPlus className='h-5 w-5' />
-              Tự động xếp lịch học
+            <DialogTitle className='flex items-center gap-2 text-2xl'>
+              <CalendarPlus className='h-6 w-6 text-green-600' />
+              Tự động xếp lịch học cho lớp
             </DialogTitle>
-            <DialogDescription>
-              Thiết lập thông tin để tự động xếp lịch học cho lớp này. Hệ thống
-              sẽ tự động tìm khung giờ và phòng học phù hợp.
+            <DialogDescription className='text-base'>
+              Hệ thống sẽ tự động sắp xếp lịch học dựa trên thời gian và ngày
+              bạn chọn
             </DialogDescription>
           </DialogHeader>
 
           <div className='space-y-6'>
-            {/* Time Range */}
+            {/* BEFORE/AFTER Comparison */}
             <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='min_time'>Giờ bắt đầu *</Label>
-                <Select
-                  value={autoScheduleData.min_time.toString()}
-                  onValueChange={(value) =>
-                    handleAutoScheduleChange("min_time", parseInt(value))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Chọn giờ bắt đầu' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 7).map((hour) => (
-                      <SelectItem
-                        key={hour}
-                        value={hour.toString()}
-                      >
-                        {hour}:00
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='max_time'>Giờ kết thúc *</Label>
-                <Select
-                  value={autoScheduleData.max_time.toString()}
-                  onValueChange={(value) =>
-                    handleAutoScheduleChange("max_time", parseInt(value))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Chọn giờ kết thúc' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 7).map((hour) => (
-                      <SelectItem
-                        key={hour}
-                        value={hour.toString()}
-                      >
-                        {hour}:00
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Days of Week Selection */}
-            <div className='space-y-3'>
-              <Label>Chọn ngày trong tuần *</Label>
-              <div className='grid grid-cols-7 gap-2'>
-                {[
-                  { label: "T2", value: 3 },
-                  { label: "T3", value: 4 },
-                  { label: "T4", value: 5 },
-                  { label: "T5", value: 6 },
-                  { label: "T6", value: 0 },
-                  { label: "T7", value: 1 },
-                  { label: "CN", value: 2 },
-                ].map((day) => (
-                  <div
-                    key={day.value}
-                    className='flex items-center space-x-2'
-                  >
-                    <Checkbox
-                      id={`day-${day.value}`}
-                      checked={autoScheduleData.array_number_in_week.includes(
-                        day.value
-                      )}
-                      onCheckedChange={() => handleDayToggle(day.value)}
-                    />
-                    <Label
-                      htmlFor={`day-${day.value}`}
-                      className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                    >
-                      {day.label}
-                    </Label>
+              {/* HIỆN TẠI */}
+              <div className='border rounded-lg p-4 bg-muted/30'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <Clock className='h-4 w-4 text-muted-foreground' />
+                  <h3 className='font-semibold text-base'>HIỆN TẠI</h3>
+                </div>
+                <div className='space-y-3'>
+                  <div>
+                    <p className='text-sm text-muted-foreground mb-1'>
+                      Khóa học yêu cầu
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {classData?.course.session_number || 0}
+                      <span className='text-base text-muted-foreground ml-2'>
+                        buổi học
+                      </span>
+                    </p>
                   </div>
-                ))}
+                  <div className='border-t pt-3'>
+                    <p className='text-sm text-muted-foreground mb-1'>
+                      Đã xếp lịch
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {classData?.total_schedules || 0}
+                      <span className='text-base text-muted-foreground ml-2'>
+                        buổi
+                      </span>
+                    </p>
+                  </div>
+                  {classData?.sessions_remaining &&
+                    classData.sessions_remaining > 0 && (
+                      <div className='bg-muted p-3 rounded-lg border'>
+                        <p className='text-sm text-muted-foreground font-medium'>
+                          ⚠️ Còn thiếu
+                        </p>
+                        <p className='text-xl font-bold'>
+                          {classData.sessions_remaining} buổi
+                        </p>
+                      </div>
+                    )}
+                </div>
               </div>
-              <p className='text-sm text-muted-foreground'>
-                Số buổi học/tuần: {autoScheduleData.array_number_in_week.length}{" "}
-                buổi
-              </p>
+
+              {/* SAU KHI TỰ ĐỘNG XẾP LỊCH */}
+              <div className='border rounded-lg p-4 bg-muted/30'>
+                <div className='flex items-center gap-2 mb-3'>
+                  <CheckCircle2 className='h-4 w-4 text-muted-foreground' />
+                  <h3 className='font-semibold text-base'>
+                    SAU KHI TỰ ĐỘNG XẾP
+                  </h3>
+                </div>
+                <div className='space-y-3'>
+                  <div>
+                    <p className='text-sm text-muted-foreground mb-1'>
+                      Khóa học yêu cầu
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {classData?.course.session_number || 0}
+                      <span className='text-base text-muted-foreground ml-2'>
+                        buổi học
+                      </span>
+                    </p>
+                  </div>
+                  <div className='border-t pt-3'>
+                    <p className='text-sm text-muted-foreground mb-1'>
+                      Sẽ được xếp lịch
+                    </p>
+                    <p className='text-2xl font-bold'>
+                      {classData?.course.session_number || 0}
+                      <span className='text-base text-muted-foreground ml-2'>
+                        buổi
+                      </span>
+                    </p>
+                  </div>
+                  <div className='bg-muted p-3 rounded-lg border'>
+                    <p className='text-sm text-muted-foreground font-medium'>
+                      ✅ Trạng thái
+                    </p>
+                    <p className='text-base font-semibold'>Đủ lịch học</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Summary */}
-            <div className='bg-muted/50 p-4 rounded-lg space-y-2'>
-              <h4 className='font-semibold'>Tóm tắt:</h4>
-              <ul className='text-sm text-muted-foreground space-y-1'>
-                <li>
-                  • Khung giờ: {autoScheduleData.min_time}:00 -{" "}
-                  {autoScheduleData.max_time}:00
-                </li>
-                <li>
-                  • Số buổi học/tuần:{" "}
-                  {autoScheduleData.array_number_in_week.length} buổi
-                </li>
-                <li>
-                  • Ngày học:{" "}
-                  {autoScheduleData.array_number_in_week
-                    .map((day) => {
-                      // Mapping theo backend: 0=T6, 1=T7, 2=CN, 3=T2, 4=T3, 5=T4, 6=T5
-                      const dayNames = [
-                        "Thứ 6", // 0
-                        "Thứ 7", // 1
-                        "Chủ nhật", // 2
-                        "Thứ 2", // 3
-                        "Thứ 3", // 4
-                        "Thứ 4", // 5
-                        "Thứ 5", // 6
-                      ];
-                      return dayNames[day];
-                    })
-                    .join(", ")}
-                </li>
-                {classData?.sessions_remaining && (
-                  <li>
-                    • Số buổi học còn thiếu: {classData.sessions_remaining} buổi
-                  </li>
-                )}
-              </ul>
+            {/* Info Box */}
+            <div className='bg-muted/50 border rounded-lg p-4'>
+              <div className='flex gap-3'>
+                <Settings className='h-5 w-5 text-muted-foreground mt-0.5' />
+                <div className='flex-1'>
+                  <h4 className='font-semibold mb-2'>Hệ thống sẽ tự động:</h4>
+                  <ul className='space-y-1 text-sm text-muted-foreground'>
+                    <li>• Tìm khung giờ phù hợp trong thời gian bạn chọn</li>
+
+                    <li>• Xếp lịch đều đặn theo các ngày trong tuần</li>
+                    <li>• Đảm bảo không trùng lịch với các lớp khác</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+
+            {/* Settings Section */}
+            <div className='border rounded-lg p-4'>
+              <h3 className='font-semibold text-base mb-4 flex items-center gap-2'>
+                <Settings className='h-4 w-4' />
+                Thiết lập thời gian học
+              </h3>
+
+              {/* Time Range */}
+              <div className='space-y-4'>
+                <div>
+                  <Label className='font-medium mb-2 block'>
+                    🕐 Khung giờ học trong ngày
+                  </Label>
+                  <p className='text-sm text-muted-foreground mb-3'>
+                    Chọn khoảng thời gian trong ngày mà lớp có thể học
+                  </p>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='min_time'
+                        className='text-sm'
+                      >
+                        Từ giờ
+                      </Label>
+                      <Select
+                        value={autoScheduleData.min_time.toString()}
+                        onValueChange={(value) =>
+                          handleAutoScheduleChange("min_time", parseInt(value))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Chọn giờ bắt đầu' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 7).map(
+                            (hour) => (
+                              <SelectItem
+                                key={hour}
+                                value={hour.toString()}
+                              >
+                                {hour}:00
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label
+                        htmlFor='max_time'
+                        className='text-sm'
+                      >
+                        Đến giờ
+                      </Label>
+                      <Select
+                        value={autoScheduleData.max_time.toString()}
+                        onValueChange={(value) =>
+                          handleAutoScheduleChange("max_time", parseInt(value))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Chọn giờ kết thúc' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 12 }, (_, i) => i + 7).map(
+                            (hour) => (
+                              <SelectItem
+                                key={hour}
+                                value={hour.toString()}
+                              >
+                                {hour}:00
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Days of Week Selection */}
+                <div className='pt-4 border-t'>
+                  <Label className='font-medium mb-2 block'>
+                    Chọn các ngày trong tuần *
+                  </Label>
+                  <p className='text-sm text-muted-foreground mb-3'>
+                    Chọn những ngày nào trong tuần mà lớp sẽ học
+                  </p>
+                  <div className='grid grid-cols-7 gap-2'>
+                    {[
+                      { label: "T2", fullLabel: "Thứ 2", value: 3 },
+                      { label: "T3", fullLabel: "Thứ 3", value: 4 },
+                      { label: "T4", fullLabel: "Thứ 4", value: 5 },
+                      { label: "T5", fullLabel: "Thứ 5", value: 6 },
+                      { label: "T6", fullLabel: "Thứ 6", value: 0 },
+                      { label: "T7", fullLabel: "Thứ 7", value: 1 },
+                      { label: "CN", fullLabel: "Chủ nhật", value: 2 },
+                    ].map((day) => (
+                      <div
+                        key={day.value}
+                        className={`
+                          border rounded p-2 cursor-pointer transition-all text-center
+                          ${
+                            autoScheduleData.array_number_in_week.includes(
+                              day.value
+                            )
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50"
+                          }
+                        `}
+                        onClick={() => handleDayToggle(day.value)}
+                      >
+                        <Checkbox
+                          id={`day-${day.value}`}
+                          checked={autoScheduleData.array_number_in_week.includes(
+                            day.value
+                          )}
+                          onCheckedChange={() => handleDayToggle(day.value)}
+                          className='mx-auto mb-1'
+                        />
+                        <Label
+                          htmlFor={`day-${day.value}`}
+                          className='text-sm font-medium block cursor-pointer'
+                        >
+                          {day.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className='text-sm text-muted-foreground mt-3'>
+                    Số buổi học/tuần:{" "}
+                    {autoScheduleData.array_number_in_week.length} buổi
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Preview/Summary Box */}
+            {autoScheduleData.array_number_in_week.length > 0 && (
+              <div className='bg-muted/50 border rounded-lg p-4'>
+                <h4 className='font-semibold mb-3'>Tóm tắt:</h4>
+                <div className='space-y-2 text-sm'>
+                  <div className='flex items-start gap-2'>
+                    <span className='text-muted-foreground min-w-[100px]'>
+                      Khung giờ:
+                    </span>
+                    <span className='font-medium'>
+                      {autoScheduleData.min_time}:00 -{" "}
+                      {autoScheduleData.max_time}:00
+                    </span>
+                  </div>
+                  <div className='flex items-start gap-2'>
+                    <span className='text-muted-foreground min-w-[100px]'>
+                      Số buổi/tuần:
+                    </span>
+                    <span className='font-medium'>
+                      {autoScheduleData.array_number_in_week.length} buổi
+                    </span>
+                  </div>
+                  <div className='flex items-start gap-2'>
+                    <span className='text-muted-foreground min-w-[100px]'>
+                      Ngày học:
+                    </span>
+                    <span className='font-medium'>
+                      {autoScheduleData.array_number_in_week
+                        .sort((a, b) => a - b)
+                        .map((day) => {
+                          const dayNames = [
+                            "Thứ 6",
+                            "Thứ 7",
+                            "Chủ nhật",
+                            "Thứ 2",
+                            "Thứ 3",
+                            "Thứ 4",
+                            "Thứ 5",
+                          ];
+                          return dayNames[day];
+                        })
+                        .join(", ")}
+                    </span>
+                  </div>
+                  {classData?.sessions_remaining &&
+                    classData.sessions_remaining > 0 && (
+                      <div className='flex items-start gap-2'>
+                        <span className='text-muted-foreground min-w-[100px]'>
+                          Số buổi học còn thiếu:
+                        </span>
+                        <span className='font-medium'>
+                          {classData.sessions_remaining} buổi
+                        </span>
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

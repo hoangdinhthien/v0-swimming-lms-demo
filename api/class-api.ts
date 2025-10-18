@@ -88,6 +88,7 @@ export interface ClassItem {
   updated_at: string;
   updated_by: string;
   tenant_id: string;
+  schedules?: Schedule[]; // Add schedules array
 }
 
 // Interface for classrooms (from classrooms-api)
