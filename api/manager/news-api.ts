@@ -1,7 +1,7 @@
-import config from "./config.json";
-import { apiGet } from "./api-utils";
+import config from "../config.json";
+import { apiGet } from "../api-utils";
 // Import media functions from the new file
-import { getMediaDetails } from "./media-api";
+import { getMediaDetails } from "../media-api";
 
 // Media object interface for cover field
 export interface MediaObject {

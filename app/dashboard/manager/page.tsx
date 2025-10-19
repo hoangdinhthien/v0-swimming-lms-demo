@@ -35,9 +35,9 @@ import {
   formatRelativeTime,
   NewsItem,
   getNewsDetail,
-} from "@/api/news-api";
+} from "@/api/manager/news-api";
 import { withTenantGuard } from "@/components/tenant-provider";
-import { fetchCourses } from "@/api/courses-api";
+import { fetchCourses } from "@/api/manager/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import {
@@ -48,13 +48,13 @@ import {
   formatPrice,
   getStatusName,
   getStatusClass,
-} from "@/api/orders-api";
+} from "@/api/manager/orders-api";
 import { useAuth } from "@/hooks/use-auth";
 import {
   fetchDateRangeSchedule,
   fetchWeekSchedule,
   type ScheduleEvent,
-} from "@/api/schedule-api";
+} from "@/api/manager/schedule-api";
 
 function ManagerDashboardPage() {
   const router = useRouter();

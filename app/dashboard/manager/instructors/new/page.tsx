@@ -24,7 +24,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import {
   createInstructor,
   type CreateInstructorData,
-} from "@/api/instructors-api";
+} from "@/api/manager/instructors-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";

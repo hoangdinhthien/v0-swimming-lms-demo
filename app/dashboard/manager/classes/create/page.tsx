@@ -30,10 +30,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 
 // API imports
-import { createClass, type CreateClassData } from "@/api/class-api";
-import { fetchCourses } from "@/api/courses-api";
-import { fetchInstructors } from "@/api/instructors-api";
-import { fetchStudents, fetchStudentsByCourseOrder } from "@/api/students-api";
+import { createClass, type CreateClassData } from "@/api/manager/class-api";
+import { fetchCourses } from "@/api/manager/courses-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
+import {
+  fetchStudents,
+  fetchStudentsByCourseOrder,
+} from "@/api/manager/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 

@@ -33,7 +33,7 @@ import {
   fetchCourseCategories,
   createCourse,
   type CreateCourseData,
-} from "@/api/courses-api";
+} from "@/api/manager/courses-api";
 import { uploadMedia } from "@/api/media-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";

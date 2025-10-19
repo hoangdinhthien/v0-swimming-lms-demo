@@ -52,16 +52,16 @@ import {
   updateClass,
   type ClassDetails,
   type UpdateClassData,
-} from "@/api/class-api";
-import { fetchCourses } from "@/api/courses-api";
-import { fetchInstructors } from "@/api/instructors-api";
-import { fetchOrdersForCourse, type Order } from "@/api/orders-api";
-import { fetchStudentsByCourseOrder } from "@/api/students-api";
+} from "@/api/manager/class-api";
+import { fetchCourses } from "@/api/manager/courses-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
+import { fetchOrdersForCourse, type Order } from "@/api/manager/orders-api";
+import { fetchStudentsByCourseOrder } from "@/api/manager/students-api";
 import { getMediaDetails } from "@/api/media-api";
 import {
   autoScheduleClass,
   type AutoScheduleRequest,
-} from "@/api/schedule-api";
+} from "@/api/manager/schedule-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 

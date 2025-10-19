@@ -64,15 +64,15 @@ import {
   type Instructor as ScheduleInstructor,
   convertApiDayToJsDay,
   convertJsDayToApiDay,
-} from "@/api/schedule-api";
-import { fetchAllSlots, type SlotDetail } from "@/api/slot-api";
+} from "@/api/manager/schedule-api";
+import { fetchAllSlots, type SlotDetail } from "@/api/manager/slot-api";
 import {
   fetchClassrooms,
   addClassToSchedule,
   type Classroom,
-} from "@/api/class-api";
-import { fetchPools, type Pool } from "@/api/pools-api";
-import { fetchInstructors } from "@/api/instructors-api";
+} from "@/api/manager/class-api";
+import { fetchPools, type Pool } from "@/api/manager/pools-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";

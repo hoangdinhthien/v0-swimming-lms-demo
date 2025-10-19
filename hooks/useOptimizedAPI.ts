@@ -8,9 +8,12 @@ import {
   withCache,
   apiBatcher,
 } from "@/utils/performance-cache";
-import { fetchInstructors } from "@/api/instructors-api";
-import { fetchStudents, fetchStudentsByCourseOrder } from "@/api/students-api";
-import { fetchCourses } from "@/api/courses-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
+import {
+  fetchStudents,
+  fetchStudentsByCourseOrder,
+} from "@/api/manager/students-api";
+import { fetchCourses } from "@/api/manager/courses-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";

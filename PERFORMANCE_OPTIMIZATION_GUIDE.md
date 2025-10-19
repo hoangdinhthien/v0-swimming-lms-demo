@@ -101,7 +101,7 @@ export default function DashboardLayout({ children }) {
 
 ```typescript
 // Thay vì:
-import { fetchInstructors } from "@/api/instructors-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
 
 // Sử dụng:
 import { useOptimizedInstructors } from "@/hooks/useOptimizedAPI";

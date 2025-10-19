@@ -1,5 +1,5 @@
-import { getAuthToken } from "./auth-utils";
-import { getSelectedTenant } from "../utils/tenant-utils";
+import { getAuthToken } from "../auth-utils";
+import { getSelectedTenant } from "@/utils/tenant-utils";
 
 export interface ApplicationType {
   _id: string;

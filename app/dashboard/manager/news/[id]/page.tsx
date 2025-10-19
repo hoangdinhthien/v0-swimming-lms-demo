@@ -41,7 +41,7 @@ import {
   formatRelativeTime,
   updateNews,
   extractNewsImageUrls,
-} from "@/api/news-api";
+} from "@/api/manager/news-api";
 import { getMediaDetails, uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";

@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchInstructorDetail, updateInstructor } from "@/api/instructors-api";
+import {
+  fetchInstructorDetail,
+  updateInstructor,
+} from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import {
   Loader2,

@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { fetchStaff } from "@/api/staff-api";
+import { fetchStaff } from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";

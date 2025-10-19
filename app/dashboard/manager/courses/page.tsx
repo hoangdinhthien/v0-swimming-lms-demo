@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { fetchCourses, fetchCourseCategories } from "@/api/courses-api";
+import { fetchCourses, fetchCourseCategories } from "@/api/manager/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { Skeleton } from "@/components/ui/skeleton";

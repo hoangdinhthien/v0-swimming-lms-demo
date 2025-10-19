@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
-import { fetchCourseById, fetchCourses } from "@/api/courses-api";
+import { fetchCourseById, fetchCourses } from "@/api/manager/courses-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails, uploadMedia, deleteMedia } from "@/api/media-api";
 import config from "@/api/config.json";

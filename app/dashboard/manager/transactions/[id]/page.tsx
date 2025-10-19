@@ -54,14 +54,14 @@ import {
   updateOrderWithUser,
   fetchOrderById,
   addMemberToClass,
-} from "../../../../../api/orders-api";
-import { fetchCourseById } from "../../../../../api/courses-api";
+} from "@/api/manager/orders-api";
+import { fetchCourseById } from "@/api/manager/courses-api";
 import {
   fetchClassroomsByCourse,
   fetchClassroomsByCourseAndSchedule,
   addUserToClass,
-} from "@/api/class-api";
-import { fetchInstructorDetail } from "../../../../../api/instructors-api";
+} from "@/api/manager/class-api";
+import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import ManagerNotFound from "@/components/manager/not-found";
 import CreateStudentModal from "@/components/create-student-modal";
 

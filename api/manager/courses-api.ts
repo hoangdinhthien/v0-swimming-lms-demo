@@ -1,5 +1,5 @@
-import config from "@/api/config.json";
-import { apiRequest } from "@/api/api-utils";
+import config from "../config.json";
+import { apiRequest } from "../api-utils";
 
 export async function fetchCourses({
   tenantId,

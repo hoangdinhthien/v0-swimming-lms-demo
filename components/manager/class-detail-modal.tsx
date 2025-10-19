@@ -30,14 +30,14 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import { fetchSlotDetail, type SlotDetail } from "@/api/slot-api";
-import { fetchCourseById } from "@/api/courses-api";
+import { fetchSlotDetail, type SlotDetail } from "@/api/manager/slot-api";
+import { fetchCourseById } from "@/api/manager/courses-api";
 import { getMediaDetails } from "@/api/media-api";
-import { fetchStudentDetail } from "@/api/students-api";
-import { fetchInstructorDetail } from "@/api/instructors-api";
+import { fetchStudentDetail } from "@/api/manager/students-api";
+import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import type { ScheduleEvent } from "@/api/schedule-api";
+import type { ScheduleEvent } from "@/api/manager/schedule-api";
 
 const { Title, Text } = Typography;
 

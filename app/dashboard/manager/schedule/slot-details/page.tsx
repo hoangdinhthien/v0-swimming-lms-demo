@@ -54,13 +54,13 @@ import {
   getSlotTimeRange,
   type SlotDetail,
   type SlotSchedule,
-} from "@/api/slot-api";
-import { fetchClassrooms, addClassToSchedule } from "@/api/class-api";
-import { fetchPools } from "@/api/pools-api";
-import { deleteScheduleEvent } from "@/api/schedule-api";
-import { fetchCourseById } from "@/api/courses-api";
-import { Classroom as ClassroomType } from "@/api/class-api";
-import { Pool as PoolType } from "@/api/pools-api";
+} from "@/api/manager/slot-api";
+import { fetchClassrooms, addClassToSchedule } from "@/api/manager/class-api";
+import { fetchPools } from "@/api/manager/pools-api";
+import { deleteScheduleEvent } from "@/api/manager/schedule-api";
+import { fetchCourseById } from "@/api/manager/courses-api";
+import { Classroom as ClassroomType } from "@/api/manager/class-api";
+import { Pool as PoolType } from "@/api/manager/pools-api";
 
 export default function SlotDetailsPage() {
   const router = useRouter();

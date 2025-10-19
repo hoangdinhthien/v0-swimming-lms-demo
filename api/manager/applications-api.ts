@@ -1,5 +1,5 @@
-import config from "./config.json";
-import { apiGet, apiPut } from "./api-utils";
+import config from "../config.json";
+import { apiGet, apiPut } from "../api-utils";
 
 export interface ApplicationType {
   _id: string;

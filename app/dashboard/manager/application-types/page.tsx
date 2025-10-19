@@ -59,7 +59,7 @@ import {
   getRoleColorClass,
   type ApplicationType,
   type CreateApplicationTypeRequest,
-} from "@/api/application-types-api";
+} from "@/api/manager/application-types-api";
 
 const AVAILABLE_ROLES = ["member", "instructor", "staff", "manager"];
 

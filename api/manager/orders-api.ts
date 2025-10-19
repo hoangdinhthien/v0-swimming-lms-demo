@@ -1,5 +1,5 @@
-import config from "@/api/config.json";
-import { getAuthToken } from "@/api/auth-utils";
+import config from "../config.json";
+import { getAuthToken } from "../auth-utils";
 
 export interface OrderGuest {
   username: string;

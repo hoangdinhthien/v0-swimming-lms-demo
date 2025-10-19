@@ -52,7 +52,7 @@ import {
   fetchStaffDetailWithModule,
   fetchStaffDetail,
   updateStaff,
-} from "@/api/staff-api";
+} from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getTenantInfo } from "@/api/tenant-api";

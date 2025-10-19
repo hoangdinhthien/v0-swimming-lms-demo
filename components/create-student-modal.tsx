@@ -44,7 +44,7 @@ import {
   createStudent,
   fetchUsersWithoutParent,
   CreateStudentData,
-} from "@/api/students-api";
+} from "@/api/manager/students-api";
 
 // Form schema for validation
 const studentFormSchema = z

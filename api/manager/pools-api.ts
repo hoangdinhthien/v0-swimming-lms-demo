@@ -1,5 +1,5 @@
-import config from "./config.json";
-import { getAuthToken } from "./auth-utils";
+import config from "../config.json";
+import { getAuthToken } from "../auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 
 export interface Pool {

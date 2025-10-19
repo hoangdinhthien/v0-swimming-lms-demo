@@ -20,7 +20,7 @@ import {
   Clock,
 } from "lucide-react";
 import SiteHeader from "@/components/site-header";
-import { fetchCourses } from "@/api/courses-api";
+import { fetchCourses } from "@/api/manager/courses-api";
 
 export default async function Home() {
   const data = await fetchCourses();

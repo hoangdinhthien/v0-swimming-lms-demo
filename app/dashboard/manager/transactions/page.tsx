@@ -61,8 +61,8 @@ import {
   getOrderCourseTitle,
   updateOrderStatus,
   Order,
-} from "../../../../api/orders-api";
-import { fetchCourseById } from "../../../../api/courses-api";
+} from "@/api/manager/orders-api";
+import { fetchCourseById } from "@/api/manager/courses-api";
 
 interface CourseInfo {
   title: string;

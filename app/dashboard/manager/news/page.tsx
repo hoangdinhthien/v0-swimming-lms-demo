@@ -50,7 +50,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getNews, createNews, type NewsItem } from "@/api/news-api";
+import { getNews, createNews, type NewsItem } from "@/api/manager/news-api";
 import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";

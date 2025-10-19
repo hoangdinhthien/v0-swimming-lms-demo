@@ -1,4 +1,4 @@
-import config from "./config.json";
+import config from "../config.json";
 
 // Helper function to build API URL
 function buildApiUrl(endpoint: string): string {

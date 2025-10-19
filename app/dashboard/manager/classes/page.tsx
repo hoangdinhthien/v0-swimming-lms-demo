@@ -44,7 +44,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
-import { fetchClasses, type ClassItem } from "@/api/class-api";
+import { fetchClasses, type ClassItem } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 

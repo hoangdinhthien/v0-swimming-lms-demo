@@ -35,8 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // Optimized hooks and APIs
 import { useCommonData, useOptimizedAvatars } from "@/hooks/useOptimizedAPI";
-import { createClass, type CreateClassData } from "@/api/class-api";
-import { fetchStudentsByCourseOrder } from "@/api/students-api";
+import { createClass, type CreateClassData } from "@/api/manager/class-api";
+import { fetchStudentsByCourseOrder } from "@/api/manager/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 

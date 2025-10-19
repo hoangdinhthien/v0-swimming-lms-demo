@@ -8,7 +8,7 @@ import {
   ApplicationType,
   replyToApplication,
   ReplyApplicationRequest,
-} from "@/api/applications-api";
+} from "@/api/manager/applications-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";

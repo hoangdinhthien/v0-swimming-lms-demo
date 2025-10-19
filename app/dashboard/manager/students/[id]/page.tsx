@@ -34,7 +34,7 @@ import {
   fetchStudentDetail,
   fetchStudents,
   updateStudent,
-} from "@/api/students-api";
+} from "@/api/manager/students-api";
 import { getTenantInfo } from "@/api/tenant-api";
 import { uploadMedia } from "@/api/media-api";
 import {

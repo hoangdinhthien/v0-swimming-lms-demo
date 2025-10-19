@@ -1,6 +1,6 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import config from "./config.json";
+import config from "../config.json";
 
 // Define types for the class API response
 export interface Course {

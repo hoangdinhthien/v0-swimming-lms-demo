@@ -1,4 +1,4 @@
-import config from "@/api/config.json";
+import config from "../config.json";
 
 export interface CreateStudentData {
   username: string;

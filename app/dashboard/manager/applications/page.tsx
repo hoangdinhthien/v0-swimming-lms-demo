@@ -25,7 +25,7 @@ import {
   getApplicationDetail,
   Application,
   PaginatedApplicationsResponse,
-} from "@/api/applications-api";
+} from "@/api/manager/applications-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { Button } from "@/components/ui/button";
