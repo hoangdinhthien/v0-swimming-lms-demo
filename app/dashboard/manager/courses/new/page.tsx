@@ -29,11 +29,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import {
-  fetchCourseCategories,
-  createCourse,
-  type CreateCourseData,
-} from "@/api/manager/courses-api";
+import { createCourse, type CreateCourseData } from "@/api/manager/courses-api";
+import { fetchAllCourseCategories } from "@/api/manager/course-categories";
 import { uploadMedia } from "@/api/media-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -57,6 +54,7 @@ const courseFormSchema = z.object({
       })
     )
     .min(1, "Vui lòng thêm ít nhất 1 nội dung chi tiết"),
+  category: z.string().min(1, "Vui lòng chọn danh mục khóa học"),
   is_active: z.boolean().default(false),
   price: z.coerce.number().int().nonnegative("Giá phải là số không âm"),
   media: z.array(z.string()).optional(),
@@ -83,6 +81,7 @@ export default function NewCoursePage() {
     session_number: 1,
     session_number_duration: "45 phút",
     detail: [{ title: "" }],
+    category: "",
     is_active: false,
     price: 0,
     media: [],
@@ -100,20 +99,21 @@ export default function NewCoursePage() {
       setLoadingCategories(true);
       try {
         const tenantId = getSelectedTenant();
-        if (!tenantId) throw new Error("Thiếu thông tin tenant");
-        const arr = await fetchCourseCategories({ tenantId });
+        const token = getAuthToken();
+        if (!tenantId || !token) throw new Error("Thiếu thông tin xác thực");
+        const arr = await fetchAllCourseCategories({ tenantId, token });
         setCategories(arr);
       } catch (e: any) {
         toast({
           title: "Lỗi",
-          description: e.message || "Không thể tải danh mục trình độ",
+          description: e.message || "Không thể tải danh mục khóa học",
           variant: "destructive",
         });
       }
       setLoadingCategories(false);
     }
     fetchCategories();
-  }, []); // ✅ FIX: Empty dependency array - only fetch once on mount
+  }, [toast]); // Empty dependency array - only fetch once on mount
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,9 +223,15 @@ export default function NewCoursePage() {
     setLoading(true);
 
     try {
+      // Convert category from string to array for API
+      const courseData: CreateCourseData = {
+        ...values,
+        category: [values.category], // Convert single category to array
+      };
+
       // Use our API function to create the course
       await createCourse({
-        courseData: values as CreateCourseData,
+        courseData,
         tenantId,
         token,
       });
@@ -377,6 +383,55 @@ export default function NewCoursePage() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='category'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Danh mục khóa học{" "}
+                        <span className='text-red-500'>*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={loadingCategories || categories.length === 0}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Chọn danh mục khóa học' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {loadingCategories ? (
+                            <div className='flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground'>
+                              <Loader2 className='h-4 w-4 animate-spin' />
+                              Đang tải danh mục...
+                            </div>
+                          ) : categories.length === 0 ? (
+                            <div className='px-2 py-1.5 text-sm text-muted-foreground'>
+                              Không có danh mục nào
+                            </div>
+                          ) : (
+                            categories.map((category) => (
+                              <SelectItem
+                                key={category._id}
+                                value={category._id}
+                              >
+                                {category.title}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Chọn danh mục phù hợp cho khóa học này
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

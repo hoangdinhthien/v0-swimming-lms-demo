@@ -399,7 +399,7 @@ export default function CoursesPage() {
                             >
                               {course.is_active
                                 ? "Đang hoạt động"
-                                : "Đã kết thúc"}
+                                : "Ngưng hoạt động"}
                             </Badge>
                             <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
                           </div>

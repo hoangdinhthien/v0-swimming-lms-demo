@@ -83,6 +83,7 @@ export interface CreateCourseData {
   session_number: number;
   session_number_duration: string;
   detail: Array<{ title: string }>;
+  category: string[];
   media?: string[];
   is_active: boolean;
   price: number;

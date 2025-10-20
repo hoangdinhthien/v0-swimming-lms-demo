@@ -21,6 +21,7 @@ import {
   PermissionModule,
   AvailablePermission,
 } from "@/api/staff/staff-permissions-api";
+import { fetchStaffDetailWithModule } from "@/api/manager/staff-api";
 import { useAuth } from "@/hooks/use-auth";
 
 interface StaffPermissionModalProps {
@@ -54,6 +55,7 @@ export default function StaffPermissionModal({
   >([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
 
   // Debug logs
   console.log("StaffPermissionModal props:", {
@@ -71,6 +73,57 @@ export default function StaffPermissionModal({
     }
   }, [open, token, tenantId]);
 
+  // Fetch staff permissions if not provided
+  useEffect(() => {
+    async function fetchPermissionsIfNeeded() {
+      // Only fetch if modal is open, we have staffData, but no currentPermissions
+      if (
+        open &&
+        staffData &&
+        !staffData.currentPermissions &&
+        token &&
+        tenantId
+      ) {
+        setLoadingPermissions(true);
+        try {
+          console.log(
+            "Fetching staff permissions from API for:",
+            staffData._id
+          );
+          const detailData = await fetchStaffDetailWithModule({
+            staffId: staffData._id,
+            tenantId,
+            token,
+          });
+
+          if (detailData && detailData.permission) {
+            console.log("Fetched permissions:", detailData.permission);
+            setSelectedPermissions([...detailData.permission]);
+          } else {
+            console.log("No permissions found for staff");
+            setSelectedPermissions([]);
+          }
+        } catch (error) {
+          console.error("Error fetching staff permissions:", error);
+          setSelectedPermissions([]);
+        } finally {
+          setLoadingPermissions(false);
+        }
+      } else if (staffData?.currentPermissions) {
+        console.log(
+          "Using provided currentPermissions:",
+          staffData.currentPermissions
+        );
+        setSelectedPermissions([...staffData.currentPermissions]);
+      } else if (open && staffData && !token) {
+        console.log("No token available, setting empty permissions");
+        setSelectedPermissions([]);
+      }
+    }
+
+    fetchPermissionsIfNeeded();
+  }, [open, staffData, token, tenantId]);
+
   // Initialize selected permissions when staff data changes
   useEffect(() => {
     console.log("Staff data changed:", staffData);
@@ -81,8 +134,8 @@ export default function StaffPermissionModal({
       );
       setSelectedPermissions([...staffData.currentPermissions]);
     } else {
-      console.log("No current permissions, setting empty array");
-      setSelectedPermissions([]);
+      console.log("No current permissions, will be fetched or set to empty");
+      // Don't set to empty here - let the previous useEffect handle it
     }
   }, [staffData]);
 
@@ -259,10 +312,14 @@ export default function StaffPermissionModal({
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? (
+        {loading || loadingPermissions ? (
           <div className='flex items-center justify-center py-8'>
             <Loader2 className='h-8 w-8 animate-spin' />
-            <span className='ml-2'>Đang tải danh sách quyền hạn...</span>
+            <span className='ml-2'>
+              {loading
+                ? "Đang tải danh sách quyền hạn..."
+                : "Đang tải quyền hạn hiện tại..."}
+            </span>
           </div>
         ) : (
           <div className='space-y-6'>
@@ -448,14 +505,14 @@ export default function StaffPermissionModal({
           <Button
             variant='outline'
             onClick={() => onOpenChange(false)}
-            disabled={saving}
+            disabled={saving || loadingPermissions}
           >
             <X className='h-4 w-4 mr-2' />
             Hủy
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving || loading}
+            disabled={saving || loading || loadingPermissions}
           >
             {saving ? (
               <Loader2 className='h-4 w-4 mr-2 animate-spin' />
