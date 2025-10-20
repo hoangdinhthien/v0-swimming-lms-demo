@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { fetchCourses, fetchCourseCategories } from "@/api/manager/courses-api";
+import { fetchCourses } from "@/api/manager/courses-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,9 +55,6 @@ export default function CoursesPage() {
   const [allCourses, setAllCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10); // Default page size
   const [total, setTotal] = useState(0); // Total courses from API
@@ -91,24 +88,6 @@ export default function CoursesPage() {
     return () => clearTimeout(timeoutId);
   }, [page, limit]);
 
-  useEffect(() => {
-    async function fetchCategories() {
-      setLoadingCategories(true);
-      setCategoriesError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        if (!tenantId) throw new Error("Thiếu thông tin tenant");
-        const arr = await fetchCourseCategories({ tenantId });
-        setCategories(arr);
-      } catch (e: any) {
-        setCategoriesError(e.message || "Lỗi không xác định");
-        setCategories([]);
-      }
-      setLoadingCategories(false);
-    }
-    fetchCategories();
-  }, []);
-
   // Fetch all courses for summary cards
   useEffect(() => {
     async function fetchAll() {
@@ -135,22 +114,6 @@ export default function CoursesPage() {
   // const filteredCourses = courses.filter((course) => { ... });
   // Instead, use the paginated API data directly:
   const displayedCourses = courses;
-
-  // Function to reload categories when updated via modal
-  const handleCategoriesUpdated = () => {
-    // Reload categories for the filter dropdown
-    const loadCategories = async () => {
-      try {
-        const tenantId = getSelectedTenant();
-        if (!tenantId) return;
-        const arr = await fetchCourseCategories({ tenantId });
-        setCategories(arr);
-      } catch (e: any) {
-        console.error("Error reloading categories:", e);
-      }
-    };
-    loadCategories();
-  };
 
   if (loading) {
     return (
@@ -313,37 +276,25 @@ export default function CoursesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>Tất cả trình độ</SelectItem>
-                    {loadingCategories ? (
-                      <SelectItem
-                        value='loading'
-                        disabled
-                      >
-                        Đang tải...
-                      </SelectItem>
-                    ) : categoriesError ? (
-                      <SelectItem
-                        value='error'
-                        disabled
-                      >
-                        Lỗi tải trình độ
-                      </SelectItem>
-                    ) : categories.length > 0 ? (
-                      categories.map((cat) => (
+                    {/* Extract unique categories from all courses */}
+                    {Array.from(
+                      new Set(
+                        allCourses.flatMap((course) =>
+                          Array.isArray(course.category)
+                            ? course.category.map((cat: any) => cat.title)
+                            : []
+                        )
+                      )
+                    )
+                      .filter(Boolean)
+                      .map((categoryTitle) => (
                         <SelectItem
-                          key={cat._id}
-                          value={cat.title}
+                          key={categoryTitle}
+                          value={categoryTitle as string}
                         >
-                          {cat.title}
+                          {categoryTitle}
                         </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem
-                        value='none'
-                        disabled
-                      >
-                        Không có trình độ
-                      </SelectItem>
-                    )}
+                      ))}
                   </SelectContent>
                 </Select>
 
@@ -518,7 +469,6 @@ export default function CoursesPage() {
       <CourseCategoriesModal
         open={categoriesModalOpen}
         onOpenChange={setCategoriesModalOpen}
-        onCategoriesUpdated={handleCategoriesUpdated}
       />
     </>
   );

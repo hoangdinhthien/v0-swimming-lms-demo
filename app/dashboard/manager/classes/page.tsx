@@ -51,13 +51,12 @@ import { getAuthToken } from "@/api/auth-utils";
 export default function ClassesPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
+  const [isFetching, setIsFetching] = useState(false);
 
   // Helper function to get instructor name from class data
   const getInstructorName = (classItem: ClassItem): string => {
@@ -110,51 +109,64 @@ export default function ClassesPage() {
     return "Không có thông tin";
   };
 
-  // Fetch paginated classes data
+  // Fetch all classes once - use for both summary cards AND pagination
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchData() {
+      // Prevent duplicate calls
+      if (isFetching) return;
+
+      setIsFetching(true);
       setLoading(true);
       setError(null);
+
       try {
         const tenantId = getSelectedTenant();
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
 
-        const result = await fetchClasses(tenantId, token, page, limit);
-        setClasses(result.data);
-        setTotalCount(result.meta_data.count);
-      } catch (e: any) {
-        setError(e.message || "Lỗi không xác định");
-        setClasses([]);
-      }
-      setLoading(false);
-    }
-    fetchData();
-  }, [page, limit]);
-
-  // Fetch all classes for summary cards
-  useEffect(() => {
-    async function fetchAllClasses() {
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token) return;
-
+        // Fetch ALL classes at once (instead of 2 separate API calls)
         const result = await fetchClasses(tenantId, token, 1, 1000);
-        setAllClasses(result.data);
-      } catch {
-        setAllClasses([]);
+
+        if (isMounted) {
+          setAllClasses(result.data);
+        }
+      } catch (e: any) {
+        if (isMounted) {
+          setError(e.message || "Lỗi không xác định");
+          setAllClasses([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setIsFetching(false);
+        }
       }
     }
-    fetchAllClasses();
-  }, []);
+
+    // Only fetch once when component mounts
+    const timeoutId = setTimeout(fetchData, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, []); // Empty dependency - only run once
 
   // Filter classes based on search query
-  const filteredClasses = classes.filter(
+  const filteredClasses = allClasses.filter(
     (classItem) =>
       classItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       classItem.course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Client-side pagination: slice the filtered results
+  const totalCount = filteredClasses.length;
+  const paginatedClasses = filteredClasses.slice(
+    (page - 1) * limit,
+    page * limit
   );
 
   // Calculate summary statistics
@@ -304,8 +316,8 @@ export default function ClassesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredClasses.length > 0 ? (
-                    filteredClasses.map((classItem) => (
+                  {paginatedClasses.length > 0 ? (
+                    paginatedClasses.map((classItem) => (
                       <TableRow
                         key={classItem._id}
                         className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'

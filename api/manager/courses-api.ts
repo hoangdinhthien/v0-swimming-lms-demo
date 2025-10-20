@@ -47,23 +47,6 @@ export async function fetchCourses({
   };
 }
 
-export async function fetchCourseCategories({
-  tenantId,
-}: {
-  tenantId: string;
-}) {
-  const res = await fetch(
-    `${config.API}/v1/workflow-process/public/course-categories`,
-    {
-      headers: { "x-tenant-id": tenantId },
-      cache: "no-store",
-    }
-  );
-  if (!res.ok) throw new Error("Không thể tải danh mục trình độ");
-  const data = await res.json();
-  return data?.data?.[0]?.[0]?.data || [];
-}
-
 export async function fetchCourseById({
   courseId,
   tenantId,
