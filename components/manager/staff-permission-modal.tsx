@@ -97,13 +97,17 @@ export default function StaffPermissionModal({
         token,
       });
 
-      console.log("Raw permissions from API:", permissions);
+      console.log("Permissions from fetchAvailablePermissions:", permissions);
+      console.log("Type of permissions:", typeof permissions);
+      console.log("Is permissions an array:", Array.isArray(permissions));
 
       // Ensure permissions is always an array
       const validPermissions = Array.isArray(permissions) ? permissions : [];
       console.log("Valid permissions after array check:", validPermissions);
+      console.log("Valid permissions length:", validPermissions.length);
+      console.log("First permission item:", validPermissions[0]);
 
-      // Remove any duplicates based on module name
+      // The API function already handles deduplication, but let's add a safety check
       const uniquePermissions = validPermissions.filter(
         (permission, index, self) => {
           const moduleName = permission.module?.[0];
@@ -114,15 +118,8 @@ export default function StaffPermissionModal({
         }
       );
 
-      console.log("Loaded permissions:", validPermissions);
-      console.log("Unique permissions after deduplication:", uniquePermissions);
-      if (validPermissions.length !== uniquePermissions.length) {
-        console.warn(
-          "Removed",
-          validPermissions.length - uniquePermissions.length,
-          "duplicate permissions"
-        );
-      }
+      console.log("Final permissions to set:", uniquePermissions);
+      console.log("Number of available permissions:", uniquePermissions.length);
 
       setAvailablePermissions(uniquePermissions);
     } catch (error) {

@@ -33,7 +33,7 @@ export interface StaffPermissionResponse {
 }
 
 export interface AvailablePermissionsResponse {
-  data: [[AvailablePermission[]]];
+  data: [{ data: AvailablePermission[] }];
   message: string;
   statusCode: number;
 }
@@ -81,25 +81,31 @@ export async function fetchAvailablePermissions({
   );
 
   // Unwrap the nested structure to get the permissions array
-  // Based on the actual API response: { data: [[[permissions_array]]], message: "Success", statusCode: 200 }
+  // Based on the actual API response: { data: [{ data: permissions_array }], message: "Success", statusCode: 200 }
   let permissions: AvailablePermission[] = [];
 
   if (data?.data) {
     console.log("[fetchAvailablePermissions] data.data:", data.data);
 
-    // The response structure is: data[0][0] contains the array of permissions
+    // The response structure is: data[0].data contains the array of permissions
     if (Array.isArray(data.data) && data.data.length > 0) {
       const firstLevel = data.data[0];
       console.log("[fetchAvailablePermissions] firstLevel:", firstLevel);
 
-      if (Array.isArray(firstLevel) && firstLevel.length > 0) {
-        const secondLevel = firstLevel[0];
-        console.log("[fetchAvailablePermissions] secondLevel:", secondLevel);
+      if (
+        firstLevel &&
+        typeof firstLevel === "object" &&
+        "data" in firstLevel
+      ) {
+        const permissionsArray = firstLevel.data;
+        console.log(
+          "[fetchAvailablePermissions] permissionsArray:",
+          permissionsArray
+        );
 
-        // secondLevel should be the array of permissions
-        if (Array.isArray(secondLevel)) {
-          // secondLevel is directly the array of permissions objects
-          permissions = secondLevel;
+        // permissionsArray should be the array of permissions
+        if (Array.isArray(permissionsArray)) {
+          permissions = permissionsArray;
         }
       }
     }

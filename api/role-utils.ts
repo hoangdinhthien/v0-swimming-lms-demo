@@ -126,7 +126,6 @@ export function hasRequiredRole(requiredRoles: RoleFront[]): boolean {
 
 /**
  * Get dashboard path based on user's role
- * Now properly handles staff routing to manager dashboard with permissions
  * @returns {string} The dashboard path
  */
 export function getUserDashboardPath(): string {
@@ -140,7 +139,7 @@ export function getUserDashboardPath(): string {
     case "manager":
       return "/dashboard/manager";
     case "staff":
-      return "/dashboard/manager"; // Staff uses manager dashboard with limited permissions
+      return "/dashboard/staff"; // Staff has their own dashboard with permissions
     case "instructor":
       return "/dashboard/manager"; // Instructor uses manager dashboard
     case "student":

@@ -173,7 +173,11 @@ export default function SiteHeader() {
                 <DropdownMenuContent align='end'>
                   <DropdownMenuItem asChild>
                     <Link
-                      href={`/dashboard/${userRole}`}
+                      href={
+                        userRole === "staff"
+                          ? "/dashboard/manager"
+                          : `/dashboard/${userRole}`
+                      }
                       className='cursor-pointer'
                     >
                       Bảng điều khiển

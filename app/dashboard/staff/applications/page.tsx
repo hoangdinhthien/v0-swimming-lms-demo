@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  Search,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+  User,
+  Mail,
+  ChevronRight,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,17 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Mail, User, Loader2, ChevronRight, Search } from "lucide-react";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-} from "@/components/ui/pagination";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,121 +31,116 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  getApplications,
-  getApplicationDetail,
-  Application,
-  PaginatedApplicationsResponse,
-} from "@/api/manager/applications-api";
-import { getSelectedTenant } from "@/utils/tenant-utils";
-import { getAuthToken } from "@/api/auth-utils";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { fetchStaffApplications } from "@/api/staff-data/staff-data-api";
 import { useRouter } from "next/navigation";
 
-export default function ApplicationsPage() {
+interface Application {
+  _id: string;
+  title: string;
+  content: string;
+  type:
+    | {
+        title: string;
+        type: string[];
+      }
+    | string;
+  status: string[];
+  created_by: {
+    username: string;
+    email: string;
+  };
+  created_at: string;
+  reply?: string;
+}
+
+interface ApplicationsResponse {
+  meta: {
+    total: number;
+    last_page: number;
+    current_page: number;
+  };
+  data: Application[];
+}
+
+export default function StaffApplicationsPage() {
+  const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  // Filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-
-  // Pagination state (matching courses page pattern)
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
+  const limit = 10;
 
-  const router = useRouter();
+  // Statistics
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+  });
 
-  const handleRowClick = (applicationId: string) => {
-    router.push(`/dashboard/manager/applications/${applicationId}`);
+  const loadApplications = async () => {
+    setLoading(true);
+    try {
+      const response: ApplicationsResponse = await fetchStaffApplications(
+        page,
+        limit
+      );
+      console.log("Applications response:", response);
+
+      setApplications(response.data || []);
+      setTotal(response.meta?.total || 0);
+
+      // Calculate statistics
+      const allApplications = response.data || [];
+      const totalApps = allApplications.length;
+      const pending = allApplications.filter(
+        (app) =>
+          !app.status ||
+          app.status.length === 0 ||
+          app.status.includes("pending")
+      ).length;
+      const approved = allApplications.filter(
+        (app) => app.status && app.status.includes("approved")
+      ).length;
+      const rejected = allApplications.filter(
+        (app) => app.status && app.status.includes("rejected")
+      ).length;
+
+      setStats({
+        total: response.meta?.total || totalApps,
+        pending,
+        approved,
+        rejected,
+      });
+    } catch (error) {
+      console.error("Error loading applications:", error);
+      setApplications([]);
+      setTotal(0);
+      setStats({ total: 0, pending: 0, approved: 0, rejected: 0 });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    async function fetchApplications() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token)
-          throw new Error("Thiếu thông tin tenant hoặc token");
-        const response = await getApplications(tenantId, token, page, limit);
-        console.log("[ApplicationsPage] Loaded applications:", response);
-        console.log(
-          "[ApplicationsPage] Applications array:",
-          response.applications
-        );
-        if (response.applications.length > 0) {
-          console.log(
-            "[ApplicationsPage] First app structure:",
-            response.applications[0]
-          );
-          console.log(
-            "[ApplicationsPage] First app type:",
-            response.applications[0].type,
-            typeof response.applications[0].type
-          );
-        }
-        setApplications(response.applications);
-        setTotal(response.totalCount);
-      } catch (e: any) {
-        setError(e.message || "Failed to fetch applications");
-        setApplications([]);
-      }
-      setLoading(false);
-    }
-
-    // Add request deduplication like courses page
-    const timeoutId = setTimeout(fetchApplications, 100);
-    return () => clearTimeout(timeoutId);
-  }, [page, limit]);
-
-  async function handleShowDetail(id: string) {
-    setDetailLoading(true);
-    setDialogOpen(true);
-    try {
-      const tenantId = getSelectedTenant();
-      const token = getAuthToken();
-      if (!tenantId || !token)
-        throw new Error("Thiếu thông tin tenant hoặc token");
-      const detail = await getApplicationDetail(id, tenantId, token);
-      setSelectedApp(detail);
-    } catch {
-      setSelectedApp(null);
-    }
-    setDetailLoading(false);
-  }
-
-  // Calculate totals for summary cards
-  const totalApplications = total;
-  const totalPending = applications.filter(
-    (app) => app.status && app.status.includes("pending")
-  ).length;
-  const totalApproved = applications.filter(
-    (app) => app.status && app.status.includes("approved")
-  ).length;
-  const totalRejected = applications.filter(
-    (app) => app.status && app.status.includes("rejected")
-  ).length;
+    loadApplications();
+  }, [page]);
 
   // Filter applications based on search term, status, and type
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
       app.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (app.content &&
-        app.content.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      app.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.created_by?.username
         ?.toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
@@ -167,95 +164,85 @@ export default function ApplicationsPage() {
 
     let matchesType = true;
     if (typeFilter !== "all") {
-      if (
-        typeof app.type === "object" &&
-        app.type &&
-        "type" in app.type &&
-        app.type.type
-      ) {
-        matchesType =
-          Array.isArray(app.type.type) && app.type.type.includes(typeFilter);
-      } else if (Array.isArray(app.type)) {
-        matchesType = app.type.includes(typeFilter);
+      if (typeof app.type === "object" && app.type.type) {
+        matchesType = app.type.type.includes(typeFilter);
+      } else if (typeof app.type === "string") {
+        matchesType = app.type === typeFilter;
       }
     }
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
+  const handleRowClick = (applicationId: string) => {
+    router.push(`/dashboard/staff/applications/${applicationId}`);
+  };
+
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <p className='text-muted-foreground'>Đang tải danh sách đơn từ...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <div className='text-center space-y-4'>
-          <div className='text-red-500 text-lg font-semibold'>
-            Lỗi tải dữ liệu
+      <div className='container mx-auto p-6'>
+        <div className='animate-pulse space-y-4'>
+          <div className='h-8 bg-gray-200 rounded w-1/4'></div>
+          <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className='h-24 bg-gray-200 rounded'
+              ></div>
+            ))}
           </div>
-          <p className='text-muted-foreground'>{error}</p>
-          <Button onClick={() => window.location.reload()}>Thử lại</Button>
+          <div className='h-96 bg-gray-200 rounded'></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Đơn từ</h1>
-          <p className='text-muted-foreground'>
-            Quản lý tất cả các đơn từ gửi lên trong hệ thống
-          </p>
-        </div>
+    <div className='container mx-auto p-6 space-y-6'>
+      {/* Header */}
+      <div className='flex justify-between items-center'>
+        <h1 className='text-3xl font-bold'>Quản lý đơn từ</h1>
       </div>
 
-      {/* Summary Cards */}
-      <div className='grid gap-6 md:grid-cols-4'>
+      {/* Statistics Cards */}
+      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Tổng số đơn từ
-            </CardTitle>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Tổng đơn từ</CardTitle>
+            <FileText className='h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalApplications}</div>
+            <div className='text-2xl font-bold'>{stats.total}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Đang chờ xử lý
-            </CardTitle>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Đang chờ</CardTitle>
+            <Clock className='h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalPending}</div>
+            <div className='text-2xl font-bold'>{stats.pending}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Đã duyệt</CardTitle>
+            <CheckCircle className='h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalApproved}</div>
+            <div className='text-2xl font-bold'>{stats.approved}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Đã từ chối</CardTitle>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Từ chối</CardTitle>
+            <XCircle className='h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{totalRejected}</div>
+            <div className='text-2xl font-bold'>{stats.rejected}</div>
           </CardContent>
         </Card>
       </div>
@@ -312,102 +299,60 @@ export default function ApplicationsPage() {
         </CardContent>
       </Card>
 
+      {/* Applications Table */}
       <Card>
         <CardHeader>
-          <div className='flex items-center justify-between'>
-            <CardTitle>
-              Danh sách đơn từ ({filteredApplications.length})
-            </CardTitle>
-          </div>
+          <CardTitle>
+            Danh sách đơn từ ({filteredApplications.length})
+          </CardTitle>
         </CardHeader>
-        <CardContent className='relative'>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Tiêu đề</TableHead>
-                <TableHead>Loại đơn từ</TableHead>
+                <TableHead>Loại</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Người gửi</TableHead>
-                <TableHead>Ngày gửi</TableHead>
+                <TableHead>Ngày tạo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredApplications.map((app) => (
                 <TableRow
                   key={app._id}
-                  className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
+                  className='cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950 group transition-all duration-200'
                   onClick={() => handleRowClick(app._id)}
                 >
-                  <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                    <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                      {app.title}
-                    </span>
-                  </TableCell>
                   <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                    <div className='flex flex-wrap gap-1'>
-                      {(() => {
-                        // Handle different type structures
-                        if (
-                          app.type &&
-                          typeof app.type === "object" &&
-                          "_id" in app.type
-                        ) {
-                          // Type is an object with title and nested type array
-                          const typeObj = app.type as any;
-                          return (
-                            <Badge
-                              variant='outline'
-                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
-                            >
-                              {typeObj.title || "Đơn từ tùy chỉnh"}
-                            </Badge>
-                          );
-                        } else if (
-                          Array.isArray(app.type) &&
-                          app.type.length > 0
-                        ) {
-                          // Type is an array
-                          return app.type.map((t: string) => (
-                            <Badge
-                              key={t}
-                              variant='outline'
-                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
-                            >
-                              {t === "instructor"
-                                ? "Giảng viên"
-                                : t === "member"
-                                ? "Thành viên"
-                                : t === "staff"
-                                ? "Nhân viên"
-                                : t}
-                            </Badge>
-                          ));
-                        } else {
-                          return (
-                            <Badge
-                              variant='outline'
-                              className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
-                            >
-                              Không xác định
-                            </Badge>
-                          );
-                        }
-                      })()}
+                    <div className='space-y-1'>
+                      <div className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        {app.title}
+                      </div>
+                      <div className='text-sm text-gray-500 line-clamp-2 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        {app.content}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                    <Badge
+                      variant='outline'
+                      className='group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
+                    >
+                      {typeof app.type === "object"
+                        ? app.type.title
+                        : app.type || "Chưa phân loại"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                     <div className='flex flex-wrap gap-1'>
-                      {app.status &&
-                      Array.isArray(app.status) &&
-                      app.status.length > 0 ? (
-                        app.status.map((status: string) => (
+                      {app.status && app.status.length > 0 ? (
+                        app.status.map((status, index) => (
                           <Badge
-                            key={status}
+                            key={index}
                             variant={
-                              status === "approved" || status === "completed"
+                              status === "approved"
                                 ? "default"
-                                : status === "rejected"
-                                ? "destructive"
                                 : status === "pending"
                                 ? "secondary"
                                 : "outline"

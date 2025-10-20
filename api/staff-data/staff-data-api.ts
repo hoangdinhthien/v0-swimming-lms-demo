@@ -66,17 +66,17 @@ export async function fetchStaffData({
 /**
  * Fetch Course data for staff
  */
-export async function fetchStaffCourses({
-  tenantId,
-  token,
-  page = 1,
-  limit = 10,
-}: {
-  tenantId: string;
-  token: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function fetchStaffCourses(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
   return fetchStaffData({
     module: "Course",
     tenantId,
@@ -88,17 +88,17 @@ export async function fetchStaffCourses({
 /**
  * Fetch Class data for staff
  */
-export async function fetchStaffClasses({
-  tenantId,
-  token,
-  page = 1,
-  limit = 10,
-}: {
-  tenantId: string;
-  token: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function fetchStaffClasses(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
   return fetchStaffData({
     module: "Class",
     tenantId,
@@ -110,17 +110,17 @@ export async function fetchStaffClasses({
 /**
  * Fetch Order data for staff
  */
-export async function fetchStaffOrders({
-  tenantId,
-  token,
-  page = 1,
-  limit = 10,
-}: {
-  tenantId: string;
-  token: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function fetchStaffOrders(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
   return fetchStaffData({
     module: "Order",
     tenantId,
@@ -159,19 +159,63 @@ export async function fetchStaffUsers({
 }
 
 /**
+ * Fetch Students data for staff (members only)
+ */
+export async function fetchStaffStudents(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
+  return fetchStaffData({
+    module: "User",
+    tenantId,
+    token,
+    additionalParams: { page, limit, role: "member" },
+  });
+}
+
+/**
+ * Fetch Instructors data for staff (instructors only)
+ */
+export async function fetchStaffInstructors(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
+  return fetchStaffData({
+    module: "User",
+    tenantId,
+    token,
+    additionalParams: { page, limit, role: "instructor" },
+  });
+}
+
+/**
  * Fetch News data for staff
  */
-export async function fetchStaffNews({
-  tenantId,
-  token,
-  page = 1,
-  limit = 10,
-}: {
-  tenantId: string;
-  token: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function fetchStaffNews(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
   return fetchStaffData({
     module: "News",
     tenantId,
@@ -205,17 +249,17 @@ export async function fetchStaffBlogs({
 /**
  * Fetch Application data for staff
  */
-export async function fetchStaffApplications({
-  tenantId,
-  token,
-  page = 1,
-  limit = 10,
-}: {
-  tenantId: string;
-  token: string;
-  page?: number;
-  limit?: number;
-}) {
+export async function fetchStaffApplications(page = 1, limit = 10) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
   return fetchStaffData({
     module: "Application",
     tenantId,

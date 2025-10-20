@@ -67,7 +67,7 @@ import { ChevronDown, Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  userRole?: "student" | "instructor" | "admin" | "manager"; // Optional, will use from auth if not provided
+  userRole?: "student" | "instructor" | "admin" | "manager" | "staff"; // Optional, will use from auth if not provided
 }
 
 export default function DashboardLayout({
@@ -163,8 +163,11 @@ export default function DashboardLayout({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-  // For this version of the app, we only have manager role
+  // Get role display name based on user role
   const getRoleDisplayName = () => {
+    if (isStaff) {
+      return "Nhân Viên";
+    }
     return "Quản Lý";
   };
 
@@ -346,7 +349,9 @@ export default function DashboardLayout({
             className='flex items-center gap-2 font-semibold'
           >
             <Waves className='h-6 w-6 text-sky-500' />
-            <span className='hidden md:inline-block'>AquaLearn Manager</span>
+            <span className='hidden md:inline-block'>
+              AquaLearn {isStaff ? "Staff" : "Manager"}
+            </span>
           </Link>
         </nav>
         <Sheet>
@@ -539,7 +544,11 @@ export default function DashboardLayout({
                 }`}
               >
                 <Building className='h-4 w-4 text-primary' />
-                {!sidebarCollapsed && <span>Quản Lý Hệ Thống</span>}
+                {!sidebarCollapsed && (
+                  <span>
+                    {isStaff ? "Hệ Thống Nhân Viên" : "Quản Lý Hệ Thống"}
+                  </span>
+                )}
               </div>
               <Button
                 variant='ghost'
@@ -763,7 +772,7 @@ export default function DashboardLayout({
                           {
                             name: "Giao Dịch",
                             href: isStaff
-                              ? "/dashboard/staff/orders"
+                              ? "/dashboard/staff/transactions"
                               : "/dashboard/manager/transactions",
                             icon: <PaymentIcon className='h-4 w-4' />,
                           },
