@@ -11,6 +11,7 @@ import {
   Calendar,
   Loader2,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ import {
   PaginationPrevious,
   PaginationNext,
 } from "@/components/ui/pagination";
+import CourseCategoriesModal from "@/components/manager/course-categories-modal";
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -59,6 +61,7 @@ export default function CoursesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10); // Default page size
   const [total, setTotal] = useState(0); // Total courses from API
+  const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -133,6 +136,22 @@ export default function CoursesPage() {
   // Instead, use the paginated API data directly:
   const displayedCourses = courses;
 
+  // Function to reload categories when updated via modal
+  const handleCategoriesUpdated = () => {
+    // Reload categories for the filter dropdown
+    const loadCategories = async () => {
+      try {
+        const tenantId = getSelectedTenant();
+        if (!tenantId) return;
+        const arr = await fetchCourseCategories({ tenantId });
+        setCategories(arr);
+      } catch (e: any) {
+        console.error("Error reloading categories:", e);
+      }
+    };
+    loadCategories();
+  };
+
   if (loading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen py-16'>
@@ -178,11 +197,20 @@ export default function CoursesPage() {
               Quản lý tất cả các khóa học bơi hiện có
             </p>
           </div>
-          <Link href='/dashboard/manager/courses/new'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' /> Thêm khóa học mới
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setCategoriesModalOpen(true)}
+            >
+              <Settings className='mr-2 h-4 w-4' />
+              Quản lý danh mục
             </Button>
-          </Link>
+            <Link href='/dashboard/manager/courses/new'>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' /> Thêm khóa học mới
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className='mt-8 grid gap-6 md:grid-cols-4'>
@@ -485,6 +513,13 @@ export default function CoursesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Course Categories Management Modal */}
+      <CourseCategoriesModal
+        open={categoriesModalOpen}
+        onOpenChange={setCategoriesModalOpen}
+        onCategoriesUpdated={handleCategoriesUpdated}
+      />
     </>
   );
 }
