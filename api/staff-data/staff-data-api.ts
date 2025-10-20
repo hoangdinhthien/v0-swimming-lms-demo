@@ -268,6 +268,130 @@ export async function fetchStaffApplications(page = 1, limit = 10) {
   });
 }
 
+/**
+ * Fetch Student detail for staff
+ */
+export async function fetchStaffStudentDetail({
+  studentId,
+  tenantId,
+  token,
+}: {
+  studentId: string;
+  tenantId: string;
+  token: string;
+}) {
+  if (!studentId || !tenantId || !token) {
+    throw new Error(
+      "Missing required parameters: studentId, tenantId, or token"
+    );
+  }
+
+  const url = `${config.API}/v1/workflow-process/staff?role=member&id=${studentId}`;
+
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+    service: "User", // Pass User as 'service' header for student details
+    "Content-Type": "application/json",
+  };
+
+  console.log(
+    `[fetchStaffStudentDetail] Fetching student detail for ID: ${studentId}`
+  );
+  console.log(`[fetchStaffStudentDetail] URL:`, url);
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(
+      `[fetchStaffStudentDetail] API error:`,
+      res.status,
+      errorText
+    );
+    throw new Error(`Không thể lấy thông tin học viên: ${res.status}`);
+  }
+
+  const responseData = await res.json();
+  console.log(`[fetchStaffStudentDetail] Response:`, responseData);
+
+  // Extract student data from nested structure
+  // Response structure: { data: { data: [...], meta_data: {...} }, message: "Success", statusCode: 200 }
+  const studentData = responseData.data?.data?.[0];
+
+  if (!studentData) {
+    throw new Error("Không tìm thấy thông tin học viên");
+  }
+
+  return studentData;
+}
+
+/**
+ * Fetch Instructor detail for staff
+ */
+export async function fetchStaffInstructorDetail({
+  instructorId,
+  tenantId,
+  token,
+}: {
+  instructorId: string;
+  tenantId: string;
+  token: string;
+}) {
+  if (!instructorId || !tenantId || !token) {
+    throw new Error(
+      "Missing required parameters: instructorId, tenantId, or token"
+    );
+  }
+
+  const url = `${config.API}/v1/workflow-process/staff?role=instructor&id=${instructorId}`;
+
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+    service: "User", // Pass User as 'service' header for instructor details
+    "Content-Type": "application/json",
+  };
+
+  console.log(
+    `[fetchStaffInstructorDetail] Fetching instructor detail for ID: ${instructorId}`
+  );
+  console.log(`[fetchStaffInstructorDetail] URL:`, url);
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(
+      `[fetchStaffInstructorDetail] API error:`,
+      res.status,
+      errorText
+    );
+    throw new Error(`Không thể lấy thông tin giáo viên: ${res.status}`);
+  }
+
+  const responseData = await res.json();
+  console.log(`[fetchStaffInstructorDetail] Response:`, responseData);
+
+  // Extract instructor data from nested structure
+  // Response structure: { data: { data: [...], meta_data: {...} }, message: "Success", statusCode: 200 }
+  const instructorData = responseData.data?.data?.[0];
+
+  if (!instructorData) {
+    throw new Error("Không tìm thấy thông tin giáo viên");
+  }
+
+  return instructorData;
+}
+
 // Helper function to check if staff has permission for a specific module and action
 export function hasStaffPermission(
   staffPermissions: any,

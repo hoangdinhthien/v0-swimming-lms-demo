@@ -1149,7 +1149,7 @@ export default function StudentDetailPage() {
 
                           <div className='mt-3 pt-3 border-t border-blue-200 dark:border-slate-600'>
                             <Link
-                              href={`/dashboard/manager/classes/${
+                              href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
                               className='inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors'
@@ -1252,7 +1252,7 @@ export default function StudentDetailPage() {
 
                           <div className='mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800'>
                             <Link
-                              href={`/dashboard/manager/classes/${
+                              href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
                               className='inline-flex items-center text-sm text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100 font-medium transition-colors'
@@ -1372,7 +1372,7 @@ export default function StudentDetailPage() {
 
                           <div className='mt-3 pt-3 border-t border-green-200 dark:border-green-800'>
                             <Link
-                              href={`/dashboard/manager/classes/${
+                              href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
                               className='inline-flex items-center text-sm text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-green-100 font-medium transition-colors'

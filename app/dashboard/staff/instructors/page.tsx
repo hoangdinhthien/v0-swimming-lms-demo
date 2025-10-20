@@ -108,7 +108,7 @@ export default function StaffInstructorsPage() {
           );
 
           return {
-            id: item._id,
+            id: item.user?._id || item._id, // Use user._id for detail page navigation
             name: item.user?.username || "-",
             email: item.user?.email || "-",
             phone: item.user?.phone || "-",
