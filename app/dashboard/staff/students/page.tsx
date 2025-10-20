@@ -39,7 +39,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchStaffStudents } from "@/api/staff-data/staff-data-api";
-import { apiCache } from "@/utils/api-cache";
 import PermissionGuard from "@/components/permission-guard";
 
 // Helper function to extract avatar URL from featured_image
@@ -124,57 +123,36 @@ export default function StaffStudentsPage() {
         const response = await fetchStaffStudents(1, 1000);
 
         // Extract data from the staff API response structure
-        // New API structure: response.data.data (nested data)
+        // New API structure: response.data.data (direct data array)
         const data = response?.data?.data || [];
 
         // Process each student to get their images and parent information
-        const processedStudents = await Promise.all(
-          data.map(async (item: any) => {
-            // Extract avatar URL using helper function - now from item.user.featured_image
-            const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-            console.log(
-              `Avatar for student ${item.user?.username}:`,
-              avatarUrl
-            );
-            let parentName = null;
+        const processedStudents = data.map((item: any) => {
+          // Extract avatar URL using helper function
+          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+          console.log(`Avatar for student ${item.user?.username}:`, avatarUrl);
 
-            // Get parent information if available - now from item.user.parent_id
-            if (item.user?.parent_id && item.user.parent_id.length > 0) {
-              try {
-                const parentId = item.user.parent_id[0];
-                const cacheKey = `staff-parent-detail-${parentId}`;
-
-                // Try cache first
-                let parentDetail = apiCache.get(cacheKey);
-
-                if (!parentDetail) {
-                  // For staff, we might need to fetch parent info differently
-                  // For now, we'll just mark it as loading or use a placeholder
-                  parentName = "Đang tải...";
-                  // Cache for 5 minutes
-                  apiCache.set(cacheKey, { loading: true }, 300);
-                }
-
-                if (parentDetail?.user?.username) {
-                  parentName = parentDetail.user.username;
-                }
-              } catch (error) {
-                console.error(
-                  "Error fetching parent info for student:",
-                  item._id,
-                  error
-                );
-              }
+          // Extract parent name directly from the response data (same as manager API)
+          let parentName = null;
+          if (
+            item.user?.parent_id &&
+            Array.isArray(item.user.parent_id) &&
+            item.user.parent_id.length > 0
+          ) {
+            // Parent info is now included in the response
+            const parentInfo = item.user.parent_id[0];
+            if (parentInfo && parentInfo.username) {
+              parentName = parentInfo.username;
             }
+          }
 
-            return {
-              ...item,
-              user: item.user, // Extract the user object from the item
-              avatar: avatarUrl,
-              parentName: parentName,
-            };
-          })
-        );
+          return {
+            ...item,
+            user: item.user, // Extract the user object from the item
+            avatar: avatarUrl,
+            parentName: parentName,
+          };
+        });
         setStudents(processedStudents);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
@@ -523,8 +501,7 @@ export default function StaffStudentsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className='py-4'>
-                          {student.parentName &&
-                          student.parentName !== "Đang tải..." ? (
+                          {student.parentName ? (
                             <div className='flex items-center gap-2'>
                               <Users className='h-3 w-3 text-blue-600 group-hover:text-blue-700 transition-colors duration-200' />
                               <span className='text-sm font-medium text-blue-700 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-300 transition-colors duration-200'>

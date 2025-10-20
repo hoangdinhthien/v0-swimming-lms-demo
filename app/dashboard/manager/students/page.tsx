@@ -38,11 +38,9 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { fetchStudents, fetchStudentDetail } from "@/api/manager/students-api";
+import { fetchStudents } from "@/api/manager/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import { getMediaDetails } from "@/api/media-api";
-import { apiCache } from "@/utils/api-cache"; // ✅ Import cache
 import PermissionGuard from "@/components/permission-guard";
 
 // Helper function to extract avatar URL from featured_image
@@ -131,55 +129,31 @@ export default function StudentsPage() {
           token: token ?? undefined,
         });
         // Process each student to get their images and parent information
-        const processedStudents = await Promise.all(
-          data.map(async (item: any) => {
-            // Extract avatar URL using helper function
-            const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-            console.log(
-              `Avatar for student ${item.user?.username}:`,
-              avatarUrl
-            );
-            let parentName = null;
+        const processedStudents = data.map((item: any) => {
+          // Extract avatar URL using helper function
+          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+          console.log(`Avatar for student ${item.user?.username}:`, avatarUrl);
 
-            // ✅ FIX: Add caching and batch parent requests
-            if (item.user?.parent_id && item.user.parent_id.length > 0) {
-              try {
-                const parentId = item.user.parent_id[0];
-                const cacheKey = `parent-detail-${parentId}`;
-
-                // Try cache first
-                let parentDetail = apiCache.get(cacheKey);
-
-                if (!parentDetail) {
-                  // Use fetchStudentDetail to get parent information
-                  parentDetail = await fetchStudentDetail({
-                    studentId: parentId,
-                    tenantId: tenantId!,
-                    token: token!,
-                  });
-                  // Cache for 5 minutes
-                  apiCache.set(cacheKey, parentDetail, 300);
-                }
-
-                if (parentDetail?.user?.username) {
-                  parentName = parentDetail.user.username;
-                }
-              } catch (error) {
-                console.error(
-                  "Error fetching parent info for student:",
-                  item._id,
-                  error
-                );
-              }
+          // Extract parent name directly from the response data
+          let parentName = null;
+          if (
+            item.user?.parent_id &&
+            Array.isArray(item.user.parent_id) &&
+            item.user.parent_id.length > 0
+          ) {
+            // Parent info is now included in the response
+            const parentInfo = item.user.parent_id[0];
+            if (parentInfo && parentInfo.username) {
+              parentName = parentInfo.username;
             }
+          }
 
-            return {
-              ...item,
-              avatar: avatarUrl,
-              parentName: parentName,
-            };
-          })
-        );
+          return {
+            ...item,
+            avatar: avatarUrl,
+            parentName: parentName,
+          };
+        });
         setStudents(processedStudents);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");

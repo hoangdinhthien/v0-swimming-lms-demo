@@ -50,15 +50,13 @@ interface ClassData {
     username: string;
   }>;
   instructor: any; // Can be string, object, or array
-  schedule_plan: Array<{
-    days_of_week?: string[];
-    slot?: {
-      _id: string;
-      title: string;
-      start_time: number;
-      end_time: number;
-      duration: string;
-    };
+  schedules: Array<{
+    _id: string;
+    classroom: string;
+    date: string;
+    slot: string;
+    instructor: string;
+    tenant_id: string;
   }>;
 }
 
@@ -131,8 +129,12 @@ export default function StaffClassesPage() {
       setError(null);
       try {
         const result = await fetchStaffClasses(page, limit);
-        setClasses(result.data);
-        setTotalCount(result.meta.total);
+        // Extract data from staff API response structure
+        const classesData = result?.data?.data || [];
+        const metaData = result?.data?.meta_data || {};
+
+        setClasses(classesData);
+        setTotalCount(metaData.count || 0);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setClasses([]);
@@ -147,7 +149,9 @@ export default function StaffClassesPage() {
     async function fetchAllClasses() {
       try {
         const result = await fetchStaffClasses(1, 1000);
-        setAllClasses(result.data);
+        // Extract data from staff API response structure
+        const classesData = result?.data?.data || [];
+        setAllClasses(classesData);
       } catch {
         setAllClasses([]);
       }
@@ -353,7 +357,7 @@ export default function StaffClassesPage() {
                             <div>
                               <div className='flex items-center gap-1'>
                                 <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                  {classItem.schedule_plan?.length || 0}
+                                  {classItem.schedules?.length || 0}
                                 </span>
                                 <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                   / {classItem.course.session_number || 0}
@@ -362,7 +366,7 @@ export default function StaffClassesPage() {
                               <div className='text-xs text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
                                 {(() => {
                                   const scheduled =
-                                    classItem.schedule_plan?.length || 0;
+                                    classItem.schedules?.length || 0;
                                   const total =
                                     classItem.course.session_number || 0;
                                   const remaining = total - scheduled;
