@@ -349,7 +349,9 @@ export async function fetchStaffSchedules(startDate: string, endDate: string) {
     "Content-Type": "application/json",
   };
 
-  console.log(`[fetchStaffSchedules] Fetching schedules from ${startDate} to ${endDate}`);
+  console.log(
+    `[fetchStaffSchedules] Fetching schedules from ${startDate} to ${endDate}`
+  );
   console.log(`[fetchStaffSchedules] URL:`, url);
 
   const res = await fetch(url, {

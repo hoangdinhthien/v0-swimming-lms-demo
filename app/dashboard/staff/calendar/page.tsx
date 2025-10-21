@@ -6,8 +6,39 @@ import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/vi";
 import locale from "antd/locale/vi_VN";
 // Note: antd v5 shows a compatibility warning with React 19, but still functions correctly
-import { ConfigProvider, Calendar, Card as AntdCard, Button as AntdButton, Drawer, Tabs, Empty, Alert, message, Avatar, Tag, Typography, Space, Modal, Row, Col, Tooltip } from "antd";
-import { ArrowLeftOutlined, CalendarOutlined, TeamOutlined, ClockCircleOutlined, EnvironmentOutlined, BookOutlined, UserOutlined, EyeOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  ConfigProvider,
+  Calendar,
+  Card as AntdCard,
+  Button as AntdButton,
+  Drawer,
+  Tabs,
+  Empty,
+  Alert,
+  message,
+  Avatar,
+  Tag,
+  Typography,
+  Space,
+  Modal,
+  Row,
+  Col,
+  Tooltip,
+} from "antd";
+import {
+  ArrowLeftOutlined,
+  CalendarOutlined,
+  TeamOutlined,
+  ClockCircleOutlined,
+  EnvironmentOutlined,
+  BookOutlined,
+  UserOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchStaffSchedules } from "@/api/staff-data/staff-data-api";
@@ -95,7 +126,8 @@ export default function StaffCalendarPage() {
 
   // Modal state
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [selectedScheduleEvent, setSelectedScheduleEvent] = useState<ScheduleEvent | null>(null);
+  const [selectedScheduleEvent, setSelectedScheduleEvent] =
+    useState<ScheduleEvent | null>(null);
 
   // Load schedule data
   useEffect(() => {
@@ -105,10 +137,16 @@ export default function StaffCalendarPage() {
         const startDate = currentDate.startOf("month").format("YYYY-MM-DD");
         const endDate = currentDate.endOf("month").format("YYYY-MM-DD");
 
-        console.log("📅 Loading schedule for month:", currentDate.format("YYYY-MM"));
+        console.log(
+          "📅 Loading schedule for month:",
+          currentDate.format("YYYY-MM")
+        );
         console.log("📅 Date range:", startDate, "to", endDate);
 
-        const events: ScheduleEvent[] = await fetchStaffSchedules(startDate, endDate);
+        const events: ScheduleEvent[] = await fetchStaffSchedules(
+          startDate,
+          endDate
+        );
 
         console.log("📅 Loaded schedule events:", {
           count: events.length,
@@ -190,7 +228,9 @@ export default function StaffCalendarPage() {
             .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
         : "",
       course: getCourseName(classroom?.course), // Resolve course name
-      poolTitle: (Array.isArray(pool) ? pool[0]?.title : pool?.title) || "Không xác định",
+      poolTitle:
+        (Array.isArray(pool) ? pool[0]?.title : pool?.title) ||
+        "Không xác định",
       poolId: (Array.isArray(pool) ? pool[0]?._id : pool?._id) || "",
       classroomId: classroom?._id || "", // Add classroom ID for editing
       instructorId: instructor?._id || "",
@@ -324,10 +364,12 @@ export default function StaffCalendarPage() {
     const totalEvents = scheduleEvents.length;
     const totalSlots = scheduleEvents.length; // Each event has one slot
     const uniquePools = new Set(
-      scheduleEvents.map((event) => {
-        const pool = event.pool;
-        return Array.isArray(pool) ? pool[0]?.title : pool?.title;
-      }).filter(Boolean)
+      scheduleEvents
+        .map((event) => {
+          const pool = event.pool;
+          return Array.isArray(pool) ? pool[0]?.title : pool?.title;
+        })
+        .filter(Boolean)
     ).size;
 
     return { totalEvents, totalSlots, uniquePools };
@@ -492,7 +534,7 @@ export default function StaffCalendarPage() {
             drawerDate && (
               <div className='space-y-6'>
                 <Tabs
-                  activeKey="view"
+                  activeKey='view'
                   items={[
                     {
                       key: "view",
@@ -662,7 +704,7 @@ export default function StaffCalendarPage() {
 
         {/* Class Detail Modal - Placeholder for now */}
         <Modal
-          title="Chi tiết lớp học"
+          title='Chi tiết lớp học'
           open={detailModalOpen}
           onCancel={() => {
             setDetailModalOpen(false);
@@ -686,13 +728,18 @@ export default function StaffCalendarPage() {
               <div className='flex items-center gap-3'>
                 <Avatar
                   style={{
-                    backgroundColor: getEventColor(selectedScheduleEvent.classroom?.course),
+                    backgroundColor: getEventColor(
+                      selectedScheduleEvent.classroom?.course
+                    ),
                   }}
                   icon={<EnvironmentOutlined />}
                   size='large'
                 />
                 <div>
-                  <Title level={4} className='!mb-1'>
+                  <Title
+                    level={4}
+                    className='!mb-1'
+                  >
                     {selectedScheduleEvent.classroom?.name || "Không xác định"}
                   </Title>
                   <Text type='secondary'>
@@ -704,15 +751,22 @@ export default function StaffCalendarPage() {
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <Text strong>Khóa học:</Text>
-                  <div>{getCourseName(selectedScheduleEvent.classroom?.course)}</div>
+                  <div>
+                    {getCourseName(selectedScheduleEvent.classroom?.course)}
+                  </div>
                 </div>
                 <div>
                   <Text strong>Hồ bơi:</Text>
-                  <div>{selectedScheduleEvent.pool?.title || "Không xác định"}</div>
+                  <div>
+                    {selectedScheduleEvent.pool?.title || "Không xác định"}
+                  </div>
                 </div>
                 <div>
                   <Text strong>Giáo viên:</Text>
-                  <div>{selectedScheduleEvent.instructor?.username || "Không xác định"}</div>
+                  <div>
+                    {selectedScheduleEvent.instructor?.username ||
+                      "Không xác định"}
+                  </div>
                 </div>
                 <div>
                   <Text strong>Thời gian:</Text>
@@ -720,11 +774,21 @@ export default function StaffCalendarPage() {
                     {selectedScheduleEvent.slot
                       ? `${Math.floor(selectedScheduleEvent.slot.start_time)
                           .toString()
-                          .padStart(2, "0")}:${selectedScheduleEvent.slot.start_minute
+                          .padStart(
+                            2,
+                            "0"
+                          )}:${selectedScheduleEvent.slot.start_minute
                           .toString()
-                          .padStart(2, "0")} - ${Math.floor(selectedScheduleEvent.slot.end_time)
+                          .padStart(2, "0")} - ${Math.floor(
+                          selectedScheduleEvent.slot.end_time
+                        )
                           .toString()
-                          .padStart(2, "0")}:${selectedScheduleEvent.slot.end_minute.toString().padStart(2, "0")}`
+                          .padStart(
+                            2,
+                            "0"
+                          )}:${selectedScheduleEvent.slot.end_minute
+                          .toString()
+                          .padStart(2, "0")}`
                       : "Không xác định"}
                   </div>
                 </div>
