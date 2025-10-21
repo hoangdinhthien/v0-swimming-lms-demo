@@ -295,18 +295,32 @@ export default function DashboardLayout({
   }[] => {
     const baseNavItems = navItems.manager;
 
+    console.log("[getFilteredNavItems] Input:", {
+      isManager,
+      isStaff,
+      allowedNavigationItems,
+      baseNavItemsCount: baseNavItems.length,
+    });
+
     // If user is manager, show all items with manager routes
     if (isManager) {
+      console.log("[getFilteredNavItems] User is manager, showing all items");
       return baseNavItems;
     }
 
     // If user is staff, filter based on permissions and use staff routes
     if (isStaff) {
+      console.log("[getFilteredNavItems] User is staff, filtering items");
       return baseNavItems
         .filter((item) => {
           // Extract the route from href (e.g., "/dashboard/manager/students" -> "students")
           const routeParts = item.href.split("/");
           const route = routeParts[routeParts.length - 1];
+
+          const allowed = allowedNavigationItems.includes(route);
+          console.log(
+            `[getFilteredNavItems] Item: ${item.name}, Route: ${route}, Allowed: ${allowed}`
+          );
 
           // Always allow dashboard access
           if (route === "manager") {
@@ -314,7 +328,7 @@ export default function DashboardLayout({
           }
 
           // Check if staff has permission for this route
-          return allowedNavigationItems.includes(route);
+          return allowed;
         })
         .map((item) => {
           // Convert manager routes to staff routes for staff users
@@ -333,11 +347,18 @@ export default function DashboardLayout({
     }
 
     // Default to empty for other roles
+    console.log("[getFilteredNavItems] User has other role, showing no items");
     return [];
   };
+
   // For this version of the application, we're focusing on manager functionality
   // Default to manager navigation items unless explicitly overridden  // For this version, we always use manager navigation items
   const currentNavItems = getFilteredNavItems();
+  console.log(
+    "[DashboardLayout] Final navigation items:",
+    currentNavItems.map((item) => ({ name: item.name, href: item.href }))
+  );
+
   // Build the content
   const content = (
     <div className='flex min-h-screen flex-col'>
@@ -735,14 +756,18 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && "Hoạt Động"}
                   </div>
                   {[
-                    // Calendar - available for all staff and managers
-                    {
-                      name: "Lịch",
-                      href: isStaff
-                        ? "/dashboard/staff/calendar"
-                        : "/dashboard/manager/calendar",
-                      icon: <Clock className='h-4 w-4' />,
-                    },
+                    // Calendar - only show if user has Class/calendar permission or is manager
+                    ...(isManager || allowedNavigationItems.includes("calendar")
+                      ? [
+                          {
+                            name: "Lịch",
+                            href: isStaff
+                              ? "/dashboard/staff/calendar"
+                              : "/dashboard/manager/calendar",
+                            icon: <Clock className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
                     // Application module - only show if has Application permission
                     ...(isManager ||
                     allowedNavigationItems.includes("applications")

@@ -297,6 +297,7 @@ export function getModuleNavigationMapping(): Record<string, string> {
     Course: "courses",
     Order: "orders",
     Class: "classes",
+    Calendar: "calendar", // Calendar module mapping
     User: "students", // assuming User module refers to students
     News: "news",
     Blog: "news", // assuming Blog is part of news
@@ -328,6 +329,7 @@ export function getAllowedNavigationItems(
             break;
           case "Class":
             allowedNavItems.add("classes");
+            allowedNavItems.add("calendar"); // Calendar belongs to Class module
             break;
           case "User":
             // User module includes students, instructors, and staff management

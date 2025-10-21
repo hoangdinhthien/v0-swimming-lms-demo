@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserFrontendRole } from "@/api/role-utils";
+import { getAuthenticatedUser } from "@/api/auth-utils";
 import {
   fetchStaffPermissions,
   StaffPermission,
@@ -34,6 +35,13 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
   const userRole = getUserFrontendRole();
   const isManager = userRole === "manager" || userRole === "admin";
   const isStaff = userRole === "staff";
+
+  console.log("[useStaffPermissions] Role detection:", {
+    userRole,
+    isManager,
+    isStaff,
+    user: getAuthenticatedUser(),
+  });
 
   const fetchPermissions = async () => {
     if (!token || !tenantId || !isStaff) return;
@@ -127,6 +135,21 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
         "reports",
       ] // Managers see everything
     : getAllowedNavigationItems(staffPermissions);
+
+  console.log("[useStaffPermissions] Final state:", {
+    userRole,
+    isManager,
+    isStaff,
+    allowedNavigationItems,
+    staffPermissions: staffPermissions
+      ? {
+          _id: staffPermissions._id,
+          permission: staffPermissions.permission,
+        }
+      : null,
+    loading,
+    error,
+  });
 
   return {
     staffPermissions,
