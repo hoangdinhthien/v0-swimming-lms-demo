@@ -62,6 +62,12 @@ export async function getMediaDetails(mediaId: string): Promise<string | null> {
       return null;
     }
 
+    // Return null for 403 (forbidden) responses - user doesn't have permission
+    if (response.status === 403) {
+      console.warn(`Media access forbidden (403): ${mediaId}`);
+      return null;
+    }
+
     if (!response.ok) {
       console.error(`Failed to fetch media details: ${response.status}`);
       return null;

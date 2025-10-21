@@ -179,9 +179,16 @@ export default function StaffClassesPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <p className='text-muted-foreground'>Đang tải danh sách lớp học...</p>
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
+            Đang tải danh sách lớp học...
+          </p>
+          <p className='text-sm text-muted-foreground mt-2'>
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
       </div>
     );
   }
@@ -313,6 +320,11 @@ export default function StaffClassesPage() {
                       <TableRow
                         key={classItem._id}
                         className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/staff/classes/${classItem._id}`
+                          )
+                        }
                       >
                         <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
                           <div className='flex items-center gap-2'>

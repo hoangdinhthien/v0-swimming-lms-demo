@@ -1,3 +1,61 @@
+/**
+ * Fetch Course detail for staff
+ */
+export async function fetchStaffCourseDetail({
+  courseId,
+  tenantId,
+  token,
+}: {
+  courseId: string;
+  tenantId: string;
+  token: string;
+}) {
+  if (!courseId || !tenantId || !token) {
+    throw new Error(
+      "Missing required parameters: courseId, tenantId, or token"
+    );
+  }
+
+  // API expects: search[_id:equal]=courseId as query param, service: Course
+  const url = `${config.API}/v1/workflow-process/staff?search[_id:equal]=${courseId}`;
+
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+    service: "Course", // Pass Course as 'service' header for course details
+    "Content-Type": "application/json",
+  };
+
+  console.log(
+    `[fetchStaffCourseDetail] Fetching course detail for ID: ${courseId}`
+  );
+  console.log(`[fetchStaffCourseDetail] URL:`, url);
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`[fetchStaffCourseDetail] API error:`, res.status, errorText);
+    throw new Error(`Không thể lấy thông tin khoá học: ${res.status}`);
+  }
+
+  const responseData = await res.json();
+  console.log(`[fetchStaffCourseDetail] Response:`, responseData);
+
+  // Extract course data from nested structure
+  // Response structure: { data: [...] }
+  const courseData = responseData.data?.[0];
+
+  if (!courseData) {
+    throw new Error("Không tìm thấy thông tin khoá học");
+  }
+
+  return courseData;
+}
 import config from "@/api/config.json";
 
 /**
@@ -266,6 +324,50 @@ export async function fetchStaffApplications(page = 1, limit = 10) {
     token,
     additionalParams: { page, limit },
   });
+}
+
+/**
+ * Fetch Schedule data for staff
+ */
+export async function fetchStaffSchedules(startDate: string, endDate: string) {
+  const { getSelectedTenant } = await import("@/utils/tenant-utils");
+  const { getAuthToken } = await import("@/api/auth-utils");
+
+  const tenantId = getSelectedTenant();
+  const token = getAuthToken();
+
+  if (!tenantId || !token) {
+    throw new Error("Missing required tenant ID or authentication token");
+  }
+
+  const url = `${config.API}/v1/workflow-process/staff/schedules?startDate=${startDate}&endDate=${endDate}`;
+
+  const headers = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+    service: "Class",
+    "Content-Type": "application/json",
+  };
+
+  console.log(`[fetchStaffSchedules] Fetching schedules from ${startDate} to ${endDate}`);
+  console.log(`[fetchStaffSchedules] URL:`, url);
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`[fetchStaffSchedules] API error:`, res.status, errorText);
+    throw new Error(`Không thể lấy dữ liệu lịch học: ${res.status}`);
+  }
+
+  const responseData = await res.json();
+  console.log(`[fetchStaffSchedules] Response:`, responseData);
+
+  return responseData.data || [];
 }
 
 /**
