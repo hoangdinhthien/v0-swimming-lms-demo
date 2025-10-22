@@ -99,7 +99,8 @@ export function middleware(request: NextRequest) {
         if (
           path.startsWith("/dashboard/manager") &&
           frontendRole !== "manager" &&
-          frontendRole !== "admin"
+          frontendRole !== "admin" &&
+          frontendRole !== "staff"
         ) {
           return NextResponse.redirect(new URL("/", request.url));
         }

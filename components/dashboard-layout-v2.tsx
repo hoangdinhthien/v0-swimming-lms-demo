@@ -84,6 +84,10 @@ export default function DashboardLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  // Normalize pathnames for robust comparisons (remove trailing slash and query)
+  const normalizePath = (p?: string) =>
+    (p || "").replace(/\?.*$/, "").replace(/\/$/, "");
+  // (debug logs moved down after isStaff is available)
 
   // Staff permissions hook
   const {
@@ -92,6 +96,16 @@ export default function DashboardLayout({
     isStaff,
     loading: permissionsLoading,
   } = useStaffPermissions(); // Handle tenant switching
+  // Debug info for active highlight issues (logged after isStaff is available)
+  if (typeof window !== "undefined") {
+    console.log("[DashboardLayout DEBUG] pathname:", pathname);
+    console.log("[DashboardLayout DEBUG] normalized:", normalizePath(pathname));
+    console.log(
+      "[DashboardLayout DEBUG] expected staff path:",
+      normalizePath("/dashboard/staff")
+    );
+    console.log("[DashboardLayout DEBUG] isStaff:", isStaff);
+  }
   const handleTenantSwitch = async (newTenantId: string) => {
     try {
       // Set the new tenant ID
@@ -383,7 +397,7 @@ export default function DashboardLayout({
               className='md:hidden'
             >
               <Menu className='h-5 w-5' />
-              <span className='sr-only'>Toggle Menu</span>
+              sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
             </Button>
           </SheetTrigger>{" "}
           <SheetContent
@@ -403,7 +417,8 @@ export default function DashboardLayout({
 
               <div className='space-y-2'>
                 {currentNavItems.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive =
+                    normalizePath(pathname) === normalizePath(item.href);
                   return (
                     <Link
                       key={item.href}
@@ -604,8 +619,10 @@ export default function DashboardLayout({
                       sidebarCollapsed ? "justify-center" : "gap-3"
                     } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 relative
                       ${
-                        pathname ===
-                        (isStaff ? "/dashboard/staff" : "/dashboard/manager")
+                        normalizePath(pathname) ===
+                        normalizePath(
+                          isStaff ? "/dashboard/staff" : "/dashboard/manager"
+                        )
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       }`}
@@ -624,8 +641,10 @@ export default function DashboardLayout({
                     {!sidebarCollapsed && (
                       <span className='truncate'>Dashboard</span>
                     )}
-                    {pathname ===
-                      (isStaff ? "/dashboard/staff" : "/dashboard/manager") && (
+                    {normalizePath(pathname) ===
+                      normalizePath(
+                        isStaff ? "/dashboard/staff" : "/dashboard/manager"
+                      ) && (
                       <div className='absolute left-0 top-0 bottom-0 w-1 bg-primary-foreground rounded-r-full' />
                     )}
                   </Link>
@@ -646,9 +665,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Học Viên",
-                            href: isStaff
-                              ? "/dashboard/staff/students"
-                              : "/dashboard/manager/students",
+                            href: "/dashboard/manager/students",
                             icon: <GraduationCap className='h-4 w-4' />,
                           },
                         ]
@@ -657,9 +674,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Giáo Viên",
-                            href: isStaff
-                              ? "/dashboard/staff/instructors"
-                              : "/dashboard/manager/instructors",
+                            href: "/dashboard/manager/instructors",
                             icon: <UserCheck className='h-4 w-4' />,
                           },
                         ]
@@ -679,9 +694,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Khóa Học",
-                            href: isStaff
-                              ? "/dashboard/staff/courses"
-                              : "/dashboard/manager/courses",
+                            href: "/dashboard/manager/courses",
                             icon: <BookOpen className='h-4 w-4' />,
                           },
                         ]
@@ -691,9 +704,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Lớp Học",
-                            href: isStaff
-                              ? "/dashboard/staff/classes"
-                              : "/dashboard/manager/classes",
+                            href: "/dashboard/manager/classes",
                             icon: <Users className='h-4 w-4' />,
                           },
                         ]
@@ -703,9 +714,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Tin tức",
-                            href: isStaff
-                              ? "/dashboard/staff/news"
-                              : "/dashboard/manager/news",
+                            href: "/dashboard/manager/news",
                             icon: <Bell className='h-4 w-4' />,
                           },
                         ]

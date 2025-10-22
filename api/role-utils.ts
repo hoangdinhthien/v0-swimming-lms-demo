@@ -139,7 +139,7 @@ export function getUserDashboardPath(): string {
     case "manager":
       return "/dashboard/manager";
     case "staff":
-      return "/dashboard/staff"; // Staff has their own dashboard with permissions
+      return "/dashboard/manager"; // Staff now use manager dashboard (permissions still applied)
     case "instructor":
       return "/dashboard/manager"; // Instructor uses manager dashboard
     case "student":

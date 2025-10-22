@@ -16,6 +16,7 @@ export default function DashboardRedirect() {
 
       // Redirect based on user role
       if (userRole === "staff") {
+        // Staff should land on their own dashboard page
         router.replace("/dashboard/staff");
       } else if (userRole === "manager" || userRole === "admin") {
         router.replace("/dashboard/manager");
