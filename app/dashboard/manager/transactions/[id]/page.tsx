@@ -16,6 +16,7 @@ import {
   UserPlus,
   UserCheck,
   Search,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -527,9 +528,16 @@ export default function TransactionDetailPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center h-64 space-y-4'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-        <p className='text-muted-foreground'>Đang tải thông tin giao dịch...</p>
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
+            Đang tải thông tin giao dịch...
+          </p>
+          <p className='text-sm text-muted-foreground mt-2'>
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
       </div>
     );
   }

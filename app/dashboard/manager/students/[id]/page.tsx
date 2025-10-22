@@ -565,9 +565,16 @@ export default function StudentDetailPage() {
 
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center py-16'>
-        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
-        <div>Đang tải chi tiết học viên...</div>
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
+            Đang tải thông tin học viên...
+          </p>
+          <p className='text-sm text-muted-foreground mt-2'>
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
       </div>
     );
   }

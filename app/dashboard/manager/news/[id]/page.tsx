@@ -337,6 +337,46 @@ export default function NewsDetailPage() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [coverImages, currentImageIndex]);
 
+  if (isLoading) {
+    return (
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
+            Đang tải chi tiết tin tức...
+          </p>
+          <p className='text-sm text-muted-foreground mt-2'>
+            Vui lòng chờ trong giây lát
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <div className='text-red-600 dark:text-red-400 flex items-center gap-2 mb-4'>
+            <div className='p-2 bg-red-100 dark:bg-red-900/20 rounded-lg'>
+              <Eye className='h-5 w-5' />
+            </div>
+            {error}
+          </div>
+          <Button
+            asChild
+            variant='outline'
+          >
+            <Link href='/dashboard/manager/news'>
+              <ArrowLeft className='mr-2 h-4 w-4' />
+              Quay về danh sách tin tức
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='px-2 sm:px-4 md:px-6 lg:px-8  max-w-full space-y-6 animate-in fade-in duration-500'>
       {/* Header */}
@@ -352,280 +392,223 @@ export default function NewsDetailPage() {
               Quay về danh sách
             </Link>
 
-            {newsItem && !isLoading && !error && (
-              <Button
-                onClick={handleOpenEditModal}
-                className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
-              >
-                <Edit className='mr-2 h-4 w-4' />
-                Chỉnh sửa
-              </Button>
-            )}
+            <Button
+              onClick={handleOpenEditModal}
+              className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
+            >
+              <Edit className='mr-2 h-4 w-4' />
+              Chỉnh sửa
+            </Button>
           </div>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className='relative'>
-          <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />
-          <Card className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg'>
-            <CardHeader className='space-y-4'>
-              <div className='space-y-3'>
-                <Skeleton className='h-8 w-3/4 bg-gray-200/50 dark:bg-gray-700/50' />
-                <div className='flex gap-4'>
-                  <Skeleton className='h-4 w-32 bg-gray-200/50 dark:bg-gray-700/50' />
-                  <Skeleton className='h-4 w-40 bg-gray-200/50 dark:bg-gray-700/50' />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <Skeleton className='h-48 w-full bg-gray-200/50 dark:bg-gray-700/50 rounded-lg' />
-              <div className='space-y-3'>
-                <Skeleton className='h-4 w-full bg-gray-200/50 dark:bg-gray-700/50' />
-                <Skeleton className='h-4 w-5/6 bg-gray-200/50 dark:bg-gray-700/50' />
-                <Skeleton className='h-4 w-4/6 bg-gray-200/50 dark:bg-gray-700/50' />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : error ? (
-        <div className='relative'>
-          <div className='absolute inset-0 bg-gradient-to-r from-red-600/10 to-pink-600/10 dark:from-red-500/5 dark:to-pink-500/5 rounded-xl blur-xl -z-10' />
-          <Card className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg'>
-            <CardHeader>
-              <CardTitle className='text-red-600 dark:text-red-400 flex items-center gap-2'>
-                <div className='p-2 bg-red-100 dark:bg-red-900/20 rounded-lg'>
-                  <Eye className='h-5 w-5' />
-                </div>
-                {error}
+      <div className='relative'>
+        <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />
+        <Card className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg overflow-hidden'>
+          <CardHeader className='pb-4'>
+            <div className='space-y-4'>
+              <CardTitle className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight'>
+                {newsItem!.title}
               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='text-muted-foreground mb-6'>
-                Không thể tải thông tin chi tiết tin tức.
-              </p>
-              <Button
-                onClick={() => router.push("/dashboard/manager")}
-                className='bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
-              >
-                <ArrowLeft className='mr-2 h-4 w-4' />
-                Trở về Trang Quản Lý
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        newsItem && (
-          <div className='relative'>
-            <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />
-            <Card className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg overflow-hidden'>
-              <CardHeader className='pb-4'>
-                <div className='space-y-4'>
-                  <CardTitle className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight'>
-                    {newsItem.title}
-                  </CardTitle>
 
-                  {/* Meta Information */}
-                  <div className='flex flex-wrap gap-4 text-sm'>
-                    <div className='flex items-center gap-2 text-muted-foreground'>
-                      <div className='p-1.5 bg-blue-100 dark:bg-blue-900/20 rounded-lg'>
-                        <Calendar className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
-                      </div>
-                      <span className='font-medium'>
-                        {formatRelativeTime(newsItem.created_at)}
+              {/* Meta Information */}
+              <div className='flex flex-wrap gap-4 text-sm'>
+                <div className='flex items-center gap-2 text-muted-foreground'>
+                  <div className='p-1.5 bg-blue-100 dark:bg-blue-900/20 rounded-lg'>
+                    <Calendar className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
+                  </div>
+                  <span className='font-medium'>
+                    {formatRelativeTime(newsItem!.created_at)}
+                  </span>
+                </div>
+
+                <div className='flex items-center gap-2 text-muted-foreground'>
+                  <div className='p-1.5 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg'>
+                    <User className='h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400' />
+                  </div>
+                  <span className='font-medium'>Đối tượng:</span>
+                </div>
+              </div>
+
+              {/* Audience Badges */}
+              <div className='flex flex-wrap gap-2'>
+                {newsItem!.type.map((type, index) => {
+                  const roleInfo = {
+                    admin: {
+                      label: "Quản trị viên",
+                      color:
+                        "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
+                    },
+                    manager: {
+                      label: "Quản lý",
+                      color:
+                        "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
+                    },
+                    instructor: {
+                      label: "Huấn luyện viên",
+                      color:
+                        "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
+                    },
+                    student: {
+                      label: "Học viên",
+                      color:
+                        "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300",
+                    },
+                  }[type.toLowerCase()] || {
+                    label: type.charAt(0).toUpperCase() + type.slice(1),
+                    color:
+                      "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300",
+                  };
+
+                  return (
+                    <Badge
+                      key={index}
+                      variant='secondary'
+                      className={`${roleInfo.color} border-0 font-medium`}
+                    >
+                      <Tag className='mr-1 h-3 w-3' />
+                      {roleInfo.label}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className='space-y-8'>
+            {/* Cover Images */}
+            {coverImages.length > 0 && (
+              <div className='relative'>
+                <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900'>
+                  <img
+                    src={coverImages[currentImageIndex]}
+                    alt={`${newsItem!.title} - Hình ${currentImageIndex + 1}`}
+                    className='w-full h-auto max-h-96 object-contain rounded-xl transition-all duration-300 hover:scale-105'
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/placeholder.svg";
+                    }}
+                  />
+                  <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl' />
+
+                  {/* Navigation Buttons */}
+                  {coverImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                      >
+                        <ChevronLeft className='h-5 w-5' />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                      >
+                        <ChevronRight className='h-5 w-5' />
+                      </button>
+                    </>
+                  )}
+
+                  {/* Image Counter */}
+                  {coverImages.length > 1 && (
+                    <div className='absolute bottom-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full'>
+                      {currentImageIndex + 1} / {coverImages.length}
+                    </div>
+                  )}
+                </div>
+
+                {/* Image Thumbnails */}
+                {coverImages.length > 1 && (
+                  <div className='flex gap-2 mt-4 justify-center overflow-x-auto pb-2'>
+                    {coverImages.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                          index === currentImageIndex
+                            ? "border-primary ring-2 ring-primary/20"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`Thumbnail ${index + 1}`}
+                          className='w-full h-full object-cover'
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/placeholder.svg";
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Content */}
+            <div className='prose max-w-none'>
+              <div className='bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-black/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50'>
+                <div className='text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap text-base'>
+                  {newsItem!.content}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Information */}
+            <div className='border-t border-gray-200/50 dark:border-gray-700/50 pt-6'>
+              <div className='bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 rounded-xl p-4'>
+                <div className='flex justify-between items-start gap-4 text-sm'>
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-2'>
+                      <Clock className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                      <span className='font-medium text-gray-700 dark:text-gray-300'>
+                        Ngày tạo:
+                      </span>
+                      <span className='text-gray-900 dark:text-gray-100'>
+                        {new Date(newsItem!.created_at).toLocaleDateString(
+                          "vi-VN",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
                       </span>
                     </div>
 
-                    <div className='flex items-center gap-2 text-muted-foreground'>
-                      <div className='p-1.5 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg'>
-                        <User className='h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400' />
-                      </div>
-                      <span className='font-medium'>Đối tượng:</span>
-                    </div>
-                  </div>
-
-                  {/* Audience Badges */}
-                  <div className='flex flex-wrap gap-2'>
-                    {newsItem.type.map((type, index) => {
-                      const roleInfo = {
-                        admin: {
-                          label: "Quản trị viên",
-                          color:
-                            "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300",
-                        },
-                        manager: {
-                          label: "Quản lý",
-                          color:
-                            "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300",
-                        },
-                        instructor: {
-                          label: "Huấn luyện viên",
-                          color:
-                            "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300",
-                        },
-                        student: {
-                          label: "Học viên",
-                          color:
-                            "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300",
-                        },
-                      }[type.toLowerCase()] || {
-                        label: type.charAt(0).toUpperCase() + type.slice(1),
-                        color:
-                          "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300",
-                      };
-
-                      return (
-                        <Badge
-                          key={index}
-                          variant='secondary'
-                          className={`${roleInfo.color} border-0 font-medium`}
-                        >
-                          <Tag className='mr-1 h-3 w-3' />
-                          {roleInfo.label}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className='space-y-8'>
-                {/* Cover Images */}
-                {coverImages.length > 0 && (
-                  <div className='relative'>
-                    <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900'>
-                      <img
-                        src={coverImages[currentImageIndex]}
-                        alt={`${newsItem.title} - Hình ${
-                          currentImageIndex + 1
-                        }`}
-                        className='w-full h-auto max-h-96 object-contain rounded-xl transition-all duration-300 hover:scale-105'
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/placeholder.svg";
-                        }}
-                      />
-                      <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl' />
-
-                      {/* Navigation Buttons */}
-                      {coverImages.length > 1 && (
-                        <>
-                          <button
-                            onClick={prevImage}
-                            className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
-                          >
-                            <ChevronLeft className='h-5 w-5' />
-                          </button>
-                          <button
-                            onClick={nextImage}
-                            className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
-                          >
-                            <ChevronRight className='h-5 w-5' />
-                          </button>
-                        </>
-                      )}
-
-                      {/* Image Counter */}
-                      {coverImages.length > 1 && (
-                        <div className='absolute bottom-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full'>
-                          {currentImageIndex + 1} / {coverImages.length}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image Thumbnails */}
-                    {coverImages.length > 1 && (
-                      <div className='flex gap-2 mt-4 justify-center overflow-x-auto pb-2'>
-                        {coverImages.map((image, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentImageIndex(index)}
-                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                              index === currentImageIndex
-                                ? "border-primary ring-2 ring-primary/20"
-                                : "border-border hover:border-primary/50"
-                            }`}
-                          >
-                            <img
-                              src={image}
-                              alt={`Thumbnail ${index + 1}`}
-                              className='w-full h-full object-cover'
-                              onError={(e) => {
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = "/placeholder.svg";
-                              }}
-                            />
-                          </button>
-                        ))}
+                    {newsItem!.created_at !== newsItem!.updated_at && (
+                      <div className='flex items-center gap-2'>
+                        <Clock className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
+                        <span className='font-medium text-gray-700 dark:text-gray-300'>
+                          Cập nhật:
+                        </span>
+                        <span className='text-gray-900 dark:text-gray-100'>
+                          {new Date(newsItem!.updated_at).toLocaleDateString(
+                            "vi-VN",
+                            {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </span>
                       </div>
                     )}
                   </div>
-                )}
-
-                {/* Content */}
-                <div className='prose max-w-none'>
-                  <div className='bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-black/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50'>
-                    <div className='text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap text-base'>
-                      {newsItem.content}
-                    </div>
-                  </div>
                 </div>
-
-                {/* Footer Information */}
-                <div className='border-t border-gray-200/50 dark:border-gray-700/50 pt-6'>
-                  <div className='bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 rounded-xl p-4'>
-                    <div className='flex justify-between items-start gap-4 text-sm'>
-                      <div className='space-y-2'>
-                        <div className='flex items-center gap-2'>
-                          <Clock className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                          <span className='font-medium text-gray-700 dark:text-gray-300'>
-                            Ngày tạo:
-                          </span>
-                          <span className='text-gray-900 dark:text-gray-100'>
-                            {new Date(newsItem.created_at).toLocaleDateString(
-                              "vi-VN",
-                              {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }
-                            )}
-                          </span>
-                        </div>
-
-                        {newsItem.created_at !== newsItem.updated_at && (
-                          <div className='flex items-center gap-2'>
-                            <Clock className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
-                            <span className='font-medium text-gray-700 dark:text-gray-300'>
-                              Cập nhật:
-                            </span>
-                            <span className='text-gray-900 dark:text-gray-100'>
-                              {new Date(newsItem.updated_at).toLocaleDateString(
-                                "vi-VN",
-                                {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-      )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Edit Modal */}
       <Dialog
