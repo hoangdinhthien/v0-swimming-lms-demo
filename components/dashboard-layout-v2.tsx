@@ -770,9 +770,10 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Lịch",
-                            href: isStaff
-                              ? "/dashboard/staff/calendar"
-                              : "/dashboard/manager/calendar",
+                            // Calendar is the same manager-managed page; even for staff
+                            // we keep the canonical URL under /dashboard/manager/calendar
+                            // but staff will access with the required 'service: Schedule' header.
+                            href: "/dashboard/manager/calendar",
                             icon: <Clock className='h-4 w-4' />,
                           },
                         ]

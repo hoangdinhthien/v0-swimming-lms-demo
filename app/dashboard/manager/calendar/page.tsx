@@ -81,6 +81,7 @@ import {
   usePerformanceMonitor,
   apiCache,
 } from "@/hooks/use-api-cache";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ClassDetailModal from "@/components/manager/class-detail-modal";
@@ -177,6 +178,9 @@ export default function ImprovedAntdCalendarPage() {
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // staff/manager permission helper
+  const { isStaff } = useStaffPermissions();
+
   // NOTE: defer loading slots/classrooms/pools until manager opens drawer to add/edit
   // This reduces initial page load time. Data will be fetched by `loadClassManagementData()`
   // which is triggered when user opens the Add/Edit UI.
@@ -199,7 +203,13 @@ export default function ImprovedAntdCalendarPage() {
           "🗓️ Fetching month schedule for:",
           currentDate.format("YYYY-MM-DD")
         );
-        const events = await fetchMonthSchedule(currentDate.toDate());
+        // If the current user is staff, the API requires a 'service: Schedule' header
+        const events = await fetchMonthSchedule(
+          currentDate.toDate(),
+          undefined,
+          undefined,
+          isStaff ? "Schedule" : undefined
+        );
 
         console.log(" Loaded schedule events:", {
           count: events.length,
@@ -420,7 +430,13 @@ export default function ImprovedAntdCalendarPage() {
       message.success(`Đã xóa lớp ${scheduleToDelete.className} khỏi lịch`);
 
       // Refresh data without changing page
-      const events = await fetchMonthSchedule(currentDate.toDate());
+      const { isStaff: isStaff2 } = useStaffPermissions();
+      const events = await fetchMonthSchedule(
+        currentDate.toDate(),
+        undefined,
+        undefined,
+        isStaff2 ? "Schedule" : undefined
+      );
 
       setScheduleEvents(events);
       setDeleteDialogOpen(false);
@@ -636,7 +652,13 @@ export default function ImprovedAntdCalendarPage() {
       message.success("Đã thêm lớp học vào lịch thành công");
 
       // Refresh schedule data
-      const events = await fetchMonthSchedule(currentDate.toDate());
+      const { isStaff: isStaff3 } = useStaffPermissions();
+      const events = await fetchMonthSchedule(
+        currentDate.toDate(),
+        undefined,
+        undefined,
+        isStaff3 ? "Schedule" : undefined
+      );
       setScheduleEvents(events);
 
       // Reset form
@@ -717,7 +739,12 @@ export default function ImprovedAntdCalendarPage() {
 
       // Refresh schedule data
       console.log("🔄 Refreshing schedule data...");
-      const events = await fetchMonthSchedule(currentDate.toDate());
+      const events = await fetchMonthSchedule(
+        currentDate.toDate(),
+        undefined,
+        undefined,
+        isStaff ? "Schedule" : undefined
+      );
       setScheduleEvents(events);
       console.log("✅ Schedule data refreshed");
 

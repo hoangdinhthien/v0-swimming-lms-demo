@@ -110,6 +110,7 @@ export interface FetchScheduleParams {
   endDate: Date;
   tenantId?: string;
   token?: string;
+  service?: string;
 }
 
 /**
@@ -121,6 +122,7 @@ export const fetchScheduleData = async (
   params: FetchScheduleParams
 ): Promise<ScheduleEvent[]> => {
   const { startDate, endDate, tenantId, token } = params;
+  const { service } = params;
 
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
@@ -146,6 +148,7 @@ export const fetchScheduleData = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
+        ...(service ? { service } : {}),
       },
     }
   );
@@ -183,7 +186,8 @@ export const fetchScheduleData = async (
 export const fetchMonthSchedule = async (
   date: Date,
   tenantId?: string,
-  token?: string
+  token?: string,
+  service?: string
 ): Promise<ScheduleEvent[]> => {
   // Get the first and last day of the month
   const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -194,6 +198,7 @@ export const fetchMonthSchedule = async (
     endDate: lastDay,
     tenantId,
     token,
+    service,
   });
 };
 
@@ -209,13 +214,15 @@ export const fetchDateRangeSchedule = async (
   startDate: Date,
   endDate: Date,
   tenantId?: string,
-  token?: string
+  token?: string,
+  service?: string
 ): Promise<ScheduleEvent[]> => {
   return fetchScheduleData({
     startDate,
     endDate,
     tenantId,
     token,
+    service,
   });
 };
 
