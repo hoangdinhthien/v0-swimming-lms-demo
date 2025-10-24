@@ -15,11 +15,129 @@ FIX:
 - thêm logic button 'Xem lịch dạy' trang manager/instructor detail
 - chưa có UI cho manager/pool
 
-
 ==========================================================
--tính năng còn thiếu:
---manager/staff:
---- block (UI kéo thả)
---- staff gửi request update module cho manager, manager duyệt update request của staff
---- hiện tại là đang đăng ký cho khóa học á, có đổi thành đăng ký cho lớp học ko hay khỏi
---- 
+
+SCREEN FLOW MANAGER/STAFF
+
+MANAGER:
+- các màn hình (SCREENS): 
+  > LOGIN 
+  > TENANT SELECTION (màn hình chọn chi nhánh,nếu như manager đó có quyền access được nhiều chi nhánh khác nhau) 
+  > DASHBOARD
+
+  > STUDENTS (Members)
+    >> click vào 1 student nào đó sẽ đến trang STUDENTS DETAIL 
+    >> click vào nút 'Thêm học viên' sẽ đến trang CREATE STUDENTS
+  > STUDENT DETAIL (thông tin chi tiết của học viên)
+    >> click vào nút 'Chỉnh sửa' sẽ hiện lên form modal/popup để chỉnh sửa học viên, click vào nút 'Hủy' hoặc 'Lưu thay đổi' sẽ đóng modal đó lại
+    >> click vào nút 'Quay về danh sách' sẽ trở lại trang STUDENTS
+  > CREATE STUDENT (trang tạo tài khoản cho học viên mới)
+    >> click vào nút 'Quay về danh sách học viên' sẽ trở lại trang STUDENTS
+    >> click vào nút 'Thêm học viên' sau khi đã điền thông tin của học viên mới sẽ trở lại trang STUDENTS
+
+  > INSTRUCTORS (Giáo viên) 
+    >> click vào 1 instructor nào đó sẽ đến trang INSTRUCTOR DETAIL
+    >> click vào nút 'Thêm giáo viên' sẽ đến trang CREATE INSTRUCTOR 
+  > INSTRUCTOR DETAIL (thông tin chi tiết của giáo viên)
+    >> click vào nút 'Quay về danh sách' sẽ trở lại trang INSTRUCTORS
+    >> click vào nút 'Chỉnh sửa' sẽ hiện lên form modal/popup để chỉnh sửa thông tin của giáo viên, click vào nút 'Hủy' hoặc 'Lưu thay đổi' sẽ đóng modal đó lại.
+  > CREATE INSTRUCTOR (tạo giáo viên mới)
+    >> click vào nút 'Quay về danh sách giáo viên' sẽ trở lại trang INSTRUCTORS
+    >> click vào nút 'Thêm giáo viên' sau khi đã điền thông tin của giáo viên mới sẽ trở lại trang INSTRUCTORS
+
+  > STAFFS (Nhân viên)
+    >> click vào nút 'Thêm nhân viên' sẽ đến trang CREATE STAFF
+    >> click vào nút 'Chi tiết' của 1 staff nào đó trong trang sẽ đến trang STAFF DETAIL
+    >> click vào nút 'Quyền hạn' của 1 staff nào đó sẽ hiện lên modal/popup để chỉnh sửa permission của staff đó, click vào nút 'Hủy' hoặc 'Lưu quyền hạn' sẽ đóng modal đó lại
+  > STAFF DETAIL (thông tin chi tiết của staff)
+    >> click vào nút 'Chỉnh sửa thông tin' sẽ hiện lên form modal/popup để chỉnh sửa thông tin của nhân viên, click vào nút 'Hủy' hoặc 'Lưu thay đổi' sẽ đóng modal đó lại.
+    >> click vào nút 'Quản lý quyền truy cập' sẽ hiện lên modal/popup để chỉnh sửa permission của staff đó, click vào nút 'Hủy' hoặc 'Lưu quyền hạn' sẽ đóng modal đó lại
+    >> click 'Quay về danh sách' sẽ trở lại trang STAFFS
+  > CREATE  STAFF (tạo nhân viên mới)
+    >> click 'Quay về danh sách nhân viên' sẽ trở lại trang STAFFS
+    >> click 'Hủy bỏ' hoặc 'Tạo nhân viên' sẽ trở lại trang STAFFS
+  
+  > COURSES (Khóa học)
+    >> click vào nút 'Quản lý danh mục' sẽ mở modal để quản lý COURSE CATEGORIES (danh mục khóa học)
+      >> sau khi đã điền courses category mới và toggle trạng thái hoạt động sau đó click vào nút 'Thêm' sẽ tạo được một course category mới
+      >> click vào icon chỉnh sửa của một course category sẽ chỉnh sửa được thông tin của course category đó
+      >> click vào icon thùng rác sẽ của một course category sẽ hiện lên một modal/popup xác nhận xóa course category đó
+      >> click vào nút 'Đóng' sẽ đóng modal quản lý COURSE CATEGORIES
+    >> click vào nút 'Thêm khóa học' sẽ đến trang CREATE COURSE
+    >> click vào một khóa học sẽ đến trang COURSE DETAIL
+  > CREATE COURSE (tạo khóa học mới)
+    >> click vào nút 'Quay về danh sách khóa học' sẽ trở lại trang COURSES
+    >> click vào nút 'Hủy' hoặc 'Tạo khóa học' sau khi đã điền thông tin của khóa học mới sẽ trở lại trang COURSES
+  > COURSE DETAIL (thông tin chi tiết của khóa học)
+    >> click vào nút 'Quay về danh sách' sẽ trở lại trang COURSES
+    >> click vào nút 'Chỉnh sửa khóa học' sẽ mở modal/popup để chỉnh sửa thông tin của khóa học, click vào nút 'Hủy' hoặc 'Lưu thay đổi' sau khi đã điền thông tin đã chỉnh sửa của khóa học sẽ đóng modal
+
+  > CLASSES (Lớp học) 
+    >> click vào một lớp học sẽ đến trang CLASS DETAIL
+    >> click vào nút 'Thêm lớp học mới' sẽ đến trang CREATE CLASS
+  > CREATE CLASS (tạo lớp học mới)
+    >> click vào nút 'Quay về Danh sách lớp học' sẽ trở lại trang CLASSES
+    >> click vào nút 'Hủy' hoặc 'Tạo lớp học' sau khi đã điền thông tin của lớp học mới sẽ trở lại trang CLASSES
+  > CLASS DETAIL (thông tin chi tiết của lớp học)
+    >> click vào nút 'Quay về danh sách lớp học' sẽ trở về trang CLASSES
+    >> click vào nút 'Chỉnh sửa lớp học' sẽ mở modal để chỉnh sửa thông tin của lớp học, click vào nút 'Hủy' hoặc 'Lưu thay đổi' sẽ đóng modal
+    >> click vào một học viên hoặc giáo viên ở phần 'Thông tin lớp học' sẽ đên trang STUDENT DETAIL hoặc INSTRUCTOR DETAIL
+    >> một lưu ý về trang CLASS DETAIL này: nếu như lớp học đó mà chưa được xếp đủ số buổi học thì trong trang CLASS DETAIL này sẽ hiện thêm một nút là 'Tự động xếp lịch học', click vào nút 'Tự động xếp lịch học' sẽ hiên lên một modal để setup thời gian cho việc tự động xếp lịch học, sau đó click vào nút 'Tự động xếp lịch' thì hệ thống sẽ tự động xếp lịch học cho lớp học này và đóng modal hoặc click vào nút 'Hủy' cũng sẽ đóng modal
+
+  > NEWS (Tin tức) 
+    >> click vào nút 'Tạo tin tức' sẽ mở modal CREATE NEWS
+      >> click vào nút 'Hủy' hoặc 'Tạo tin tức' sau khi nhập thông tin của tin tức mới sẽ đóng modal CREATE NEWS
+    >> click vào một tin tức sẽ đến trang NEWS DETAIL
+  > NEWS DETAIL (thông tin chi tiết của tin tức)
+    >> click vào nút 'Quay về danh sách' sẽ trở lại trang NEWS
+    >> click vào nút 'Chỉnh sửa' sẽ mở một modal để chỉnh sửa thông tin của tin tức đó
+      >> click vào nút 'Hủy' hoặc 'Cập nhật tin tức' sau khi nhập thông tin của tin tức đã chỉnh sửa sẽ đóng modal 
+
+  > APPLICATIONS (Đơn từ)
+    >> click vào một đơn từ sẽ đến trang APPLICATION DETAIL
+  > APPLICATION DETAIL
+    >> click vào nút 'Quay về danh sách đơn từ' để trở lại trang APPLICATIONS
+    >> click vào nút 'Phản hồi đơn' để phản hồi đờ từ
+
+  > APPLICATION TYPE (Loại đơn từ) 
+    >> click vào nút 'Tạo loại đơn từ mới' sẽ hiện lên modal để tạo một loại đơn từ mới
+      >> click nút 'Hủy' hoặc 'Tạo loại đơn từ' sau khi điền thông tin của loại đơn từ mới sẽ đóng modal
+
+  > ORDERS (Giao dịch)
+    >> click vào một giao dịch sẽ đến trang ORDER DETAIL 
+  > ORDER DETAIL
+
+  > CALENDAR (Lịch)
+    >> lưu ý: calendar này là ở dạng view tháng
+    >> click vào một ô (cell) trên lịch sẽ hiện lên một drawer hiện thông tin các buổi học của ngày hôm đó
+      >> trong drawer: 
+        >> click vào icon thùng rác (trash icon) sẽ xóa thông tin buổi học đó khỏi lịch
+        >> click vào icon hình con mắt (eye icon) của một buổi học sẽ hiện lên modal của thể hiện thông tin của chi tiết của buổi học đó
+          >> trong modal chi tiết buổi học
+            >> click vào nút 'Đóng' sẽ đóng modal lại
+            >> click vào nút 'Chỉnh sửa' sẽ hiện một tab 'Chỉnh sửa buổi học' trong drawer để chỉnh sửa buổi học 
+            >> click vào nút 'Xóa lớp học' sẽ xóa lớp học
+  
+  > Setting (Account settings)
+  > Pools (Hồ bơi)
+  > Pools detail
+
+NAVIGATION:
+- sidebar: 
+  > Dashboard,
+  > Students (Members) 
+  > Instructors (Giáo viên) 
+  > Staffs (Nhân viên) 
+  > Courses (Khóa học) 
+  > Classes (Lớp học) 
+  > News (Tin tức) 
+  > Applications (Đơn từ) 
+  > Application types (Loại đơn từ) 
+  > Orders (Giao dịch) 
+  > Setting (Account settings)
+  
+- header: 
+  > Header với thông tin user và tenant
+  > Dropdown chuyển đổi chi nhánh
+  > Theme toggle (sáng/tối)
+  > Đăng xuất
