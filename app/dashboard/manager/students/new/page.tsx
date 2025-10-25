@@ -322,9 +322,22 @@ export default function NewStudentPage() {
 
       router.refresh(); // Refresh the page to show the new student
     } catch (error: any) {
+      // Surface server-side validation errors inline when possible
+      const serverMessage: string =
+        error?.message || "Đã xảy ra lỗi khi thêm học viên";
+
+      // If the error mentions email or duplicate, attach it to the email field
+      if (/email|duplicate|exists|already/i.test(serverMessage)) {
+        try {
+          form.setError("email", { type: "server", message: serverMessage });
+        } catch (e) {
+          // ignore
+        }
+      }
+
       toast({
         title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi khi thêm học viên",
+        description: serverMessage,
         variant: "destructive",
       });
     } finally {

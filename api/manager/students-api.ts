@@ -36,6 +36,7 @@ export async function createStudent({
     }
   );
 
+  // If HTTP status is not OK, parse body (if possible) and throw with a helpful message
   if (!response.ok) {
     const errorText = await response.text();
     let errorMessage;
@@ -43,6 +44,7 @@ export async function createStudent({
       const errorData = JSON.parse(errorText);
       errorMessage =
         errorData.message ||
+        errorData.error ||
         `Error (${response.status}): ${response.statusText}`;
     } catch (e) {
       errorMessage = `Error (${response.status}): ${
@@ -53,7 +55,89 @@ export async function createStudent({
     throw new Error(errorMessage);
   }
 
-  return await response.json();
+  // If HTTP status is OK, the backend may still return an error inside the JSON body
+  const json = await response.json();
+
+  // Helper: recursively search for error-like indicators in the JSON response
+  const findErrorMessage = (obj: any, depth = 0): string | null => {
+    if (!obj || depth > 4) return null;
+    if (typeof obj === "string") {
+      const lower = obj.toLowerCase();
+      // Common error keywords
+      if (
+        lower.includes("error") ||
+        lower.includes("duplicate") ||
+        lower.includes("exists") ||
+        lower.includes("failed") ||
+        lower.includes("invalid")
+      ) {
+        return obj;
+      }
+      return null;
+    }
+    if (typeof obj === "number" || typeof obj === "boolean") return null;
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        const m = findErrorMessage(item, depth + 1);
+        if (m) return m;
+      }
+      return null;
+    }
+    // obj is plain object
+    // direct fields
+    if (obj.success === false) {
+      if (obj.message) return obj.message;
+      if (obj.error)
+        return typeof obj.error === "string"
+          ? obj.error
+          : JSON.stringify(obj.error);
+      return "Unknown error from API";
+    }
+    if (obj.status && String(obj.status).toLowerCase() === "error") {
+      return obj.message || obj.error || "Unknown error from API";
+    }
+    if (
+      obj.error &&
+      (typeof obj.error === "string" || typeof obj.error === "object")
+    ) {
+      return typeof obj.error === "string"
+        ? obj.error
+        : obj.error.message || JSON.stringify(obj.error);
+    }
+    if (obj.message && typeof obj.message === "string") {
+      // Some APIs return a message field for errors
+      const lower = obj.message.toLowerCase();
+      if (
+        lower.includes("error") ||
+        lower.includes("duplicate") ||
+        lower.includes("exists") ||
+        lower.includes("failed") ||
+        lower.includes("invalid") ||
+        lower.includes("already")
+      ) {
+        return obj.message;
+      }
+    }
+
+    // check nested
+    for (const key of Object.keys(obj)) {
+      try {
+        const m = findErrorMessage(obj[key], depth + 1);
+        if (m) return m;
+      } catch (e) {
+        // ignore
+      }
+    }
+    return null;
+  };
+
+  const detected = findErrorMessage(json);
+  if (detected) {
+    console.error("API returned error inside 200 response:", detected, json);
+    throw new Error(detected);
+  }
+
+  return json;
 }
 
 export async function fetchStudents({
