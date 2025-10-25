@@ -58,6 +58,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import { getTenantInfo } from "@/api/tenant-api";
 import { uploadMedia, getMediaDetails } from "@/api/media-api";
 import { useToast } from "@/hooks/use-toast";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import ManagerNotFound from "@/components/manager/not-found";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
@@ -289,9 +290,24 @@ export default function StaffDetailPage() {
       // Refetch staff details
       await fetchDetailAgain();
     } catch (error) {
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
+
+      // Set field-specific errors
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        try {
+          form.setError(field as keyof z.infer<typeof staffFormSchema>, {
+            type: "server",
+            message,
+          });
+        } catch (e) {
+          // Ignore if field doesn't exist in form
+        }
+      });
+
       toast({
         title: "Cập nhật thất bại",
-        description: "Đã xảy ra lỗi khi cập nhật thông tin nhân viên",
+        description: generalError,
         variant: "destructive",
       });
       console.error("Error updating staff:", error);

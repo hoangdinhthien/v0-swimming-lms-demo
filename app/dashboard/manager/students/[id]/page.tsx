@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import ManagerNotFound from "@/components/manager/not-found";
 
 export default function StudentDetailPage() {
@@ -375,9 +376,18 @@ export default function StudentDetailPage() {
       // Refresh student data
       fetchDetail();
     } catch (error: any) {
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
+
+      // Set field-specific errors
+      setFormErrors((prev) => ({
+        ...prev,
+        ...fieldErrors,
+      }));
+
       toast({
         title: "Lỗi cập nhật thông tin",
-        description: error.message || "Không thể cập nhật thông tin học viên",
+        description: generalError,
         variant: "destructive",
       });
       console.error("Error updating student:", error);
@@ -646,14 +656,25 @@ export default function StudentDetailPage() {
                 >
                   Tên đăng nhập
                 </Label>
-                <Input
-                  id='username'
-                  name='username'
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                  required
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='username'
+                    name='username'
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    className={
+                      formErrors.username
+                        ? "col-span-3 border-red-500"
+                        : "col-span-3"
+                    }
+                    required
+                  />
+                  {formErrors.username && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.username}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label
@@ -662,14 +683,25 @@ export default function StudentDetailPage() {
                 >
                   Email
                 </Label>
-                <Input
-                  id='email'
-                  name='email'
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                  required
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='email'
+                    name='email'
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={
+                      formErrors.email
+                        ? "col-span-3 border-red-500"
+                        : "col-span-3"
+                    }
+                    required
+                  />
+                  {formErrors.email && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.email}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label
@@ -678,13 +710,24 @@ export default function StudentDetailPage() {
                 >
                   Số điện thoại
                 </Label>
-                <Input
-                  id='phone'
-                  name='phone'
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='phone'
+                    name='phone'
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={
+                      formErrors.phone
+                        ? "col-span-3 border-red-500"
+                        : "col-span-3"
+                    }
+                  />
+                  {formErrors.phone && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.phone}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label
@@ -693,13 +736,24 @@ export default function StudentDetailPage() {
                 >
                   Địa chỉ
                 </Label>
-                <Input
-                  id='address'
-                  name='address'
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='address'
+                    name='address'
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={
+                      formErrors.address
+                        ? "col-span-3 border-red-500"
+                        : "col-span-3"
+                    }
+                  />
+                  {formErrors.address && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.address}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label
@@ -731,15 +785,26 @@ export default function StudentDetailPage() {
                 >
                   Mật khẩu mới
                 </Label>
-                <Input
-                  id='password'
-                  name='password'
-                  type='password'
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className='col-span-3'
-                  placeholder='Để trống nếu không thay đổi'
-                />
+                <div className='col-span-3'>
+                  <Input
+                    id='password'
+                    name='password'
+                    type='password'
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={
+                      formErrors.password
+                        ? "col-span-3 border-red-500"
+                        : "col-span-3"
+                    }
+                    placeholder='Để trống nếu không thay đổi'
+                  />
+                  {formErrors.password && (
+                    <p className='text-red-500 text-sm mt-1'>
+                      {formErrors.password}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='grid grid-cols-4 items-center gap-4'>
                 <Label

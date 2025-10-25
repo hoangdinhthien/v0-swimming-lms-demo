@@ -40,6 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { getMediaDetails, uploadMedia } from "@/api/media-api";
 import { getTenantInfo } from "@/api/tenant-api";
 import { useToast } from "@/hooks/use-toast";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -402,9 +403,24 @@ export default function InstructorDetailPage() {
       }
       setLoading(false);
     } catch (error) {
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
+
+      // Set field-specific errors
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        try {
+          form.setError(field as keyof z.infer<typeof instructorFormSchema>, {
+            type: "server",
+            message,
+          });
+        } catch (e) {
+          // Ignore if field doesn't exist in form
+        }
+      });
+
       toast({
         title: "Cập nhật thất bại",
-        description: "Đã xảy ra lỗi khi cập nhật thông tin giáo viên",
+        description: generalError,
         variant: "destructive",
       });
       console.error("Error updating instructor:", error);

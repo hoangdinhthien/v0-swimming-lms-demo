@@ -25,6 +25,7 @@ import {
   createInstructor,
   type CreateInstructorData,
 } from "@/api/manager/instructors-api";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -157,9 +158,24 @@ export default function NewInstructorPage() {
       router.push("/dashboard/manager/instructors");
       router.refresh(); // Refresh the page to show the new instructor
     } catch (error: any) {
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
+
+      // Set field-specific errors
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        try {
+          form.setError(field as keyof InstructorFormValues, {
+            type: "server",
+            message,
+          });
+        } catch (e) {
+          // Ignore if field doesn't exist in form
+        }
+      });
+
       toast({
         title: "Lỗi",
-        description: error.message || "Đã xảy ra lỗi khi thêm giáo viên",
+        description: generalError,
         variant: "destructive",
       });
     } finally {

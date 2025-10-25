@@ -38,6 +38,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { uploadMedia } from "@/api/media-api";
 import config from "@/api/config.json";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 
 // Staff creation function using the actual API
 async function createStaffMember(staffData: any, avatarFile: File | null) {
@@ -276,9 +277,18 @@ export default function NewStaffPage() {
         router.refresh(); // Refresh to show the new staff member
       }
     } catch (error: any) {
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
+
+      // Set field-specific errors
+      setErrors((prev) => ({
+        ...prev,
+        ...fieldErrors,
+      }));
+
       toast({
         title: "Lỗi",
-        description: error.message || "Có lỗi xảy ra khi tạo nhân viên",
+        description: generalError,
         variant: "destructive",
       });
     } finally {

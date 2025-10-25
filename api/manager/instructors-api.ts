@@ -234,7 +234,16 @@ export async function updateInstructor({
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API error:", res.status, errorText);
-    throw new Error("Không thể cập nhật thông tin giáo viên");
+    // Try to surface a useful server-side error message so the frontend
+    // can parse and map field-specific validation errors.
+    try {
+      const parsed = JSON.parse(errorText);
+      const message = parsed.message || parsed.error || JSON.stringify(parsed);
+      throw new Error(message);
+    } catch (e) {
+      // If response is not JSON, include the raw text
+      throw new Error(errorText || `Error (${res.status}): ${res.statusText}`);
+    }
   }
 
   const responseData = await res.json();

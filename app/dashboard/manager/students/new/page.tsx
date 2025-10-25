@@ -25,6 +25,7 @@ import {
   type CreateStudentData,
   fetchUsersWithoutParent,
 } from "@/api/manager/students-api";
+import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -322,22 +323,24 @@ export default function NewStudentPage() {
 
       router.refresh(); // Refresh the page to show the new student
     } catch (error: any) {
-      // Surface server-side validation errors inline when possible
-      const serverMessage: string =
-        error?.message || "Đã xảy ra lỗi khi thêm học viên";
+      // Parse field-specific errors from API response
+      const { fieldErrors, generalError } = parseApiFieldErrors(error);
 
-      // If the error mentions email or duplicate, attach it to the email field
-      if (/email|duplicate|exists|already/i.test(serverMessage)) {
+      // Set field-specific errors
+      Object.entries(fieldErrors).forEach(([field, message]) => {
         try {
-          form.setError("email", { type: "server", message: serverMessage });
+          form.setError(field as keyof StudentFormValues, {
+            type: "server",
+            message,
+          });
         } catch (e) {
-          // ignore
+          // Ignore if field doesn't exist in form
         }
-      }
+      });
 
       toast({
         title: "Lỗi",
-        description: serverMessage,
+        description: generalError,
         variant: "destructive",
       });
     } finally {
