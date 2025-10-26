@@ -1,6 +1,7 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import config from "../config.json";
+import { getUserFrontendRole } from "../role-utils";
 
 // Define types for the slot detail API response
 export interface Pool {
@@ -99,6 +100,7 @@ export const fetchSlotDetail = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
       },
     }
   );
@@ -188,6 +190,7 @@ export const fetchAllSlots = async (
       "Content-Type": "application/json",
       "x-tenant-id": finalTenantId,
       Authorization: `Bearer ${finalToken}`,
+      ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
     },
   });
 
