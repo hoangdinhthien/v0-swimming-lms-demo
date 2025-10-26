@@ -1,5 +1,6 @@
 import config from "../config.json";
 import { getAuthToken } from "../auth-utils";
+import { getUserFrontendRole } from "../role-utils";
 
 export interface OrderGuest {
   username: string;
@@ -79,12 +80,16 @@ export interface Order {
 }
 
 export interface OrdersResponse {
-  data: Order[];
-  meta: {
-    total: number;
-    last_page: number;
-    current_page: number;
-  };
+  data: Array<
+    Array<{
+      data: Order[];
+      meta_data: {
+        count: number;
+        page: number;
+        limit: number;
+      };
+    }>
+  >;
   message: string;
   statusCode: number;
 }
@@ -115,11 +120,16 @@ export async function fetchOrders({
     );
   }
 
-  const url = `${config.API}/v1/order?page=${page}&limit=${limit}`;
-  const headers = {
+  const url = `${config.API}/v1/workflow-process/manager/orders?page=${page}&limit=${limit}`;
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers.service = "Order";
+  }
 
   console.log("[fetchOrders] URL:", url);
   console.log("[fetchOrders] Headers:", headers);
@@ -139,13 +149,16 @@ export async function fetchOrders({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrders] API Response:", data);
 
-    // Parse the new flat structure where data is directly an array of orders
-    const orders = data.data || [];
-    console.log("[fetchOrders] Parsed orders count:", orders.length);
+    // Parse the nested structure: data[0][0].data contains orders, data[0][0].meta_data contains pagination
+    const ordersData = data.data?.[0]?.[0];
+    const orders = ordersData?.data || [];
+    const metaData = ordersData?.meta_data;
 
-    const meta = data.meta;
-    const total = meta?.total || orders.length;
-    const currentPage = meta?.current_page || page;
+    console.log("[fetchOrders] Parsed orders count:", orders.length);
+    console.log("[fetchOrders] Meta data:", metaData);
+
+    const total = metaData?.count || orders.length;
+    const currentPage = metaData?.page || page;
 
     return {
       orders,
@@ -413,11 +426,17 @@ export async function fetchOrdersForCourse({
     `search[status:contains]=${status}`,
   ].join("&");
 
-  const url = `${config.API}/v1/order?${queryParams}`;
-  const headers = {
+  // Use the manager workflow endpoint which returns nested data
+  const url = `${config.API}/v1/workflow-process/manager/orders?${queryParams}`;
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers.service = "Order";
+  }
 
   console.log("[fetchOrdersForCourse] URL:", url);
   console.log("[fetchOrdersForCourse] Headers:", headers);
@@ -437,8 +456,9 @@ export async function fetchOrdersForCourse({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrdersForCourse] API Response:", data);
 
-    // Parse the new flat structure where data is directly an array of orders
-    const orders = data.data || [];
+    // Parse the nested structure: data[0][0].data contains orders
+    const ordersData = data.data?.[0]?.[0];
+    const orders = ordersData?.data || [];
     console.log("[fetchOrdersForCourse] Parsed orders count:", orders.length);
 
     return orders;
@@ -472,10 +492,15 @@ export async function fetchOrderById({
   }
 
   const url = `${config.API}/v1/workflow-process/manager/order?id=${orderId}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers.service = "Order";
+  }
 
   console.log("[fetchOrderById] URL:", url);
   console.log("[fetchOrderById] Headers:", headers);

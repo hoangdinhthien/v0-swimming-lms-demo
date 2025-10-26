@@ -784,9 +784,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Đơn từ",
-                            href: isStaff
-                              ? "/dashboard/staff/applications"
-                              : "/dashboard/manager/applications",
+                            href: "/dashboard/manager/applications",
                             icon: <FileText className='h-4 w-4' />,
                           },
                         ]
@@ -806,9 +804,7 @@ export default function DashboardLayout({
                       ? [
                           {
                             name: "Giao Dịch",
-                            href: isStaff
-                              ? "/dashboard/staff/transactions"
-                              : "/dashboard/manager/transactions",
+                            href: "/dashboard/manager/transactions",
                             icon: <PaymentIcon className='h-4 w-4' />,
                           },
                         ]

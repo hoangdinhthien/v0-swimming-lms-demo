@@ -1,5 +1,6 @@
 import { getSelectedTenant } from "../utils/tenant-utils";
 import { getAuthToken } from "./auth-utils";
+import { getUserFrontendRole } from "./role-utils";
 import { apiCache } from "../utils/api-cache";
 
 export interface ApiOptions extends RequestInit {
@@ -7,6 +8,24 @@ export interface ApiOptions extends RequestInit {
   includeTenant?: boolean;
   useCache?: boolean;
   cacheTTL?: number; // in milliseconds
+}
+
+// Helper function to get service name from URL
+function getServiceFromUrl(url: string): string | null {
+  if (url.includes("/manager/user")) return "User";
+  if (url.includes("/manager/users")) return "User";
+  if (url.includes("/manager/course")) return "Course";
+  if (url.includes("/manager/courses")) return "Course";
+  if (url.includes("/manager/course-category")) return "Course";
+  if (url.includes("/manager/class")) return "Class";
+  if (url.includes("/manager/classes")) return "Class";
+  if (url.includes("/manager/pools")) return "Pool";
+  if (url.includes("/manager/schedule")) return "Schedule";
+  if (url.includes("/manager/slot")) return "Slot";
+  if (url.includes("/manager/news")) return "News";
+  if (url.includes("/manager/orders")) return "Order";
+  if (url.includes("/manager/applications")) return "Application";
+  return null;
 }
 
 export async function apiRequest(
@@ -54,6 +73,14 @@ export async function apiRequest(
     const tenantId = getSelectedTenant();
     if (tenantId) {
       headers["x-tenant-id"] = tenantId;
+    }
+  }
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    const service = getServiceFromUrl(url);
+    if (service) {
+      headers["service"] = service;
     }
   }
 
@@ -119,4 +146,33 @@ export async function apiDelete(
   options: ApiOptions = {}
 ): Promise<Response> {
   return apiRequest(url, { ...options, method: "DELETE" });
+}
+
+// Helper function to build headers with service for direct fetch calls
+export function buildApiHeaders(
+  token?: string,
+  tenantId?: string,
+  url?: string
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  if (tenantId) {
+    headers["x-tenant-id"] = tenantId;
+  }
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff" && url) {
+    const service = getServiceFromUrl(url);
+    if (service) {
+      headers["service"] = service;
+    }
+  }
+
+  return headers;
 }

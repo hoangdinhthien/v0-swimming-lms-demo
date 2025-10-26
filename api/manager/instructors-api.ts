@@ -1,4 +1,5 @@
 import config from "../config.json";
+import { getUserFrontendRole } from "../role-utils";
 
 export interface CreateInstructorData {
   username: string;
@@ -20,15 +21,22 @@ export async function createInstructor({
   tenantId: string;
   token: string;
 }) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+    "x-tenant-id": tenantId,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/user`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-tenant-id": tenantId,
-      },
+      headers,
       body: JSON.stringify(data),
     }
   );
@@ -68,11 +76,21 @@ export async function fetchInstructors({
 
     console.log("🔍 Fetching from URL:", url);
 
+    const headers: Record<string, string> = {
+      "x-tenant-id": tenantId,
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers["service"] = "User";
+    }
+
     const res = await fetch(url, {
-      headers: {
-        "x-tenant-id": tenantId,
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
+      headers,
       cache: "no-store",
     });
 
@@ -162,10 +180,16 @@ export async function fetchInstructorDetail({
     throw new Error("Thiếu thông tin xác thực hoặc ID giáo viên");
   }
   const url = `${config.API}/v1/workflow-process/manager/user?id=${instructorId}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
   console.log("[fetchInstructorDetail] URL:", url);
   console.log("[fetchInstructorDetail] Headers:", headers);
   const res = await fetch(url, {
@@ -216,11 +240,16 @@ export async function updateInstructor({
   }
 
   const url = `${config.API}/v1/workflow-process/manager/user?id=${instructorId}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
 
   console.log("[updateInstructor] URL:", url);
   console.log("[updateInstructor] Headers:", headers);

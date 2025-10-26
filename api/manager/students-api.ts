@@ -1,4 +1,5 @@
 import config from "../config.json";
+import { getUserFrontendRole } from "../role-utils";
 
 export interface CreateStudentData {
   username: string;
@@ -23,15 +24,22 @@ export async function createStudent({
 }) {
   console.log("Creating student with data:", data);
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+    "x-tenant-id": tenantId,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/user`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-tenant-id": tenantId,
-      },
+      headers,
       body: JSON.stringify(data),
     }
   );
@@ -150,13 +158,24 @@ export async function fetchStudents({
   role?: string;
 }) {
   if (!tenantId) return [];
+
+  const headers: Record<string, string> = {
+    "x-tenant-id": tenantId,
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/users?role=${role}`,
     {
-      headers: {
-        "x-tenant-id": tenantId,
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
+      headers,
       cache: "no-store",
     }
   );
@@ -185,10 +204,16 @@ export async function fetchStudentDetail({
     throw new Error("Thiếu thông tin xác thực hoặc ID học viên");
   }
   const url = `${config.API}/v1/workflow-process/manager/user?id=${studentId}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
   console.log("[fetchStudentDetail] URL:", url);
   console.log("[fetchStudentDetail] Headers:", headers);
   const res = await fetch(url, {
@@ -225,10 +250,15 @@ export async function fetchUsersWithoutParent({
   }
 
   const url = `${config.API}/v1/workflow-process/manager/users?have_parent=false&role=${role}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
 
   console.log("[fetchUsersWithoutParent] URL:", url);
 
@@ -292,10 +322,15 @@ export async function fetchStudentsByCourseOrder({
   }
 
   const url = `${config.API}/v1/workflow-process/manager/users/get-by-order?course=${courseId}`;
-  const headers = {
+  const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,
   };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
 
   console.log("[fetchStudentsByCourse] URL:", url);
   console.log("[fetchStudentsByCourse] Headers:", headers);
@@ -428,6 +463,8 @@ export async function updateStudent({
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         "x-tenant-id": tenantId,
+        // Add service header for staff users
+        ...(getUserFrontendRole() === "staff" && { service: "User" }),
       },
       body: JSON.stringify(data),
     }

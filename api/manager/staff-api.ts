@@ -1,4 +1,5 @@
 import config from "../config.json";
+import { getUserFrontendRole } from "../role-utils";
 
 // Helper function to build API URL
 function buildApiUrl(endpoint: string): string {
@@ -13,6 +14,11 @@ function createHeaders(token?: string): HeadersInit {
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
   }
 
   return headers;

@@ -1,5 +1,6 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { getUserFrontendRole } from "../role-utils";
 import config from "../config.json";
 
 // Define types for the class API response
@@ -203,15 +204,22 @@ export const fetchClassDetails = async (
     throw new Error("Classroom ID is required");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class?id=${classroomId}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 
@@ -260,15 +268,22 @@ export const fetchClasses = async (
     throw new Error("Missing authentication or tenant information");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/classes?page=${page}&limit=${limit}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 
@@ -321,15 +336,22 @@ export const createClass = async (
     throw new Error("Missing authentication or tenant information");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
       body: JSON.stringify(data),
     }
   );
@@ -379,15 +401,22 @@ export const updateClass = async (
     throw new Error("Class ID is required");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
       body: JSON.stringify(data),
     }
   );
@@ -419,15 +448,22 @@ export async function fetchClassrooms(
     throw new Error("Missing authentication or tenant information");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/classes`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 
@@ -470,15 +506,22 @@ export async function fetchClassroomsByCourse(
     throw new Error("Course ID is required");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/classes?course=${courseId}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 
@@ -536,15 +579,22 @@ export async function fetchClassroomsByCourseAndSchedule(
     params.append("searchKey", searchKey.trim());
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/classes?${params.toString()}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 
@@ -598,15 +648,22 @@ export async function addClassToSchedule(
     );
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Schedule";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/schedule`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
       body: JSON.stringify(request),
     }
   );
@@ -689,15 +746,22 @@ export async function addUserToClass(
   // First, fetch the current class details to get all data needed for update
   let classData: any = null;
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-tenant-id": finalTenantId,
+      Authorization: `Bearer ${finalToken}`,
+    };
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers["service"] = "Class";
+    }
+
     const classResponse = await fetch(
       `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
       {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "x-tenant-id": finalTenantId,
-          Authorization: `Bearer ${finalToken}`,
-        },
+        headers,
       }
     );
 
@@ -751,15 +815,22 @@ export async function addUserToClass(
     member: [...existingMembers, userId],
   };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
       body: JSON.stringify(updateData),
     }
   );

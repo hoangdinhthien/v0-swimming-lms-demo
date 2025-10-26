@@ -1,5 +1,6 @@
 import config from "../config.json";
 import { apiRequest } from "../api-utils";
+import { getUserFrontendRole } from "../role-utils";
 
 export async function fetchCourses({
   tenantId,
@@ -15,6 +16,16 @@ export async function fetchCourses({
   if (!tenantId || !token) return { data: [], total: 0 };
 
   // Use cached request for courses (5 minutes cache)
+  const headers: Record<string, string> = {
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await apiRequest(
     `${config.API}/v1/workflow-process/manager/courses?page=${page}&limit=${limit}`,
     {
@@ -23,10 +34,7 @@ export async function fetchCourses({
       includeTenant: true,
       useCache: true,
       cacheTTL: 5 * 60 * 1000, // 5 minutes cache
-      headers: {
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     }
   );
 
@@ -57,13 +65,21 @@ export async function fetchCourseById({
   token?: string;
 }) {
   if (!tenantId || !token) throw new Error("Thiếu thông tin tenant hoặc token");
+
+  const headers: Record<string, string> = {
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/course?id=${courseId}`,
     {
-      headers: {
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       cache: "no-store",
     }
   );
@@ -99,13 +115,20 @@ export async function createCourse({
   tenantId: string;
   token: string;
 }) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(`${config.API}/v1/workflow-process/manager/course`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-tenant-id": tenantId,
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     body: JSON.stringify(courseData),
   });
 
