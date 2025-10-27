@@ -42,6 +42,7 @@ import { fetchStudents } from "@/api/manager/students-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import PermissionGuard from "@/components/permission-guard";
+import { useToast } from "@/hooks/use-toast";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -110,6 +111,7 @@ function calculateAge(birthdayStr: string | null | undefined): number | null {
 
 export default function StudentsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState<any[]>([]);

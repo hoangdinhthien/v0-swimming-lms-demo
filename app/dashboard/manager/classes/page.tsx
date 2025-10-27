@@ -47,8 +47,10 @@ import {
 import { fetchClasses, type ClassItem } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ClassesPage() {
+  const { toast } = useToast();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);

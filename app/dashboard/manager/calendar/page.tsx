@@ -76,6 +76,7 @@ import { fetchInstructors } from "@/api/manager/instructors-api";
 import { getMediaDetails } from "@/api/media-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { useToast } from "@/hooks/use-toast";
 import {
   useCachedAPI,
   usePerformanceMonitor,
@@ -126,6 +127,8 @@ interface CalendarEvent {
 
 export default function ImprovedAntdCalendarPage() {
   usePerformanceMonitor("ImprovedAntdCalendarPage");
+
+  const { toast } = useToast();
 
   const router = useRouter();
   const searchParams = useSearchParams();

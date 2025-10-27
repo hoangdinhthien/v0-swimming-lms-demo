@@ -5,9 +5,11 @@ import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, BookOpen, Calendar, FileText, Award, Bell } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StaffDashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { allowedNavigationItems, staffPermissions, loading, isStaff } =
     useStaffPermissions();
 

@@ -53,6 +53,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Book, Calendar, Key, Building } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -289,6 +290,7 @@ function InstructorDetailModal({
 
 export default function InstructorsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState("all");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");

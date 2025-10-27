@@ -45,9 +45,11 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import CourseCategoriesModal from "@/components/manager/course-categories-modal";
+import { useToast } from "@/hooks/use-toast";
 
 export default function CoursesPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [levelFilter, setLevelFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");

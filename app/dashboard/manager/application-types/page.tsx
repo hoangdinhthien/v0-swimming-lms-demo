@@ -60,10 +60,12 @@ import {
   type ApplicationType,
   type CreateApplicationTypeRequest,
 } from "@/api/manager/application-types-api";
+import { useToast } from "@/hooks/use-toast";
 
 const AVAILABLE_ROLES = ["member", "instructor", "staff", "manager"];
 
 export default function ApplicationTypesPage() {
+  const { toast } = useToast();
   const [applicationTypes, setApplicationTypes] = useState<ApplicationType[]>(
     []
   );
@@ -104,7 +106,11 @@ export default function ApplicationTypesPage() {
 
   const handleCreateSubmit = async () => {
     if (!formData.title.trim() || formData.type.length === 0) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -116,7 +122,11 @@ export default function ApplicationTypesPage() {
       resetForm();
     } catch (error) {
       console.error("Error creating application type:", error);
-      alert("Có lỗi xảy ra khi tạo loại đơn từ");
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi tạo loại đơn từ",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +134,11 @@ export default function ApplicationTypesPage() {
 
   const handleEditSubmit = async () => {
     if (!currentItem || !formData.title.trim() || formData.type.length === 0) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -137,7 +151,11 @@ export default function ApplicationTypesPage() {
       setCurrentItem(null);
     } catch (error) {
       console.error("Error updating application type:", error);
-      alert("Có lỗi xảy ra khi cập nhật loại đơn từ");
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi cập nhật loại đơn từ",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +172,11 @@ export default function ApplicationTypesPage() {
       setCurrentItem(null);
     } catch (error) {
       console.error("Error deleting application type:", error);
-      alert("Có lỗi xảy ra khi xóa loại đơn từ");
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa loại đơn từ",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

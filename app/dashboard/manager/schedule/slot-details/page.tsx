@@ -61,8 +61,10 @@ import { deleteScheduleEvent } from "@/api/manager/schedule-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
 import { Classroom as ClassroomType } from "@/api/manager/class-api";
 import { Pool as PoolType } from "@/api/manager/pools-api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SlotDetailsPage() {
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [slotDetail, setSlotDetail] = useState<SlotDetail | null>(null);

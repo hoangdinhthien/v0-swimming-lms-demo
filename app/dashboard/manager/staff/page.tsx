@@ -45,6 +45,7 @@ import { fetchStaff } from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
+import { useToast } from "@/hooks/use-toast";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -92,6 +93,7 @@ function extractAvatarUrl(featuredImage: any): string {
 }
 
 export default function StaffPage() {
+  const { toast } = useToast();
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");

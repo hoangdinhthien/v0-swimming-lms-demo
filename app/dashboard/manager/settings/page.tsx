@@ -30,8 +30,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserProfile, UserProfileResponse } from "@/api/login-api";
 import { getAuthenticatedUser, getAuthToken } from "@/api/auth-utils";
 import { LoadingScreen } from "@/components/loading-screen";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   const [userProfile, setUserProfile] = useState<
     UserProfileResponse["data"] | null
   >(null);

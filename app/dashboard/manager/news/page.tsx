@@ -51,11 +51,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getNews, createNews, type NewsItem } from "@/api/manager/news-api";
+import { useToast } from "@/hooks/use-toast";
 import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 
 export default function NewsListPage() {
+  const { toast } = useToast();
   const router = useRouter();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +131,11 @@ export default function NewsListPage() {
       !formData.content.trim() ||
       formData.type.length === 0
     ) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -181,11 +187,12 @@ export default function NewsListPage() {
       setNewsItems(news);
     } catch (error) {
       console.error("Error creating news:", error);
-      alert(
-        `Lỗi: ${
-          error instanceof Error ? error.message : "Không thể tạo thông báo"
-        }`
-      );
+      toast({
+        title: "Lỗi",
+        description:
+          error instanceof Error ? error.message : "Không thể tạo thông báo",
+        variant: "destructive",
+      });
     } finally {
       setIsCreating(false);
     }

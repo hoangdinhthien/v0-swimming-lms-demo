@@ -39,7 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,6 +139,7 @@ function ProfileImage({
 }
 
 export default function ApplicationDetailPage() {
+  const { toast } = useToast();
   const params = useParams();
   const applicationId = params?.id as string;
   const [application, setApplication] = useState<Application | null>(null);

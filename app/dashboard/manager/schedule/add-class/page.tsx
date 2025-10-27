@@ -22,6 +22,7 @@ import { fetchClassrooms, addClassToSchedule } from "@/api/manager/class-api";
 import { fetchPools } from "@/api/manager/pools-api";
 import { Classroom } from "@/api/manager/class-api";
 import { Pool as PoolType } from "@/api/manager/pools-api";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -62,6 +63,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
 export default function AddClassToSchedulePage() {
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
 

@@ -29,8 +29,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 // No need to import DashboardLayout since it's provided by manager/layout.tsx
+import { useToast } from "@/hooks/use-toast";
 
 export default function ReportsPage() {
+  const { toast } = useToast();
   const [reportType, setReportType] = useState("financial");
   const [timeframe, setTimeframe] = useState("monthly");
 
