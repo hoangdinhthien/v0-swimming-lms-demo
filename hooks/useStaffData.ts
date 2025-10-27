@@ -53,12 +53,15 @@ export function useStaffCourses(
     setError(null);
 
     try {
-      const response = await fetchStaffCourses({
-        tenantId,
-        token,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      const response = await fetchStaffCourses(
+        additionalParams,
+        tenantId,
+        token
+      );
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch courses");
@@ -107,12 +110,15 @@ export function useStaffClasses(
     setError(null);
 
     try {
-      const response = await fetchStaffClasses({
-        tenantId,
-        token,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      const response = await fetchStaffClasses(
+        additionalParams,
+        tenantId,
+        token
+      );
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch classes");
@@ -161,12 +167,15 @@ export function useStaffOrders(
     setError(null);
 
     try {
-      const response = await fetchStaffOrders({
-        tenantId,
-        token,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      const response = await fetchStaffOrders(
+        additionalParams,
+        tenantId,
+        token
+      );
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch orders");
@@ -234,13 +243,12 @@ export function useStaffUsers(
         page,
         limit,
       });
-      const response = await fetchStaffUsers({
-        tenantId,
-        token,
-        role,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      if (role) additionalParams.role = role;
+      const response = await fetchStaffUsers(additionalParams, tenantId, token);
       console.log("[useStaffUsers] Response received:", response);
       setData(response);
     } catch (err) {
@@ -315,12 +323,11 @@ export function useStaffNews(
     setError(null);
 
     try {
-      const response = await fetchStaffNews({
-        tenantId,
-        token,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      const response = await fetchStaffNews(additionalParams, tenantId, token);
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch news");
@@ -369,12 +376,15 @@ export function useStaffApplications(
     setError(null);
 
     try {
-      const response = await fetchStaffApplications({
-        tenantId,
-        token,
+      const additionalParams: Record<string, string | number> = {
         page,
         limit,
-      });
+      };
+      const response = await fetchStaffApplications(
+        additionalParams,
+        tenantId,
+        token
+      );
       setData(response);
     } catch (err) {
       setError(

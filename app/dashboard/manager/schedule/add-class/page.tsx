@@ -144,11 +144,11 @@ export default function AddClassToSchedulePage() {
 
         // Fetch pools
         const poolsData = await fetchPools();
-        setPools(poolsData);
+        setPools(poolsData.pools);
 
         // Set default selected pool if any
-        if (poolsData.length > 0) {
-          setSelectedPool(poolsData[0]._id);
+        if (poolsData.pools.length > 0) {
+          setSelectedPool(poolsData.pools[0]._id);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -249,6 +249,7 @@ export default function AddClassToSchedulePage() {
         slot: slotId, // Using the correct slot ID from the schedule event
         classroom: classroomId,
         pool: selectedPool,
+        instructor: "",
       });
 
       // Show success message
@@ -476,18 +477,12 @@ export default function AddClassToSchedulePage() {
                             Sức chứa: {pool.capacity} người
                           </div>
                         )}
-                        {pool.maintance_status && (
-                          <Badge
-                            variant={
-                              pool.maintance_status === "Đang hoạt động"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className='mt-2 text-xs'
-                          >
-                            {pool.maintance_status}
-                          </Badge>
-                        )}
+                        <Badge
+                          variant={pool.is_active ? "default" : "secondary"}
+                          className='mt-2 text-xs'
+                        >
+                          {pool.is_active ? "Hoạt động" : "Không hoạt động"}
+                        </Badge>
                       </div>
                     </label>
                   </div>

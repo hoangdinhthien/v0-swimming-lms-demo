@@ -122,6 +122,126 @@ export function hasStaffPermission(
   );
 }
 
+// Specific functions for different modules
+export async function fetchStaffCourses(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "Course",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffClasses(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "Class",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffOrders(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "Order",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffUsers(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "User",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffNews(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "News",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffBlogs(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "Blog",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
+export async function fetchStaffApplications(
+  additionalParams?: Record<string, string | number>,
+  tenantId?: string,
+  token?: string
+) {
+  const finalTenantId =
+    tenantId || (await import("@/utils/tenant-utils")).getSelectedTenant();
+  const finalToken = token || (await import("@/api/auth-utils")).getAuthToken();
+  if (!finalTenantId || !finalToken) throw new Error("Missing tenant or token");
+  return fetchStaffData({
+    module: "Application",
+    tenantId: finalTenantId,
+    token: finalToken,
+    additionalParams: additionalParams || {},
+  });
+}
+
 // Types for common API responses (you can extend these based on actual API responses)
 export interface StaffDataResponse<T> {
   data: T;

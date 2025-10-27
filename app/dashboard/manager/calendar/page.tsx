@@ -590,13 +590,13 @@ export default function ImprovedAntdCalendarPage() {
       console.log("🔍 Data loaded:", {
         slots: slotsData.length,
         classrooms: classroomsData.length,
-        pools: poolsData.length,
+        pools: poolsData.pools.length,
         instructors: instructorsData.length,
       });
 
       setAvailableSlots(slotsData);
       setAvailableClassrooms(classroomsData);
-      setAvailablePools(poolsData);
+      setAvailablePools(poolsData.pools);
       setAvailableInstructors(instructorsData);
       setLastClassDataLoad(now); // Update last load time
 
@@ -608,8 +608,8 @@ export default function ImprovedAntdCalendarPage() {
       // Set default selections only if not already set
       if (!selectedSlot && slotsData.length > 0)
         setSelectedSlot(slotsData[0]._id);
-      if (!selectedPool && poolsData.length > 0)
-        setSelectedPool(poolsData[0]._id);
+      if (!selectedPool && poolsData.pools.length > 0)
+        setSelectedPool(poolsData.pools[0]._id);
       if (!selectedInstructor && instructorsData.length > 0)
         setSelectedInstructor(instructorsData[0]._id);
     } catch (error) {

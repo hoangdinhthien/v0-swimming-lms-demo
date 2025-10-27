@@ -82,12 +82,19 @@ export interface Order {
 export interface OrdersResponse {
   data: Array<
     Array<{
-      data: Order[];
-      meta_data: {
+      // New response shape uses `documents` and pagination fields like `limit`, `skip`, `count`.
+      // Keep compatibility with older `data` + `meta_data` shape.
+      documents?: Order[];
+      data?: Order[];
+      meta_data?: {
         count: number;
         page: number;
         limit: number;
       };
+      // optional top-level pagination fields in new API
+      limit?: number;
+      skip?: number;
+      count?: number;
     }>
   >;
   message: string;
@@ -149,16 +156,20 @@ export async function fetchOrders({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrders] API Response:", data);
 
-    // Parse the nested structure: data[0][0].data contains orders, data[0][0].meta_data contains pagination
-    const ordersData = data.data?.[0]?.[0];
-    const orders = ordersData?.data || [];
-    const metaData = ordersData?.meta_data;
+    // Robust parsing: support both old shape (data[0][0].data + meta_data)
+    // and new shape (data[0][0].documents + limit/skip/count)
+    const ordersData = data.data?.[0]?.[0] || {};
+    const orders = ordersData?.documents || ordersData?.data || [];
 
-    console.log("[fetchOrders] Parsed orders count:", orders.length);
-    console.log("[fetchOrders] Meta data:", metaData);
-
-    const total = metaData?.count || orders.length;
-    const currentPage = metaData?.page || page;
+    // Determine total and current page. New API returns `count`, `limit`, `skip`.
+    const total =
+      ordersData?.count ?? ordersData?.meta_data?.count ?? orders.length;
+    const apiLimit = ordersData?.limit ?? ordersData?.meta_data?.limit ?? limit;
+    const skip = ordersData?.skip ?? 0;
+    // compute currentPage from skip & limit when possible
+    const currentPage =
+      ordersData?.meta_data?.page ??
+      (apiLimit ? Math.floor(skip / apiLimit) + 1 : page);
 
     return {
       orders,
@@ -456,9 +467,8 @@ export async function fetchOrdersForCourse({
     const data: OrdersResponse = await res.json();
     console.log("[fetchOrdersForCourse] API Response:", data);
 
-    // Parse the nested structure: data[0][0].data contains orders
-    const ordersData = data.data?.[0]?.[0];
-    const orders = ordersData?.data || [];
+    const ordersData = data.data?.[0]?.[0] || {};
+    const orders = ordersData?.documents || ordersData?.data || [];
     console.log("[fetchOrdersForCourse] Parsed orders count:", orders.length);
 
     return orders;
@@ -523,8 +533,32 @@ export async function fetchOrderById({
     const data = await res.json();
     console.log("[fetchOrderById] API Response:", data);
 
-    // Handle the nested structure for single order: data[0][0][0]
-    const order = data.data?.[0]?.[0]?.[0];
+    // New shape: data[0][0].documents[0]
+    const block = data.data?.[0]?.[0] || {};
+    let order: Order | undefined;
+
+    if (Array.isArray(block?.documents) && block.documents.length > 0) {
+      order = block.documents[0];
+    } else if (Array.isArray(block?.data) && block.data.length > 0) {
+      order = block.data[0];
+    } else if (
+      Array.isArray(data.data) &&
+      Array.isArray(data.data[0]) &&
+      data.data[0][0]
+    ) {
+      // fallback to older triple-nested array where single order might be at [0][0][0]
+      const maybe = data.data[0][0];
+      if (Array.isArray(maybe)) {
+        order = maybe[0];
+      } else if (
+        maybe &&
+        typeof maybe === "object" &&
+        (maybe._id || maybe.id)
+      ) {
+        order = maybe as Order;
+      }
+    }
+
     if (!order) {
       throw new Error("Không tìm thấy đơn hàng");
     }

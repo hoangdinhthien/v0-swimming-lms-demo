@@ -134,7 +134,9 @@ export default function SlotDetailsPage() {
           const coursePromises = detail.schedules.map(async (schedule) => {
             if (schedule.classroom?.course) {
               try {
-                const course = await fetchCourseById(schedule.classroom.course);
+                const course = await fetchCourseById({
+                  courseId: schedule.classroom.course,
+                });
                 return { id: schedule.classroom.course, name: course.title };
               } catch {
                 return {
@@ -176,7 +178,7 @@ export default function SlotDetailsPage() {
         fetchPools(),
       ]);
       setClassrooms(classroomsData);
-      setPools(poolsData);
+      setPools(poolsData.pools);
     } catch (err) {
       console.error("Error loading add-class data:", err);
     }
@@ -201,6 +203,7 @@ export default function SlotDetailsPage() {
         slot: slotId,
         classroom: selectedClass,
         pool: selectedPool,
+        instructor: "",
       });
 
       // Reload slot details to show new class

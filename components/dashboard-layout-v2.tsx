@@ -221,6 +221,11 @@ export default function DashboardLayout({
         icon: <Users className='h-4 w-4' />,
       },
       {
+        name: "Hồ Bơi",
+        href: "/dashboard/manager/pools",
+        icon: <Waves className='h-4 w-4' />,
+      },
+      {
         name: "Tin tức",
         href: "/dashboard/manager/news",
         icon: <Bell className='h-4 w-4' />,
@@ -706,6 +711,18 @@ export default function DashboardLayout({
                             name: "Lớp Học",
                             href: "/dashboard/manager/classes",
                             icon: <Users className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Pool module - show for manager and staff (or if explicit permission exists)
+                    ...(isManager ||
+                    isStaff ||
+                    allowedNavigationItems.includes("pools")
+                      ? [
+                          {
+                            name: "Hồ Bơi",
+                            href: "/dashboard/manager/pools",
+                            icon: <Waves className='h-4 w-4' />,
                           },
                         ]
                       : []),
