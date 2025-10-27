@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import AuthProvider from "@/components/auth-provider";
 import { TenantProvider } from "@/components/tenant-provider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from "lucide-react";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -51,6 +52,7 @@ export default function RootLayout({
                 <React.Suspense fallback={<GlobalLoading />}>
                   {children}
                 </React.Suspense>
+                <Toaster />
               </TenantProvider>
             </AuthProvider>
           </ThemeProvider>

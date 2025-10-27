@@ -14,11 +14,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import { fetchPools, Pool } from "@/api/manager/pools-api";
+import {
+  fetchPools,
+  Pool,
+  createPool,
+  getPoolDetail,
+  updatePool,
+} from "@/api/manager/pools-api";
+import { getUserFrontendRole } from "@/api/role-utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PoolsPage() {
+  const { toast } = useToast();
   const [poolsData, setPoolsData] = useState<{
     pools: Pool[];
     meta: { count: number; page: number; limit: number };
@@ -30,6 +50,36 @@ export default function PoolsPage() {
   // Pagination
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Detail/Update modal state
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedPool, setSelectedPool] = useState<Pool | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Update form state
+  const [updateFormData, setUpdateFormData] = useState({
+    title: "",
+    type: "",
+    dimensions: "",
+    depth: "",
+    capacity: "",
+    is_active: true,
+  });
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: "",
+    type: "",
+    dimensions: "",
+    depth: "",
+    capacity: "",
+    is_active: true,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -61,6 +111,191 @@ export default function PoolsPage() {
       mounted = false;
     };
   }, []); // Remove searchQuery from dependencies
+
+  // Handle form input changes
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle create pool
+  const handleCreatePool = async () => {
+    if (
+      !formData.title.trim() ||
+      !formData.dimensions.trim() ||
+      !formData.depth.trim() ||
+      !formData.capacity
+    ) {
+      toast({
+        title: "Thiếu thông tin",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const requestBody = {
+        title: formData.title,
+        type: formData.type || undefined,
+        dimensions: `${formData.dimensions} mét`,
+        depth: `${formData.depth} mét`,
+        capacity: parseInt(formData.capacity),
+        is_active: formData.is_active,
+      };
+
+      await createPool(requestBody);
+
+      // Reset form and close modal
+      setFormData({
+        title: "",
+        type: "",
+        dimensions: "",
+        depth: "",
+        capacity: "",
+        is_active: true,
+      });
+      setIsModalOpen(false);
+
+      // Refresh the pools list
+      const result = await fetchPools(
+        { page: 1, limit: 1000 },
+        undefined,
+        undefined
+      );
+      setPoolsData(result);
+    } catch (error) {
+      console.error("Error creating pool:", error);
+      toast({
+        title: "Lỗi tạo hồ bơi",
+        description:
+          error instanceof Error ? error.message : "Không thể tạo hồ bơi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Reset form when modal closes
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setFormData({
+      title: "",
+      type: "",
+      dimensions: "",
+      depth: "",
+      capacity: "",
+      is_active: true,
+    });
+  };
+
+  // Handle pool row click to show detail
+  const handlePoolClick = async (pool: Pool) => {
+    setSelectedPool(pool);
+    setIsDetailModalOpen(true);
+    setIsEditing(false);
+
+    // Load pool details
+    try {
+      const poolDetail = await getPoolDetail(pool._id);
+      setSelectedPool(poolDetail);
+
+      // Initialize update form with current data
+      setUpdateFormData({
+        title: poolDetail.title,
+        type: poolDetail.type || "",
+        dimensions: poolDetail.dimensions
+          ? poolDetail.dimensions.replace(" mét", "")
+          : "",
+        depth: poolDetail.depth ? poolDetail.depth.replace(" mét", "") : "",
+        capacity: poolDetail.capacity?.toString() || "",
+        is_active: poolDetail.is_active,
+      });
+    } catch (error) {
+      console.error("Error loading pool details:", error);
+      toast({
+        title: "Lỗi tải chi tiết",
+        description: "Không thể tải chi tiết hồ bơi",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle update form input changes
+  const handleUpdateInputChange = (field: string, value: any) => {
+    setUpdateFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle update pool
+  const handleUpdatePool = async () => {
+    if (!selectedPool) return;
+
+    if (
+      !updateFormData.title.trim() ||
+      !updateFormData.dimensions.trim() ||
+      !updateFormData.depth.trim() ||
+      !updateFormData.capacity
+    ) {
+      toast({
+        title: "Thiếu thông tin",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const requestBody = {
+        title: updateFormData.title,
+        type: updateFormData.type || undefined,
+        dimensions: `${updateFormData.dimensions} mét`,
+        depth: `${updateFormData.depth} mét`,
+        capacity: parseInt(updateFormData.capacity),
+        is_active: updateFormData.is_active,
+      };
+
+      await updatePool(selectedPool._id, requestBody);
+
+      // Update local state
+      if (poolsData) {
+        const updatedPools = poolsData.pools.map((p) =>
+          p._id === selectedPool._id ? { ...p, ...requestBody } : p
+        );
+        setPoolsData({ ...poolsData, pools: updatedPools });
+      }
+
+      setIsEditing(false);
+      toast({
+        title: "Thành công",
+        description: "Cập nhật hồ bơi thành công!",
+      });
+    } catch (error) {
+      console.error("Error updating pool:", error);
+      toast({
+        title: "Lỗi cập nhật",
+        description:
+          error instanceof Error ? error.message : "Không thể cập nhật hồ bơi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle detail modal close
+  const handleDetailModalClose = () => {
+    setIsDetailModalOpen(false);
+    setSelectedPool(null);
+    setIsEditing(false);
+  };
 
   const pools = poolsData?.pools || [];
 
@@ -134,13 +369,342 @@ export default function PoolsPage() {
         </div>
         <div className='flex gap-2'>
           <Button variant='outline'>Xuất dữ liệu</Button>
-          <Link href='/dashboard/manager/pools/new'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' /> Thêm hồ bơi
-            </Button>
-          </Link>
+          <Dialog
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' /> Thêm hồ bơi
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+              <DialogHeader>
+                <DialogTitle>Thêm hồ bơi mới</DialogTitle>
+                <DialogDescription>
+                  Nhập thông tin để tạo hồ bơi mới cho trung tâm
+                </DialogDescription>
+              </DialogHeader>
+              <div className='space-y-6'>
+                <div className='space-y-2'>
+                  <Label htmlFor='title'>Tên hồ bơi *</Label>
+                  <Input
+                    id='title'
+                    placeholder='Nhập tên hồ bơi...'
+                    value={formData.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='type'>Loại hồ bơi</Label>
+                  <Input
+                    id='type'
+                    placeholder='Ví dụ: Trẻ em, Trung bình, Lớn...'
+                    value={formData.type}
+                    onChange={(e) => handleInputChange("type", e.target.value)}
+                  />
+                </div>
+
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='dimensions'>Kích thước (mét) *</Label>
+                    <Input
+                      id='dimensions'
+                      type='number'
+                      placeholder='Ví dụ: 10'
+                      value={formData.dimensions}
+                      onChange={(e) =>
+                        handleInputChange("dimensions", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='depth'>Độ sâu (mét) *</Label>
+                    <Input
+                      id='depth'
+                      type='number'
+                      placeholder='Ví dụ: 1.2'
+                      value={formData.depth}
+                      onChange={(e) =>
+                        handleInputChange("depth", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='capacity'>Sức chứa *</Label>
+                  <Input
+                    id='capacity'
+                    type='number'
+                    placeholder='Số người tối đa...'
+                    value={formData.capacity}
+                    onChange={(e) =>
+                      handleInputChange("capacity", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className='flex items-center space-x-2'>
+                  <Checkbox
+                    id='is_active'
+                    checked={formData.is_active}
+                    onCheckedChange={(checked) =>
+                      handleInputChange("is_active", checked)
+                    }
+                  />
+                  <Label htmlFor='is_active'>Hồ bơi đang hoạt động</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={handleModalClose}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleCreatePool}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      Đang tạo...
+                    </>
+                  ) : (
+                    "Tạo hồ bơi"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
+
+      {/* Pool Detail/Update Modal */}
+      <Dialog
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+      >
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditing ? "Chỉnh sửa hồ bơi" : "Chi tiết hồ bơi"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditing
+                ? "Cập nhật thông tin hồ bơi"
+                : "Xem thông tin chi tiết của hồ bơi"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPool && (
+            <div className='space-y-6'>
+              {!isEditing ? (
+                // View mode
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <Label className='text-sm font-medium'>Tên hồ bơi</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.title}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className='text-sm font-medium'>Loại hồ bơi</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.type || "Không có"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <Label className='text-sm font-medium'>Kích thước</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.dimensions || "Không có"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className='text-sm font-medium'>Độ sâu</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.depth || "Không có"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <Label className='text-sm font-medium'>Sức chứa</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.capacity ?? "Không có"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className='text-sm font-medium'>Trạng thái</Label>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        {selectedPool.is_active
+                          ? "Hoạt động"
+                          : "Không hoạt động"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {(selectedPool.created_at || selectedPool.updated_at) && (
+                    <div className='grid grid-cols-2 gap-4 pt-4 border-t'>
+                      <div>
+                        <Label className='text-sm font-medium'>Ngày tạo</Label>
+                        <p className='text-sm text-muted-foreground mt-1'>
+                          {selectedPool.created_at
+                            ? new Date(selectedPool.created_at).toLocaleString(
+                                "vi-VN"
+                              )
+                            : "Không có"}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className='text-sm font-medium'>
+                          Cập nhật lần cuối
+                        </Label>
+                        <p className='text-sm text-muted-foreground mt-1'>
+                          {selectedPool.updated_at
+                            ? new Date(selectedPool.updated_at).toLocaleString(
+                                "vi-VN"
+                              )
+                            : "Không có"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Edit mode
+                <div className='space-y-6'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='update-title'>Tên hồ bơi *</Label>
+                    <Input
+                      id='update-title'
+                      placeholder='Nhập tên hồ bơi...'
+                      value={updateFormData.title}
+                      onChange={(e) =>
+                        handleUpdateInputChange("title", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='update-type'>Loại hồ bơi</Label>
+                    <Input
+                      id='update-type'
+                      placeholder='Ví dụ: Trẻ em, Trung bình, Lớn...'
+                      value={updateFormData.type}
+                      onChange={(e) =>
+                        handleUpdateInputChange("type", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='update-dimensions'>
+                        Kích thước (mét) *
+                      </Label>
+                      <Input
+                        id='update-dimensions'
+                        type='number'
+                        placeholder='Ví dụ: 10'
+                        value={updateFormData.dimensions}
+                        onChange={(e) =>
+                          handleUpdateInputChange("dimensions", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label htmlFor='update-depth'>Độ sâu (mét) *</Label>
+                      <Input
+                        id='update-depth'
+                        type='number'
+                        placeholder='Ví dụ: 1.2'
+                        value={updateFormData.depth}
+                        onChange={(e) =>
+                          handleUpdateInputChange("depth", e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='update-capacity'>Sức chứa *</Label>
+                    <Input
+                      id='update-capacity'
+                      type='number'
+                      placeholder='Số người tối đa...'
+                      value={updateFormData.capacity}
+                      onChange={(e) =>
+                        handleUpdateInputChange("capacity", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className='flex items-center space-x-2'>
+                    <Checkbox
+                      id='update-is_active'
+                      checked={updateFormData.is_active}
+                      onCheckedChange={(checked) =>
+                        handleUpdateInputChange("is_active", checked)
+                      }
+                    />
+                    <Label htmlFor='update-is_active'>
+                      Hồ bơi đang hoạt động
+                    </Label>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            {!isEditing ? (
+              <>
+                <Button
+                  variant='outline'
+                  onClick={handleDetailModalClose}
+                >
+                  Đóng
+                </Button>
+                <Button onClick={() => setIsEditing(true)}>Chỉnh sửa</Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsEditing(false)}
+                  disabled={isUpdating}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={handleUpdatePool}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <>
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      Đang cập nhật...
+                    </>
+                  ) : (
+                    "Cập nhật"
+                  )}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className='mt-8 grid gap-6 md:grid-cols-3'>
         <Card>
@@ -212,7 +776,11 @@ export default function PoolsPage() {
               </TableHeader>
               <TableBody>
                 {paginatedPools.map((p) => (
-                  <TableRow key={p._id}>
+                  <TableRow
+                    key={p._id}
+                    className='cursor-pointer hover:bg-muted/50'
+                    onClick={() => handlePoolClick(p)}
+                  >
                     <TableCell>
                       <div className='font-medium'>{p.title}</div>
                     </TableCell>
