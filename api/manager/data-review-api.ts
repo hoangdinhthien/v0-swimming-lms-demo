@@ -37,8 +37,7 @@ export async function fetchDataReviewList({
   token: string;
   page?: number;
   limit?: number;
-}): Promise<{ documents: DataReviewRecord[]; count: number }>
-{
+}): Promise<{ documents: DataReviewRecord[]; count: number }> {
   if (!tenantId || !token) throw new Error("Missing tenantId or token");
 
   const url = `${config.API}/v1/workflow-process/manager/data-review?page=${page}&limit=${limit}`;
