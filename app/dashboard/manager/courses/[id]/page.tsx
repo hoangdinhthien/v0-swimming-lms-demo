@@ -960,9 +960,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               ) : (
                 <div>
                   <MultiSelect
-                    options={categories.map((c) => ({ id: c._id, label: c.title }))}
+                    options={categories.map((c) => ({
+                      id: c._id,
+                      label: c.title,
+                    }))}
                     value={formData.category}
-                    onChange={(vals: string[]) => setFormData((prev) => ({ ...prev, category: vals }))}
+                    onChange={(vals: string[]) =>
+                      setFormData((prev) => ({ ...prev, category: vals }))
+                    }
                   />
                 </div>
               )}

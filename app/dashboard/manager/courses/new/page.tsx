@@ -406,15 +406,18 @@ export default function NewCoursePage() {
                       ) : (
                         <div>
                           <MultiSelect
-                            options={categories.map((c) => ({ id: c._id, label: c.title }))}
+                            options={categories.map((c) => ({
+                              id: c._id,
+                              label: c.title,
+                            }))}
                             value={field.value || []}
                             onChange={(vals) => field.onChange(vals)}
                           />
                         </div>
                       )}
                       <FormDescription>
-                        Chọn một hoặc nhiều danh mục phù hợp cho khóa học này. Giữ
-                        Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
+                        Chọn một hoặc nhiều danh mục phù hợp cho khóa học này.
+                        Giữ Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

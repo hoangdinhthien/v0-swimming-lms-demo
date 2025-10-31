@@ -32,7 +32,9 @@ export default function MultiSelect({
 
   const selectedOptions = options.filter((o) => value.includes(o.id));
   const filtered = options.filter(
-    (o) => !value.includes(o.id) && o.label.toLowerCase().includes(input.toLowerCase())
+    (o) =>
+      !value.includes(o.id) &&
+      o.label.toLowerCase().includes(input.toLowerCase())
   );
 
   useEffect(() => {
@@ -90,7 +92,10 @@ export default function MultiSelect({
   };
 
   return (
-    <div ref={rootRef} className={`relative ${className}`}>
+    <div
+      ref={rootRef}
+      className={`relative ${className}`}
+    >
       <div
         className={`min-h-[44px] w-full rounded-md border bg-background px-2 py-1 flex items-center gap-2 flex-wrap ${
           disabled ? "opacity-50 cursor-not-allowed" : ""
