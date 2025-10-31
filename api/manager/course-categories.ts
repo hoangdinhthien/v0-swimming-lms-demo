@@ -186,7 +186,6 @@ export async function deleteCourseCategory({
     {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         "x-tenant-id": tenantId,
         Authorization: `Bearer ${token}`,
       },

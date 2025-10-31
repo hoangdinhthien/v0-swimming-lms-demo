@@ -14,6 +14,7 @@ FIX:
 - thêm logic button 'Phân công lớp học mới' trang manager/instructor detail
 - thêm logic button 'Xem lịch dạy' trang manager/instructor detail
 - chưa có UI cho manager/pool
+- sửa lại dashboard của staff 
 
 ==========================================================
 
