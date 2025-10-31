@@ -1,6 +1,7 @@
 import config from "../config.json";
 import { apiRequest } from "../api-utils";
 import { getUserFrontendRole } from "../role-utils";
+import { apiCache } from "../../utils/api-cache";
 
 export async function fetchCourses({
   tenantId,
@@ -139,7 +140,15 @@ export async function createCourse({
     );
   }
 
-  return await res.json();
+  const result = await res.json();
+  // Clear API cache so lists (fetchCourses) will reflect the new course promptly
+  try {
+    apiCache.clear();
+  } catch (e) {
+    // swallow errors from cache clearing to avoid breaking create flow
+    console.warn("Failed to clear API cache after createCourse:", e);
+  }
+  return result;
 }
 
 // Interface for course update
@@ -194,5 +203,12 @@ export async function updateCourse({
     );
   }
 
-  return await res.json();
+  const result = await res.json();
+  // Clear cache so course lists reflect the updated course
+  try {
+    apiCache.clear();
+  } catch (e) {
+    console.warn("Failed to clear API cache after updateCourse:", e);
+  }
+  return result;
 }
