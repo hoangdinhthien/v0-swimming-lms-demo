@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import MultiSelect from "@/components/ui/multi-select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { getSelectedTenant } from "@/utils/tenant-utils";
@@ -403,40 +404,17 @@ export default function NewCoursePage() {
                           Không có danh mục nào
                         </div>
                       ) : (
-                        <div className='grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3'>
-                          {categories.map((category) => (
-                            <div
-                              key={category._id}
-                              className='flex items-center space-x-2'
-                            >
-                              <input
-                                type='checkbox'
-                                id={`category-${category._id}`}
-                                checked={field.value?.includes(category._id)}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  const currentValue = field.value || [];
-                                  const newValue = checked
-                                    ? [...currentValue, category._id]
-                                    : currentValue.filter(
-                                        (id: string) => id !== category._id
-                                      );
-                                  field.onChange(newValue);
-                                }}
-                                className='rounded border-gray-300'
-                              />
-                              <Label
-                                htmlFor={`category-${category._id}`}
-                                className='text-sm cursor-pointer'
-                              >
-                                {category.title}
-                              </Label>
-                            </div>
-                          ))}
+                        <div>
+                          <MultiSelect
+                            options={categories.map((c) => ({ id: c._id, label: c.title }))}
+                            value={field.value || []}
+                            onChange={(vals) => field.onChange(vals)}
+                          />
                         </div>
                       )}
                       <FormDescription>
-                        Chọn một hoặc nhiều danh mục phù hợp cho khóa học này
+                        Chọn một hoặc nhiều danh mục phù hợp cho khóa học này. Giữ
+                        Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

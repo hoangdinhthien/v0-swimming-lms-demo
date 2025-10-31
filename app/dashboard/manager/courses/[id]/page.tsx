@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import MultiSelect from "@/components/ui/multi-select";
 import {
   Dialog,
   DialogContent,
@@ -957,29 +958,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   Không có danh mục nào
                 </div>
               ) : (
-                <div className='grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3'>
-                  {categories.map((category) => (
-                    <div
-                      key={category._id}
-                      className='flex items-center space-x-2'
-                    >
-                      <input
-                        type='checkbox'
-                        id={`category-${category._id}`}
-                        checked={formData.category.includes(category._id)}
-                        onChange={(e) =>
-                          handleCategoryChange(category._id, e.target.checked)
-                        }
-                        className='rounded border-gray-300'
-                      />
-                      <Label
-                        htmlFor={`category-${category._id}`}
-                        className='text-sm cursor-pointer'
-                      >
-                        {category.title}
-                      </Label>
-                    </div>
-                  ))}
+                <div>
+                  <MultiSelect
+                    options={categories.map((c) => ({ id: c._id, label: c.title }))}
+                    value={formData.category}
+                    onChange={(vals: string[]) => setFormData((prev) => ({ ...prev, category: vals }))}
+                  />
                 </div>
               )}
             </div>
