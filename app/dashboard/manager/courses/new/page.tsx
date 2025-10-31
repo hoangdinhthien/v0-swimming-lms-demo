@@ -54,7 +54,9 @@ const courseFormSchema = z.object({
       })
     )
     .min(1, "Vui lòng thêm ít nhất 1 nội dung chi tiết"),
-  category: z.string().min(1, "Vui lòng chọn danh mục khóa học"),
+  category: z
+    .array(z.string())
+    .min(1, "Vui lòng chọn ít nhất 1 danh mục khóa học"),
   is_active: z.boolean().default(false),
   price: z.coerce.number().int().nonnegative("Giá phải là số không âm"),
   media: z.array(z.string()).optional(),
@@ -81,7 +83,7 @@ export default function NewCoursePage() {
     session_number: 1,
     session_number_duration: "45 phút",
     detail: [{ title: "" }],
-    category: "",
+    category: [],
     is_active: false,
     price: 0,
     media: [],
@@ -223,15 +225,9 @@ export default function NewCoursePage() {
     setLoading(true);
 
     try {
-      // Convert category from string to array for API
-      const courseData: CreateCourseData = {
-        ...values,
-        category: [values.category], // Convert single category to array
-      };
-
       // Use our API function to create the course
       await createCourse({
-        courseData,
+        courseData: values,
         tenantId,
         token,
       });
@@ -397,40 +393,50 @@ export default function NewCoursePage() {
                         Danh mục khóa học{" "}
                         <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={loadingCategories || categories.length === 0}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Chọn danh mục khóa học' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {loadingCategories ? (
-                            <div className='flex items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground'>
-                              <Loader2 className='h-4 w-4 animate-spin' />
-                              Đang tải danh mục...
-                            </div>
-                          ) : categories.length === 0 ? (
-                            <div className='px-2 py-1.5 text-sm text-muted-foreground'>
-                              Không có danh mục nào
-                            </div>
-                          ) : (
-                            categories.map((category) => (
-                              <SelectItem
-                                key={category._id}
-                                value={category._id}
+                      {loadingCategories ? (
+                        <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          <Loader2 className='h-4 w-4 animate-spin' />
+                          Đang tải danh mục...
+                        </div>
+                      ) : categories.length === 0 ? (
+                        <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          Không có danh mục nào
+                        </div>
+                      ) : (
+                        <div className='grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3'>
+                          {categories.map((category) => (
+                            <div
+                              key={category._id}
+                              className='flex items-center space-x-2'
+                            >
+                              <input
+                                type='checkbox'
+                                id={`category-${category._id}`}
+                                checked={field.value?.includes(category._id)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  const currentValue = field.value || [];
+                                  const newValue = checked
+                                    ? [...currentValue, category._id]
+                                    : currentValue.filter(
+                                        (id: string) => id !== category._id
+                                      );
+                                  field.onChange(newValue);
+                                }}
+                                className='rounded border-gray-300'
+                              />
+                              <Label
+                                htmlFor={`category-${category._id}`}
+                                className='text-sm cursor-pointer'
                               >
                                 {category.title}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       <FormDescription>
-                        Chọn danh mục phù hợp cho khóa học này
+                        Chọn một hoặc nhiều danh mục phù hợp cho khóa học này
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

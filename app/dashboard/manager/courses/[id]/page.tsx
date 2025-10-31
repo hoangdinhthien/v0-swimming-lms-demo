@@ -40,7 +40,12 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
-import { fetchCourseById, fetchCourses } from "@/api/manager/courses-api";
+import {
+  fetchCourseById,
+  fetchCourses,
+  updateCourse,
+} from "@/api/manager/courses-api";
+import { fetchAllCourseCategories } from "@/api/manager/course-categories";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails, uploadMedia, deleteMedia } from "@/api/media-api";
 import config from "@/api/config.json";
@@ -69,12 +74,15 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     session_number: 0,
     session_number_duration: "",
     detail: [{ title: "" }],
+    category: [] as string[],
     price: 0,
     is_active: true,
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadedMediaIds, setUploadedMediaIds] = useState<string[]>([]);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   const { toast } = useToast();
 
@@ -159,6 +167,29 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     if (courseId) loadCourse();
   }, [courseId]);
 
+  // Load course categories
+  useEffect(() => {
+    async function loadCategories() {
+      setLoadingCategories(true);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+        if (tenantId && token) {
+          const categoriesData = await fetchAllCourseCategories({
+            tenantId,
+            token,
+          });
+          setCategories(categoriesData);
+        }
+      } catch (error) {
+        console.error("Error loading categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    }
+    loadCategories();
+  }, []);
+
   // Navigation functions for image slider
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
@@ -210,6 +241,13 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         session_number: course.session_number || 0,
         session_number_duration: course.session_number_duration || "",
         detail: course.detail?.length > 0 ? course.detail : [{ title: "" }],
+        category: Array.isArray(course.category)
+          ? course.category.map((cat: any) => cat._id || cat)
+          : course.category?._id
+          ? [course.category._id]
+          : course.category
+          ? [course.category]
+          : [],
         price: course.price || 0,
         is_active: course.is_active ?? true,
       });
@@ -250,6 +288,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     setFormData((prev) => ({
       ...prev,
       detail: prev.detail.map((item, i) => (i === index ? { title } : item)),
+    }));
+  };
+
+  // Handle category selection
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      category: checked
+        ? [...prev.category, categoryId]
+        : prev.category.filter((id) => id !== categoryId),
     }));
   };
 
@@ -320,29 +368,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         session_number: formData.session_number,
         session_number_duration: formData.session_number_duration,
         detail: formData.detail.filter((item) => item.title.trim() !== ""),
+        category: formData.category,
         media: remainingMediaIds,
         is_active: formData.is_active,
         price: formData.price,
       };
 
-      // Update course
-      const response = await fetch(
-        `${config.API}/v1/workflow-process/manager/course?id=${course._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "x-tenant-id": tenantId,
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updatePayload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cập nhật thất bại: ${errorText}`);
-      }
+      // Update course using API function
+      await updateCourse({
+        courseId: course._id,
+        courseData: updatePayload,
+        tenantId,
+        token,
+      });
 
       // Refresh course data
       const updatedCourse = await fetchCourseById({
@@ -465,16 +503,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   {course.is_active ? "🟢 Đang hoạt động" : "⚫ Đã kết thúc"}
                 </Badge>
                 {Array.isArray(course.category) &&
-                  course.category.map((cat: any) => (
-                    <Badge
-                      key={cat._id}
-                      variant='secondary'
-                      className='font-medium'
-                    >
-                      <Tag className='mr-1 h-3 w-3' />
-                      {cat.title}
-                    </Badge>
-                  ))}
+                  course.category
+                    .map((catId: string) =>
+                      categories.find((cat) => cat._id === catId)
+                    )
+                    .filter(Boolean)
+                    .map((cat: any) => (
+                      <Badge
+                        key={cat._id}
+                        variant='secondary'
+                        className='font-medium'
+                      >
+                        <Tag className='mr-1 h-3 w-3' />
+                        {cat.title}
+                      </Badge>
+                    ))}
               </div>
             </div>
 
@@ -899,6 +942,46 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Course Categories */}
+            <div className='space-y-4'>
+              <Label>Danh mục khóa học</Label>
+              {loadingCategories ? (
+                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                  Đang tải danh mục...
+                </div>
+              ) : categories.length === 0 ? (
+                <div className='text-sm text-muted-foreground'>
+                  Không có danh mục nào
+                </div>
+              ) : (
+                <div className='grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3'>
+                  {categories.map((category) => (
+                    <div
+                      key={category._id}
+                      className='flex items-center space-x-2'
+                    >
+                      <input
+                        type='checkbox'
+                        id={`category-${category._id}`}
+                        checked={formData.category.includes(category._id)}
+                        onChange={(e) =>
+                          handleCategoryChange(category._id, e.target.checked)
+                        }
+                        className='rounded border-gray-300'
+                      />
+                      <Label
+                        htmlFor={`category-${category._id}`}
+                        className='text-sm cursor-pointer'
+                      >
+                        {category.title}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Media Upload */}

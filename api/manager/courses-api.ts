@@ -141,3 +141,58 @@ export async function createCourse({
 
   return await res.json();
 }
+
+// Interface for course update
+export interface UpdateCourseData {
+  title: string;
+  description: string;
+  session_number: number;
+  session_number_duration: string;
+  detail: Array<{ title: string }>;
+  category: string[];
+  media?: string[];
+  is_active: boolean;
+  price: number;
+}
+
+// Function to update an existing course
+export async function updateCourse({
+  courseId,
+  courseData,
+  tenantId,
+  token,
+}: {
+  courseId: string;
+  courseData: UpdateCourseData;
+  tenantId: string;
+  token: string;
+}) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
+  const res = await fetch(
+    `${config.API}/v1/workflow-process/manager/course?id=${courseId}`,
+    {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(courseData),
+    }
+  );
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(
+      errorData.message || `Failed to update course: ${res.status}`
+    );
+  }
+
+  return await res.json();
+}
