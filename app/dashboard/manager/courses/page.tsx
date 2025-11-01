@@ -12,6 +12,7 @@ import {
   Loader2,
   ChevronRight,
   Settings,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,32 @@ export default function CoursesPage() {
   const [limit, setLimit] = useState(10); // Default page size
   const [total, setTotal] = useState(0); // Total courses from API
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Function to manually refresh courses
+  const refreshCourses = async () => {
+    setRefreshing(true);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token) return;
+      const res = await fetchCourses({ tenantId, token, page: 1, limit: 1000 });
+      setCourses(res.data || []);
+      setTotal(res.total || res.data?.length || 0);
+      setPage(1); // Reset to page 1
+      toast({
+        title: "Đã làm mới",
+        description: "Danh sách khóa học đã được cập nhật",
+      });
+    } catch (e: any) {
+      toast({
+        title: "Lỗi",
+        description: e.message || "Không thể tải lại danh sách",
+        variant: "destructive",
+      });
+    }
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -71,13 +98,15 @@ export default function CoursesPage() {
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
-        // Use the fetchCourses API with pagination
-        const res = await fetchCourses({ tenantId, token, page, limit });
-        // fetchCourses returns only the data array, but we need total for pagination
-        // So, fetchCourses should return { data, total } or you need to fetch total from the API response
-        // Let's fix fetchCourses to return both data and total
+        // Fetch all courses (no pagination for now to enable search/filter)
+        const res = await fetchCourses({
+          tenantId,
+          token,
+          page: 1,
+          limit: 1000,
+        });
         setCourses(res.data || []);
-        setTotal(res.total || 0);
+        setTotal(res.total || res.data?.length || 0);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setCourses([]);
@@ -85,10 +114,8 @@ export default function CoursesPage() {
       setLoading(false);
     }
 
-    // ✅ Add request deduplication
-    const timeoutId = setTimeout(fetchData, 100); // Debounce API calls
-    return () => clearTimeout(timeoutId);
-  }, [page, limit]);
+    fetchData();
+  }, []); // Remove page/limit dependency - fetch once on mount, refetch manually if needed
 
   // Fetch all courses for summary cards
   useEffect(() => {
@@ -110,12 +137,45 @@ export default function CoursesPage() {
       }
     }
     fetchAll();
-  }, []);
+  }, [courses]); // Refetch when courses change
 
-  // Remove this line:
-  // const filteredCourses = courses.filter((course) => { ... });
-  // Instead, use the paginated API data directly:
-  const displayedCourses = courses;
+  // Apply client-side filtering
+  const filteredCourses = courses.filter((course) => {
+    // Search filter
+    const matchesSearch =
+      searchQuery === "" ||
+      course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (Array.isArray(course.category) &&
+        course.category.some((cat: any) =>
+          cat.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        ));
+
+    // Level filter
+    const matchesLevel =
+      levelFilter === "all" ||
+      (Array.isArray(course.category) &&
+        course.category.some((cat: any) => cat.title === levelFilter));
+
+    // Status filter
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "Active" && course.is_active) ||
+      (statusFilter === "Completed" && !course.is_active);
+
+    return matchesSearch && matchesLevel && matchesStatus;
+  });
+
+  // Paginate filtered results client-side
+  const paginatedCourses = filteredCourses.slice(
+    (page - 1) * limit,
+    page * limit
+  );
+  const displayedCourses = paginatedCourses;
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, levelFilter, statusFilter]);
 
   if (loading) {
     return (
@@ -170,6 +230,16 @@ export default function CoursesPage() {
             </p>
           </div>
           <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              onClick={refreshCourses}
+              disabled={refreshing}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Làm mới
+            </Button>
             <Button
               variant='outline'
               onClick={() => setCategoriesModalOpen(true)}
@@ -430,7 +500,14 @@ export default function CoursesPage() {
             </div>
 
             {/* Pagination Controls */}
-            <div className='flex justify-center mt-6'>
+            <div className='flex justify-between items-center mt-6'>
+              <div className='text-sm text-muted-foreground'>
+                Hiển thị {paginatedCourses.length} / {filteredCourses.length}{" "}
+                khóa học
+                {searchQuery || levelFilter !== "all" || statusFilter !== "all"
+                  ? " (đã lọc)"
+                  : ""}
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -443,28 +520,34 @@ export default function CoursesPage() {
                       aria-disabled={page === 1}
                     />
                   </PaginationItem>
-                  {Array.from({ length: Math.ceil(total / limit) }, (_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink
-                        href='#'
-                        isActive={page === i + 1}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setPage(i + 1);
-                        }}
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+                  {Array.from(
+                    { length: Math.ceil(filteredCourses.length / limit) },
+                    (_, i) => (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          href='#'
+                          isActive={page === i + 1}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPage(i + 1);
+                          }}
+                        >
+                          {i + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
                   <PaginationItem>
                     <PaginationNext
                       href='#'
                       onClick={(e) => {
                         e.preventDefault();
-                        if (page < Math.ceil(total / limit)) setPage(page + 1);
+                        if (page < Math.ceil(filteredCourses.length / limit))
+                          setPage(page + 1);
                       }}
-                      aria-disabled={page === Math.ceil(total / limit)}
+                      aria-disabled={
+                        page === Math.ceil(filteredCourses.length / limit)
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
