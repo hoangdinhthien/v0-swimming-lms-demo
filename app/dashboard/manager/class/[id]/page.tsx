@@ -464,9 +464,17 @@ export default function ClassDetailPage() {
 
       console.log("🔍 Auto Schedule Request Data:", requestData);
       console.log("📅 Selected days breakdown:");
-      requestData.array_number_in_week.forEach(day => {
+      requestData.array_number_in_week.forEach((day) => {
         const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-        const vietnameseDayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
+        const vietnameseDayNames = [
+          "Thứ 2",
+          "Thứ 3",
+          "Thứ 4",
+          "Thứ 5",
+          "Thứ 6",
+          "Thứ 7",
+          "Chủ nhật",
+        ];
         console.log(`  ${day} = ${dayNames[day]} (${vietnameseDayNames[day]})`);
       });
 
@@ -595,15 +603,25 @@ export default function ClassDetailPage() {
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth(); // 0-11
     const day = date.getUTCDate();
-    
+
     // Use UTC date to get Vietnamese day name
     const vietnameseDay = getVietnameseDayFromDate(dateString);
-    
+
     const monthNames = [
-      "thg 1", "thg 2", "thg 3", "thg 4", "thg 5", "thg 6",
-      "thg 7", "thg 8", "thg 9", "thg 10", "thg 11", "thg 12"
+      "thg 1",
+      "thg 2",
+      "thg 3",
+      "thg 4",
+      "thg 5",
+      "thg 6",
+      "thg 7",
+      "thg 8",
+      "thg 9",
+      "thg 10",
+      "thg 11",
+      "thg 12",
     ];
-    
+
     return `${vietnameseDay}, ${day} ${monthNames[month]}`;
   };
   return (
@@ -1654,13 +1672,13 @@ export default function ClassDetailPage() {
                         .sort((a, b) => a - b)
                         .map((day) => {
                           const dayNames = [
-                            "Thứ 2",     // 0 = Monday
-                            "Thứ 3",     // 1 = Tuesday
-                            "Thứ 4",     // 2 = Wednesday
-                            "Thứ 5",     // 3 = Thursday
-                            "Thứ 6",     // 4 = Friday
-                            "Thứ 7",     // 5 = Saturday
-                            "Chủ nhật",  // 6 = Sunday
+                            "Thứ 2", // 0 = Monday
+                            "Thứ 3", // 1 = Tuesday
+                            "Thứ 4", // 2 = Wednesday
+                            "Thứ 5", // 3 = Thursday
+                            "Thứ 6", // 4 = Friday
+                            "Thứ 7", // 5 = Saturday
+                            "Chủ nhật", // 6 = Sunday
                           ];
                           return dayNames[day];
                         })
