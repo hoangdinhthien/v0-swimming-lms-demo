@@ -11,7 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Mail, User, Loader2, ChevronRight, Search } from "lucide-react";
+import {
+  Mail,
+  User,
+  Loader2,
+  ChevronRight,
+  Search,
+  RefreshCw,
+} from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -55,6 +62,7 @@ export default function ApplicationsPage() {
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,45 +80,67 @@ export default function ApplicationsPage() {
     router.push(`/dashboard/manager/applications/${applicationId}`);
   };
 
-  useEffect(() => {
-    async function fetchApplications() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token)
-          throw new Error("Thiếu thông tin tenant hoặc token");
-        const response = await getApplications(tenantId, token, page, limit);
-        console.log("[ApplicationsPage] Loaded applications:", response);
+  // Extract fetch logic
+  const fetchApplications = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+      const response = await getApplications(tenantId, token, page, limit);
+      console.log("[ApplicationsPage] Loaded applications:", response);
+      console.log(
+        "[ApplicationsPage] Applications array:",
+        response.applications
+      );
+      if (response.applications.length > 0) {
         console.log(
-          "[ApplicationsPage] Applications array:",
-          response.applications
+          "[ApplicationsPage] First app structure:",
+          response.applications[0]
         );
-        if (response.applications.length > 0) {
-          console.log(
-            "[ApplicationsPage] First app structure:",
-            response.applications[0]
-          );
-          console.log(
-            "[ApplicationsPage] First app type:",
-            response.applications[0].type,
-            typeof response.applications[0].type
-          );
-        }
-        setApplications(response.applications);
-        setTotal(response.totalCount);
-      } catch (e: any) {
-        setError(e.message || "Failed to fetch applications");
-        setApplications([]);
+        console.log(
+          "[ApplicationsPage] First app type:",
+          response.applications[0].type,
+          typeof response.applications[0].type
+        );
       }
+      setApplications(response.applications);
+      setTotal(response.totalCount);
+    } catch (e: any) {
+      setError(e.message || "Failed to fetch applications");
+      setApplications([]);
+    } finally {
       setLoading(false);
     }
+  };
 
+  useEffect(() => {
     // Add request deduplication like courses page
     const timeoutId = setTimeout(fetchApplications, 100);
     return () => clearTimeout(timeoutId);
   }, [page, limit]);
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchApplications();
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu đơn đăng ký đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   async function handleShowDetail(id: string) {
     setDetailLoading(true);
@@ -224,6 +254,16 @@ export default function ApplicationsPage() {
             Quản lý tất cả các đơn từ gửi lên trong hệ thống
           </p>
         </div>
+        <Button
+          variant='outline'
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+          />
+          Làm mới
+        </Button>
       </div>
 
       {/* Summary Cards */}

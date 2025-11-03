@@ -17,6 +17,7 @@ import {
   Phone,
   Loader2,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,54 +118,75 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const loadStudents = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId) throw new Error("Thiếu thông tin tenant");
+      const data = await fetchStudents({
+        tenantId: tenantId ?? undefined,
+        token: token ?? undefined,
+      });
+      // Process each student to get their images and parent information
+      const processedStudents = data.map((item: any) => {
+        // Extract avatar URL using helper function
+        const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+        console.log(`Avatar for student ${item.user?.username}:`, avatarUrl);
+
+        // Extract parent name directly from the response data
+        let parentName = null;
+        if (
+          item.user?.parent_id &&
+          Array.isArray(item.user.parent_id) &&
+          item.user.parent_id.length > 0
+        ) {
+          // Parent info is now included in the response
+          const parentInfo = item.user.parent_id[0];
+          if (parentInfo && parentInfo.username) {
+            parentName = parentInfo.username;
+          }
+        }
+
+        return {
+          ...item,
+          avatar: avatarUrl,
+          parentName: parentName,
+        };
+      });
+      setStudents(processedStudents);
+    } catch (e: any) {
+      setError(e.message || "Lỗi không xác định");
+      setStudents([]);
+    }
+    setLoading(false);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadStudents();
+    setRefreshing(false);
+    toast({
+      title: "Đã làm mới",
+      description: "Danh sách học viên đã được cập nhật",
+    });
+  };
 
   useEffect(() => {
-    async function loadStudents() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId) throw new Error("Thiếu thông tin tenant");
-        const data = await fetchStudents({
-          tenantId: tenantId ?? undefined,
-          token: token ?? undefined,
-        });
-        // Process each student to get their images and parent information
-        const processedStudents = data.map((item: any) => {
-          // Extract avatar URL using helper function
-          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-          console.log(`Avatar for student ${item.user?.username}:`, avatarUrl);
-
-          // Extract parent name directly from the response data
-          let parentName = null;
-          if (
-            item.user?.parent_id &&
-            Array.isArray(item.user.parent_id) &&
-            item.user.parent_id.length > 0
-          ) {
-            // Parent info is now included in the response
-            const parentInfo = item.user.parent_id[0];
-            if (parentInfo && parentInfo.username) {
-              parentName = parentInfo.username;
-            }
-          }
-
-          return {
-            ...item,
-            avatar: avatarUrl,
-            parentName: parentName,
-          };
-        });
-        setStudents(processedStudents);
-      } catch (e: any) {
-        setError(e.message || "Lỗi không xác định");
-        setStudents([]);
-      }
-      setLoading(false);
-    }
     loadStudents();
   }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, filter]);
 
   // Filter and search students
   const filteredStudents = students.filter((student) => {
@@ -183,6 +205,13 @@ export default function StudentsPage() {
         user.email.toLowerCase().includes(searchQuery.toLowerCase()));
     return statusMatch && searchMatch;
   });
+
+  // Client-side pagination
+  const totalCount = filteredStudents.length;
+  const paginatedStudents = filteredStudents.slice(
+    (page - 1) * limit,
+    page * limit
+  );
 
   // Calculate summary statistics
   const totalStudents = students.length;
@@ -263,6 +292,16 @@ export default function StudentsPage() {
           </p>
         </div>
         <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
+          </Button>
           <Link href='/dashboard/manager/students/import'>
             <Button variant='outline'>
               <FileText className='mr-2 h-4 w-4' />
@@ -439,8 +478,8 @@ export default function StudentsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => {
+                {paginatedStudents.length > 0 ? (
+                  paginatedStudents.map((student) => {
                     const user = student.user || {};
                     return (
                       <TableRow
@@ -541,6 +580,39 @@ export default function StudentsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalCount > 0 && (
+            <div className='flex items-center justify-between mt-4'>
+              <div className='text-sm text-muted-foreground'>
+                Hiển thị {(page - 1) * limit + 1} -{" "}
+                {Math.min(page * limit, totalCount)} trên {totalCount} học viên
+              </div>
+              <div className='flex items-center gap-2'>
+                <Button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  variant='outline'
+                >
+                  Trước
+                </Button>
+                <div className='px-3 text-sm'>
+                  {page} / {Math.ceil(totalCount / limit)}
+                </div>
+                <Button
+                  onClick={() =>
+                    setPage((p) =>
+                      Math.min(Math.ceil(totalCount / limit), p + 1)
+                    )
+                  }
+                  disabled={page >= Math.ceil(totalCount / limit)}
+                  variant='outline'
+                >
+                  Tiếp
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </>

@@ -500,59 +500,41 @@ export default function CoursesPage() {
             </div>
 
             {/* Pagination Controls */}
-            <div className='flex justify-between items-center mt-6'>
-              <div className='text-sm text-muted-foreground'>
-                Hiển thị {paginatedCourses.length} / {filteredCourses.length}{" "}
-                khóa học
-                {searchQuery || levelFilter !== "all" || statusFilter !== "all"
-                  ? " (đã lọc)"
-                  : ""}
+            {filteredCourses.length > 0 && (
+              <div className='flex items-center justify-between mt-4'>
+                <div className='text-sm text-muted-foreground'>
+                  Hiển thị {(page - 1) * limit + 1} -{" "}
+                  {Math.min(page * limit, filteredCourses.length)} trên{" "}
+                  {filteredCourses.length} khóa học
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    variant='outline'
+                  >
+                    Trước
+                  </Button>
+                  <div className='px-3 text-sm'>
+                    {page} / {Math.ceil(filteredCourses.length / limit)}
+                  </div>
+                  <Button
+                    onClick={() =>
+                      setPage((p) =>
+                        Math.min(
+                          Math.ceil(filteredCourses.length / limit),
+                          p + 1
+                        )
+                      )
+                    }
+                    disabled={page >= Math.ceil(filteredCourses.length / limit)}
+                    variant='outline'
+                  >
+                    Tiếp
+                  </Button>
+                </div>
               </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href='#'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page > 1) setPage(page - 1);
-                      }}
-                      aria-disabled={page === 1}
-                    />
-                  </PaginationItem>
-                  {Array.from(
-                    { length: Math.ceil(filteredCourses.length / limit) },
-                    (_, i) => (
-                      <PaginationItem key={i}>
-                        <PaginationLink
-                          href='#'
-                          isActive={page === i + 1}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPage(i + 1);
-                          }}
-                        >
-                          {i + 1}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      href='#'
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (page < Math.ceil(filteredCourses.length / limit))
-                          setPage(page + 1);
-                      }}
-                      aria-disabled={
-                        page === Math.ceil(filteredCourses.length / limit)
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>

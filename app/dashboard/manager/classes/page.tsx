@@ -15,6 +15,7 @@ import {
   Clock,
   User,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,7 @@ export default function ClassesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [isFetching, setIsFetching] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Helper function to get instructor name from class data
   const getInstructorName = (classItem: ClassItem): string => {
@@ -166,10 +168,16 @@ export default function ClassesPage() {
 
   // Client-side pagination: slice the filtered results
   const totalCount = filteredClasses.length;
+  const totalPages = Math.ceil(totalCount / limit);
   const paginatedClasses = filteredClasses.slice(
     (page - 1) * limit,
     page * limit
   );
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   // Calculate summary statistics
   const totalClasses = allClasses.length;
@@ -181,6 +189,34 @@ export default function ClassesPage() {
   const activeClasses = allClasses.filter(
     (classItem) => classItem.course.is_active
   ).length;
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+
+      const result = await fetchClasses(tenantId, token, 1, 1000);
+      setAllClasses(result.data);
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu lớp học đã được cập nhật",
+      });
+    } catch (e: any) {
+      setError(e.message || "Lỗi không xác định");
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -234,11 +270,23 @@ export default function ClassesPage() {
               Quản lý tất cả các lớp học hiện có
             </p>
           </div>
-          <Link href='/dashboard/manager/classes/create'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Làm mới
             </Button>
-          </Link>
+            <Link href='/dashboard/manager/classes/create'>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className='mt-8 grid gap-6 md:grid-cols-4'>
@@ -438,50 +486,31 @@ export default function ClassesPage() {
             </div>
 
             {/* Pagination Controls */}
-            {totalCount > limit && (
-              <div className='flex justify-center mt-6'>
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page > 1) setPage(page - 1);
-                        }}
-                        aria-disabled={page === 1}
-                      />
-                    </PaginationItem>
-                    {Array.from(
-                      { length: Math.ceil(totalCount / limit) },
-                      (_, i) => (
-                        <PaginationItem key={i}>
-                          <PaginationLink
-                            href='#'
-                            isActive={page === i + 1}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              setPage(i + 1);
-                            }}
-                          >
-                            {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      )
-                    )}
-                    <PaginationItem>
-                      <PaginationNext
-                        href='#'
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (page < Math.ceil(totalCount / limit))
-                            setPage(page + 1);
-                        }}
-                        aria-disabled={page === Math.ceil(totalCount / limit)}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+            {totalCount > 0 && (
+              <div className='flex items-center justify-between mt-4'>
+                <div className='text-sm text-muted-foreground'>
+                  Hiển thị {(page - 1) * limit + 1} -{" "}
+                  {Math.min(page * limit, totalCount)} trên {totalCount} lớp học
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    variant='outline'
+                  >
+                    Trước
+                  </Button>
+                  <div className='px-3 text-sm'>
+                    {page} / {totalPages}
+                  </div>
+                  <Button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    variant='outline'
+                  >
+                    Tiếp
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

@@ -20,6 +20,7 @@ import {
   Book,
   Filter,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,86 +102,112 @@ export default function StaffPage() {
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Permission modal states
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [selectedStaffForPermission, setSelectedStaffForPermission] =
     useState<any>(null);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId) throw new Error("No tenant selected");
-        if (!token) throw new Error("Not authenticated");
+  // Extract load logic into separate function
+  const loadStaff = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId) throw new Error("No tenant selected");
+      if (!token) throw new Error("Not authenticated");
 
-        // Use the staff API to fetch staff members
-        const data = await fetchStaff({
-          tenantId,
-          token,
-        });
+      // Use the staff API to fetch staff members
+      const data = await fetchStaff({
+        tenantId,
+        token,
+      });
 
-        // Process each staff member to get their images
-        const processedStaff = data.map((item: any, index: number) => {
-          // Extract avatar URL using helper function
-          const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-          console.log(`Avatar for staff ${item.user?.username}:`, avatarUrl);
+      // Process each staff member to get their images
+      const processedStaff = data.map((item: any, index: number) => {
+        // Extract avatar URL using helper function
+        const avatarUrl = extractAvatarUrl(item.user?.featured_image);
+        console.log(`Avatar for staff ${item.user?.username}:`, avatarUrl);
 
-          // Debug logging for ID issues
-          console.log(`Processing staff: ${item.user?.username}`);
-          console.log(`- Staff ID (item._id): ${item._id}`);
-          console.log(`- User ID (item.user._id): ${item.user?._id}`);
-          console.log(`- Full item:`, item);
+        // Debug logging for ID issues
+        console.log(`Processing staff: ${item.user?.username}`);
+        console.log(`- Staff ID (item._id): ${item._id}`);
+        console.log(`- User ID (item.user._id): ${item.user?._id}`);
+        console.log(`- Full item:`, item);
 
-          // Use user._id for navigation since that's what the detail page expects
-          // This ensures consistent ID usage throughout the application
-          const primaryId = item.user?._id || `staff-${index}`;
+        // Use user._id for navigation since that's what the detail page expects
+        // This ensures consistent ID usage throughout the application
+        const primaryId = item.user?._id || `staff-${index}`;
 
-          return {
-            id: primaryId, // Use user._id for navigation and display
-            staffId: item._id, // Keep staff._id for reference
-            userId: item.user?._id, // Keep user._id separately for API calls
-            name: item.user?.username || "-",
-            email: item.user?.email || "-",
-            phone: item.user?.phone || "-",
-            department: item.user?.role_front || [],
-            status: item.user?.is_active ? "Active" : "Inactive",
-            joinDate: item.user?.created_at
-              ? new Date(item.user.created_at).toLocaleString("vi-VN", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })
-              : "-",
-            avatar: avatarUrl,
-            featuredImageData: item.user?.featured_image?.[0] || null,
-          };
-        });
+        return {
+          id: primaryId, // Use user._id for navigation and display
+          staffId: item._id, // Keep staff._id for reference
+          userId: item.user?._id, // Keep user._id separately for API calls
+          name: item.user?.username || "-",
+          email: item.user?.email || "-",
+          phone: item.user?.phone || "-",
+          department: item.user?.role_front || [],
+          status: item.user?.is_active ? "Active" : "Inactive",
+          joinDate: item.user?.created_at
+            ? new Date(item.user.created_at).toLocaleString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                timeZone: "UTC",
+              })
+            : "-",
+          avatar: avatarUrl,
+          featuredImageData: item.user?.featured_image?.[0] || null,
+        };
+      });
 
-        console.log("Processed staff array:", processedStaff);
-        console.log(
-          "Staff IDs:",
-          processedStaff.map((s) => ({
-            name: s.name,
-            id: s.id,
-            userId: s.userId,
-            staffId: s.staffId,
-          }))
-        );
+      console.log("Processed staff array:", processedStaff);
+      console.log(
+        "Staff IDs:",
+        processedStaff.map((s) => ({
+          name: s.name,
+          id: s.id,
+          userId: s.userId,
+          staffId: s.staffId,
+        }))
+      );
 
-        // Since we're now always using staff._id, no need for duplicate checking
-        console.log("Final staff array:", processedStaff);
-        setStaff(processedStaff);
-      } catch (e: any) {
-        setError(e.message || "Failed to fetch staff");
-      }
+      // Since we're now always using staff._id, no need for duplicate checking
+      console.log("Final staff array:", processedStaff);
+      setStaff(processedStaff);
+    } catch (e: any) {
+      setError(e.message || "Failed to fetch staff");
+    } finally {
       setLoading(false);
     }
-    load();
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadStaff();
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu nhân viên đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStaff();
   }, []);
 
   // Get unique departments for filter
@@ -208,6 +235,16 @@ export default function StaffPage() {
 
     return statusMatch && departmentMatch && searchMatch;
   });
+
+  // Client-side pagination
+  const totalCount = filteredStaff.length;
+  const totalPages = Math.ceil(totalCount / limit);
+  const paginatedStaff = filteredStaff.slice((page - 1) * limit, page * limit);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, departmentFilter]);
 
   // Calculate statistics
   const totalStaff = staff.length;
@@ -273,12 +310,24 @@ export default function StaffPage() {
             Quản lý tất cả nhân viên tại trung tâm bơi lội của bạn
           </p>
         </div>
-        <Link href='/dashboard/manager/staff/new'>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            Thêm Nhân viên
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
           </Button>
-        </Link>
+          <Link href='/dashboard/manager/staff/new'>
+            <Button>
+              <Plus className='mr-2 h-4 w-4' />
+              Thêm Nhân viên
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -423,8 +472,8 @@ export default function StaffPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaff.length > 0 ? (
-                  filteredStaff.map((member, index) => (
+                {paginatedStaff.length > 0 ? (
+                  paginatedStaff.map((member, index) => (
                     <TableRow
                       key={`${member.id}-${index}`} // Ensure unique keys even if IDs are duplicated
                       className='cursor-pointer hover:bg-muted/50 transition-all duration-200 border-border/30 group hover:shadow-sm'
@@ -570,6 +619,35 @@ export default function StaffPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalCount > 0 && (
+            <div className='flex items-center justify-between mt-4'>
+              <div className='text-sm text-muted-foreground'>
+                Hiển thị {(page - 1) * limit + 1} -{" "}
+                {Math.min(page * limit, totalCount)} trên {totalCount} nhân viên
+              </div>
+              <div className='flex items-center gap-2'>
+                <Button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  variant='outline'
+                >
+                  Trước
+                </Button>
+                <div className='px-3 text-sm'>
+                  {page} / {totalPages}
+                </div>
+                <Button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  variant='outline'
+                >
+                  Tiếp
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

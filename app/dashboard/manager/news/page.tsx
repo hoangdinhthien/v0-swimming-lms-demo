@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   Upload,
   X,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export default function NewsListPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -77,21 +79,42 @@ export default function NewsListPage() {
   // Image preview
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchNews() {
-      try {
-        setIsLoading(true);
-        const news = await getNews();
-        setNewsItems(news);
-      } catch (error) {
-        console.error("Error fetching news:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  // Extract fetch logic
+  const fetchNews = async () => {
+    try {
+      setIsLoading(true);
+      const news = await getNews();
+      setNewsItems(news);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchNews();
   }, []);
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchNews();
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu tin tức đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (field: string, value: any) => {
@@ -298,6 +321,16 @@ export default function NewsListPage() {
           </p>
         </div>
         <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing || isLoading}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
+          </Button>
           <Dialog
             open={isModalOpen}
             onOpenChange={setIsModalOpen}

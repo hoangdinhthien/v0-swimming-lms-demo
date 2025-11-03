@@ -13,6 +13,7 @@ import {
   GraduationCap,
   Loader2,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -298,6 +299,11 @@ export default function InstructorsPage() {
   const [selectedInstructorId, setSelectedInstructorId] = useState<
     string | null
   >(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Use optimized hooks for better performance
   const {
@@ -306,6 +312,26 @@ export default function InstructorsPage() {
     error,
     refetch,
   } = useOptimizedInstructors();
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu giáo viên đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Use optimized avatar loading
   const avatars = useOptimizedAvatars(rawInstructors || []);
@@ -362,6 +388,18 @@ export default function InstructorsPage() {
 
     return statusMatch && specialtyMatch && searchMatch;
   });
+
+  // Client-side pagination
+  const totalCount = filteredInstructors.length;
+  const paginatedInstructors = filteredInstructors.slice(
+    (page - 1) * limit,
+    page * limit
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, specialtyFilter]);
 
   // Calculate statistics
   const totalInstructors = instructors.length;
@@ -444,12 +482,24 @@ export default function InstructorsPage() {
             Quản lý tất cả giáo viên tại trung tâm bơi lội của bạn
           </p>
         </div>
-        <Link href='/dashboard/manager/instructors/new'>
-          <Button>
-            <Plus className='mr-2 h-4 w-4' />
-            Thêm Giáo viên
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
           </Button>
-        </Link>
+          <Link href='/dashboard/manager/instructors/new'>
+            <Button>
+              <Plus className='mr-2 h-4 w-4' />
+              Thêm Giáo viên
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className='mt-8 grid gap-6 md:grid-cols-4'>
@@ -588,8 +638,8 @@ export default function InstructorsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInstructors.length > 0 ? (
-                  filteredInstructors.map((instructor) => {
+                {paginatedInstructors.length > 0 ? (
+                  paginatedInstructors.map((instructor) => {
                     const {
                       id,
                       name,
@@ -719,6 +769,39 @@ export default function InstructorsPage() {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalCount > 0 && (
+            <div className='flex items-center justify-between mt-4'>
+              <div className='text-sm text-muted-foreground'>
+                Hiển thị {(page - 1) * limit + 1} -{" "}
+                {Math.min(page * limit, totalCount)} trên {totalCount} giáo viên
+              </div>
+              <div className='flex items-center gap-2'>
+                <Button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  variant='outline'
+                >
+                  Trước
+                </Button>
+                <div className='px-3 text-sm'>
+                  {page} / {Math.ceil(totalCount / limit)}
+                </div>
+                <Button
+                  onClick={() =>
+                    setPage((p) =>
+                      Math.min(Math.ceil(totalCount / limit), p + 1)
+                    )
+                  }
+                  disabled={page >= Math.ceil(totalCount / limit)}
+                  variant='outline'
+                >
+                  Tiếp
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </>

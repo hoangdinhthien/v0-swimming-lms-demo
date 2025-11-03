@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Search, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, Search, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ export default function PoolsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -81,36 +82,53 @@ export default function PoolsPage() {
     is_active: true,
   });
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token)
-          throw new Error("Thiếu thông tin tenant hoặc token");
-        // Fetch all pools for client-side search and pagination
-        const result = await fetchPools(
-          { page: 1, limit: 1000 }, // Fetch all pools
-          tenantId,
-          token
-        );
-        if (!mounted) return;
-        setPoolsData(result);
-      } catch (e: any) {
-        setError(e?.message || "Lỗi khi tải danh sách hồ bơi");
-        setPoolsData(null);
-      } finally {
-        if (mounted) setLoading(false);
-      }
+  // Extract load logic
+  const loadPools = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+      // Fetch all pools for client-side search and pagination
+      const result = await fetchPools(
+        { page: 1, limit: 1000 }, // Fetch all pools
+        tenantId,
+        token
+      );
+      setPoolsData(result);
+    } catch (e: any) {
+      setError(e?.message || "Lỗi khi tải danh sách hồ bơi");
+      setPoolsData(null);
+    } finally {
+      setLoading(false);
     }
-    load();
-    return () => {
-      mounted = false;
-    };
+  };
+
+  useEffect(() => {
+    loadPools();
   }, []); // Remove searchQuery from dependencies
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadPools();
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu hồ bơi đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (field: string, value: any) => {
@@ -368,6 +386,16 @@ export default function PoolsPage() {
           </p>
         </div>
         <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
+          </Button>
           <Button variant='outline'>Xuất dữ liệu</Button>
           <Dialog
             open={isModalOpen}
