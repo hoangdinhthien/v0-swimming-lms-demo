@@ -739,3 +739,10 @@ UI SUGGESTION TASK:
 3. Cách thao tác phê duyệt (approve/reject).
 4. UX gợi ý để Manager dễ dàng kiểm tra và xác nhận thay đổi.
 - Có thể mô tả bằng text hoặc sơ đồ giao diện (nếu phù hợp).
+
+
+- custom lịch 
+- drawer: thêm searrch filter, show theo slot + expand
+- thêm filter/sort vào table
+- thêm auto xếp lịch trong lịch
+- 
