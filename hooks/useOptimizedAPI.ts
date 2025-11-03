@@ -256,16 +256,34 @@ export function useOptimizedAvatars(items: any[]): { [key: string]: string } {
 
         if (featuredImage) {
           try {
-            if (Array.isArray(featuredImage) && featuredImage.length > 0) {
+            // Handle empty array
+            if (Array.isArray(featuredImage) && featuredImage.length === 0) {
+              avatarUrl = "/placeholder.svg";
+            }
+            // Handle Array format: [{ path: ["url"] }] or [{ path: "url" }]
+            else if (Array.isArray(featuredImage) && featuredImage.length > 0) {
               const firstImage = featuredImage[0];
               if (firstImage?.path) {
                 if (Array.isArray(firstImage.path)) {
                   avatarUrl = firstImage.path[0] || "/placeholder.svg";
-                } else {
+                } else if (typeof firstImage.path === "string") {
                   avatarUrl = firstImage.path;
                 }
               }
-            } else if (typeof featuredImage === "string") {
+            }
+            // Handle Object format: { path: "url" } or { path: ["url"] }
+            else if (typeof featuredImage === "object" && featuredImage.path) {
+              if (
+                Array.isArray(featuredImage.path) &&
+                featuredImage.path.length > 0
+              ) {
+                avatarUrl = featuredImage.path[0];
+              } else if (typeof featuredImage.path === "string") {
+                avatarUrl = featuredImage.path;
+              }
+            }
+            // Handle String format (legacy media ID)
+            else if (typeof featuredImage === "string") {
               if (featuredImage.startsWith("http")) {
                 avatarUrl = featuredImage;
               } else {

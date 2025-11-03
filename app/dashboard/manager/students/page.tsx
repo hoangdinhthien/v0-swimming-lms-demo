@@ -54,6 +54,12 @@ function extractAvatarUrl(featuredImage: any): string {
     return "/placeholder.svg";
   }
 
+  // Handle empty array - return placeholder immediately
+  if (Array.isArray(featuredImage) && featuredImage.length === 0) {
+    console.log("Empty featured_image array, using placeholder");
+    return "/placeholder.svg";
+  }
+
   // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
   if (Array.isArray(featuredImage) && featuredImage.length > 0) {
     console.log("Handling array format featured_image");
