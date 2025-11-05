@@ -46,6 +46,7 @@ import {
   BookOutlined,
   SaveOutlined,
   CloseOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { Loader2 } from "lucide-react";
 import type { CalendarProps } from "antd";
@@ -85,6 +86,12 @@ import {
 import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import ClassDetailModal from "@/components/manager/class-detail-modal";
 
 const { Option } = AntdSelect;
@@ -140,6 +147,7 @@ export default function ImprovedAntdCalendarPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerDate, setDrawerDate] = useState<Dayjs | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Performance optimization: Track last load time to avoid redundant calls
   const [lastClassDataLoad, setLastClassDataLoad] = useState<number>(0);
@@ -377,23 +385,23 @@ export default function ImprovedAntdCalendarPage() {
     const isPast = value.isBefore(dayjs(), "day");
     const isFuture = value.isAfter(dayjs(), "day");
 
+    const handleCellClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDrawerDate(value);
+      setDrawerOpen(true);
+    };
+
     if (events.length === 0) {
       return (
         <div
-          className={`h-full min-h-[80px] p-1 ${
+          className={`h-full min-h-[120px] p-2 ${
             isPast ? "opacity-60" : ""
-          } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center`}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDrawerDate(value);
-            setDrawerOpen(true);
-          }}
+          } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
+          onClick={handleCellClick}
         >
-          <div className='text-center'>
-            <div className='text-xs text-gray-400 dark:text-gray-600'>
-              Chưa có lớp học
-            </div>
+          <div className='text-xs text-gray-400 dark:text-gray-600 text-center py-2'>
+            Chưa có lớp học
           </div>
         </div>
       );
@@ -401,26 +409,68 @@ export default function ImprovedAntdCalendarPage() {
 
     return (
       <div
-        className={`h-full min-h-[80px] p-1 ${
+        className={`h-full min-h-[120px] p-1 ${
           isPast ? "opacity-60" : ""
-        } flex items-center justify-center`}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setDrawerDate(value);
-          setDrawerOpen(true);
-        }}
+        } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
+        onClick={handleCellClick}
       >
-        <div className='text-center'>
-          <div className='inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold text-sm mb-1 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors'>
-            {events.length}
-          </div>
-          <div className='text-xs text-gray-600 dark:text-gray-400 font-medium'>
-            lớp học
-          </div>
-        </div>
+        <ul className='events-list max-h-[135px] overflow-y-auto overflow-x-auto space-y-2 pr-1 pb-2'>
+          {events.map((event, index) => (
+            <li
+              key={index}
+              className='event-item'
+            >
+              <div
+                className='cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2 py-1.5 transition-colors text-xs whitespace-nowrap inline-block min-w-full'
+                style={{
+                  backgroundColor: `${event.color}15`,
+                  borderLeft: `3px solid ${event.color}`,
+                }}
+              >
+                <span className='font-medium'>{event.slotTitle}</span>
+                {" - "}
+                <span>{event.className}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     );
+  };
+
+  // Filter events based on search query
+  const filterEvents = (events: CalendarEvent[]): CalendarEvent[] => {
+    if (!searchQuery.trim()) return events;
+
+    const query = searchQuery.toLowerCase();
+    return events.filter(
+      (event) =>
+        event.className.toLowerCase().includes(query) ||
+        event.slotTitle.toLowerCase().includes(query) ||
+        event.course.toLowerCase().includes(query) ||
+        event.poolTitle.toLowerCase().includes(query) ||
+        event.instructorName.toLowerCase().includes(query)
+    );
+  };
+
+  // Group events by slot
+  const groupEventsBySlot = (events: CalendarEvent[]) => {
+    const grouped: { [slotTitle: string]: CalendarEvent[] } = {};
+
+    events.forEach((event) => {
+      const slotTitle = event.slotTitle;
+      if (!grouped[slotTitle]) {
+        grouped[slotTitle] = [];
+      }
+      grouped[slotTitle].push(event);
+    });
+
+    // Sort slots by time (extract start time from slotTime)
+    return Object.entries(grouped).sort((a, b) => {
+      const timeA = a[1][0]?.slotTime.split(" - ")[0] || "";
+      const timeB = b[1][0]?.slotTime.split(" - ")[0] || "";
+      return timeA.localeCompare(timeB);
+    });
   };
 
   // Handle delete schedule event
@@ -820,32 +870,6 @@ export default function ImprovedAntdCalendarPage() {
   return (
     <ConfigProvider locale={locale}>
       <div className='container mx-auto py-8 space-y-6'>
-        {/* Header */}
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-          <div className='space-y-2'>
-            <div className='flex items-center gap-3'>
-              <Button
-                onClick={() => router.back()}
-                variant='outline'
-                size='sm'
-              >
-                <ArrowLeftOutlined className='mr-2' />
-                Quay lại
-              </Button>
-            </div>
-          </div>
-
-          {/* <div className='flex items-center gap-3'>
-            <AntdButton
-              type='primary'
-              icon={<PlusOutlined />}
-              onClick={() => handleQuickAddClass()}
-            >
-              Thêm lớp học
-            </AntdButton>
-          </div> */}
-        </div>
-
         {/* Statistics Cards */}
         {scheduleEvents.length > 0 && (
           <Row gutter={[16, 16]}>
@@ -949,6 +973,7 @@ export default function ImprovedAntdCalendarPage() {
           open={drawerOpen}
           onClose={() => {
             setDrawerOpen(false);
+            setSearchQuery(""); // Reset search query
             resetClassManagementForm();
           }}
           className='calendar-drawer'
@@ -1038,8 +1063,22 @@ export default function ImprovedAntdCalendarPage() {
 
                             return (
                               <div>
+                                {/* Search Bar */}
+                                <div className='mb-4'>
+                                  <Input
+                                    placeholder='Tìm kiếm theo lớp học, hồ bơi, giảng viên, khóa học...'
+                                    prefix={<SearchOutlined />}
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                      setSearchQuery(e.target.value)
+                                    }
+                                    allowClear
+                                    size='large'
+                                  />
+                                </div>
+
                                 {/* Summary */}
-                                <div className='mb-6'>
+                                <div className='mb-4'>
                                   <AntdCard
                                     size='small'
                                     className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
@@ -1052,127 +1091,208 @@ export default function ImprovedAntdCalendarPage() {
                                         </span>
                                       </div>
                                       <div className='text-xl font-bold text-blue-600 dark:text-blue-400'>
-                                        {events.length}
+                                        {filterEvents(events).length}
                                       </div>
                                     </div>
                                   </AntdCard>
                                 </div>
 
-                                {/* Events List */}
-                                <div className='space-y-4'>
-                                  <div className='flex items-center justify-between'>
-                                    <Title
-                                      level={5}
-                                      className='!mb-0'
-                                    >
-                                      Danh sách lớp học
-                                    </Title>
-                                    <AntdButton
-                                      type='dashed'
-                                      icon={<PlusOutlined />}
-                                      onClick={() => {
-                                        setClassManagementMode("add");
-                                        loadClassManagementData(false); // Use cache
-                                      }}
-                                    >
-                                      Thêm lớp
-                                    </AntdButton>
-                                  </div>
+                                {/* Add Class Button */}
+                                <div className='mb-4 flex justify-end'>
+                                  <AntdButton
+                                    type='dashed'
+                                    icon={<PlusOutlined />}
+                                    onClick={() => {
+                                      setClassManagementMode("add");
+                                      loadClassManagementData(false);
+                                    }}
+                                  >
+                                    Thêm lớp
+                                  </AntdButton>
+                                </div>
 
-                                  <div className='space-y-3'>
-                                    {events.map((event, index) => (
-                                      <AntdCard
-                                        key={index}
-                                        size='small'
-                                        className='hover:shadow-md transition-all'
+                                {/* Events List by Slot (Accordion) */}
+                                <div className='space-y-2'>
+                                  {(() => {
+                                    const filteredEvents = filterEvents(events);
+                                    const groupedEvents =
+                                      groupEventsBySlot(filteredEvents);
+
+                                    if (filteredEvents.length === 0) {
+                                      return (
+                                        <div className='text-center py-8'>
+                                          <Empty
+                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                            description={
+                                              <span className='text-gray-500 dark:text-gray-400'>
+                                                {searchQuery
+                                                  ? "Không tìm thấy lớp học nào phù hợp"
+                                                  : "Không có lớp học nào"}
+                                              </span>
+                                            }
+                                          />
+                                        </div>
+                                      );
+                                    }
+
+                                    return (
+                                      <Accordion
+                                        type='multiple'
+                                        defaultValue={groupedEvents.map(
+                                          (_, index) => `slot-${index}`
+                                        )}
+                                        className='w-full'
                                       >
-                                        <div className='flex items-start justify-between'>
-                                          <div className='flex items-start gap-3 flex-1'>
-                                            <Avatar
-                                              style={{
-                                                backgroundColor: event.color,
-                                              }}
-                                              icon={<EnvironmentOutlined />}
-                                              size='default'
-                                            />
-                                            <div className='flex-1'>
-                                              <div className='flex items-center gap-2 mb-2'>
-                                                <Text
-                                                  strong
-                                                  className='text-lg'
-                                                >
-                                                  {event.className}
-                                                </Text>
-                                                <Tag color={event.color}>
-                                                  {event.slotTitle}
-                                                </Tag>
-                                              </div>
-
-                                              <div className='space-y-1'>
-                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
-                                                  <ClockCircleOutlined />
-                                                  <span>{event.slotTime}</span>
-                                                </div>
-                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
-                                                  <BookOutlined />
-                                                  <span>{event.course}</span>
-                                                </div>
-                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
-                                                  <EnvironmentOutlined />
-                                                  <span>{event.poolTitle}</span>
-                                                </div>
-                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
-                                                  <UserOutlined />
-                                                  <div className='flex items-center gap-2'>
-                                                    <span>
-                                                      {event.instructorName}
+                                        {groupedEvents.map(
+                                          ([slotTitle, slotEvents], index) => (
+                                            <AccordionItem
+                                              key={`slot-${index}`}
+                                              value={`slot-${index}`}
+                                              className='border rounded-lg mb-2 overflow-hidden'
+                                            >
+                                              <AccordionTrigger className='px-4 hover:no-underline bg-gray-50 dark:bg-gray-800'>
+                                                <div className='flex items-center gap-3 w-full'>
+                                                  <ClockCircleOutlined className='text-blue-600 dark:text-blue-400' />
+                                                  <div className='flex-1 text-left'>
+                                                    <span className='font-semibold'>
+                                                      {slotTitle}
+                                                    </span>
+                                                    <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
+                                                      ({slotEvents[0]?.slotTime}
+                                                      )
                                                     </span>
                                                   </div>
+                                                  <Tag color='blue'>
+                                                    {slotEvents.length} lớp
+                                                  </Tag>
                                                 </div>
-                                              </div>
-                                            </div>
-                                          </div>
+                                              </AccordionTrigger>
+                                              <AccordionContent className='px-0 pb-0'>
+                                                <div className='space-y-2 p-2'>
+                                                  {slotEvents.map(
+                                                    (event, eventIndex) => (
+                                                      <AntdCard
+                                                        key={eventIndex}
+                                                        size='small'
+                                                        className='hover:shadow-md transition-all'
+                                                      >
+                                                        <div className='flex items-start justify-between'>
+                                                          <div className='flex items-start gap-3 flex-1'>
+                                                            <Avatar
+                                                              style={{
+                                                                backgroundColor:
+                                                                  event.color,
+                                                              }}
+                                                              icon={
+                                                                <EnvironmentOutlined />
+                                                              }
+                                                              size='small'
+                                                            />
+                                                            <div className='flex-1'>
+                                                              <div className='flex items-center gap-2 mb-2'>
+                                                                <Text
+                                                                  strong
+                                                                  className='text-base'
+                                                                >
+                                                                  {
+                                                                    event.className
+                                                                  }
+                                                                </Text>
+                                                              </div>
+                                                              <Tag
+                                                                color={
+                                                                  event.color
+                                                                }
+                                                                className='text-xs'
+                                                              >
+                                                                {event.course}
+                                                              </Tag>
 
-                                          <div className='flex flex-col gap-1'>
-                                            <Tooltip title='Xem chi tiết'>
-                                              <AntdButton
-                                                type='text'
-                                                size='small'
-                                                icon={<EyeOutlined />}
-                                                onClick={(e) => {
-                                                  e.preventDefault();
-                                                  e.stopPropagation();
-                                                  handleOpenDetailModal(event);
-                                                }}
-                                              />
-                                            </Tooltip>
-                                            <Tooltip title='Xóa lớp học'>
-                                              <AntdButton
-                                                type='text'
-                                                size='small'
-                                                icon={<DeleteOutlined />}
-                                                danger
-                                                onClick={(e) => {
-                                                  e.preventDefault();
-                                                  e.stopPropagation();
-                                                  setScheduleToDelete({
-                                                    scheduleId:
-                                                      event.scheduleId,
-                                                    className: event.className,
-                                                    date: drawerDate.format(
-                                                      "YYYY-MM-DD"
-                                                    ),
-                                                    slotTitle: event.slotTitle,
-                                                  });
-                                                  setDeleteDialogOpen(true);
-                                                }}
-                                              />
-                                            </Tooltip>
-                                          </div>
-                                        </div>
-                                      </AntdCard>
-                                    ))}
-                                  </div>
+                                                              <div className='space-y-1'>
+                                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                                                                  <EnvironmentOutlined />
+                                                                  <span>
+                                                                    {
+                                                                      event.poolTitle
+                                                                    }
+                                                                  </span>
+                                                                </div>
+                                                                <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+                                                                  <UserOutlined />
+                                                                  <span>
+                                                                    {
+                                                                      event.instructorName
+                                                                    }
+                                                                  </span>
+                                                                </div>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+
+                                                          <div className='flex flex-col gap-1'>
+                                                            <Tooltip title='Xem chi tiết'>
+                                                              <AntdButton
+                                                                type='text'
+                                                                size='small'
+                                                                icon={
+                                                                  <EyeOutlined />
+                                                                }
+                                                                onClick={(
+                                                                  e
+                                                                ) => {
+                                                                  e.preventDefault();
+                                                                  e.stopPropagation();
+                                                                  handleOpenDetailModal(
+                                                                    event
+                                                                  );
+                                                                }}
+                                                              />
+                                                            </Tooltip>
+                                                            <Tooltip title='Xóa lớp học'>
+                                                              <AntdButton
+                                                                type='text'
+                                                                size='small'
+                                                                icon={
+                                                                  <DeleteOutlined />
+                                                                }
+                                                                danger
+                                                                onClick={(
+                                                                  e
+                                                                ) => {
+                                                                  e.preventDefault();
+                                                                  e.stopPropagation();
+                                                                  setScheduleToDelete(
+                                                                    {
+                                                                      scheduleId:
+                                                                        event.scheduleId,
+                                                                      className:
+                                                                        event.className,
+                                                                      date: drawerDate.format(
+                                                                        "YYYY-MM-DD"
+                                                                      ),
+                                                                      slotTitle:
+                                                                        event.slotTitle,
+                                                                    }
+                                                                  );
+                                                                  setDeleteDialogOpen(
+                                                                    true
+                                                                  );
+                                                                }}
+                                                              />
+                                                            </Tooltip>
+                                                          </div>
+                                                        </div>
+                                                      </AntdCard>
+                                                    )
+                                                  )}
+                                                </div>
+                                              </AccordionContent>
+                                            </AccordionItem>
+                                          )
+                                        )}
+                                      </Accordion>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             );

@@ -99,3 +99,139 @@
 .dark .ant-picker-calendar .ant-picker-panel {
   background: transparent !important;
 }
+
+/* Events list styling */
+.events-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  /* Enable both horizontal and vertical scrolling */
+  overflow-x: auto;
+  overflow-y: auto;
+  /* Add padding to prevent items from being cut off */
+  padding-bottom: 4px;
+}
+
+/* Scrollbar styling for both directions */
+.events-list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px; /* Enable horizontal scrollbar */
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.dark .events-list::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.dark .events-list::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.events-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .events-list::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Scrollbar for Firefox */
+.events-list {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.dark .events-list {
+  scrollbar-color: #475569 #1e293b;
+}
+
+.event-item {
+  margin: 0;
+  padding: 0;
+  /* Ensure items don't collapse */
+  min-width: fit-content;
+}
+
+/* Ensure event item content wraps properly */
+.event-item > div {
+  display: inline-block;
+  width: auto;
+  min-width: 100%;
+}
+
+/* Improve calendar cell height for better event display */
+.ant-picker-calendar-date-content {
+  height: 100%;
+  min-height: 120px;
+}
+
+/* Make sure calendar cells have consistent height */
+.ant-picker-cell {
+  vertical-align: top;
+  height: 150px; /* Increase cell height */
+}
+
+/* Increase overall calendar size */
+.ant-picker-calendar .ant-picker-panel {
+  min-height: 800px;
+}
+
+/* Badge styling for events */
+.ant-badge-status-text {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Dark mode improvements for calendar date numbers */
+.dark .ant-picker-calendar .ant-picker-calendar-date-value {
+  color: #e5e7eb !important;
+}
+
+/* Dark mode for calendar date content */
+.dark .ant-picker-calendar .ant-picker-calendar-date-content {
+  color: #e5e7eb;
+}
+
+/* Dark mode for event items - ensure text is readable */
+.dark .event-item div {
+  color: #d1d5db !important;
+}
+
+.dark .event-item div span {
+  color: #d1d5db !important;
+}
+
+/* Ensure calendar cells in dark mode have proper background */
+.dark .ant-picker-cell-in-view {
+  color: #e5e7eb !important;
+}
+
+/* Fix the "Chưa có lớp học" text in dark mode */
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+/* Calendar container dark mode */
+.dark .calendar-container {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Dark mode for calendar card container */
+.dark .ant-card.calendar-container {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .ant-card.calendar-container .ant-card-body {
+  background: #1f2937 !important;
+}
