@@ -5,48 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Search,
-  Plus,
   Loader2,
   Users,
   UserCheck,
   UserX,
-  Mail,
-  Phone,
-  Calendar,
-  User,
-  Building,
-  Key,
-  Book,
-  Filter,
-  ChevronRight,
   RefreshCw,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { fetchStaff } from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 import { useToast } from "@/hooks/use-toast";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { columns, Staff } from "./components/columns";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -96,15 +70,10 @@ function extractAvatarUrl(featuredImage: any): string {
 export default function StaffPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   // Permission modal states
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
@@ -210,56 +179,15 @@ export default function StaffPage() {
     loadStaff();
   }, []);
 
-  // Get unique departments for filter
-  const departments = Array.from(
-    new Set(staff.flatMap((member) => member.department))
-  );
-
-  // Filter staff based on filters and search
-  const filteredStaff = staff.filter((member) => {
-    // Filter by status
-    const statusMatch =
-      statusFilter === "all" || member.status === statusFilter;
-
-    // Filter by department
-    const departmentMatch =
-      departmentFilter === "all" ||
-      member.department.includes(departmentFilter);
-
-    // Filter by search query
-    const searchMatch =
-      searchQuery === "" ||
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.phone.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return statusMatch && departmentMatch && searchMatch;
-  });
-
-  // Client-side pagination
-  const totalCount = filteredStaff.length;
-  const totalPages = Math.ceil(totalCount / limit);
-  const paginatedStaff = filteredStaff.slice((page - 1) * limit, page * limit);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, statusFilter, departmentFilter]);
-
   // Calculate statistics
   const totalStaff = staff.length;
   const activeStaff = staff.filter((m) => m.status === "Active").length;
   const inactiveStaff = totalStaff - activeStaff;
 
-  // Create initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  // Get unique departments for filter options
+  const departments = Array.from(
+    new Set(staff.flatMap((member) => member.department))
+  );
 
   if (loading) {
     return (
@@ -321,12 +249,6 @@ export default function StaffPage() {
             />
             Làm mới
           </Button>
-          <Link href='/dashboard/manager/staff/new'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' />
-              Thêm Nhân viên
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -390,7 +312,7 @@ export default function StaffPage() {
         <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium flex items-center gap-2'>
-              <Building className='h-4 w-4 text-blue-600' />
+              <Building2 className='h-4 w-4 text-blue-600' />
               Phòng ban
             </CardTitle>
           </CardHeader>
@@ -411,243 +333,34 @@ export default function StaffPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-            <div className='flex-1 relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Tìm kiếm nhân viên theo tên, email hoặc số điện thoại...'
-                className='pl-8'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4 w-full md:w-[400px]'>
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Lọc theo trạng thái' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='Active'>Đang hoạt động</SelectItem>
-                  <SelectItem value='Inactive'>Ngưng hoạt động</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={departmentFilter}
-                onValueChange={setDepartmentFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Lọc theo phòng ban' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả phòng ban</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem
-                      key={dept}
-                      value={dept}
-                    >
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className='rounded-md border overflow-hidden bg-card/50'>
-            <Table>
-              <TableHeader>
-                <TableRow className='bg-muted/30 hover:bg-muted/40'>
-                  <TableHead className='font-semibold'>Nhân viên</TableHead>
-                  <TableHead className='font-semibold'>Liên hệ</TableHead>
-                  <TableHead className='font-semibold'>Phòng ban</TableHead>
-                  <TableHead className='font-semibold'>Ngày tham gia</TableHead>
-                  <TableHead className='font-semibold'>Trạng thái</TableHead>
-                  <TableHead className='font-semibold'>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedStaff.length > 0 ? (
-                  paginatedStaff.map((member, index) => (
-                    <TableRow
-                      key={`${member.id}-${index}`} // Ensure unique keys even if IDs are duplicated
-                      className='cursor-pointer hover:bg-muted/50 transition-all duration-200 border-border/30 group hover:shadow-sm'
-                      onClick={() =>
-                        router.push(`/dashboard/manager/staff/${member.userId}`)
-                      }
-                    >
-                      <TableCell>
-                        <div className='flex items-center gap-3'>
-                          <Avatar className='h-10 w-10 border-2 border-primary/10 group-hover:border-primary/30 transition-colors duration-200'>
-                            <AvatarImage
-                              src={member.avatar}
-                              alt={member.name}
-                              className='object-cover'
-                            />
-                            <AvatarFallback className='bg-primary/10 text-primary font-semibold group-hover:bg-primary/20 transition-colors duration-200'>
-                              {getInitials(member.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className='font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {member.name}
-                            </div>
-                            <div className='text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-200'>
-                              ID: {member.userId?.slice(-8) || "N/A"}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className='space-y-1'>
-                          <div className='flex items-center gap-2 text-sm'>
-                            <Mail className='h-3 w-3 text-muted-foreground group-hover:text-blue-500 transition-colors duration-200' />
-                            <span className='group-hover:text-foreground/90 transition-colors duration-200'>
-                              {member.email}
-                            </span>
-                          </div>
-                          {member.phone !== "-" && (
-                            <div className='flex items-center gap-2 text-sm'>
-                              <Phone className='h-3 w-3 text-muted-foreground group-hover:text-blue-500 transition-colors duration-200' />
-                              <span className='group-hover:text-foreground/90 transition-colors duration-200'>
-                                {member.phone}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                        <div className='flex flex-wrap gap-1'>
-                          {member.department.length > 0 ? (
-                            member.department.map((dept: string) => (
-                              <Badge
-                                key={dept}
-                                variant='outline'
-                                className='text-xs group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-300 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300 dark:group-hover:border-blue-700 transition-all duration-200'
-                              >
-                                {dept}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className='text-muted-foreground text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              Chưa phân công
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                        <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                          {member.joinDate}
-                        </span>
-                      </TableCell>
-                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                        <Badge
-                          variant='outline'
-                          className={`transition-all duration-200 ${
-                            member.status === "Active"
-                              ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 group-hover:bg-green-100 group-hover:border-green-300"
-                              : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-300 dark:border-gray-800 group-hover:bg-gray-100 group-hover:border-gray-300"
-                          }`}
-                        >
-                          {member.status === "Active"
-                            ? "Hoạt động"
-                            : "Ngưng hoạt động"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                        <div className='flex items-center justify-between'>
-                          <div className='flex gap-2'>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(
-                                  "Opening permission modal for:",
-                                  member
-                                );
-                                setSelectedStaffForPermission({
-                                  _id: member.id,
-                                  user: {
-                                    username: member.name,
-                                    email: member.email,
-                                  },
-                                });
-                                setPermissionModalOpen(true);
-                              }}
-                            >
-                              <Key className='h-4 w-4 mr-1' />
-                              Quyền hạn
-                            </Button>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(
-                                  `Viewing details for staff: ${member.name}, ID: ${member.id}`
-                                );
-                                router.push(
-                                  `/dashboard/manager/staff/${member.id}`
-                                );
-                              }}
-                            >
-                              <User className='h-4 w-4 mr-1' />
-                              Chi tiết
-                            </Button>
-                          </div>
-                          <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className='text-center py-8 text-muted-foreground'
-                    >
-                      Không tìm thấy nhân viên phù hợp với bộ lọc hiện tại.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination Controls */}
-          {totalCount > 0 && (
-            <div className='flex items-center justify-between mt-4'>
-              <div className='text-sm text-muted-foreground'>
-                Hiển thị {(page - 1) * limit + 1} -{" "}
-                {Math.min(page * limit, totalCount)} trên {totalCount} nhân viên
-              </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  variant='outline'
-                >
-                  Trước
-                </Button>
-                <div className='px-3 text-sm'>
-                  {page} / {totalPages}
-                </div>
-                <Button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  variant='outline'
-                >
-                  Tiếp
-                </Button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={staff}
+            searchKey='name'
+            searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
+            filterOptions={[
+              {
+                columnId: "status",
+                title: "Trạng thái",
+                options: [
+                  { label: "Hoạt động", value: "Active" },
+                  { label: "Ngưng hoạt động", value: "Inactive" },
+                ],
+              },
+              {
+                columnId: "department",
+                title: "Phòng ban",
+                options: departments.map((dept) => ({
+                  label: dept,
+                  value: dept,
+                })),
+              },
+            ]}
+            onRowClick={(staff) =>
+              router.push(`/dashboard/manager/staff/${staff.userId}`)
+            }
+            emptyMessage='Không tìm thấy nhân viên nào'
+          />
         </CardContent>
       </Card>
 
@@ -657,7 +370,6 @@ export default function StaffPage() {
         onOpenChange={setPermissionModalOpen}
         staffData={selectedStaffForPermission}
         onSuccess={() => {
-          // Optionally refresh staff data or show success message
           console.log("Staff permissions updated successfully");
         }}
       />

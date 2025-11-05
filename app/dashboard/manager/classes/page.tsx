@@ -5,113 +5,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Plus,
-  Search,
-  Filter,
-  Calendar,
   Loader2,
   Users,
   BookOpen,
   Clock,
-  User,
-  ChevronRight,
   RefreshCw,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-} from "@/components/ui/pagination";
-import { fetchClasses, type ClassItem } from "@/api/manager/class-api";
+import { fetchClasses } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { useToast } from "@/hooks/use-toast";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { columns, ClassItem } from "./components/columns";
 
 export default function ClassesPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
   const [isFetching, setIsFetching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Helper function to get instructor name from class data
-  const getInstructorName = (classItem: ClassItem): string => {
-    if (!classItem.instructor) {
-      return "Chưa phân công";
-    }
-
-    // If instructor is a string (ID), it means it's an old format or not populated
-    if (typeof classItem.instructor === "string") {
-      return "Không có thông tin";
-    }
-
-    // If instructor is an object (new format with populated data)
-    if (
-      typeof classItem.instructor === "object" &&
-      !Array.isArray(classItem.instructor)
-    ) {
-      return (
-        classItem.instructor.username ||
-        classItem.instructor.email ||
-        "Không có thông tin"
-      );
-    }
-
-    // If instructor is an array
-    if (Array.isArray(classItem.instructor)) {
-      if (classItem.instructor.length === 0) {
-        return "Chưa phân công";
-      }
-
-      // Get names from instructor array
-      const names = classItem.instructor
-        .map((instructor: any) => {
-          if (typeof instructor === "string") {
-            return "Không có thông tin";
-          }
-          if (typeof instructor === "object" && instructor?.username) {
-            return instructor.username;
-          }
-          if (typeof instructor === "object" && instructor?.email) {
-            return instructor.email;
-          }
-          return "Không có thông tin";
-        })
-        .filter((name) => name !== "Không có thông tin");
-
-      return names.length > 0 ? names.join(", ") : "Không có thông tin";
-    }
-
-    return "Không có thông tin";
-  };
 
   // Fetch all classes once - use for both summary cards AND pagination
   useEffect(() => {
@@ -158,26 +75,6 @@ export default function ClassesPage() {
       clearTimeout(timeoutId);
     };
   }, []); // Empty dependency - only run once
-
-  // Filter classes based on search query
-  const filteredClasses = allClasses.filter(
-    (classItem) =>
-      classItem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      classItem.course.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Client-side pagination: slice the filtered results
-  const totalCount = filteredClasses.length;
-  const totalPages = Math.ceil(totalCount / limit);
-  const paginatedClasses = filteredClasses.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-
-  // Reset page when search changes
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
 
   // Calculate summary statistics
   const totalClasses = allClasses.length;
@@ -348,171 +245,26 @@ export default function ClassesPage() {
             <CardTitle>Danh sách lớp học</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-              <div className='flex-1 relative'>
-                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-                <Input
-                  placeholder='Tìm kiếm theo tên lớp học hoặc khóa học...'
-                  className='pl-8'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className='rounded-md border overflow-hidden'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tên lớp học</TableHead>
-                    <TableHead>Khóa học</TableHead>
-                    <TableHead>Số học viên</TableHead>
-                    <TableHead>Giáo viên</TableHead>
-                    <TableHead>Buổi học đã xếp</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedClasses.length > 0 ? (
-                    paginatedClasses.map((classItem) => (
-                      <TableRow
-                        key={classItem._id}
-                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/manager/class/${classItem._id}?from=classes`
-                          )
-                        }
-                      >
-                        <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <Users className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <div className='font-medium text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {classItem.name}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <BookOpen className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <div>
-                              <div className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                {classItem.course.title}
-                              </div>
-                              <div className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                {classItem.course.session_number} buổi -{" "}
-                                {classItem.course.session_number_duration}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <User className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {classItem.member?.length || 0} học viên
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <User className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {getInstructorName(classItem)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <div>
-                              <div className='flex items-center gap-1'>
-                                <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                  {classItem.schedules?.length || 0}
-                                </span>
-                                <span className='text-sm text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                  / {classItem.course.session_number || 0}
-                                </span>
-                              </div>
-                              <div className='text-xs text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                {(() => {
-                                  const scheduled =
-                                    classItem.schedules?.length || 0;
-                                  const total =
-                                    classItem.course.session_number || 0;
-                                  const remaining = total - scheduled;
-                                  return remaining > 0
-                                    ? `Còn thiếu ${remaining} buổi`
-                                    : remaining === 0 && total > 0
-                                    ? "Đã xếp đủ lịch"
-                                    : "Chưa có lịch";
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center justify-between'>
-                            <Badge
-                              variant='outline'
-                              className={`transition-all duration-200 ${
-                                classItem.course.is_active
-                                  ? "bg-green-50 text-green-700 border-green-200 group-hover:bg-green-100 group-hover:border-green-300"
-                                  : "bg-gray-50 text-gray-700 border-gray-200 group-hover:bg-gray-100 group-hover:border-gray-300"
-                              }`}
-                            >
-                              {classItem.course.is_active
-                                ? "Đang hoạt động"
-                                : "Đã kết thúc"}
-                            </Badge>
-                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className='text-center py-8 text-muted-foreground'
-                      >
-                        {searchQuery
-                          ? "Không tìm thấy lớp học phù hợp với từ khóa tìm kiếm."
-                          : "Chưa có lớp học nào được tạo."}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination Controls */}
-            {totalCount > 0 && (
-              <div className='flex items-center justify-between mt-4'>
-                <div className='text-sm text-muted-foreground'>
-                  Hiển thị {(page - 1) * limit + 1} -{" "}
-                  {Math.min(page * limit, totalCount)} trên {totalCount} lớp học
-                </div>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    variant='outline'
-                  >
-                    Trước
-                  </Button>
-                  <div className='px-3 text-sm'>
-                    {page} / {totalPages}
-                  </div>
-                  <Button
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page >= totalPages}
-                    variant='outline'
-                  >
-                    Tiếp
-                  </Button>
-                </div>
-              </div>
-            )}
+            <DataTable
+              columns={columns}
+              data={allClasses}
+              searchKey='name'
+              searchPlaceholder='Tìm kiếm theo tên lớp hoặc khóa học...'
+              filterOptions={[
+                {
+                  columnId: "status",
+                  title: "Trạng thái",
+                  options: [
+                    { label: "Đang hoạt động", value: "active" },
+                    { label: "Đã kết thúc", value: "inactive" },
+                  ],
+                },
+              ]}
+              onRowClick={(classItem) =>
+                router.push(`/dashboard/manager/classes/${classItem._id}`)
+              }
+              emptyMessage='Không tìm thấy lớp học nào'
+            />
           </CardContent>
         </Card>
       </div>

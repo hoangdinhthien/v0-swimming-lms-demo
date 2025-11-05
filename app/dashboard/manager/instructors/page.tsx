@@ -6,33 +6,15 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
-  Search,
   Users,
   UserCheck,
   Star,
   GraduationCap,
   Loader2,
-  ChevronRight,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
@@ -55,6 +37,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Book, Calendar, Key, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { columns, Instructor } from "./components/columns";
+import { DataTable } from "@/components/ui/data-table/data-table";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -298,18 +282,11 @@ function InstructorDetailModal({
 export default function InstructorsPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [specialtyFilter, setSpecialtyFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedInstructorId, setSelectedInstructorId] = useState<
     string | null
   >(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Pagination state
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   // Use optimized hooks for better performance
   const {
@@ -368,44 +345,6 @@ export default function InstructorsPage() {
       featuredImageData: item?.featured_image?.[0] || null,
     }));
   }, [rawInstructors, avatars]);
-
-  // Get unique specialties for filter
-  const specialties = Array.from(
-    new Set(instructors.flatMap((instructor) => instructor.specialty))
-  );
-
-  // Filter instructors based on filters and search
-  const filteredInstructors = instructors.filter((instructor) => {
-    // Filter by status
-    const statusMatch =
-      statusFilter === "all" || instructor.status === statusFilter;
-
-    // Filter by specialty
-    const specialtyMatch =
-      specialtyFilter === "all" ||
-      instructor.specialty.includes(specialtyFilter);
-
-    // Filter by search query
-    const searchMatch =
-      searchQuery === "" ||
-      instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      instructor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      instructor.phone.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return statusMatch && specialtyMatch && searchMatch;
-  });
-
-  // Client-side pagination
-  const totalCount = filteredInstructors.length;
-  const paginatedInstructors = filteredInstructors.slice(
-    (page - 1) * limit,
-    page * limit
-  );
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, statusFilter, specialtyFilter]);
 
   // Calculate statistics
   const totalInstructors = instructors.length;
@@ -583,231 +522,34 @@ export default function InstructorsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-            <div className='flex-1 relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Tìm kiếm giáo viên theo tên, email hoặc số điện thoại...'
-                className='pl-8'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className='grid grid-cols-2 gap-4 w-full md:w-[400px]'>
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Lọc theo trạng thái' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='Active'>Đang hoạt động</SelectItem>
-                  <SelectItem value='On Leave'>Đang nghỉ phép</SelectItem>
-                  <SelectItem value='Inactive'>Ngừng hoạt động</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={specialtyFilter}
-                onValueChange={setSpecialtyFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Lọc theo chuyên môn' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả chuyên môn</SelectItem>
-                  {specialties.map((specialty) => (
-                    <SelectItem
-                      key={specialty}
-                      value={specialty}
-                    >
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className='rounded-md border overflow-hidden bg-card/50'>
-            <Table>
-              <TableHeader>
-                <TableRow className='bg-muted/50'>
-                  <TableHead className='font-semibold'>Giáo viên</TableHead>
-                  <TableHead className='font-semibold'>Học viên</TableHead>
-                  <TableHead className='font-semibold'>Lớp học</TableHead>
-                  <TableHead className='font-semibold'>Đánh giá</TableHead>
-                  <TableHead className='font-semibold'>Trạng thái</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedInstructors.length > 0 ? (
-                  paginatedInstructors.map((instructor) => {
-                    const {
-                      id,
-                      name,
-                      email,
-                      phone,
-                      specialty,
-                      status,
-                      students,
-                      classes,
-                      joinDate,
-                      rating,
-                      avatar,
-                    } = instructor;
-                    return (
-                      <TableRow
-                        key={id}
-                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200 border-b border-border/50'
-                        onClick={() =>
-                          router.push(`/dashboard/manager/instructors/${id}`)
-                        }
-                      >
-                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-3'>
-                            <div className='relative group-hover:scale-105 transition-transform duration-200'>
-                              <img
-                                src={avatar}
-                                alt={name}
-                                className='h-10 w-10 rounded-full object-cover border-2 border-border/20 group-hover:border-blue-300 dark:group-hover:border-blue-600 transition-colors duration-200'
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const fallback = e.currentTarget
-                                    .nextElementSibling as HTMLElement;
-                                  if (fallback) {
-                                    fallback.style.display = "flex";
-                                  }
-                                }}
-                              />
-                              <div
-                                className='h-10 w-10 rounded-full bg-primary/10 border-2 border-border/20 hidden items-center justify-center text-sm font-medium text-primary group-hover:border-blue-300 dark:group-hover:border-blue-600 group-hover:bg-blue-100 dark:group-hover:bg-blue-900 group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-all duration-200'
-                                style={{ display: "none" }}
-                              >
-                                {getInitials(name)}
-                              </div>
-                            </div>
-                            <div className='min-w-0 flex-1'>
-                              <div className='font-medium text-foreground truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                {name}
-                              </div>
-                              <div className='text-sm text-muted-foreground truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                {email}
-                              </div>
-                              {specialty.length > 0 && (
-                                <div className='text-xs text-muted-foreground mt-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                                  {specialty.slice(0, 2).join(", ")}
-                                  {specialty.length > 2 && "..."}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <Users className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {students}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-2'>
-                            <GraduationCap className='h-4 w-4 text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {classes}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center gap-1'>
-                            <Star className='h-4 w-4 text-amber-500 fill-current group-hover:text-amber-600 transition-colors duration-200' />
-                            <span className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
-                              {rating}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className='py-4 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <div className='flex items-center justify-between'>
-                            <Badge
-                              variant='outline'
-                              className={`transition-all duration-200 ${
-                                status === "Active"
-                                  ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 group-hover:bg-green-100 group-hover:border-green-300"
-                                  : status === "On Leave"
-                                  ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800 group-hover:bg-amber-100 group-hover:border-amber-300"
-                                  : "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900/30 dark:text-gray-400 dark:border-gray-800 group-hover:bg-gray-100 group-hover:border-gray-300"
-                              }`}
-                            >
-                              {status === "Active"
-                                ? "Đang hoạt động"
-                                : status === "On Leave"
-                                ? "Đang nghỉ phép"
-                                : "Ngừng hoạt động"}
-                            </Badge>
-                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className='text-center py-12'
-                    >
-                      <div className='flex flex-col items-center gap-2'>
-                        <Users className='h-8 w-8 text-muted-foreground/50' />
-                        <p className='text-muted-foreground font-medium'>
-                          Không tìm thấy giáo viên phù hợp
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                          Thử điều chỉnh bộ lọc hoặc tìm kiếm khác
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination Controls */}
-          {totalCount > 0 && (
-            <div className='flex items-center justify-between mt-4'>
-              <div className='text-sm text-muted-foreground'>
-                Hiển thị {(page - 1) * limit + 1} -{" "}
-                {Math.min(page * limit, totalCount)} trên {totalCount} giáo viên
-              </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  variant='outline'
-                >
-                  Trước
-                </Button>
-                <div className='px-3 text-sm'>
-                  {page} / {Math.ceil(totalCount / limit)}
-                </div>
-                <Button
-                  onClick={() =>
-                    setPage((p) =>
-                      Math.min(Math.ceil(totalCount / limit), p + 1)
-                    )
-                  }
-                  disabled={page >= Math.ceil(totalCount / limit)}
-                  variant='outline'
-                >
-                  Tiếp
-                </Button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={instructors}
+            searchKey='name'
+            searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
+            filterOptions={[
+              {
+                columnId: "status",
+                title: "Trạng thái",
+                options: [
+                  {
+                    label: "Đang hoạt động",
+                    value: "Active",
+                    icon: "UserCheck",
+                  },
+                  {
+                    label: "Ngừng hoạt động",
+                    value: "Inactive",
+                    icon: "UserX",
+                  },
+                ],
+              },
+            ]}
+            emptyMessage='Không tìm thấy giáo viên phù hợp.'
+            onRowClick={(instructor: Instructor) => {
+              router.push(`/dashboard/manager/instructors/${instructor.id}`);
+            }}
+          />
         </CardContent>
       </Card>
     </>
