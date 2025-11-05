@@ -193,8 +193,8 @@ export default function ClassDetailPage() {
         };
       default:
         return {
-          href: "/dashboard/manager/calendar",
-          text: "Quay về lịch",
+          href: "/dashboard/manager/classes",
+          text: "Quay về danh sách lớp học",
         };
     }
   };

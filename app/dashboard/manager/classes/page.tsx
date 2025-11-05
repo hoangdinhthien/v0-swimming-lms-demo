@@ -261,7 +261,7 @@ export default function ClassesPage() {
                 },
               ]}
               onRowClick={(classItem) =>
-                router.push(`/dashboard/manager/classes/${classItem._id}`)
+                router.push(`/dashboard/manager/class/${classItem._id}`)
               }
               emptyMessage='Không tìm thấy lớp học nào'
             />
