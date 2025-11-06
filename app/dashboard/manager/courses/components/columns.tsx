@@ -13,6 +13,8 @@ export type Course = {
   studentCount?: number;
   is_active: boolean;
   description?: string;
+  session_number?: number;
+  schedules?: any[];
 };
 
 export const columns: ColumnDef<Course>[] = [
@@ -99,6 +101,42 @@ export const columns: ColumnDef<Course>[] = [
     cell: ({ row }) => {
       const count = row.original.studentCount || 0;
       return <span className='text-sm'>{count} học viên</span>;
+    },
+  },
+  {
+    accessorKey: "schedules",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title='Buổi học đã xếp'
+      />
+    ),
+    cell: ({ row }) => {
+      const schedulesCount = row.original.schedules?.length || 0;
+      const sessionNumber = row.original.session_number || 0;
+      
+      // Calculate percentage
+      const percentage = sessionNumber > 0 
+        ? Math.round((schedulesCount / sessionNumber) * 100) 
+        : 0;
+      
+      // Determine color based on completion
+      const getColorClass = () => {
+        if (percentage >= 100) return "text-green-600 dark:text-green-400";
+        if (percentage >= 50) return "text-amber-600 dark:text-amber-400";
+        return "text-red-600 dark:text-red-400";
+      };
+      
+      return (
+        <div className='flex flex-col gap-1'>
+          <span className={`font-medium ${getColorClass()}`}>
+            {schedulesCount}/{sessionNumber} buổi
+          </span>
+          <span className='text-xs text-muted-foreground'>
+            ({percentage}%)
+          </span>
+        </div>
+      );
     },
   },
   {

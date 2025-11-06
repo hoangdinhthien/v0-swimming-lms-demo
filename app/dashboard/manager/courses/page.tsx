@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Settings, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchCourses } from "@/api/manager/courses-api";
+import { fetchClasses } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import CourseCategoriesModal from "@/components/manager/course-categories-modal";
@@ -31,8 +32,34 @@ export default function CoursesPage() {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
       if (!tenantId || !token) return;
+      
+      // Fetch courses
       const res = await fetchCourses({ tenantId, token, page: 1, limit: 1000 });
-      setCourses(res.data || []);
+      
+      // Fetch all classes to get schedules data
+      const classesRes = await fetchClasses(tenantId, token, 1, 1000);
+      
+      // Map schedules count to each course
+      const coursesWithSchedules = res.data.map((course: any) => {
+        // Find all classes for this course
+        const courseClasses = classesRes.data.filter(
+          (classItem: any) => classItem.course._id === course._id
+        );
+        
+        // Count total schedules across all classes
+        const totalSchedules = courseClasses.reduce(
+          (sum: number, classItem: any) => 
+            sum + (classItem.schedules?.length || 0), 
+          0
+        );
+        
+        return {
+          ...course,
+          schedules: Array(totalSchedules).fill({}), // Create array with length = totalSchedules
+        };
+      });
+      
+      setCourses(coursesWithSchedules || []);
       toast({
         title: "Đã làm mới",
         description: "Danh sách khóa học đã được cập nhật",
@@ -56,13 +83,39 @@ export default function CoursesPage() {
         const token = getAuthToken();
         if (!tenantId || !token)
           throw new Error("Thiếu thông tin tenant hoặc token");
+        
+        // Fetch courses
         const res = await fetchCourses({
           tenantId,
           token,
           page: 1,
           limit: 1000,
         });
-        setCourses(res.data || []);
+        
+        // Fetch all classes to get schedules data
+        const classesRes = await fetchClasses(tenantId, token, 1, 1000);
+        
+        // Map schedules count to each course
+        const coursesWithSchedules = res.data.map((course: any) => {
+          // Find all classes for this course
+          const courseClasses = classesRes.data.filter(
+            (classItem: any) => classItem.course._id === course._id
+          );
+          
+          // Count total schedules across all classes
+          const totalSchedules = courseClasses.reduce(
+            (sum: number, classItem: any) => 
+              sum + (classItem.schedules?.length || 0), 
+            0
+          );
+          
+          return {
+            ...course,
+            schedules: Array(totalSchedules).fill({}), // Create array with length = totalSchedules
+          };
+        });
+        
+        setCourses(coursesWithSchedules || []);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");
         setCourses([]);

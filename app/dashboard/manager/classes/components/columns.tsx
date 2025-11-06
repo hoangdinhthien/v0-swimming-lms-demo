@@ -10,10 +10,12 @@ export type ClassItem = {
   course: {
     title: string;
     is_active?: boolean;
+    session_number?: number;
   };
   instructor?: any;
   member?: string[];
   schedule?: string;
+  schedules?: any[];
 };
 
 export const columns: ColumnDef<ClassItem>[] = [
@@ -120,6 +122,44 @@ export const columns: ColumnDef<ClassItem>[] = [
     cell: ({ row }) => {
       const count = row.original.member?.length || 0;
       return <span className='text-sm'>{count} học viên</span>;
+    },
+  },
+  {
+    id: "sessions",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title='Buổi học đã xếp'
+      />
+    ),
+    cell: ({ row }) => {
+      const scheduledCount = row.original.schedules?.length || 0;
+      const totalSessions = row.original.course.session_number || 0;
+      
+      if (totalSessions === 0) {
+        return <span className='text-muted-foreground text-sm'>Chưa xác định</span>;
+      }
+
+      const isComplete = scheduledCount >= totalSessions;
+      const remaining = totalSessions - scheduledCount;
+
+      return (
+        <div className='flex flex-col'>
+          <span className={`text-sm font-medium ${isComplete ? 'text-green-600' : 'text-orange-600'}`}>
+            {scheduledCount}/{totalSessions} buổi
+          </span>
+          {!isComplete && remaining > 0 && (
+            <span className='text-xs text-muted-foreground'>
+              Còn thiếu {remaining} buổi
+            </span>
+          )}
+          {isComplete && (
+            <span className='text-xs text-green-600'>
+              Đã đủ
+            </span>
+          )}
+        </div>
+      );
     },
   },
   {
