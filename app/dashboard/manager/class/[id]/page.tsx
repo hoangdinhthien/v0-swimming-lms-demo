@@ -465,15 +465,15 @@ export default function ClassDetailPage() {
       console.log("🔍 Auto Schedule Request Data:", requestData);
       console.log("📅 Selected days breakdown:");
       requestData.array_number_in_week.forEach((day) => {
-        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const dayNames = ["Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"];
         const vietnameseDayNames = [
-          "Thứ 2",
-          "Thứ 3",
-          "Thứ 4",
           "Thứ 5",
           "Thứ 6",
           "Thứ 7",
           "Chủ nhật",
+          "Thứ 2",
+          "Thứ 3",
+          "Thứ 4",
         ];
         console.log(`  ${day} = ${dayNames[day]} (${vietnameseDayNames[day]})`);
       });
@@ -1594,13 +1594,13 @@ export default function ClassDetailPage() {
                   </p>
                   <div className='grid grid-cols-7 gap-2'>
                     {[
-                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 0 },
-                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 1 },
-                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 2 },
-                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", value: 3 },
-                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 4 },
-                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 5 },
-                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 6 },
+                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 4 },
+                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 5 },
+                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 6 },
+                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", value: 0 },
+                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 1 },
+                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 2 },
+                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 3 },
                     ].map((day) => (
                       <div
                         key={day.value}
@@ -1672,13 +1672,13 @@ export default function ClassDetailPage() {
                         .sort((a, b) => a - b)
                         .map((day) => {
                           const dayNames = [
-                            "Thứ 2", // 0 = Monday
-                            "Thứ 3", // 1 = Tuesday
-                            "Thứ 4", // 2 = Wednesday
-                            "Thứ 5", // 3 = Thursday
-                            "Thứ 6", // 4 = Friday
-                            "Thứ 7", // 5 = Saturday
-                            "Chủ nhật", // 6 = Sunday
+                            "Thứ 5", // 0 = Thursday
+                            "Thứ 6", // 1 = Friday
+                            "Thứ 7", // 2 = Saturday
+                            "Chủ nhật", // 3 = Sunday
+                            "Thứ 2", // 4 = Monday
+                            "Thứ 3", // 5 = Tuesday
+                            "Thứ 4", // 6 = Wednesday
                           ];
                           return dayNames[day];
                         })
