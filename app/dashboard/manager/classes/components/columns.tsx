@@ -135,9 +135,11 @@ export const columns: ColumnDef<ClassItem>[] = [
     cell: ({ row }) => {
       const scheduledCount = row.original.schedules?.length || 0;
       const totalSessions = row.original.course.session_number || 0;
-      
+
       if (totalSessions === 0) {
-        return <span className='text-muted-foreground text-sm'>Chưa xác định</span>;
+        return (
+          <span className='text-muted-foreground text-sm'>Chưa xác định</span>
+        );
       }
 
       const isComplete = scheduledCount >= totalSessions;
@@ -145,7 +147,11 @@ export const columns: ColumnDef<ClassItem>[] = [
 
       return (
         <div className='flex flex-col'>
-          <span className={`text-sm font-medium ${isComplete ? 'text-green-600' : 'text-orange-600'}`}>
+          <span
+            className={`text-sm font-medium ${
+              isComplete ? "text-green-600" : "text-orange-600"
+            }`}
+          >
             {scheduledCount}/{totalSessions} buổi
           </span>
           {!isComplete && remaining > 0 && (
@@ -153,11 +159,7 @@ export const columns: ColumnDef<ClassItem>[] = [
               Còn thiếu {remaining} buổi
             </span>
           )}
-          {isComplete && (
-            <span className='text-xs text-green-600'>
-              Đã đủ
-            </span>
-          )}
+          {isComplete && <span className='text-xs text-green-600'>Đã đủ</span>}
         </div>
       );
     },
