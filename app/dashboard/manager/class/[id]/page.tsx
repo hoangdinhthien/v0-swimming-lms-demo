@@ -1594,13 +1594,13 @@ export default function ClassDetailPage() {
                   </p>
                   <div className='grid grid-cols-7 gap-2'>
                     {[
-                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 4 },
-                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 5 },
-                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 6 },
-                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", value: 0 },
-                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 1 },
-                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 2 },
-                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 3 },
+                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 3 },
+                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 4 },
+                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 5 },
+                      { label: "T5", fullLabel: "Thứ 5 (Thusrday)", value: 6 },
+                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 0 },
+                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 1 },
+                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 2 },
                     ].map((day) => (
                       <div
                         key={day.value}

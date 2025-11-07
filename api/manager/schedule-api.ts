@@ -524,7 +524,7 @@ export interface AutoScheduleRequest {
   min_time: number; // Minimum hour (e.g., 7)
   max_time: number; // Maximum hour (e.g., 14)
   session_in_week: number; // Number of sessions per week
-  array_number_in_week: number[]; // Days of week (0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun)
+  array_number_in_week: number[]; // Days of week (0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed)
   class_id: string; // Class ID
 }
 

@@ -258,20 +258,21 @@ export function logTimestampDebugInfo(
 
 /**
  * Convert backend day number to Vietnamese day name
- * Backend API uses: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+ * Backend API uses: 0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed
+ * (This is offset by +3 from standard UTC day numbering)
  *
  * @param dayNumber - Backend day number (0-6)
  * @returns Vietnamese day name (e.g. "Thứ 2", "Chủ nhật")
  */
 export function getVietnameseDayName(dayNumber: number): string {
   const dayNames = [
-    "Thứ 2", // 0 = Monday
-    "Thứ 3", // 1 = Tuesday
-    "Thứ 4", // 2 = Wednesday
-    "Thứ 5", // 3 = Thursday
-    "Thứ 6", // 4 = Friday
-    "Thứ 7", // 5 = Saturday
-    "Chủ nhật", // 6 = Sunday
+    "Thứ 5", // 0 = Thursday
+    "Thứ 6", // 1 = Friday
+    "Thứ 7", // 2 = Saturday
+    "Chủ nhật", // 3 = Sunday
+    "Thứ 2", // 4 = Monday
+    "Thứ 3", // 5 = Tuesday
+    "Thứ 4", // 6 = Wednesday
   ];
 
   if (dayNumber < 0 || dayNumber > 6) {
@@ -285,6 +286,7 @@ export function getVietnameseDayName(dayNumber: number): string {
 /**
  * Get day of week from a date string and convert to Vietnamese day name
  * Uses backend API day mapping and UTC time to avoid timezone issues
+ * Backend uses offset system: API_day = (UTC_day + 3) % 7
  *
  * @param dateString - ISO date string (e.g. "2025-11-03T17:44:12.000Z")
  * @returns Vietnamese day name
@@ -296,11 +298,9 @@ export function getVietnameseDayFromDate(dateString: string): string {
 
     // Convert JS UTC day to backend API day mapping
     // JS UTC:  0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    // API:     0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
-    const apiDay =
-      jsDay === 0
-        ? 6 // Sunday -> 6
-        : jsDay - 1; // Mon-Sat -> 0-5
+    // API:     0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed
+    // Formula: API_day = (UTC_day + 3) % 7
+    const apiDay = (jsDay + 3) % 7;
 
     return getVietnameseDayName(apiDay);
   } catch (error) {
