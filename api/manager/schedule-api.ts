@@ -86,7 +86,7 @@ export interface Instructor {
 export interface ScheduleEvent {
   _id: string;
   date: string;
-  day_of_week?: number; // Monday-based: 0=Monday, 1=Tuesday, 2=Wednesday, 3=Thursday, 4=Friday, 5=Saturday, 6=Sunday
+  day_of_week?: number; // Backend uses: 0=Wed, 1=Thu, 2=Fri, 3=Sat, 4=Sun, 5=Mon, 6=Tue (Wednesday-start with modulo-7)
   slot: Slot; // Single slot object, not array
   classroom: Classroom; // Single classroom object, not array
   pool: Pool; // Single pool object, not array
@@ -524,7 +524,7 @@ export interface AutoScheduleRequest {
   min_time: number; // Minimum hour (e.g., 7)
   max_time: number; // Maximum hour (e.g., 14)
   session_in_week: number; // Number of sessions per week
-  array_number_in_week: number[]; // Days of week (0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed)
+  array_number_in_week: number[]; // Days of week: 0=Wed, 1=Thu, 2=Fri, 3=Sat, 4=Sun, 5=Mon, 6=Tue (Wednesday-start with modulo-7 support)
   class_id: string; // Class ID
 }
 

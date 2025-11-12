@@ -9,17 +9,19 @@ FIX:
 
 - validate ngày sinh khi tạo users => done
 - map birthday của instructor vào 'Chỉnh sửa thông tin giáo viên' => done
-- get lại list mới nhất sau khi create xong
-- thêm logic button 'Thêm vào lớp học' trang manager/student detail
+- chưa có UI cho manager/pool => done
+- sửa lại dashboard của staff ==> done
+- get lại list mới nhất sau khi create xong => done (thêm nút refresh)
+- thêm logic button 'Thêm vào lớp học' trang manager/student detail, xài api add-student
 - thêm logic button 'Phân công lớp học mới' trang manager/instructor detail
 - thêm logic button 'Xem lịch dạy' trang manager/instructor detail
-- chưa có UI cho manager/pool
-- sửa lại dashboard của staff 
 
 ==========================================================
 
-- thêm filter/sort vào table
+- thêm filter/sort vào table => done (data-table shadcn)
+- drawer: thêm searrch filter, show theo slot + expand => done
 - custom lịch 
-- drawer: thêm searrch filter, show theo slot + expand
-- thêm auto xếp lịch trong lịch
+- thêm auto xếp lịch trong lịch (fix lại auto xếp lịch)
+- làm phần certifcate: vô bảng certificate review, cái đó là cái frame thôi nha fe lấy thông tin user hiện ra
+- check lại logic login: lâu lâu chọn tenant xong là bị đá ra trang login lại
 

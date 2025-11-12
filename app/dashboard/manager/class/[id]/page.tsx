@@ -464,18 +464,54 @@ export default function ClassDetailPage() {
 
       console.log("🔍 Auto Schedule Request Data:", requestData);
       console.log("📅 Selected days breakdown:");
+      console.log("=".repeat(60));
+      console.log("TESTING BACKEND DAY MAPPING:");
+      console.log(
+        "You selected these day numbers:",
+        requestData.array_number_in_week
+      );
+      console.log("");
+      console.log(
+        "After auto-schedule completes, check the ACTUAL dates created"
+      );
+      console.log(
+        "and compare with this table to determine the correct mapping:"
+      );
+      console.log("");
+      console.log("Possible Mappings:");
+      console.log("─".repeat(60));
+      console.log(
+        "If 0 = Monday:    ",
+        "0=T2, 1=T3, 2=T4, 3=T5, 4=T6, 5=T7, 6=CN"
+      );
+      console.log(
+        "If 0 = Tuesday:   ",
+        "0=T3, 1=T4, 2=T5, 3=T6, 4=T7, 5=CN, 6=T2"
+      );
+      console.log(
+        "If 0 = Wednesday: ",
+        "0=T4, 1=T5, 2=T6, 3=T7, 4=CN, 5=T2, 6=T3"
+      );
+      console.log(
+        "If 0 = Thursday:  ",
+        "0=T5, 1=T6, 2=T7, 3=CN, 4=T2, 5=T3, 6=T4"
+      );
+      console.log(
+        "If 0 = Friday:    ",
+        "0=T6, 1=T7, 2=CN, 3=T2, 4=T3, 5=T4, 6=T5"
+      );
+      console.log(
+        "If 0 = Saturday:  ",
+        "0=T7, 1=CN, 2=T2, 3=T3, 4=T4, 5=T5, 6=T6"
+      );
+      console.log(
+        "If 0 = Sunday:    ",
+        "0=CN, 1=T2, 2=T3, 3=T4, 4=T5, 5=T6, 6=T7"
+      );
+      console.log("=".repeat(60));
+
       requestData.array_number_in_week.forEach((day) => {
-        const dayNames = ["Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"];
-        const vietnameseDayNames = [
-          "Thứ 5",
-          "Thứ 6",
-          "Thứ 7",
-          "Chủ nhật",
-          "Thứ 2",
-          "Thứ 3",
-          "Thứ 4",
-        ];
-        console.log(`  ${day} = ${dayNames[day]} (${vietnameseDayNames[day]})`);
+        console.log(`  Day number: ${day}`);
       });
 
       const result = await autoScheduleClass(requestData);
@@ -1594,13 +1630,13 @@ export default function ClassDetailPage() {
                   </p>
                   <div className='grid grid-cols-7 gap-2'>
                     {[
-                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 3 },
-                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 4 },
-                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 5 },
-                      { label: "T5", fullLabel: "Thứ 5 (Thusrday)", value: 6 },
-                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 0 },
-                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 1 },
-                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 2 },
+                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 5 },
+                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 6 },
+                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 0 },
+                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", value: 1 },
+                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 2 },
+                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 3 },
+                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 4 },
                     ].map((day) => (
                       <div
                         key={day.value}
@@ -1671,14 +1707,16 @@ export default function ClassDetailPage() {
                       {autoScheduleData.array_number_in_week
                         .sort((a, b) => a - b)
                         .map((day) => {
+                          // TEMPORARY: Using Monday-start mapping for testing
+                          // After testing, update this based on actual backend behavior
                           const dayNames = [
-                            "Thứ 5", // 0 = Thursday
-                            "Thứ 6", // 1 = Friday
-                            "Thứ 7", // 2 = Saturday
-                            "Chủ nhật", // 3 = Sunday
-                            "Thứ 2", // 4 = Monday
-                            "Thứ 3", // 5 = Tuesday
-                            "Thứ 4", // 6 = Wednesday
+                            "Thứ 4", // 0 = Wednesday
+                            "Thứ 5", // 1 = Thursday
+                            "Thứ 6", // 2 = Friday
+                            "Thứ 7", // 3 = Saturday
+                            "Chủ nhật", // 4 = Sunday
+                            "Thứ 2", // 5 = Monday
+                            "Thứ 3", // 6 = Tuesday
                           ];
                           return dayNames[day];
                         })

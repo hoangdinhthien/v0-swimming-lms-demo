@@ -258,51 +258,58 @@ export function logTimestampDebugInfo(
 
 /**
  * Convert backend day number to Vietnamese day name
- * Backend API uses: 0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed
- * (This is offset by +3 from standard UTC day numbering)
+ * Backend mapping confirmed by testing:
+ * 0=Wed, 1=Thu, 2=Fri, 3=Sat, 4=Sun, 5=Mon, 6=Tue (Wednesday-start)
  *
- * @param dayNumber - Backend day number (0-6)
+ * @param dayNumber - Backend day number (0-6, or higher with modulo-7)
  * @returns Vietnamese day name (e.g. "Thứ 2", "Chủ nhật")
  */
 export function getVietnameseDayName(dayNumber: number): string {
+  // Support modulo-7 for values >6
+  const normalizedDay = dayNumber % 7;
+
   const dayNames = [
-    "Thứ 5", // 0 = Thursday
-    "Thứ 6", // 1 = Friday
-    "Thứ 7", // 2 = Saturday
-    "Chủ nhật", // 3 = Sunday
-    "Thứ 2", // 4 = Monday
-    "Thứ 3", // 5 = Tuesday
-    "Thứ 4", // 6 = Wednesday
+    "Thứ 4", // 0 = Wednesday
+    "Thứ 5", // 1 = Thursday
+    "Thứ 6", // 2 = Friday
+    "Thứ 7", // 3 = Saturday
+    "Chủ nhật", // 4 = Sunday
+    "Thứ 2", // 5 = Monday
+    "Thứ 3", // 6 = Tuesday
   ];
 
-  if (dayNumber < 0 || dayNumber > 6) {
+  if (dayNumber < 0) {
     console.warn(`Invalid day number: ${dayNumber}`);
     return "Không xác định";
   }
 
-  return dayNames[dayNumber];
+  return dayNames[normalizedDay];
 }
-
 /**
  * Get day of week from a date string and convert to Vietnamese day name
- * Uses backend API day mapping and UTC time to avoid timezone issues
- * Backend uses offset system: API_day = (UTC_day + 3) % 7
+ * This function is ONLY for DISPLAY purposes (showing schedule dates to user)
+ * It uses standard JavaScript day mapping, NOT backend API mapping
  *
- * @param dateString - ISO date string (e.g. "2025-11-03T17:44:12.000Z")
- * @returns Vietnamese day name
+ * @param dateString - ISO date string (e.g. "2025-11-12T09:32:35.000Z")
+ * @returns Vietnamese day name based on actual calendar day
  */
 export function getVietnameseDayFromDate(dateString: string): string {
   try {
     const date = new Date(dateString);
-    const jsDay = date.getUTCDay(); // Use UTC to avoid timezone issues! 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+    const jsDay = date.getUTCDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 
-    // Convert JS UTC day to backend API day mapping
-    // JS UTC:  0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    // API:     0=Thu, 1=Fri, 2=Sat, 3=Sun, 4=Mon, 5=Tue, 6=Wed
-    // Formula: API_day = (UTC_day + 3) % 7
-    const apiDay = (jsDay + 3) % 7;
+    // Standard Vietnamese day names matching JavaScript's getUTCDay()
+    const dayNames = [
+      "Chủ nhật", // 0 = Sunday
+      "Thứ 2", // 1 = Monday
+      "Thứ 3", // 2 = Tuesday
+      "Thứ 4", // 3 = Wednesday
+      "Thứ 5", // 4 = Thursday
+      "Thứ 6", // 5 = Friday
+      "Thứ 7", // 6 = Saturday
+    ];
 
-    return getVietnameseDayName(apiDay);
+    return dayNames[jsDay];
   } catch (error) {
     console.error("Error getting Vietnamese day from date:", error);
     return "Không xác định";

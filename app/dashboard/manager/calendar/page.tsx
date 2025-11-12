@@ -68,7 +68,7 @@ import {
 } from "@/api/manager/schedule-api";
 import { fetchAllSlots, type SlotDetail } from "@/api/manager/slot-api";
 import {
-  fetchClassrooms,
+  fetchClasses,
   addClassToSchedule,
   type Classroom,
 } from "@/api/manager/class-api";
@@ -623,10 +623,11 @@ export default function ImprovedAntdCalendarPage() {
 
       console.log("🔍 Loading class management data...");
 
-      const [slotsData, classroomsData, poolsData, instructorsData] =
+      const [slotsData, classesResponse, poolsData, instructorsData] =
         await Promise.all([
           fetchAllSlots(),
-          fetchClassrooms(),
+          // fetchClasses returns { data: ClassItem[], meta_data }
+          fetchClasses(tenantId || undefined, token || undefined, 1, 200),
           fetchPools(),
           fetchInstructors({
             tenantId: tenantId || undefined,
@@ -640,6 +641,10 @@ export default function ImprovedAntdCalendarPage() {
           ),
         ]);
 
+      const classroomsData = Array.isArray(classesResponse?.data)
+        ? classesResponse.data
+        : [];
+
       console.log("🔍 Data loaded:", {
         slots: slotsData.length,
         classrooms: classroomsData.length,
@@ -648,7 +653,7 @@ export default function ImprovedAntdCalendarPage() {
       });
 
       setAvailableSlots(slotsData);
-      setAvailableClassrooms(classroomsData);
+      setAvailableClassrooms(classroomsData as Classroom[]);
       setAvailablePools(poolsData.pools);
       setAvailableInstructors(instructorsData);
       setLastClassDataLoad(now); // Update last load time
