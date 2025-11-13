@@ -17,6 +17,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +52,7 @@ import {
   type NewsItem,
   formatRelativeTime,
   updateNews,
+  deleteNews,
   extractNewsImageUrls,
 } from "@/api/manager/news-api";
 import { getMediaDetails, uploadMedia } from "@/api/media-api";
@@ -62,6 +75,9 @@ export default function NewsDetailPage() {
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Delete state
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state for editing
   const [formData, setFormData] = useState({
@@ -308,6 +324,42 @@ export default function NewsDetailPage() {
     setImagePreview(null);
   };
 
+  // Handle delete news
+  const handleDeleteNews = async () => {
+    if (!newsItem) return;
+
+    setIsDeleting(true);
+    try {
+      const token = getAuthToken();
+      const tenantId = getSelectedTenant();
+
+      if (!token || !tenantId) {
+        throw new Error("Không tìm thấy thông tin xác thực");
+      }
+
+      await deleteNews(newsItem._id, token, tenantId);
+
+      toast({
+        title: "Thành công",
+        description: "Xóa tin tức thành công!",
+        variant: "default",
+      });
+
+      // Redirect back to news list
+      router.push("/dashboard/manager/news");
+    } catch (error) {
+      console.error("Error deleting news:", error);
+      toast({
+        title: "Lỗi xóa",
+        description:
+          error instanceof Error ? error.message : "Không thể xóa tin tức",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Navigation functions for image slider
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
@@ -392,13 +444,46 @@ export default function NewsDetailPage() {
               Quay về danh sách
             </Link>
 
-            <Button
-              onClick={handleOpenEditModal}
-              className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
-            >
-              <Edit className='mr-2 h-4 w-4' />
-              Chỉnh sửa
-            </Button>
+            <div className='flex gap-2'>
+              <Button
+                onClick={handleOpenEditModal}
+                className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
+              >
+                <Edit className='mr-2 h-4 w-4' />
+                Chỉnh sửa
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant='destructive'
+                    className='bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200'
+                  >
+                    <Trash2 className='mr-2 h-4 w-4' />
+                    Xóa
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Xác nhận xóa tin tức</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Bạn có chắc chắn muốn xóa tin tức này không? Hành động này
+                      không thể hoàn tác.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteNews}
+                      disabled={isDeleting}
+                      className='bg-red-600 hover:bg-red-700'
+                    >
+                      {isDeleting ? "Đang xóa..." : "Xóa"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </div>

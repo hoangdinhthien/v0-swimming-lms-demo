@@ -21,29 +21,36 @@ export interface MediaObject {
   path: string;
 }
 
+// User object interface for created_by and updated_by fields
+export interface UserObject {
+  _id: string;
+  username: string;
+  email: string;
+  phone: string;
+}
+
 export interface NewsItem {
   _id: string;
   title: string;
   content: string;
-  type: string[];
+  type: string[]; // "public" | "manager" | "instructor" | "member"
   created_at: string;
-  created_by: string;
+  created_by: string | UserObject;
   updated_at: string;
-  updated_by: string;
+  updated_by: string | UserObject;
   tenant_id: string;
   cover?: string | string[] | MediaObject[]; // Can be media IDs or full media objects
 }
 
+// Response format from workflow-process API
 export interface NewsResponse {
   data: [
     [
       {
-        data: NewsItem[];
-        meta_data: {
-          count: number;
-          page: number;
-          limit: number;
-        };
+        limit: number;
+        skip: number;
+        count: number;
+        documents: NewsItem[];
       }
     ]
   ];
@@ -51,16 +58,10 @@ export interface NewsResponse {
   statusCode: number;
 }
 
-export interface NewsDetailResponse {
-  data: NewsItem;
-  message: string;
-  statusCode: number;
-}
-
 export interface CreateNewsData {
   title: string;
   content: string;
-  type: string[];
+  type: string[]; // "public" | "manager" | "instructor" | "member"
   cover?: string[];
 }
 
@@ -75,8 +76,8 @@ export async function getNews() {
     const response = await apiGet(
       `${config.API}/v1/workflow-process/manager/news`,
       {
-        requireAuth: true, // Add authentication header
-        includeTenant: true, // Include tenant header (this is default but being explicit)
+        requireAuth: true,
+        includeTenant: true,
       }
     );
 
@@ -85,8 +86,12 @@ export async function getNews() {
     }
 
     const data: NewsResponse = await response.json();
-    // Sort news items by creation date, most recent first
-    const sortedNews = [...data.data[0][0].data].sort(
+
+    // Extract documents from the new response structure
+    const newsDocuments = data.data[0][0]?.documents || [];
+
+    // Sort news items by updated date, most recent first
+    const sortedNews = [...newsDocuments].sort(
       (a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     );
@@ -99,25 +104,29 @@ export async function getNews() {
 
 export async function getNewsById(id: string): Promise<NewsItem | null> {
   try {
-    // Use apiGet which should handle tenant headers automatically
-    const response = await apiGet(`${config.API}/v1/news/${id}`, {
-      requireAuth: true, // Include authentication since it's no longer a public endpoint
-      includeTenant: true, // Include tenant header
-    });
+    // Use workflow-process endpoint with search parameter
+    const response = await apiGet(
+      `${config.API}/v1/workflow-process/manager/news?search[_id:equal]=${id}`,
+      {
+        requireAuth: true,
+        includeTenant: true,
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch news details: ${response.status}`);
     }
 
-    const data: NewsDetailResponse = await response.json();
-    return data.data || null;
+    const data: NewsResponse = await response.json();
+
+    // Extract the first document from the documents array
+    const newsItem = data.data[0]?.[0]?.documents?.[0] || null;
+    return newsItem;
   } catch (error) {
     console.error("Error fetching news details:", error);
     return null;
   }
-}
-
-// Alias for getNewsById to maintain API consistency
+} // Alias for getNewsById to maintain API consistency
 export const getNewsDetail = getNewsById;
 
 // Helper function to format relative time in Vietnamese (e.g., "2 ngày trước")
@@ -189,15 +198,19 @@ export async function createNews(
   tenantId: string
 ): Promise<CreateNewsResponse> {
   try {
-    const response = await fetch(`${config.API}/v1/news`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${config.API}/v1/workflow-process/manager/news`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-tenant-id": tenantId,
+          Authorization: `Bearer ${token}`,
+          service: "News", // Required for staff users
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -222,15 +235,19 @@ export async function updateNews(
   tenantId: string
 ): Promise<CreateNewsResponse> {
   try {
-    const response = await fetch(`${config.API}/v1/news/${newsId}?`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${config.API}/v1/workflow-process/manager/news?id=${newsId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-tenant-id": tenantId,
+          Authorization: `Bearer ${token}`,
+          service: "News", // Required for staff users
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -243,6 +260,40 @@ export async function updateNews(
     return result;
   } catch (error) {
     console.error("Error updating news:", error);
+    throw error;
+  }
+}
+
+// Delete a news article
+export async function deleteNews(
+  newsId: string,
+  token: string,
+  tenantId: string
+): Promise<{ message: string; statusCode: number }> {
+  try {
+    const response = await fetch(
+      `${config.API}/v1/workflow-process/manager/news?id=${newsId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "x-tenant-id": tenantId,
+          Authorization: `Bearer ${token}`,
+          service: "News", // Required for staff users
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Xóa thông báo thất bại: ${response.status} ${errorText}`
+      );
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error deleting news:", error);
     throw error;
   }
 }

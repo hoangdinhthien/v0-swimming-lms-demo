@@ -29,8 +29,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { columns, NewsItem } from "./components/columns";
-import { getNews, createNews } from "@/api/manager/news-api";
+import { createColumns, NewsItem } from "./components/columns";
+import { getNews, createNews, deleteNews } from "@/api/manager/news-api";
 import { useToast } from "@/hooks/use-toast";
 import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
@@ -205,6 +205,24 @@ export default function NewsListPage() {
     router.push(`/dashboard/manager/news/${news._id}`);
   };
 
+  // Handle delete news
+  const handleDeleteNews = async (newsId: string, newsTitle: string) => {
+    const token = getAuthToken();
+    const tenantId = getSelectedTenant();
+
+    if (!token || !tenantId) {
+      throw new Error("Không tìm thấy thông tin xác thực");
+    }
+
+    await deleteNews(newsId, token, tenantId);
+
+    // Refresh the list after deletion
+    await fetchNews();
+  };
+
+  // Create columns with delete handler
+  const columns = createColumns(handleDeleteNews);
+
   if (isLoading) {
     return (
       <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
@@ -224,8 +242,14 @@ export default function NewsListPage() {
   return (
     <>
       <div className='mb-6'>
-        <Button variant='ghost' asChild>
-          <a href='/dashboard/manager' className='inline-flex items-center text-sm font-medium'>
+        <Button
+          variant='ghost'
+          asChild
+        >
+          <a
+            href='/dashboard/manager'
+            className='inline-flex items-center text-sm font-medium'
+          >
             <ArrowLeft className='mr-1 h-4 w-4' />
             Quay lại Dashboard
           </a>
@@ -250,7 +274,10 @@ export default function NewsListPage() {
             />
             Làm mới
           </Button>
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <Dialog
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+          >
             <DialogTrigger asChild>
               <Button>
                 <Plus className='mr-2 h-4 w-4' /> Tạo tin tức
@@ -280,45 +307,81 @@ export default function NewsListPage() {
                     id='content'
                     placeholder='Nhập nội dung tin tức...'
                     value={formData.content}
-                    onChange={(e) => handleInputChange("content", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("content", e.target.value)
+                    }
                     rows={6}
                   />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label>Loại tin tức *</Label>
-                  <div className='flex gap-4'>
+                  <Label>Đối tượng xem tin tức *</Label>
+                  <div className='flex flex-col gap-3'>
                     <div className='flex items-center space-x-2'>
                       <Checkbox
-                        id='announcement'
-                        checked={formData.type.includes("Thông báo")}
+                        id='public'
+                        checked={formData.type.includes("public")}
                         onCheckedChange={(checked) =>
-                          handleTypeChange("Thông báo", checked as boolean)
+                          handleTypeChange("public", checked as boolean)
                         }
                       />
-                      <Label htmlFor='announcement'>Thông báo</Label>
+                      <Label
+                        htmlFor='public'
+                        className='cursor-pointer'
+                      >
+                        Công khai (Tất cả mọi người)
+                      </Label>
                     </div>
                     <div className='flex items-center space-x-2'>
                       <Checkbox
-                        id='notification'
-                        checked={formData.type.includes("Tin tức")}
+                        id='manager'
+                        checked={formData.type.includes("manager")}
                         onCheckedChange={(checked) =>
-                          handleTypeChange("Tin tức", checked as boolean)
+                          handleTypeChange("manager", checked as boolean)
                         }
                       />
-                      <Label htmlFor='notification'>Tin tức</Label>
+                      <Label
+                        htmlFor='manager'
+                        className='cursor-pointer'
+                      >
+                        Quản lý (Chỉ quản lý có thể xem)
+                      </Label>
                     </div>
                     <div className='flex items-center space-x-2'>
                       <Checkbox
-                        id='event'
-                        checked={formData.type.includes("Sự kiện")}
+                        id='instructor'
+                        checked={formData.type.includes("instructor")}
                         onCheckedChange={(checked) =>
-                          handleTypeChange("Sự kiện", checked as boolean)
+                          handleTypeChange("instructor", checked as boolean)
                         }
                       />
-                      <Label htmlFor='event'>Sự kiện</Label>
+                      <Label
+                        htmlFor='instructor'
+                        className='cursor-pointer'
+                      >
+                        Huấn luyện viên (Quản lý và HLV có thể xem)
+                      </Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <Checkbox
+                        id='member'
+                        checked={formData.type.includes("member")}
+                        onCheckedChange={(checked) =>
+                          handleTypeChange("member", checked as boolean)
+                        }
+                      />
+                      <Label
+                        htmlFor='member'
+                        className='cursor-pointer'
+                      >
+                        Học viên (Quản lý và học viên có thể xem)
+                      </Label>
                     </div>
                   </div>
+                  <p className='text-xs text-muted-foreground mt-2'>
+                    Chọn ít nhất một đối tượng. Có thể chọn nhiều để nhiều nhóm
+                    cùng xem.
+                  </p>
                 </div>
 
                 <div className='space-y-2'>
@@ -351,7 +414,10 @@ export default function NewsListPage() {
                           variant='destructive'
                           className='absolute -top-2 -right-2 h-6 w-6'
                           onClick={() => {
-                            setFormData((prev) => ({ ...prev, coverFile: null }));
+                            setFormData((prev) => ({
+                              ...prev,
+                              coverFile: null,
+                            }));
                             setImagePreview(null);
                           }}
                         >
@@ -364,10 +430,16 @@ export default function NewsListPage() {
               </div>
 
               <DialogFooter>
-                <Button variant='outline' onClick={() => setIsModalOpen(false)}>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsModalOpen(false)}
+                >
                   Hủy
                 </Button>
-                <Button onClick={handleCreateNews} disabled={isCreating}>
+                <Button
+                  onClick={handleCreateNews}
+                  disabled={isCreating}
+                >
                   {isCreating ? "Đang tạo..." : "Tạo tin tức"}
                 </Button>
               </DialogFooter>
@@ -377,7 +449,7 @@ export default function NewsListPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className='grid gap-4 md:grid-cols-3 mt-6'>
+      <div className='grid gap-4 md:grid-cols-4 mt-6'>
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium'>Tổng số tin</CardTitle>
@@ -395,29 +467,41 @@ export default function NewsListPage() {
 
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Thông báo</CardTitle>
+            <CardTitle className='text-sm font-medium'>Công khai</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {newsItems.filter((n) => n.type.includes("Thông báo")).length}
+              {newsItems.filter((n) => n.type.includes("public")).length}
             </div>
             <p className='text-xs text-muted-foreground'>
-              Số lượng thông báo
+              Tin công khai cho tất cả
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Sự kiện</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Huấn luyện viên
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {newsItems.filter((n) => n.type.includes("Sự kiện")).length}
+              {newsItems.filter((n) => n.type.includes("instructor")).length}
             </div>
-            <p className='text-xs text-muted-foreground'>
-              Số lượng sự kiện
-            </p>
+            <p className='text-xs text-muted-foreground'>Tin cho HLV</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='pb-2'>
+            <CardTitle className='text-sm font-medium'>Học viên</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>
+              {newsItems.filter((n) => n.type.includes("member")).length}
+            </div>
+            <p className='text-xs text-muted-foreground'>Tin cho học viên</p>
           </CardContent>
         </Card>
       </div>
@@ -431,10 +515,10 @@ export default function NewsListPage() {
           <DataTable
             columns={columns}
             data={newsItems}
-            searchKey="title"
-            searchPlaceholder="Tìm kiếm theo tiêu đề..."
+            searchKey='title'
+            searchPlaceholder='Tìm kiếm theo tiêu đề...'
             onRowClick={handleNewsClick}
-            emptyMessage="Không tìm thấy tin tức nào."
+            emptyMessage='Không tìm thấy tin tức nào.'
           />
         </CardContent>
       </Card>

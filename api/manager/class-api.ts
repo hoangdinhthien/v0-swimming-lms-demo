@@ -43,7 +43,6 @@ export interface Instructor {
   address?: string;
   updated_by?: string;
 }
-
 export interface Schedule {
   _id: string;
   date: string;
