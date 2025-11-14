@@ -50,6 +50,8 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   fetchClassDetails,
   updateClass,
+  addMemberToClass,
+  removeMemberFromClass,
   type ClassDetails,
   type UpdateClassData,
 } from "@/api/manager/class-api";
@@ -164,6 +166,16 @@ export default function ClassDetailPage() {
     session_in_week: 3,
     array_number_in_week: [] as number[],
   });
+
+  // Member management modal state
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [isManagingMembers, setIsManagingMembers] = useState(false);
+  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<string[]>(
+    []
+  );
+  const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
+    string[]
+  >([]);
 
   // Dropdown data
   const [courses, setCourses] = useState<any[]>([]);
@@ -332,7 +344,7 @@ export default function ClassDetailPage() {
     }));
   };
 
-  // Handle form submission
+  // Handle form submission - only update basic class info (no member array)
   const handleSaveClass = async () => {
     try {
       setIsSaving(true);
@@ -347,15 +359,14 @@ export default function ClassDetailPage() {
         throw new Error("Thiếu ID lớp học");
       }
 
-      const updateData: UpdateClassData = {
+      // Only send basic class info (no member array as per API requirement)
+      const updateData = {
         course: formData.course,
         name: formData.name,
         instructor: formData.instructor,
-        member: formData.member,
       };
 
       console.log("Sending update data:", updateData);
-      console.log("Form data state:", formData);
 
       await updateClass(classroomId, updateData, tenantId, token);
 
@@ -370,7 +381,7 @@ export default function ClassDetailPage() {
       setIsEditModalOpen(false);
       toast({
         title: "Thành công",
-        description: "Lớp học đã được cập nhật thành công",
+        description: "Thông tin lớp học đã được cập nhật thành công",
       });
     } catch (error: any) {
       console.error("Error updating class:", error);
@@ -381,6 +392,74 @@ export default function ClassDetailPage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Handle adding members to class
+  const handleAddMembers = async (memberIds: string[]) => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token || !classroomId) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      await addMemberToClass(classroomId, memberIds, tenantId, token);
+
+      // Refresh class data
+      const updatedClass = await fetchClassDetails(
+        classroomId,
+        tenantId,
+        token
+      );
+      setClassData(updatedClass);
+
+      toast({
+        title: "Thành công",
+        description: `Đã thêm ${memberIds.length} học viên vào lớp`,
+      });
+    } catch (error: any) {
+      console.error("Error adding members:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Không thể thêm học viên vào lớp",
+      });
+    }
+  };
+
+  // Handle removing members from class
+  const handleRemoveMembers = async (memberIds: string[]) => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token || !classroomId) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      await removeMemberFromClass(classroomId, memberIds, tenantId, token);
+
+      // Refresh class data
+      const updatedClass = await fetchClassDetails(
+        classroomId,
+        tenantId,
+        token
+      );
+      setClassData(updatedClass);
+
+      toast({
+        title: "Thành công",
+        description: `Đã xóa ${memberIds.length} học viên khỏi lớp`,
+      });
+    } catch (error: any) {
+      console.error("Error removing members:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Không thể xóa học viên khỏi lớp",
+      });
     }
   };
 
@@ -535,6 +614,75 @@ export default function ClassDetailPage() {
       });
     } finally {
       setIsAutoScheduling(false);
+    }
+  };
+
+  // Handle opening member management modal
+  const handleOpenMemberModal = async () => {
+    const tenantId = getSelectedTenant();
+    const token = getAuthToken();
+
+    if (!tenantId || !token || !classData) return;
+
+    setIsMemberModalOpen(true);
+    setLoadingData(true);
+
+    try {
+      // Fetch students who have paid for the course
+      const studentsData = await fetchStudentsByCourseOrder({
+        courseId: classData.course._id,
+        tenantId,
+        token,
+      });
+      setStudents(studentsData || []);
+
+      // Reset selections
+      setSelectedMembersToAdd([]);
+      setSelectedMembersToRemove([]);
+    } catch (error) {
+      console.error("Error loading students:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải danh sách học viên",
+      });
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  // Handle applying member changes
+  const handleApplyMemberChanges = async () => {
+    setIsManagingMembers(true);
+    try {
+      // Add members if any selected
+      if (selectedMembersToAdd.length > 0) {
+        await handleAddMembers(selectedMembersToAdd);
+      }
+
+      // Remove members if any selected
+      if (selectedMembersToRemove.length > 0) {
+        await handleRemoveMembers(selectedMembersToRemove);
+      }
+
+      // Close modal and reset
+      setIsMemberModalOpen(false);
+      setSelectedMembersToAdd([]);
+      setSelectedMembersToRemove([]);
+
+      toast({
+        title: "Thành công",
+        description: "Đã cập nhật danh sách học viên",
+      });
+    } catch (error: any) {
+      console.error("Error managing members:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật học viên",
+      });
+    } finally {
+      setIsManagingMembers(false);
     }
   };
 
@@ -693,7 +841,15 @@ export default function ClassDetailPage() {
                 className='inline-flex items-center gap-2 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
               >
                 <Edit className='h-4 w-4' />
-                Chỉnh sửa lớp học
+                Chỉnh sửa thông tin
+              </Button>
+              <Button
+                onClick={handleOpenMemberModal}
+                variant='outline'
+                className='inline-flex items-center gap-2 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
+              >
+                <Users className='h-4 w-4' />
+                Quản lý học viên
               </Button>
               {/* Auto Schedule Button - Show if class has missing sessions or no schedules */}
               {((classData.sessions_remaining &&
@@ -1260,10 +1416,15 @@ export default function ClassDetailPage() {
       >
         <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle>Chỉnh sửa lớp học</DialogTitle>
+            <DialogTitle>Chỉnh sửa thông tin lớp học</DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin lớp học. Tất cả thay đổi sẽ được lưu ngay lập
-              tức.
+              Cập nhật thông tin cơ bản của lớp học (tên lớp, khóa học, giảng
+              viên).
+              <br />
+              <span className='text-amber-600 dark:text-amber-400 font-medium'>
+                Lưu ý: Để quản lý học viên, vui lòng sử dụng phần &quot;Quản lý
+                học viên&quot; bên dưới.
+              </span>
             </DialogDescription>
           </DialogHeader>
 
@@ -1348,43 +1509,6 @@ export default function ClassDetailPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* Students Selection */}
-              <div className='space-y-4'>
-                <Label>Học viên ({formData.member.length} đã chọn)</Label>
-                <div className='border rounded-lg p-4 max-h-64 overflow-y-auto space-y-2'>
-                  {students.length > 0 ? (
-                    students.map((student) => (
-                      <div
-                        key={student._id}
-                        className='flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-lg'
-                      >
-                        <Checkbox
-                          id={student.user._id}
-                          checked={formData.member.includes(student.user._id)}
-                          onCheckedChange={() =>
-                            handleMemberToggle(student.user._id)
-                          }
-                        />
-                        <UserAvatar
-                          user={student.user}
-                          className='h-8 w-8'
-                        />
-                        <div className='flex-1'>
-                          <p className='font-medium'>{student.user.username}</p>
-                          <p className='text-sm text-muted-foreground'>
-                            {student.user.email}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className='text-muted-foreground text-center py-4'>
-                      Không có học viên nào đã thanh toán khóa học này
-                    </p>
-                  )}
-                </div>
               </div>
             </div>
           )}
@@ -1765,6 +1889,210 @@ export default function ClassDetailPage() {
                 <>
                   <CalendarPlus className='h-4 w-4 mr-2' />
                   Tự động xếp lịch
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Member Management Modal */}
+      <Dialog
+        open={isMemberModalOpen}
+        onOpenChange={setIsMemberModalOpen}
+      >
+        <DialogContent className='max-w-5xl max-h-[90vh] overflow-hidden flex flex-col'>
+          <DialogHeader>
+            <DialogTitle>Quản lý học viên</DialogTitle>
+            <DialogDescription>
+              Thêm hoặc xóa học viên khỏi lớp học. Chỉ có thể thêm học viên đã
+              thanh toán khóa học này.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingData ? (
+            <div className='flex items-center justify-center py-12'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+              <span className='ml-2'>Đang tải danh sách học viên...</span>
+            </div>
+          ) : (
+            <div className='grid grid-cols-2 gap-4 flex-1 overflow-hidden'>
+              {/* Students to Add */}
+              <div className='flex flex-col border rounded-lg overflow-hidden'>
+                <div className='bg-muted/50 px-4 py-3 border-b'>
+                  <h3 className='font-semibold flex items-center gap-2'>
+                    <Users className='h-4 w-4' />
+                    Học viên có thể thêm (
+                    {
+                      students.filter(
+                        (s) =>
+                          !classData?.member?.find(
+                            (m: any) => m._id === s.user._id
+                          )
+                      ).length
+                    }
+                    )
+                  </h3>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    Đã thanh toán khóa học, chưa có trong lớp
+                  </p>
+                </div>
+                <div className='flex-1 overflow-y-auto p-4 space-y-2'>
+                  {students.filter(
+                    (student) =>
+                      !classData?.member?.find(
+                        (m: any) => m._id === student.user._id
+                      )
+                  ).length > 0 ? (
+                    students
+                      .filter(
+                        (student) =>
+                          !classData?.member?.find(
+                            (m: any) => m._id === student.user._id
+                          )
+                      )
+                      .map((student) => (
+                        <div
+                          key={student.user._id}
+                          className='flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border'
+                        >
+                          <Checkbox
+                            id={`add-${student.user._id}`}
+                            checked={selectedMembersToAdd.includes(
+                              student.user._id
+                            )}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedMembersToAdd((prev) => [
+                                  ...prev,
+                                  student.user._id,
+                                ]);
+                              } else {
+                                setSelectedMembersToAdd((prev) =>
+                                  prev.filter((id) => id !== student.user._id)
+                                );
+                              }
+                            }}
+                          />
+                          <UserAvatar
+                            user={student.user}
+                            className='h-10 w-10'
+                          />
+                          <div className='flex-1 min-w-0'>
+                            <p className='font-medium truncate'>
+                              {student.user.username}
+                            </p>
+                            <p className='text-sm text-muted-foreground truncate'>
+                              {student.user.email}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <p className='text-muted-foreground text-center py-8'>
+                      Tất cả học viên đã thanh toán đều đã có trong lớp
+                    </p>
+                  )}
+                </div>
+                {selectedMembersToAdd.length > 0 && (
+                  <div className='bg-green-50 dark:bg-green-900/20 px-4 py-2 border-t'>
+                    <p className='text-sm font-medium text-green-700 dark:text-green-300'>
+                      Đã chọn {selectedMembersToAdd.length} học viên để thêm
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Students to Remove */}
+              <div className='flex flex-col border rounded-lg overflow-hidden'>
+                <div className='bg-muted/50 px-4 py-3 border-b'>
+                  <h3 className='font-semibold flex items-center gap-2'>
+                    <Users className='h-4 w-4' />
+                    Học viên trong lớp ({classData?.member?.length || 0})
+                  </h3>
+                  <p className='text-sm text-muted-foreground mt-1'>
+                    Chọn để xóa khỏi lớp học
+                  </p>
+                </div>
+                <div className='flex-1 overflow-y-auto p-4 space-y-2'>
+                  {classData?.member && classData.member.length > 0 ? (
+                    classData.member.map((member: any) => (
+                      <div
+                        key={member._id}
+                        className='flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border'
+                      >
+                        <Checkbox
+                          id={`remove-${member._id}`}
+                          checked={selectedMembersToRemove.includes(member._id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedMembersToRemove((prev) => [
+                                ...prev,
+                                member._id,
+                              ]);
+                            } else {
+                              setSelectedMembersToRemove((prev) =>
+                                prev.filter((id) => id !== member._id)
+                              );
+                            }
+                          }}
+                        />
+                        <UserAvatar
+                          user={member}
+                          className='h-10 w-10'
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <p className='font-medium truncate'>
+                            {member.username}
+                          </p>
+                          <p className='text-sm text-muted-foreground truncate'>
+                            {member.email}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className='text-muted-foreground text-center py-8'>
+                      Chưa có học viên nào trong lớp
+                    </p>
+                  )}
+                </div>
+                {selectedMembersToRemove.length > 0 && (
+                  <div className='bg-red-50 dark:bg-red-900/20 px-4 py-2 border-t'>
+                    <p className='text-sm font-medium text-red-700 dark:text-red-300'>
+                      Đã chọn {selectedMembersToRemove.length} học viên để xóa
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsMemberModalOpen(false)}
+              disabled={isManagingMembers}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleApplyMemberChanges}
+              disabled={
+                isManagingMembers ||
+                (selectedMembersToAdd.length === 0 &&
+                  selectedMembersToRemove.length === 0)
+              }
+            >
+              {isManagingMembers ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang cập nhật...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className='h-4 w-4 mr-2' />
+                  Áp dụng thay đổi
                 </>
               )}
             </Button>

@@ -23,15 +23,19 @@ interface PoolsApiResponse {
   data: [
     [
       {
-        data: Pool[];
-        meta_data: {
-          count: number;
-          page: number;
-          limit: number;
-        };
+        limit: number;
+        skip: number;
+        count: number;
+        documents: Pool[];
       }
     ]
   ];
+  message: string;
+  statusCode: number;
+}
+
+interface PoolDetailResponse {
+  data: [[Pool[]]];
   message: string;
   statusCode: number;
 }
@@ -90,12 +94,15 @@ export async function fetchPools(
     result.data &&
     result.data[0] &&
     result.data[0][0] &&
-    result.data[0][0].data &&
-    result.data[0][0].meta_data
+    result.data[0][0].documents
   ) {
     return {
-      pools: result.data[0][0].data,
-      meta: result.data[0][0].meta_data,
+      pools: result.data[0][0].documents,
+      meta: {
+        count: result.data[0][0].count,
+        page: params?.page || 1,
+        limit: result.data[0][0].limit,
+      },
     };
   }
 
@@ -154,23 +161,8 @@ export async function createPool(
 
   const result = await response.json();
 
-  // Extract the created pool from the response
-  // Assuming the API returns the created pool in a similar nested structure
-  if (
-    result.data &&
-    result.data[0] &&
-    result.data[0][0] &&
-    result.data[0][0].data &&
-    result.data[0][0].data[0]
-  ) {
-    return result.data[0][0].data[0];
-  }
-
-  // If the response structure is different, return a basic pool object
-  return {
-    _id: "temp-id", // The API should return the actual ID
-    ...poolData,
-  };
+  // Return the created pool from response
+  return result.data;
 }
 
 /**
@@ -213,9 +205,9 @@ export async function getPoolDetail(
     throw new Error(`Failed to get pool details: ${response.status}`);
   }
 
-  const result = await response.json();
+  const result: PoolDetailResponse = await response.json();
 
-  // Extract pool from the nested structure
+  // Extract pool from the nested structure: data[0][0][0]
   if (
     result.data &&
     result.data[0] &&
@@ -281,19 +273,48 @@ export async function updatePool(
 
   const result = await response.json();
 
-  // Extract the updated pool from the response
-  if (
-    result.data &&
-    result.data[0] &&
-    result.data[0][0] &&
-    result.data[0][0][0]
-  ) {
-    return result.data[0][0][0];
+  // Return the updated pool
+  return result.data;
+}
+
+/**
+ * Delete a pool
+ */
+export async function deletePool(
+  poolId: string,
+  tenantId?: string,
+  token?: string
+): Promise<void> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
   }
 
-  // If the response structure is different, return a basic pool object
-  return {
-    _id: poolId,
-    ...poolData,
+  const headers: Record<string, string> = {
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
   };
+
+  // Add service header for staff users so they can call manager endpoints when allowed
+  if (getUserFrontendRole() === "staff") {
+    headers.service = "Pool";
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/pool?id=${poolId}`,
+    {
+      method: "DELETE",
+      headers,
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(
+      errorData.message || `Failed to delete pool: ${response.status}`
+    );
+  }
 }

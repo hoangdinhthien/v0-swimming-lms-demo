@@ -482,10 +482,7 @@
 - theo như response data mà tôi có gửi ở trên. khi manager/staff đã sắp xếp lịch học cho các lớp học (xếp lịch thủ công và cả tự động xếp lịch) VÀ CHỌN HỒ BƠI CHO CÁC LỊCH xong thì array thứ hai trong response data sẽ chỉ hiện khi có hồ bơi vượt quá capacity để cho manager/staff biết mà chọn hồ bơi cho hợp lý cho các lớp học
 - BẠN CÓ GỢI Ý GÌ CHO TÔI KHÔNG?
 
-
-
-
-
+===========================
 
 BÂY GIỜ CHÚNG TA CẦN PHẢI DOUBLE CHECK LẠI TỪ ĐẦU PHẦN 'TỰ ĐỘNG XẾP LỊCH HỌC' CHO LỚP HỌC
 - có vẻ như field array_number_in_week khá là kỳ quặc.

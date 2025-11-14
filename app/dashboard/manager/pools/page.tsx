@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { columns, Pool } from "./components/columns";
+import { createColumns, Pool } from "./components/columns";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { fetchPools, createPool } from "@/api/manager/pools-api";
+import { fetchPools, createPool, deletePool } from "@/api/manager/pools-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -155,6 +155,24 @@ export default function PoolsPage() {
       setIsCreating(false);
     }
   };
+
+  // Handle delete pool
+  const handleDeletePool = async (poolId: string, poolTitle: string) => {
+    const token = getAuthToken();
+    const tenantId = getSelectedTenant();
+
+    if (!token || !tenantId) {
+      throw new Error("Không tìm thấy thông tin xác thực");
+    }
+
+    await deletePool(poolId, tenantId, token);
+
+    // Refresh the list after deletion
+    await loadPools();
+  };
+
+  // Create columns with delete handler
+  const columns = createColumns(handleDeletePool);
 
   // Reset form when modal closes
   const handleModalClose = () => {

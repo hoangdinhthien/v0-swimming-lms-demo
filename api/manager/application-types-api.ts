@@ -1,5 +1,6 @@
 import { getAuthToken } from "../auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getUserFrontendRole } from "../role-utils";
 
 export interface ApplicationType {
   _id: string;
@@ -13,7 +14,16 @@ export interface ApplicationType {
 }
 
 export interface ApplicationTypeResponse {
-  data: ApplicationType[][][]; // Based on the API response structure
+  data: [
+    [
+      {
+        limit: number;
+        skip: number;
+        count: number;
+        documents: ApplicationType[];
+      }
+    ]
+  ];
   message: string;
   statusCode: number;
 }
@@ -47,13 +57,20 @@ export async function getApplicationTypes(
 
     const url = role ? `${BASE_URL}?role=${role}` : BASE_URL;
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers.service = "Application";
+    }
+
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -62,8 +79,8 @@ export async function getApplicationTypes(
 
     const result: ApplicationTypeResponse = await response.json();
 
-    // Extract the application types from the nested array structure
-    const applicationTypes = result.data?.[0]?.[0] || [];
+    // Extract the application types from the nested structure: data[0][0].documents
+    const applicationTypes = result.data?.[0]?.[0]?.documents || [];
 
     return applicationTypes;
   } catch (error) {
@@ -86,13 +103,20 @@ export async function createApplicationType(
       throw new Error("Authentication required");
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers.service = "Application";
+    }
+
     const response = await fetch(BASE_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-      },
+      headers,
       body: JSON.stringify(data),
     });
 
@@ -120,13 +144,20 @@ export async function updateApplicationType(
       throw new Error("Authentication required");
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "x-tenant-id": tenantId,
+    };
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers.service = "Application";
+    }
+
     const response = await fetch(`${BASE_URL}?id=${id}`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-      },
+      headers,
       body: JSON.stringify(data),
     });
 
@@ -151,12 +182,19 @@ export async function deleteApplicationType(id: string): Promise<void> {
       throw new Error("Authentication required");
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    };
+
+    // Add service header for staff users
+    if (getUserFrontendRole() === "staff") {
+      headers.service = "Application";
+    }
+
     const response = await fetch(`${BASE_URL}?id=${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-tenant-id": tenantId,
-      },
+      headers,
     });
 
     if (!response.ok) {

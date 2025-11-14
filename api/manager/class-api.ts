@@ -124,12 +124,10 @@ export interface ClassesApiResponse {
   data: [
     [
       {
-        data: ClassItem[];
-        meta_data: {
-          count: number;
-          page: number;
-          limit: number;
-        };
+        limit: number;
+        skip: number;
+        count: number;
+        documents: ClassItem[];
       }
     ]
   ];
@@ -142,12 +140,10 @@ interface ClassroomsApiResponse {
   data: [
     [
       {
-        data: Classroom[];
-        meta_data: {
-          count: number;
-          page: number;
-          limit: number;
-        };
+        limit: number;
+        skip: number;
+        count: number;
+        documents: Classroom[];
       }
     ]
   ];
@@ -176,7 +172,7 @@ export interface UpdateClassData {
   course: string; // course id
   name: string; // class name
   instructor: string; // instructor id
-  member: string[]; // array of member ids
+  member?: string[]; // array of member ids (optional - use add-member/remove-member endpoints instead)
 }
 
 /**
@@ -292,26 +288,29 @@ export const fetchClasses = async (
 
   const result: ClassesApiResponse = await response.json();
 
-  // The API returns nested arrays, so we need to flatten them
+  // Extract classes from the new response structure: data[0][0].documents
   let classes: ClassItem[] = [];
-  let meta_data = { count: 0, page: 1, limit: 10 };
+  let count = 0;
+  let limit_val = limit;
 
-  if (result.data && Array.isArray(result.data)) {
-    result.data.forEach((outerArray: any) => {
-      if (Array.isArray(outerArray)) {
-        outerArray.forEach((innerArray: any) => {
-          if (innerArray && innerArray.data && Array.isArray(innerArray.data)) {
-            classes = innerArray.data;
-            meta_data = innerArray.meta_data || meta_data;
-          }
-        });
-      }
-    });
+  if (
+    result.data &&
+    result.data[0] &&
+    result.data[0][0] &&
+    result.data[0][0].documents
+  ) {
+    classes = result.data[0][0].documents;
+    count = result.data[0][0].count;
+    limit_val = result.data[0][0].limit;
   }
 
   return {
     data: classes,
-    meta_data: meta_data,
+    meta_data: {
+      count: count,
+      page: page,
+      limit: limit_val,
+    },
   };
 };
 
@@ -472,14 +471,14 @@ export async function fetchClassrooms(
 
   const result: ClassroomsApiResponse = await response.json();
 
-  // Extract classrooms from the nested structure
+  // Extract classrooms from the nested structure: data[0][0].documents
   if (
     result.data &&
     result.data[0] &&
     result.data[0][0] &&
-    result.data[0][0].data
+    result.data[0][0].documents
   ) {
-    return result.data[0][0].data;
+    return result.data[0][0].documents;
   }
 
   return [];
@@ -530,14 +529,14 @@ export async function fetchClassroomsByCourse(
 
   const result: ClassroomsApiResponse = await response.json();
 
-  // Extract classrooms from the nested structure
+  // Extract classrooms from the nested structure: data[0][0].documents
   if (
     result.data &&
     result.data[0] &&
     result.data[0][0] &&
-    result.data[0][0].data
+    result.data[0][0].documents
   ) {
-    return result.data[0][0].data;
+    return result.data[0][0].documents;
   }
 
   return [];
@@ -605,14 +604,14 @@ export async function fetchClassroomsByCourseAndSchedule(
 
   const result: ClassroomsApiResponse = await response.json();
 
-  // Extract classrooms from the nested structure
+  // Extract classrooms from the nested structure: data[0][0].documents
   if (
     result.data &&
     result.data[0] &&
     result.data[0][0] &&
-    result.data[0][0].data
+    result.data[0][0].documents
   ) {
-    return result.data[0][0].data;
+    return result.data[0][0].documents;
   }
 
   return [];
@@ -852,6 +851,128 @@ export async function addUserToClass(
     }
 
     throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+/**
+ * Add member(s) to a class using the add-member endpoint
+ * @param classId - The ID of the class
+ * @param members - Single member ID string or array of member IDs
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with response data
+ */
+export async function addMemberToClass(
+  classId: string,
+  members: string | string[],
+  tenantId?: string,
+  token?: string
+): Promise<any> {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId) {
+    throw new Error("Class ID is required");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
+  // Prepare request body - can be single object or array
+  const requestBody = Array.isArray(members)
+    ? members.map((memberId) => ({ member: memberId }))
+    : { member: members };
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/add-member?id=${classId}`,
+    {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message ||
+        `Failed to add member(s) to class: ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+/**
+ * Remove member(s) from a class using the remove-member endpoint
+ * @param classId - The ID of the class
+ * @param members - Single member ID string or array of member IDs
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with response data
+ */
+export async function removeMemberFromClass(
+  classId: string,
+  members: string | string[],
+  tenantId?: string,
+  token?: string
+): Promise<any> {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId) {
+    throw new Error("Class ID is required");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
+  // Prepare request body - can be single object or array
+  const requestBody = Array.isArray(members)
+    ? members.map((memberId) => ({ member: memberId }))
+    : { member: members };
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/remove-member?id=${classId}`,
+    {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message ||
+        `Failed to remove member(s) from class: ${response.status}`
+    );
   }
 
   return response.json();

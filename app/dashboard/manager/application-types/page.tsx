@@ -36,7 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { columns, ApplicationType } from "./components/columns";
+import { createColumns, ApplicationType } from "./components/columns";
 import {
   getApplicationTypes,
   createApplicationType,
@@ -60,7 +60,9 @@ const getRoleDisplayName = (role: string) => {
 
 export default function ApplicationTypesPage() {
   const { toast } = useToast();
-  const [applicationTypes, setApplicationTypes] = useState<ApplicationType[]>([]);
+  const [applicationTypes, setApplicationTypes] = useState<ApplicationType[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -229,6 +231,15 @@ export default function ApplicationTypesPage() {
     }));
   };
 
+  // Handle delete application type
+  const handleDeleteType = async (typeId: string, typeTitle: string) => {
+    await deleteApplicationType(typeId);
+    await fetchApplicationTypes();
+  };
+
+  // Create columns with delete handler
+  const columns = createColumns(handleDeleteType);
+
   if (isLoading) {
     return (
       <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
@@ -248,8 +259,14 @@ export default function ApplicationTypesPage() {
   return (
     <>
       <div className='mb-6'>
-        <Button variant='ghost' asChild>
-          <a href='/dashboard/manager' className='inline-flex items-center text-sm font-medium'>
+        <Button
+          variant='ghost'
+          asChild
+        >
+          <a
+            href='/dashboard/manager'
+            className='inline-flex items-center text-sm font-medium'
+          >
             <ArrowLeft className='mr-1 h-4 w-4' />
             Quay lại Dashboard
           </a>
@@ -274,7 +291,10 @@ export default function ApplicationTypesPage() {
             />
             Làm mới
           </Button>
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+          <Dialog
+            open={isCreateModalOpen}
+            onOpenChange={setIsCreateModalOpen}
+          >
             <DialogTrigger asChild>
               <Button onClick={() => resetForm()}>
                 <Plus className='mr-2 h-4 w-4' /> Tạo loại đơn từ
@@ -303,13 +323,19 @@ export default function ApplicationTypesPage() {
                   <Label>Vai trò *</Label>
                   <div className='grid grid-cols-2 gap-2'>
                     {AVAILABLE_ROLES.map((role) => (
-                      <div key={role} className='flex items-center space-x-2'>
+                      <div
+                        key={role}
+                        className='flex items-center space-x-2'
+                      >
                         <Checkbox
                           id={`create-${role}`}
                           checked={formData.type.includes(role)}
                           onCheckedChange={() => handleRoleToggle(role)}
                         />
-                        <Label htmlFor={`create-${role}`} className='cursor-pointer'>
+                        <Label
+                          htmlFor={`create-${role}`}
+                          className='cursor-pointer'
+                        >
                           {getRoleDisplayName(role)}
                         </Label>
                       </div>
@@ -324,7 +350,10 @@ export default function ApplicationTypesPage() {
                 >
                   Hủy
                 </Button>
-                <Button onClick={handleCreateSubmit} disabled={isSubmitting}>
+                <Button
+                  onClick={handleCreateSubmit}
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Đang tạo..." : "Tạo"}
                 </Button>
               </DialogFooter>
@@ -337,16 +366,18 @@ export default function ApplicationTypesPage() {
       <div className='grid gap-4 md:grid-cols-3 mt-6'>
         <Card>
           <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Tổng loại đơn từ</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              Tổng loại đơn từ
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className='flex items-center gap-2'>
               <FileText className='h-8 w-8 text-primary' />
-              <div className='text-2xl font-bold'>{applicationTypes.length}</div>
+              <div className='text-2xl font-bold'>
+                {applicationTypes.length}
+              </div>
             </div>
-            <p className='text-xs text-muted-foreground'>
-              Tổng số loại đơn từ
-            </p>
+            <p className='text-xs text-muted-foreground'>Tổng số loại đơn từ</p>
           </CardContent>
         </Card>
       </div>
@@ -360,15 +391,18 @@ export default function ApplicationTypesPage() {
           <DataTable
             columns={columns}
             data={applicationTypes}
-            searchKey="title"
-            searchPlaceholder="Tìm kiếm theo tiêu đề..."
-            emptyMessage="Không tìm thấy loại đơn từ nào."
+            searchKey='title'
+            searchPlaceholder='Tìm kiếm theo tiêu đề...'
+            emptyMessage='Không tìm thấy loại đơn từ nào.'
           />
         </CardContent>
       </Card>
 
       {/* Edit Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Chỉnh sửa loại đơn từ</DialogTitle>
@@ -392,13 +426,19 @@ export default function ApplicationTypesPage() {
               <Label>Vai trò *</Label>
               <div className='grid grid-cols-2 gap-2'>
                 {AVAILABLE_ROLES.map((role) => (
-                  <div key={role} className='flex items-center space-x-2'>
+                  <div
+                    key={role}
+                    className='flex items-center space-x-2'
+                  >
                     <Checkbox
                       id={`edit-${role}`}
                       checked={formData.type.includes(role)}
                       onCheckedChange={() => handleRoleToggle(role)}
                     />
-                    <Label htmlFor={`edit-${role}`} className='cursor-pointer'>
+                    <Label
+                      htmlFor={`edit-${role}`}
+                      className='cursor-pointer'
+                    >
                       {getRoleDisplayName(role)}
                     </Label>
                   </div>
@@ -413,7 +453,10 @@ export default function ApplicationTypesPage() {
             >
               Hủy
             </Button>
-            <Button onClick={handleEditSubmit} disabled={isSubmitting}>
+            <Button
+              onClick={handleEditSubmit}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Đang cập nhật..." : "Cập nhật"}
             </Button>
           </DialogFooter>
@@ -421,12 +464,16 @@ export default function ApplicationTypesPage() {
       </Dialog>
 
       {/* Delete Alert Dialog */}
-      <AlertDialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+      <AlertDialog
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa loại đơn từ "{currentItem?.title}"? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa loại đơn từ "{currentItem?.title}"? Hành
+              động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
