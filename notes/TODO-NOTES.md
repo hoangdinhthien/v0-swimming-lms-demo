@@ -91,3 +91,10 @@ Copy code
 - Không reload trang khi gõ search.
 - Query format đúng chuẩn API.
 - UI chỉ có **1 ô search**, nhưng có thể chọn field để filter.
+
+- đối với những api thuộc dạng find-common, ngoài username và title của các entity ra thì manager/staff có thể search theo các field khác nữa dựa theo response data của api trả ra như thế nào. trang app\dashboard\manager\transactions\page.tsx là một ví dụ.
+
+- classes: search[name:contains], search[course.title:contains], search[instructor.username:contains], search[instructor.email:contains]
+- pools: search[title:contains]
+- news: search[title:contains]
+-

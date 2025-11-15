@@ -74,7 +74,9 @@ export default function TransactionsPage() {
   const { toast } = useToast();
   const { token, tenantId, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"user.username" | "course.title">("user.username");
+  const [searchField, setSearchField] = useState<
+    "user.username" | "course.title"
+  >("user.username");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
@@ -229,7 +231,15 @@ export default function TransactionsPage() {
       }
     }
     getOrders();
-  }, [token, tenantId, currentPage, limit, authLoading, debouncedSearch, searchField]);
+  }, [
+    token,
+    tenantId,
+    currentPage,
+    limit,
+    authLoading,
+    debouncedSearch,
+    searchField,
+  ]);
 
   // Fetch course details for a given course ID
   const fetchCourseDetails = async (courseId: string) => {
@@ -508,7 +518,9 @@ export default function TransactionsPage() {
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
             <Select
               value={searchField}
-              onValueChange={(value) => setSearchField(value as "user.username" | "course.title")}
+              onValueChange={(value) =>
+                setSearchField(value as "user.username" | "course.title")
+              }
             >
               <SelectTrigger className='w-[200px]'>
                 <SelectValue placeholder='Tìm theo' />
@@ -524,8 +536,8 @@ export default function TransactionsPage() {
               <Input
                 placeholder={
                   searchField === "user.username"
-                    ? 'Tìm kiếm theo tên học viên...'
-                    : 'Tìm kiếm theo tên khoá học...'
+                    ? "Tìm kiếm theo tên học viên..."
+                    : "Tìm kiếm theo tên khoá học..."
                 }
                 className='pl-8'
                 value={searchQuery}
@@ -549,12 +561,10 @@ export default function TransactionsPage() {
                   <SelectItem value='paid'>Đã thanh toán</SelectItem>
                   <SelectItem value='pending'>Đang chờ</SelectItem>
                   <SelectItem value='expired'>Đã hết hạn</SelectItem>
-                  <SelectItem value='cancelled'>Đã hủy</SelectItem>
-                  <SelectItem value='refunded'>Đã hoàn tiền</SelectItem>
                 </SelectContent>
               </Select>
 
-              <Select
+              {/* <Select
                 value={courseFilter}
                 onValueChange={setCourseFilter}
               >
@@ -572,7 +582,7 @@ export default function TransactionsPage() {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
 
               <Popover>
                 <PopoverTrigger asChild>
@@ -647,9 +657,7 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-start flex-col'>
-                            <div className='font-medium'>
-                              {userName}
-                            </div>
+                            <div className='font-medium'>{userName}</div>
                             <div className='text-xs text-muted-foreground'>
                               {userContact}
                             </div>
@@ -661,25 +669,17 @@ export default function TransactionsPage() {
                               <span className='animate-pulse bg-muted rounded h-4 w-24 block'></span>
                             </div>
                           ) : (
-                            <span>
-                              {courseName}
-                            </span>
+                            <span>{courseName}</span>
                           )}
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
-                          <span>
-                            {formatPrice(order.price)}
-                          </span>
+                          <span>{formatPrice(order.price)}</span>
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
-                          <span>
-                            {formattedDate}
-                          </span>
+                          <span>{formattedDate}</span>
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
-                          <span>
-                            {getOrderTypeDisplayName(order)}
-                          </span>
+                          <span>{getOrderTypeDisplayName(order)}</span>
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-center justify-between'>

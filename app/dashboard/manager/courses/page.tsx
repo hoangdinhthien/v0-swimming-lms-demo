@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Settings, RefreshCw } from "lucide-react";
+import { ArrowLeft, Loader2, Settings, RefreshCw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchCourses } from "@/api/manager/courses-api";
@@ -189,6 +189,12 @@ export default function CoursesPage() {
             >
               <Settings className='mr-2 h-4 w-4' />
               Quản lý danh mục
+            </Button>
+            <Button
+              onClick={() => router.push("/dashboard/manager/courses/new")}
+            >
+              <Plus className='mr-2 h-4 w-4' />
+              Tạo khóa học mới
             </Button>
           </div>
         </div>
