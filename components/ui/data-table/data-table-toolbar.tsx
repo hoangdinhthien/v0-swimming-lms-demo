@@ -4,6 +4,13 @@ import { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { useState, useEffect, useRef } from "react";
@@ -12,6 +19,10 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   searchKey?: string;
   searchPlaceholder?: string;
+  searchFieldOptions?: {
+    value: string;
+    label: string;
+  }[];
   filterOptions?: {
     columnId: string;
     title: string;
@@ -21,13 +32,14 @@ interface DataTableToolbarProps<TData> {
       icon?: string;
     }[];
   }[];
-  onServerSearch?: (searchValue: string) => void;
+  onServerSearch?: (searchValue: string, searchField?: string) => void;
 }
 
 export function DataTableToolbar<TData>({
   table,
   searchKey = "name",
   searchPlaceholder = "Tìm kiếm...",
+  searchFieldOptions,
   filterOptions = [],
   onServerSearch,
 }: DataTableToolbarProps<TData>) {
@@ -35,6 +47,9 @@ export function DataTableToolbar<TData>({
   
   // Use local state for server-side search, table state for client-side
   const [serverSearchValue, setServerSearchValue] = useState("");
+  const [selectedSearchField, setSelectedSearchField] = useState(
+    searchFieldOptions?.[0]?.value || searchKey
+  );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Get the appropriate value based on search mode
@@ -64,7 +79,7 @@ export function DataTableToolbar<TData>({
       
       // Set new timer for 300ms delay (faster response)
       debounceTimerRef.current = setTimeout(() => {
-        onServerSearch(value);
+        onServerSearch(value, selectedSearchField);
       }, 300);
     } else {
       // Client-side search - use table filtering (no debounce needed)
@@ -72,15 +87,50 @@ export function DataTableToolbar<TData>({
     }
   };
 
+  // Handle search field change
+  const handleSearchFieldChange = (field: string) => {
+    setSelectedSearchField(field);
+    // Re-trigger search with new field if there's a value
+    if (serverSearchValue && onServerSearch) {
+      onServerSearch(serverSearchValue, field);
+    }
+  };
+
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 items-center gap-2'>
-        <Input
-          placeholder={searchPlaceholder}
-          value={searchValue}
-          onChange={(event) => handleSearchChange(event.target.value)}
-          className='h-8 w-[150px] lg:w-[250px]'
-        />
+        {searchFieldOptions && searchFieldOptions.length > 0 ? (
+          <div className='flex items-center gap-2'>
+            <Select
+              value={selectedSearchField}
+              onValueChange={handleSearchFieldChange}
+            >
+              <SelectTrigger className='h-8 w-[140px]'>
+                <SelectValue placeholder='Chọn trường' />
+              </SelectTrigger>
+              <SelectContent>
+                {searchFieldOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              className='h-8 w-[150px] lg:w-[250px]'
+            />
+          </div>
+        ) : (
+          <Input
+            placeholder={searchPlaceholder}
+            value={searchValue}
+            onChange={(event) => handleSearchChange(event.target.value)}
+            className='h-8 w-[150px] lg:w-[250px]'
+          />
+        )}
         {filterOptions.map((filter) => {
           const column = table.getColumn(filter.columnId);
           if (!column) return null;

@@ -37,6 +37,10 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchKey?: string;
   searchPlaceholder?: string;
+  searchFieldOptions?: {
+    value: string;
+    label: string;
+  }[];
   filterOptions?: {
     columnId: string;
     title: string;
@@ -49,7 +53,7 @@ interface DataTableProps<TData, TValue> {
   emptyMessage?: string;
   rowIdentifier?: string;
   enableRowHover?: boolean; // Option to enable hover highlight & tooltip
-  onServerSearch?: (searchValue: string) => void; // Callback for server-side search
+  onServerSearch?: (searchValue: string, searchField?: string) => void; // Callback for server-side search
 }
 
 export function DataTable<TData, TValue>({
@@ -57,6 +61,7 @@ export function DataTable<TData, TValue>({
   data,
   searchKey = "name",
   searchPlaceholder = "Tìm kiếm...",
+  searchFieldOptions,
   filterOptions = [],
   emptyMessage = "Không tìm thấy kết quả phù hợp.",
   rowIdentifier = "_id",
@@ -100,6 +105,7 @@ export function DataTable<TData, TValue>({
         table={table}
         searchKey={searchKey}
         searchPlaceholder={searchPlaceholder}
+        searchFieldOptions={searchFieldOptions}
         filterOptions={filterOptions}
         onServerSearch={onServerSearch}
       />

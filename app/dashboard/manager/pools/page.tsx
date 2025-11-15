@@ -30,6 +30,7 @@ export default function PoolsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Separate state for search
+  const [searchField, setSearchField] = useState<string>("title");
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -44,7 +45,11 @@ export default function PoolsPage() {
   });
 
   // Load pools with search support
-  const loadPools = async (searchValue?: string, isInitialLoad = false) => {
+  const loadPools = async (
+    searchValue?: string,
+    field?: string,
+    isInitialLoad = false
+  ) => {
     if (isInitialLoad) {
       setLoading(true);
     } else if (searchValue !== undefined) {
@@ -59,8 +64,9 @@ export default function PoolsPage() {
 
       let searchParams: Record<string, string> | undefined;
       if (searchValue && searchValue.trim()) {
+        const searchKey = field || searchField;
         searchParams = {
-          "search[title:contains]": searchValue.trim(),
+          [`search[${searchKey}:contains]`]: searchValue.trim(),
         };
       }
 
@@ -80,13 +86,13 @@ export default function PoolsPage() {
   };
 
   // Handle server-side search
-  const handleServerSearch = (searchValue: string) => {
+  const handleServerSearch = (searchValue: string, field?: string) => {
     setSearchQuery(searchValue);
-    loadPools(searchValue, false);
+    loadPools(searchValue, field, false);
   };
 
   useEffect(() => {
-    loadPools(undefined, true); // Initial load
+    loadPools(undefined, undefined, true); // Initial load
   }, []);
 
   // Handle refresh
