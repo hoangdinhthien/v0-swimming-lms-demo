@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Users, Baby } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
 
 // Helper function to calculate age from birthday
 function calculateAge(birthdayStr: string | null | undefined): number | null {
@@ -81,9 +82,12 @@ export const columns: ColumnDef<Student>[] = [
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <div className="font-medium text-foreground truncate">
+            <Link 
+              href={`/dashboard/manager/students/${row.original._id}`}
+              className="font-medium text-foreground truncate hover:text-primary hover:underline transition-colors block"
+            >
               {user.username}
-            </div>
+            </Link>
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <Mail className="h-3 w-3" />
               <span className="truncate">{user.email}</span>

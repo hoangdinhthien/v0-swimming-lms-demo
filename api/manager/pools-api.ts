@@ -41,10 +41,14 @@ interface PoolDetailResponse {
 }
 
 /**
- * Fetch pools with pagination
+ * Fetch pools with pagination and Find-common search
  */
 export async function fetchPools(
-  params?: { page?: number; limit?: number; search?: string },
+  params?: { 
+    page?: number; 
+    limit?: number; 
+    searchParams?: Record<string, string>; // Find-common search parameters
+  },
   tenantId?: string,
   token?: string
 ): Promise<{
@@ -61,9 +65,17 @@ export async function fetchPools(
 
   let url = `${config.API}/v1/workflow-process/manager/pools`;
   const queryParams = new URLSearchParams();
+  
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
-  if (params?.search) queryParams.append("search", params.search);
+  
+  // Add Find-common search parameters
+  if (params?.searchParams) {
+    Object.entries(params.searchParams).forEach(([key, value]) => {
+      queryParams.append(key, value);
+    });
+  }
+  
   if (queryParams.toString()) url += `?${queryParams.toString()}`;
 
   const headers: Record<string, string> = {

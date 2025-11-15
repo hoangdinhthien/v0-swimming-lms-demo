@@ -64,6 +64,7 @@ export default function ApplicationTypesPage() {
     []
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   // Modal states
@@ -81,20 +82,47 @@ export default function ApplicationTypesPage() {
     type: [],
   });
 
-  useEffect(() => {
-    fetchApplicationTypes();
-  }, []);
-
-  const fetchApplicationTypes = async () => {
-    try {
+  // Fetch application types with optional search
+  const fetchApplicationTypes = async (
+    searchValue?: string,
+    isInitialLoad = false
+  ) => {
+    if (isInitialLoad) {
       setIsLoading(true);
-      const types = await getApplicationTypes();
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
+
+    try {
+      // Build search params using Find-common pattern
+      const searchParams = searchValue?.trim()
+        ? {
+            "search[title:contains]": searchValue.trim(),
+          }
+        : undefined;
+
+      const types = await getApplicationTypes(undefined, searchParams);
       setApplicationTypes(types);
     } catch (error) {
       console.error("Error fetching application types:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể tải danh sách loại đơn từ",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
+      setIsSearching(false);
     }
+  };
+
+  useEffect(() => {
+    fetchApplicationTypes(undefined, true);
+  }, []);
+
+  // Handler for server-side search
+  const handleServerSearch = (value: string) => {
+    fetchApplicationTypes(value, false);
   };
 
   // Handle refresh
@@ -393,6 +421,7 @@ export default function ApplicationTypesPage() {
             data={applicationTypes}
             searchKey='title'
             searchPlaceholder='Tìm kiếm theo tiêu đề...'
+            onServerSearch={handleServerSearch}
             emptyMessage='Không tìm thấy loại đơn từ nào.'
           />
         </CardContent>

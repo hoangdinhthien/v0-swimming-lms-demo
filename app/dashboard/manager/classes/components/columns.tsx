@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
 
 export type ClassItem = {
   _id: string;
@@ -28,7 +29,14 @@ export const columns: ColumnDef<ClassItem>[] = [
       />
     ),
     cell: ({ row }) => {
-      return <span className='font-medium'>{row.original.name}</span>;
+      return (
+        <Link
+          href={`/dashboard/manager/class/${row.original._id}`}
+          className='font-medium hover:text-primary hover:underline transition-colors'
+        >
+          {row.original.name}
+        </Link>
+      );
     },
   },
   {

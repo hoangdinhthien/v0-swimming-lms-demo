@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Eye, Trash2 } from "lucide-react";
@@ -168,9 +169,15 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       const title = row.getValue("title") as string;
+      const newsId = row.original._id;
       return (
         <div className='flex flex-col gap-1'>
-          <div className='font-medium max-w-[300px] truncate'>{title}</div>
+          <Link 
+            href={`/dashboard/manager/news/${newsId}`}
+            className='font-medium hover:text-primary hover:underline transition-colors max-w-[300px] truncate block'
+          >
+            {title}
+          </Link>
         </div>
       );
     },

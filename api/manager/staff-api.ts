@@ -129,10 +129,12 @@ export async function fetchStaff({
   tenantId,
   token,
   filters = {},
+  searchKey,
 }: {
   tenantId: string;
   token: string;
   filters?: StaffFilters;
+  searchKey?: string;
 }): Promise<Staff[]> {
   console.log("Fetching staff for tenant:", tenantId, "with filters:", filters);
 
@@ -153,8 +155,10 @@ export async function fetchStaff({
     if (filters.position) {
       params.append("position", filters.position);
     }
-    if (filters.search) {
-      params.append("search", filters.search);
+    // Support both filters.search and searchKey
+    const searchValue = searchKey?.trim() || filters.search;
+    if (searchValue) {
+      params.append("searchKey", searchValue);
     }
     if (filters.page) {
       params.append("page", filters.page.toString());

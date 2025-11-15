@@ -152,10 +152,12 @@ export async function fetchStudents({
   tenantId,
   token,
   role = "member",
+  searchKey, // Add searchKey parameter
 }: {
   tenantId?: string;
   token?: string;
   role?: string;
+  searchKey?: string;
 }) {
   if (!tenantId) return [];
 
@@ -172,13 +174,16 @@ export async function fetchStudents({
     headers["service"] = "User";
   }
 
-  const res = await fetch(
-    `${config.API}/v1/workflow-process/manager/users?role=${role}`,
-    {
-      headers,
-      cache: "no-store",
-    }
-  );
+  // Build URL with searchKey parameter
+  let url = `${config.API}/v1/workflow-process/manager/users?role=${role}`;
+  if (searchKey && searchKey.trim()) {
+    url += `&searchKey=${encodeURIComponent(searchKey.trim())}`;
+  }
+
+  const res = await fetch(url, {
+    headers,
+    cache: "no-store",
+  });
   if (!res.ok) throw new Error("Không thể lấy danh sách học viên");
   const data = await res.json();
   // Defensive: unwrap the nested structure to get the array of students

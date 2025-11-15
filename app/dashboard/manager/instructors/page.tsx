@@ -16,14 +16,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fetchInstructorDetail } from "@/api/manager/instructors-api";
+import { 
+  fetchInstructorDetail,
+  fetchInstructors
+} from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
-import {
-  useOptimizedInstructors,
-  useOptimizedAvatars,
-} from "@/hooks/useOptimizedAPI";
+import { useOptimizedAvatars } from "@/hooks/useOptimizedAPI";
 import React from "react";
 import {
   Dialog,
@@ -287,20 +287,64 @@ export default function InstructorsPage() {
     string | null
   >(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [rawInstructors, setRawInstructors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Use optimized hooks for better performance
-  const {
-    data: rawInstructors,
-    loading,
-    error,
-    refetch,
-  } = useOptimizedInstructors();
+  // Fetch instructors with optional search
+  const fetchData = async (searchValue?: string, isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
+    setError(null);
+
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      
+      if (!tenantId || !token) {
+        throw new Error("Missing tenant or token");
+      }
+
+      const instructors = await fetchInstructors({
+        tenantId,
+        token,
+        role: "instructor",
+        searchKey: searchValue?.trim(),
+      });
+
+      setRawInstructors(instructors || []);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch instructors");
+      setRawInstructors([]);
+      toast({
+        title: "Lỗi",
+        description: err.message || "Không thể tải danh sách giáo viên",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(undefined, true);
+  }, []);
+
+  // Handle server-side search
+  const handleServerSearch = (value: string) => {
+    fetchData(value, false);
+  };
 
   // Handle refresh
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      await fetchData(undefined, false);
       toast({
         title: "Đã làm mới",
         description: "Dữ liệu giáo viên đã được cập nhật",
@@ -527,6 +571,7 @@ export default function InstructorsPage() {
             data={instructors}
             searchKey='name'
             searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
+            onServerSearch={handleServerSearch}
             filterOptions={[
               {
                 columnId: "status",
@@ -546,9 +591,6 @@ export default function InstructorsPage() {
               },
             ]}
             emptyMessage='Không tìm thấy giáo viên phù hợp.'
-            onRowClick={(instructor: Instructor) => {
-              router.push(`/dashboard/manager/instructors/${instructor.id}`);
-            }}
           />
         </CardContent>
       </Card>

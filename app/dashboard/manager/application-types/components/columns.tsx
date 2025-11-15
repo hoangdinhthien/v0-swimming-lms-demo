@@ -139,7 +139,11 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       const title = row.getValue("title") as string;
-      return <div className='font-medium max-w-[300px] truncate'>{title}</div>;
+      return (
+        <div className='font-medium max-w-[300px] truncate cursor-default'>
+          {title}
+        </div>
+      );
     },
   },
   {

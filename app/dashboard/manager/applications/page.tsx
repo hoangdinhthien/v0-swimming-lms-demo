@@ -27,6 +27,7 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -39,16 +40,31 @@ export default function ApplicationsPage() {
     router.push(`/dashboard/manager/applications/${application._id}`);
   };
 
-  // Extract fetch logic
-  const fetchApplications = async () => {
-    setLoading(true);
+  // Extract fetch logic with optional search
+  const fetchApplications = async (
+    searchValue?: string,
+    isInitialLoad = false
+  ) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
     setError(null);
+
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
       if (!tenantId || !token)
         throw new Error("Thiếu thông tin tenant hoặc token");
-      const response = await getApplications(tenantId, token, page, limit);
+
+      const response = await getApplications(
+        tenantId,
+        token,
+        page,
+        limit,
+        searchValue?.trim()
+      );
       setApplications(response.applications);
       setTotal(response.totalCount);
     } catch (e: any) {
@@ -56,14 +72,20 @@ export default function ApplicationsPage() {
       setApplications([]);
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
   useEffect(() => {
     // Add request deduplication
-    const timeoutId = setTimeout(fetchApplications, 100);
+    const timeoutId = setTimeout(() => fetchApplications(undefined, true), 100);
     return () => clearTimeout(timeoutId);
   }, [page, limit]);
+
+  // Handler for server-side search
+  const handleServerSearch = (value: string) => {
+    fetchApplications(value, false);
+  };
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -219,6 +241,7 @@ export default function ApplicationsPage() {
             data={applications}
             searchKey="title"
             searchPlaceholder="Tìm kiếm theo tiêu đề..."
+            onServerSearch={handleServerSearch}
             filterOptions={[
               {
                 columnId: "status",
@@ -230,7 +253,6 @@ export default function ApplicationsPage() {
                 ],
               },
             ]}
-            onRowClick={handleRowClick}
             emptyMessage="Không tìm thấy đơn đăng ký nào."
           />
         </CardContent>

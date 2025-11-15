@@ -8,13 +8,21 @@ export async function fetchCourses({
   token,
   page = 1,
   limit = 20,
+  searchKey, // Add searchKey parameter
 }: {
   tenantId?: string;
   token?: string;
   page?: number;
   limit?: number;
+  searchKey?: string;
 } = {}) {
   if (!tenantId || !token) return { data: [], total: 0 };
+
+  // Build URL with searchKey parameter
+  let url = `${config.API}/v1/workflow-process/manager/courses?page=${page}&limit=${limit}`;
+  if (searchKey && searchKey.trim()) {
+    url += `&searchKey=${encodeURIComponent(searchKey.trim())}`;
+  }
 
   // Use cached request for courses (5 minutes cache)
   const headers: Record<string, string> = {
@@ -27,17 +35,14 @@ export async function fetchCourses({
     headers["service"] = "Course";
   }
 
-  const res = await apiRequest(
-    `${config.API}/v1/workflow-process/manager/courses?page=${page}&limit=${limit}`,
-    {
-      method: "GET",
-      requireAuth: true,
-      includeTenant: true,
-      useCache: true,
-      cacheTTL: 5 * 60 * 1000, // 5 minutes cache
-      headers,
-    }
-  );
+  const res = await apiRequest(url, {
+    method: "GET",
+    requireAuth: true,
+    includeTenant: true,
+    useCache: true,
+    cacheTTL: 5 * 60 * 1000, // 5 minutes cache
+    headers,
+  });
 
   if (!res.ok) throw new Error("Failed to fetch courses");
   const data = await res.json();

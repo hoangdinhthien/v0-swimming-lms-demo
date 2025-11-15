@@ -26,55 +26,71 @@ export default function ClassesPage() {
   const router = useRouter();
   const [allClasses, setAllClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch all classes with optional search
+  const fetchData = async (searchValue?: string, isInitialLoad = false) => {
+    // Prevent duplicate calls
+    if (isFetching) return;
+
+    setIsFetching(true);
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
+    setError(null);
+
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+
+      // Build search params using Find-common pattern
+      const searchParams = searchValue?.trim()
+        ? {
+            "search[name:contains]": searchValue.trim(),
+          }
+        : undefined;
+
+      // Fetch ALL classes at once (instead of 2 separate API calls)
+      const result = await fetchClasses(tenantId, token, 1, 1000, searchParams);
+      setAllClasses(result.data);
+    } catch (e: any) {
+      setError(e.message || "Lỗi không xác định");
+      setAllClasses([]);
+    } finally {
+      setLoading(false);
+      setIsSearching(false);
+      setIsFetching(false);
+    }
+  };
 
   // Fetch all classes once - use for both summary cards AND pagination
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchData() {
-      // Prevent duplicate calls
-      if (isFetching) return;
-
-      setIsFetching(true);
-      setLoading(true);
-      setError(null);
-
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token)
-          throw new Error("Thiếu thông tin tenant hoặc token");
-
-        // Fetch ALL classes at once (instead of 2 separate API calls)
-        const result = await fetchClasses(tenantId, token, 1, 1000);
-
-        if (isMounted) {
-          setAllClasses(result.data);
-        }
-      } catch (e: any) {
-        if (isMounted) {
-          setError(e.message || "Lỗi không xác định");
-          setAllClasses([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-          setIsFetching(false);
-        }
-      }
-    }
-
     // Only fetch once when component mounts
-    const timeoutId = setTimeout(fetchData, 100);
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        fetchData(undefined, true);
+      }
+    }, 100);
 
     return () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
   }, []); // Empty dependency - only run once
+
+  // Handler for server-side search
+  const handleServerSearch = (value: string) => {
+    fetchData(value, false);
+  };
 
   // Calculate summary statistics
   const totalClasses = allClasses.length;
@@ -250,6 +266,7 @@ export default function ClassesPage() {
               data={allClasses}
               searchKey='name'
               searchPlaceholder='Tìm kiếm theo tên lớp hoặc khóa học...'
+              onServerSearch={handleServerSearch}
               filterOptions={[
                 {
                   columnId: "status",
@@ -260,9 +277,6 @@ export default function ClassesPage() {
                   ],
                 },
               ]}
-              onRowClick={(classItem) =>
-                router.push(`/dashboard/manager/class/${classItem._id}`)
-              }
               emptyMessage='Không tìm thấy lớp học nào'
             />
           </CardContent>

@@ -75,19 +75,23 @@ export async function getApplications(
   tenantId: string,
   token: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  searchKey?: string
 ): Promise<PaginatedApplicationsResponse> {
-  const response = await apiGet(
-    `${config.API}/v1/workflow-process/manager/applications?page=${page}&limit=${limit}`,
-    {
-      requireAuth: true,
-      includeTenant: false,
-      headers: {
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  // Build URL with searchKey
+  let url = `${config.API}/v1/workflow-process/manager/applications?page=${page}&limit=${limit}`;
+  if (searchKey?.trim()) {
+    url += `&searchKey=${encodeURIComponent(searchKey.trim())}`;
+  }
+
+  const response = await apiGet(url, {
+    requireAuth: true,
+    includeTenant: false,
+    headers: {
+      "x-tenant-id": tenantId,
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

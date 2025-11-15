@@ -72,6 +72,7 @@ export default function StaffPage() {
   const router = useRouter();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -80,20 +81,26 @@ export default function StaffPage() {
   const [selectedStaffForPermission, setSelectedStaffForPermission] =
     useState<any>(null);
 
-  // Extract load logic into separate function
-  const loadStaff = async () => {
-    setLoading(true);
+  // Extract load logic into separate function with optional search
+  const loadStaff = async (searchValue?: string, isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
     setError(null);
+
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
       if (!tenantId) throw new Error("No tenant selected");
       if (!token) throw new Error("Not authenticated");
 
-      // Use the staff API to fetch staff members
+      // Use the staff API to fetch staff members with search
       const data = await fetchStaff({
         tenantId,
         token,
+        searchKey: searchValue?.trim(),
       });
 
       // Process each staff member to get their images
@@ -152,7 +159,13 @@ export default function StaffPage() {
       setError(e.message || "Failed to fetch staff");
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
+  };
+
+  // Handler for server-side search
+  const handleServerSearch = (value: string) => {
+    loadStaff(value, false);
   };
 
   // Handle refresh
@@ -176,7 +189,7 @@ export default function StaffPage() {
   };
 
   useEffect(() => {
-    loadStaff();
+    loadStaff(undefined, true);
   }, []);
 
   // Calculate statistics
@@ -338,6 +351,7 @@ export default function StaffPage() {
             data={staff}
             searchKey='name'
             searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
+            onServerSearch={handleServerSearch}
             filterOptions={[
               {
                 columnId: "status",
@@ -356,9 +370,6 @@ export default function StaffPage() {
                 })),
               },
             ]}
-            onRowClick={(staff) =>
-              router.push(`/dashboard/manager/staff/${staff.userId}`)
-            }
             emptyMessage='Không tìm thấy nhân viên nào'
           />
         </CardContent>

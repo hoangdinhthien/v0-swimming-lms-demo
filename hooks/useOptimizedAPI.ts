@@ -35,12 +35,13 @@ interface APIState<T> {
  * Optimized hook for fetching instructors with caching
  */
 export function useOptimizedInstructors(
-  options: UseOptimizedAPIOptions = {}
+  options: UseOptimizedAPIOptions & { searchKey?: string } = {}
 ): APIState<any[]> {
   const {
     enabled = true,
     dependencies = [],
     cacheTTL = 5 * 60 * 1000, // 5 minutes
+    searchKey,
   } = options;
 
   const [state, setState] = useState<Omit<APIState<any[]>, "refetch">>({
@@ -55,39 +56,43 @@ export function useOptimizedInstructors(
     [cacheTTL]
   );
 
-  const fetchData = useCallback(async () => {
-    if (!enabled) return;
+  const fetchData = useCallback(
+    async (customSearchKey?: string) => {
+      if (!enabled) return;
 
-    const tenantId = getSelectedTenant();
-    const token = getAuthToken();
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
 
-    if (!tenantId || !token) {
-      setState({
-        data: null,
-        loading: false,
-        error: "Missing tenant or token",
-      });
-      return;
-    }
+      if (!tenantId || !token) {
+        setState({
+          data: null,
+          loading: false,
+          error: "Missing tenant or token",
+        });
+        return;
+      }
 
-    try {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
+      try {
+        setState((prev) => ({ ...prev, loading: true, error: null }));
 
-      const instructors = await cachedFetchInstructors({
-        tenantId,
-        token,
-        role: "instructor",
-      });
+        const instructors = await cachedFetchInstructors({
+          tenantId,
+          token,
+          role: "instructor",
+          searchKey: customSearchKey ?? searchKey,
+        });
 
-      setState({ data: instructors || [], loading: false, error: null });
-    } catch (error: any) {
-      setState({
-        data: null,
-        loading: false,
-        error: error.message || "Failed to fetch instructors",
-      });
-    }
-  }, [enabled, cachedFetchInstructors, ...dependencies]);
+        setState({ data: instructors || [], loading: false, error: null });
+      } catch (error: any) {
+        setState({
+          data: null,
+          loading: false,
+          error: error.message || "Failed to fetch instructors",
+        });
+      }
+    },
+    [enabled, cachedFetchInstructors, searchKey, ...dependencies]
+  );
 
   useEffect(() => {
     fetchData();

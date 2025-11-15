@@ -71,15 +71,20 @@ export interface CreateNewsResponse {
   statusCode: number;
 }
 
-export async function getNews() {
+export async function getNews(searchParams?: Record<string, string>) {
   try {
-    const response = await apiGet(
-      `${config.API}/v1/workflow-process/manager/news`,
-      {
-        requireAuth: true,
-        includeTenant: true,
-      }
-    );
+    // Build query string with search parameters
+    let url = `${config.API}/v1/workflow-process/manager/news`;
+    
+    if (searchParams) {
+      const queryParams = new URLSearchParams(searchParams);
+      url += `?${queryParams.toString()}`;
+    }
+
+    const response = await apiGet(url, {
+      requireAuth: true,
+      includeTenant: true,
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to fetch news: ${response.status}`);

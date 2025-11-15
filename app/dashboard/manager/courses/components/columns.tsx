@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
 
 export type Course = {
   _id: string;
@@ -29,7 +30,12 @@ export const columns: ColumnDef<Course>[] = [
     cell: ({ row }) => {
       return (
         <div className='flex flex-col'>
-          <span className='font-medium'>{row.original.title}</span>
+          <Link
+            href={`/dashboard/manager/courses/${row.original._id}`}
+            className='font-medium hover:text-primary hover:underline transition-colors'
+          >
+            {row.original.title}
+          </Link>
           {row.original.description && (
             <span className='text-xs text-muted-foreground line-clamp-1'>
               {row.original.description}

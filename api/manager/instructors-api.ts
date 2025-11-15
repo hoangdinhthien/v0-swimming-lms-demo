@@ -53,15 +53,18 @@ export async function fetchInstructors({
   tenantId,
   token,
   role = "instructor",
+  searchKey, // Add searchKey parameter
 }: {
   tenantId?: string;
   token?: string;
   role?: string;
+  searchKey?: string;
 }) {
   console.log("🔍 fetchInstructors called with:", {
     tenantId,
     token: token ? "Present" : "Missing",
     role,
+    searchKey,
   });
 
   if (!tenantId) {
@@ -70,9 +73,14 @@ export async function fetchInstructors({
   }
 
   try {
-    const url = role
+    // Build URL with searchKey parameter
+    let url = role
       ? `${config.API}/v1/workflow-process/manager/users?role=${role}`
       : `${config.API}/v1/workflow-process/manager/users`;
+    
+    if (searchKey && searchKey.trim()) {
+      url += `&searchKey=${encodeURIComponent(searchKey.trim())}`;
+    }
 
     console.log("🔍 Fetching from URL:", url);
 

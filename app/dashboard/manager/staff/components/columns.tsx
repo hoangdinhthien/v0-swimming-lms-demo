@@ -3,8 +3,18 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mail, Phone, Calendar, Settings } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+
+// Dynamically import StaffPermissionModal to avoid SSR issues
+const StaffPermissionModal = dynamic(
+  () => import("@/components/manager/staff-permission-modal"),
+  { ssr: false }
+);
 
 // Helper function to get user initials
 function getUserInitials(name: string) {
@@ -55,9 +65,12 @@ export const columns: ColumnDef<Staff>[] = [
             </AvatarFallback>
           </Avatar>
           <div className='min-w-0 flex-1'>
-            <div className='font-medium text-foreground truncate'>
+            <Link
+              href={`/dashboard/manager/staff/${staff.id}`}
+              className='font-medium text-foreground truncate hover:text-primary hover:underline transition-colors block'
+            >
               {staff.name}
-            </div>
+            </Link>
             <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1'>
               <Mail className='h-3 w-3' />
               <span className='truncate'>{staff.email}</span>
@@ -182,5 +195,43 @@ export const columns: ColumnDef<Staff>[] = [
     },
     enableSorting: true,
     enableHiding: true,
+  },
+  {
+    id: "actions",
+    header: "Thao tác",
+    cell: ({ row }) => {
+      const staff = row.original;
+      const [isModalOpen, setIsModalOpen] = useState(false);
+
+      return (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsModalOpen(true);
+            }}
+            className="h-8 w-8 p-0"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <StaffPermissionModal
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+            staffData={{
+              _id: staff.userId || staff.staffId || staff.id,
+              user: {
+                username: staff.name,
+                email: staff.email,
+              },
+            }}
+            onSuccess={() => {
+              setIsModalOpen(false);
+            }}
+          />
+        </>
+      );
+    },
   },
 ];

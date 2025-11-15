@@ -109,14 +109,22 @@ export async function fetchOrders({
   token,
   page = 1,
   limit = 10,
+  searchParams,
 }: {
   tenantId: string;
   token: string;
   page?: number;
   limit?: number;
+  searchParams?: Record<string, string>;
 }): Promise<{ orders: Order[]; total: number; currentPage: number }> {
   // Debug: log input params
-  console.log("[fetchOrders] called with", { tenantId, token, page, limit });
+  console.log("[fetchOrders] called with", {
+    tenantId,
+    token,
+    page,
+    limit,
+    searchParams,
+  });
   if (!tenantId || !token) {
     console.error("[fetchOrders] Missing tenantId or token", {
       tenantId,
@@ -127,7 +135,13 @@ export async function fetchOrders({
     );
   }
 
-  const url = `${config.API}/v1/workflow-process/manager/orders?page=${page}&limit=${limit}`;
+  // Build URL with search params
+  let url = `${config.API}/v1/workflow-process/manager/orders?page=${page}&limit=${limit}`;
+  if (searchParams) {
+    const params = new URLSearchParams(searchParams);
+    url += `&${params.toString()}`;
+  }
+
   const headers: Record<string, string> = {
     "x-tenant-id": String(tenantId),
     Authorization: `Bearer ${String(token)}`,

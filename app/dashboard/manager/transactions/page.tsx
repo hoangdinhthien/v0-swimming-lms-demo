@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -74,11 +74,13 @@ export default function TransactionsPage() {
   const { toast } = useToast();
   const { token, tenantId, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"user.username" | "course.title">("user.username");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [courseInfo, setCourseInfo] = useState<Record<string, CourseInfo>>({});
   const [loadingCourses, setLoadingCourses] = useState<Record<string, boolean>>(
@@ -96,6 +98,27 @@ export default function TransactionsPage() {
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
+  // Debounce timer for search
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [searchQuery]);
+
   // Fetch orders from API
   useEffect(() => {
     // Wait for auth to complete
@@ -112,19 +135,33 @@ export default function TransactionsPage() {
         return;
       }
       try {
-        setLoading(true);
+        if (debouncedSearch && debouncedSearch.trim()) {
+          setIsSearching(true);
+        } else {
+          setLoading(true);
+        }
         console.log("[Transactions] Fetching orders with:", {
           tenantId,
           tokenLength: token?.length,
           currentPage,
           limit,
+          searchField,
+          searchQuery: debouncedSearch,
         });
+
+        // Build search params using Find-common pattern
+        const searchParams = debouncedSearch?.trim()
+          ? {
+              [`search[${searchField}:contains]`]: debouncedSearch.trim(),
+            }
+          : undefined;
 
         const ordersData = await fetchOrders({
           tenantId,
           token,
           page: currentPage,
           limit,
+          searchParams,
         });
 
         console.log("[Transactions] Orders data received:", {
@@ -188,10 +225,11 @@ export default function TransactionsPage() {
         console.error("Error fetching orders:", err);
       } finally {
         setLoading(false);
+        setIsSearching(false);
       }
     }
     getOrders();
-  }, [token, tenantId, currentPage, limit, authLoading]);
+  }, [token, tenantId, currentPage, limit, authLoading, debouncedSearch, searchField]);
 
   // Fetch course details for a given course ID
   const fetchCourseDetails = async (courseId: string) => {
@@ -468,14 +506,34 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent>
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
+            <Select
+              value={searchField}
+              onValueChange={(value) => setSearchField(value as "user.username" | "course.title")}
+            >
+              <SelectTrigger className='w-[200px]'>
+                <SelectValue placeholder='Tìm theo' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='user.username'>Tên học viên</SelectItem>
+                <SelectItem value='course.title'>Tên khoá học</SelectItem>
+              </SelectContent>
+            </Select>
+
             <div className='flex-1 relative'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
-                placeholder='Tìm kiếm theo mã giao dịch, tên học viên hoặc ID học viên...'
+                placeholder={
+                  searchField === "user.username"
+                    ? 'Tìm kiếm theo tên học viên...'
+                    : 'Tìm kiếm theo tên khoá học...'
+                }
                 className='pl-8'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {isSearching && (
+                <Loader2 className='absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground' />
+              )}
             </div>
 
             <div className='grid grid-cols-3 gap-4'>
@@ -577,55 +635,53 @@ export default function TransactionsPage() {
                     return (
                       <TableRow
                         key={order._id}
-                        className='cursor-pointer group hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors duration-200'
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/manager/transactions/${order._id}`
-                          )
-                        }
+                        className='group hover:bg-muted/50 transition-colors duration-200'
                       >
-                        <TableCell className='font-medium group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        <TableCell className='font-medium group-hover:bg-muted/50 transition-colors duration-200'>
+                          <Link
+                            href={`/dashboard/manager/transactions/${order._id}`}
+                            className='hover:text-primary hover:underline transition-colors'
+                          >
                             {order._id.substring(0, 8)}...
-                          </span>
+                          </Link>
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-start flex-col'>
-                            <div className='font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            <div className='font-medium'>
                               {userName}
                             </div>
-                            <div className='text-xs text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            <div className='text-xs text-muted-foreground'>
                               {userContact}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           {isLoadingCourse ? (
                             <div className='flex items-center'>
-                              <span className='animate-pulse bg-muted rounded h-4 w-24 block group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors duration-200'></span>
+                              <span className='animate-pulse bg-muted rounded h-4 w-24 block'></span>
                             </div>
                           ) : (
-                            <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                            <span>
                               {courseName}
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
+                          <span>
                             {formatPrice(order.price)}
                           </span>
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
+                          <span>
                             {formattedDate}
                           </span>
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
-                          <span className='group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
+                          <span>
                             {getOrderTypeDisplayName(order)}
                           </span>
                         </TableCell>
-                        <TableCell className='group-hover:bg-blue-50 dark:group-hover:bg-blue-950 transition-colors duration-200'>
+                        <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-center justify-between'>
                             <Badge
                               variant='outline'
@@ -635,7 +691,7 @@ export default function TransactionsPage() {
                             >
                               {getStatusName(order.status)}
                             </Badge>
-                            <ChevronRight className='h-4 w-4 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200' />
+                            <ChevronRight className='h-4 w-4 text-gray-400' />
                           </div>
                         </TableCell>
                       </TableRow>

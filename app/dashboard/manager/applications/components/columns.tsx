@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -75,7 +76,15 @@ export const columns: ColumnDef<Application>[] = [
     ),
     cell: ({ row }) => {
       const title = row.getValue("title") as string;
-      return <div className='font-medium max-w-[250px] truncate'>{title}</div>;
+      const applicationId = row.original._id;
+      return (
+        <Link
+          href={`/dashboard/manager/applications/${applicationId}`}
+          className='font-medium hover:text-primary hover:underline transition-colors max-w-[250px] truncate block'
+        >
+          {title}
+        </Link>
+      );
     },
   },
   {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
+import { useState, useEffect, useRef } from "react";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -20,6 +21,7 @@ interface DataTableToolbarProps<TData> {
       icon?: string;
     }[];
   }[];
+  onServerSearch?: (searchValue: string) => void;
 }
 
 export function DataTableToolbar<TData>({
@@ -27,18 +29,56 @@ export function DataTableToolbar<TData>({
   searchKey = "name",
   searchPlaceholder = "Tìm kiếm...",
   filterOptions = [],
+  onServerSearch,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
+  
+  // Use local state for server-side search, table state for client-side
+  const [serverSearchValue, setServerSearchValue] = useState("");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Get the appropriate value based on search mode
+  const searchValue = onServerSearch 
+    ? serverSearchValue 
+    : (table.getColumn(searchKey)?.getFilterValue() as string) ?? "";
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    if (onServerSearch) {
+      // Server-side search - use local state and debounced callback
+      setServerSearchValue(value);
+      
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      // Set new timer for 300ms delay (faster response)
+      debounceTimerRef.current = setTimeout(() => {
+        onServerSearch(value);
+      }, 300);
+    } else {
+      // Client-side search - use table filtering (no debounce needed)
+      table.getColumn(searchKey)?.setFilterValue(value);
+    }
+  };
 
   return (
     <div className='flex items-center justify-between'>
       <div className='flex flex-1 items-center gap-2'>
         <Input
           placeholder={searchPlaceholder}
-          value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(searchKey)?.setFilterValue(event.target.value)
-          }
+          value={searchValue}
+          onChange={(event) => handleSearchChange(event.target.value)}
           className='h-8 w-[150px] lg:w-[250px]'
         />
         {filterOptions.map((filter) => {

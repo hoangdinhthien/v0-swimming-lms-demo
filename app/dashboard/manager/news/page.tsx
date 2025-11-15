@@ -44,6 +44,8 @@ export default function NewsListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false); // Separate state for search
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,21 +58,43 @@ export default function NewsListPage() {
   // Image preview
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Extract fetch logic
-  const fetchNews = async () => {
+  // Extract fetch logic with search support
+  const fetchNews = async (searchValue?: string, isInitialLoad = false) => {
     try {
-      setIsLoading(true);
-      const news = await getNews();
+      // Only show full loading on initial load, use isSearching for searches
+      if (isInitialLoad) {
+        setIsLoading(true);
+      } else if (searchValue !== undefined) {
+        setIsSearching(true);
+      }
+      
+      let searchParams: Record<string, string> | undefined;
+      
+      if (searchValue && searchValue.trim()) {
+        // Use Find-common search pattern: search[field:operator]=value
+        searchParams = {
+          "search[title:contains]": searchValue.trim(),
+        };
+      }
+      
+      const news = await getNews(searchParams);
       setNewsItems(news);
     } catch (error) {
       console.error("Error fetching news:", error);
     } finally {
       setIsLoading(false);
+      setIsSearching(false);
     }
   };
 
+  // Handle server-side search
+  const handleServerSearch = (searchValue: string) => {
+    setSearchQuery(searchValue);
+    fetchNews(searchValue, false);
+  };
+
   useEffect(() => {
-    fetchNews();
+    fetchNews(undefined, true); // Initial load
   }, []);
 
   // Handle refresh
@@ -517,7 +541,7 @@ export default function NewsListPage() {
             data={newsItems}
             searchKey='title'
             searchPlaceholder='Tìm kiếm theo tiêu đề...'
-            onRowClick={handleNewsClick}
+            onServerSearch={handleServerSearch}
             emptyMessage='Không tìm thấy tin tức nào.'
           />
         </CardContent>

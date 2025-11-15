@@ -45,7 +45,8 @@ const BASE_URL =
  * Get list of application types filtered by role
  */
 export async function getApplicationTypes(
-  role?: string
+  role?: string,
+  searchParams?: Record<string, string>
 ): Promise<ApplicationType[]> {
   try {
     const token = getAuthToken();
@@ -55,7 +56,20 @@ export async function getApplicationTypes(
       throw new Error("Authentication required");
     }
 
-    const url = role ? `${BASE_URL}?role=${role}` : BASE_URL;
+    // Build URL with role and search params
+    let url = BASE_URL;
+    const params = new URLSearchParams();
+    if (role) {
+      params.append("role", role);
+    }
+    if (searchParams) {
+      Object.entries(searchParams).forEach(([key, value]) => {
+        params.append(key, value);
+      });
+    }
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,

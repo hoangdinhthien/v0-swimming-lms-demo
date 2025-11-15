@@ -23,13 +23,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  onRowClick?: (row: TData) => void;
   searchKey?: string;
   searchPlaceholder?: string;
   filterOptions?: {
@@ -43,17 +48,20 @@ interface DataTableProps<TData, TValue> {
   }[];
   emptyMessage?: string;
   rowIdentifier?: string;
+  enableRowHover?: boolean; // Option to enable hover highlight & tooltip
+  onServerSearch?: (searchValue: string) => void; // Callback for server-side search
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  onRowClick,
   searchKey = "name",
   searchPlaceholder = "Tìm kiếm...",
   filterOptions = [],
   emptyMessage = "Không tìm thấy kết quả phù hợp.",
   rowIdentifier = "_id",
+  enableRowHover = true, // Enable by default
+  onServerSearch, // Server-side search callback
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -78,7 +86,8 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    // Only use client-side filtering when NOT doing server-side search
+    getFilteredRowModel: onServerSearch ? undefined : getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
@@ -92,6 +101,7 @@ export function DataTable<TData, TValue>({
         searchKey={searchKey}
         searchPlaceholder={searchPlaceholder}
         filterOptions={filterOptions}
+        onServerSearch={onServerSearch}
       />
       <div className='rounded-md border'>
         <Table>
@@ -119,20 +129,15 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
-                return (
+                const rowContent = (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
                     className={
-                      onRowClick
-                        ? "cursor-pointer hover:bg-muted/50 transition-all duration-200"
+                      enableRowHover
+                        ? "hover:bg-muted/50 transition-colors duration-200"
                         : ""
                     }
-                    onClick={() => {
-                      if (onRowClick) {
-                        onRowClick(row.original);
-                      }
-                    }}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>
@@ -144,6 +149,24 @@ export function DataTable<TData, TValue>({
                     ))}
                   </TableRow>
                 );
+
+                // Wrap with tooltip if hover is enabled
+                if (enableRowHover) {
+                  return (
+                    <TooltipProvider key={row.id} delayDuration={300}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          {rowContent}
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Click vào tên để xem chi tiết</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+                }
+
+                return rowContent;
               })
             ) : (
               <TableRow>

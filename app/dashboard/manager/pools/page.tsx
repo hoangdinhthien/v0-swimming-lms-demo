@@ -28,6 +28,8 @@ export default function PoolsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false); // Separate state for search
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,9 +43,13 @@ export default function PoolsPage() {
     is_active: true,
   });
 
-  // Load pools
-  const loadPools = async () => {
-    setLoading(true);
+  // Load pools with search support
+  const loadPools = async (searchValue?: string, isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
     setError(null);
     try {
       const tenantId = getSelectedTenant();
@@ -51,8 +57,15 @@ export default function PoolsPage() {
       if (!tenantId || !token)
         throw new Error("Thiếu thông tin tenant hoặc token");
 
+      let searchParams: Record<string, string> | undefined;
+      if (searchValue && searchValue.trim()) {
+        searchParams = {
+          "search[title:contains]": searchValue.trim(),
+        };
+      }
+
       const result = await fetchPools(
-        { page: 1, limit: 1000 },
+        { page: 1, limit: 1000, searchParams },
         tenantId,
         token
       );
@@ -62,11 +75,18 @@ export default function PoolsPage() {
       setPools([]);
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
+  // Handle server-side search
+  const handleServerSearch = (searchValue: string) => {
+    setSearchQuery(searchValue);
+    loadPools(searchValue, false);
+  };
+
   useEffect(() => {
-    loadPools();
+    loadPools(undefined, true); // Initial load
   }, []);
 
   // Handle refresh
@@ -415,6 +435,7 @@ export default function PoolsPage() {
             data={pools}
             searchKey='title'
             searchPlaceholder='Tìm kiếm theo tên hồ bơi...'
+            onServerSearch={handleServerSearch}
             filterOptions={[
               {
                 columnId: "is_active",

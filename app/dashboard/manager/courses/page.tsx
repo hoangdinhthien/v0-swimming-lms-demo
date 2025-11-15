@@ -23,18 +23,53 @@ export default function CoursesPage() {
   const [error, setError] = useState<string | null>(null);
   const [categoriesModalOpen, setCategoriesModalOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchKey, setSearchKey] = useState("");
+  const [isSearching, setIsSearching] = useState(false); // Separate state for search
+
+  // Function to load courses with search support
+  const loadCourses = async (searchValue?: string, isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
+    setError(null);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token)
+        throw new Error("Thiếu thông tin tenant hoặc token");
+
+      // Fetch courses with searchKey
+      const res = await fetchCourses({
+        tenantId,
+        token,
+        page: 1,
+        limit: 1000,
+        searchKey: searchValue,
+      });
+
+      setCourses(res.data || []);
+    } catch (e: any) {
+      setError(e.message || "Lỗi không xác định");
+      setCourses([]);
+    } finally {
+      setLoading(false);
+      setIsSearching(false);
+    }
+  };
+
+  // Handle server-side search
+  const handleServerSearch = (searchValue: string) => {
+    setSearchKey(searchValue);
+    loadCourses(searchValue, false);
+  };
 
   // Function to manually refresh courses
   const refreshCourses = async () => {
     setRefreshing(true);
     try {
-      const tenantId = getSelectedTenant();
-      const token = getAuthToken();
-      if (!tenantId || !token) return;
-
-      // Fetch courses
-      const res = await fetchCourses({ tenantId, token, page: 1, limit: 1000 });
-      setCourses(res.data || []);
+      await loadCourses(searchKey, false);
       toast({
         title: "Đã làm mới",
         description: "Danh sách khóa học đã được cập nhật",
@@ -50,32 +85,7 @@ export default function CoursesPage() {
   };
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const tenantId = getSelectedTenant();
-        const token = getAuthToken();
-        if (!tenantId || !token)
-          throw new Error("Thiếu thông tin tenant hoặc token");
-
-        // Fetch courses
-        const res = await fetchCourses({
-          tenantId,
-          token,
-          page: 1,
-          limit: 1000,
-        });
-
-        setCourses(res.data || []);
-      } catch (e: any) {
-        setError(e.message || "Lỗi không xác định");
-        setCourses([]);
-      }
-      setLoading(false);
-    }
-
-    fetchData();
+    loadCourses(undefined, true); // Initial load
   }, []);
 
   // Fetch all courses for summary cards
@@ -269,6 +279,7 @@ export default function CoursesPage() {
               data={courses}
               searchKey='title'
               searchPlaceholder='Tìm kiếm theo tên khóa học...'
+              onServerSearch={handleServerSearch}
               filterOptions={[
                 {
                   columnId: "category",
@@ -287,9 +298,6 @@ export default function CoursesPage() {
                   ],
                 },
               ]}
-              onRowClick={(course) =>
-                router.push(`/dashboard/manager/courses/${course._id}`)
-              }
               emptyMessage='Không tìm thấy khóa học nào'
             />
           </CardContent>

@@ -102,9 +102,15 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchKey, setSearchKey] = useState("");
+  const [isSearching, setIsSearching] = useState(false); // Separate state for search
 
-  const loadStudents = async () => {
-    setLoading(true);
+  const loadStudents = async (searchValue?: string, isInitialLoad = false) => {
+    if (isInitialLoad) {
+      setLoading(true);
+    } else if (searchValue !== undefined) {
+      setIsSearching(true);
+    }
     setError(null);
     try {
       const tenantId = getSelectedTenant();
@@ -113,6 +119,7 @@ export default function StudentsPage() {
       const data = await fetchStudents({
         tenantId: tenantId ?? undefined,
         token: token ?? undefined,
+        searchKey: searchValue,
       });
       // Process each student to get their images and parent information
       const processedStudents = data.map((item: any) => {
@@ -144,13 +151,21 @@ export default function StudentsPage() {
     } catch (e: any) {
       setError(e.message || "Lỗi không xác định");
       setStudents([]);
+    } finally {
+      setLoading(false);
+      setIsSearching(false);
     }
-    setLoading(false);
+  };
+
+  // Handle server-side search
+  const handleServerSearch = (searchValue: string) => {
+    setSearchKey(searchValue);
+    loadStudents(searchValue, false);
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadStudents();
+    await loadStudents(searchKey, false);
     setRefreshing(false);
     toast({
       title: "Đã làm mới",
@@ -159,7 +174,7 @@ export default function StudentsPage() {
   };
 
   useEffect(() => {
-    loadStudents();
+    loadStudents(undefined, true); // Initial load
   }, []);
 
   // Calculate summary statistics
@@ -370,6 +385,7 @@ export default function StudentsPage() {
             data={students}
             searchKey='username'
             searchPlaceholder='Tìm kiếm theo tên hoặc email...'
+            onServerSearch={handleServerSearch}
             filterOptions={[
               {
                 columnId: "status",
@@ -389,12 +405,6 @@ export default function StudentsPage() {
               },
             ]}
             emptyMessage='Không tìm thấy học viên phù hợp.'
-            onRowClick={(student: Student) => {
-              const userId = (student as any)?.user?._id;
-              if (userId) {
-                router.push(`/dashboard/manager/students/${userId}`);
-              }
-            }}
           />
         </CardContent>
       </Card>

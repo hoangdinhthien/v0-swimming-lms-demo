@@ -253,7 +253,8 @@ export const fetchClasses = async (
   tenantId?: string,
   token?: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  searchParams?: Record<string, string>
 ): Promise<ClassesResponse> => {
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
@@ -274,13 +275,17 @@ export const fetchClasses = async (
     headers["service"] = "Class";
   }
 
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/classes?page=${page}&limit=${limit}`,
-    {
-      method: "GET",
-      headers,
-    }
-  );
+  // Build URL with search params
+  let url = `${config.API}/v1/workflow-process/manager/classes?page=${page}&limit=${limit}`;
+  if (searchParams) {
+    const params = new URLSearchParams(searchParams);
+    url += `&${params.toString()}`;
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch classes: ${response.status}`);
@@ -436,7 +441,8 @@ export const updateClass = async (
  */
 export async function fetchClassrooms(
   tenantId?: string,
-  token?: string
+  token?: string,
+  searchParams?: Record<string, string> // Find-common search
 ): Promise<Classroom[]> {
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
@@ -444,6 +450,13 @@ export async function fetchClassrooms(
 
   if (!finalTenantId || !finalToken) {
     throw new Error("Missing authentication or tenant information");
+  }
+
+  // Build URL with search parameters
+  let url = `${config.API}/v1/workflow-process/manager/classes`;
+  if (searchParams) {
+    const queryParams = new URLSearchParams(searchParams);
+    url += `?${queryParams.toString()}`;
   }
 
   const headers: Record<string, string> = {
@@ -457,13 +470,10 @@ export async function fetchClassrooms(
     headers["service"] = "Class";
   }
 
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/classes`,
-    {
-      method: "GET",
-      headers,
-    }
-  );
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch classrooms: ${response.status}`);
