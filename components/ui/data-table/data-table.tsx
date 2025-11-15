@@ -159,11 +159,12 @@ export function DataTable<TData, TValue>({
                 // Wrap with tooltip if hover is enabled
                 if (enableRowHover) {
                   return (
-                    <TooltipProvider key={row.id} delayDuration={300}>
+                    <TooltipProvider
+                      key={row.id}
+                      delayDuration={300}
+                    >
                       <Tooltip>
-                        <TooltipTrigger asChild>
-                          {rowContent}
-                        </TooltipTrigger>
+                        <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
                         <TooltipContent>
                           <p>Click vào tên để xem chi tiết</p>
                         </TooltipContent>

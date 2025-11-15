@@ -44,17 +44,17 @@ export function DataTableToolbar<TData>({
   onServerSearch,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
-  
+
   // Use local state for server-side search, table state for client-side
   const [serverSearchValue, setServerSearchValue] = useState("");
   const [selectedSearchField, setSelectedSearchField] = useState(
     searchFieldOptions?.[0]?.value || searchKey
   );
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Get the appropriate value based on search mode
-  const searchValue = onServerSearch 
-    ? serverSearchValue 
+  const searchValue = onServerSearch
+    ? serverSearchValue
     : (table.getColumn(searchKey)?.getFilterValue() as string) ?? "";
 
   // Cleanup debounce timer on unmount
@@ -71,12 +71,12 @@ export function DataTableToolbar<TData>({
     if (onServerSearch) {
       // Server-side search - use local state and debounced callback
       setServerSearchValue(value);
-      
+
       // Clear existing timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
-      
+
       // Set new timer for 300ms delay (faster response)
       debounceTimerRef.current = setTimeout(() => {
         onServerSearch(value, selectedSearchField);
@@ -110,7 +110,10 @@ export function DataTableToolbar<TData>({
               </SelectTrigger>
               <SelectContent>
                 {searchFieldOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                  >
                     {option.label}
                   </SelectItem>
                 ))}
