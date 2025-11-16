@@ -1,0 +1,83 @@
+// text short
+{
+  "type": "object",
+  "items": {
+    "test": { //field name
+      "type": "string", //field type
+      "required": true, //field này default
+      "is_filter": true, //field này default
+      "text_type": "short_text", //or long_text or email or url or datetime or date or time or color or html
+      "min": 1,
+      "max": 5,
+    }
+  }
+}
+
+// number 
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "number",
+      "required": true,
+      "is_filter": true,
+      "is_array": true,
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10
+    }
+  }
+}
+
+// number coordinates (have to enable is array)
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "number",
+      "required": true,
+      "is_filter": true,
+      "is_array": true,
+      "number_type": "coordinates",
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10
+    }
+  }
+}
+
+// boolean
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "boolean",
+      "required": true,
+      "is_filter": true,
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10
+    }
+  }
+}
+
+// select
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "select",
+      "required": true,
+      "is_filter": true,
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10,
+      "select_values": "lable1:option1,lable2:option2"
+    }
+  }
+}
+

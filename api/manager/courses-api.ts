@@ -104,7 +104,7 @@ export interface CreateCourseData {
   description: string;
   session_number: number;
   session_number_duration: string;
-  detail: Array<{ title: string }>;
+  detail: Array<{ title: string; description: string }>;
   category: string[];
   media?: string[];
   is_active: boolean;
@@ -162,7 +162,7 @@ export interface UpdateCourseData {
   description: string;
   session_number: number;
   session_number_duration: string;
-  detail: Array<{ title: string }>;
+  detail: Array<{ title: string; description: string }>;
   category: string[];
   media?: string[];
   is_active: boolean;

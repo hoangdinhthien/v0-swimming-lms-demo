@@ -52,6 +52,7 @@ const courseFormSchema = z.object({
     .array(
       z.object({
         title: z.string().min(1, "Vui lòng nhập nội dung chi tiết"),
+        description: z.string().min(1, "Vui lòng nhập mô tả chi tiết"),
       })
     )
     .min(1, "Vui lòng thêm ít nhất 1 nội dung chi tiết"),
@@ -83,7 +84,7 @@ export default function NewCoursePage() {
     description: "",
     session_number: 1,
     session_number_duration: "45 phút",
-    detail: [{ title: "" }],
+    detail: [{ title: "", description: "" }],
     category: [],
     is_active: false,
     price: 0,
@@ -197,7 +198,7 @@ export default function NewCoursePage() {
   // Add a new detail item
   const addDetail = () => {
     const currentDetails = form.getValues("detail") || [];
-    form.setValue("detail", [...currentDetails, { title: "" }]);
+    form.setValue("detail", [...currentDetails, { title: "", description: "" }]);
   };
 
   // Remove a detail item
@@ -457,24 +458,43 @@ export default function NewCoursePage() {
                 {form.watch("detail")?.map((_, index) => (
                   <div
                     key={index}
-                    className='flex items-end gap-2'
+                    className='flex gap-2'
                   >
-                    <FormField
-                      control={form.control}
-                      name={`detail.${index}.title`}
-                      render={({ field }) => (
-                        <FormItem className='flex-1'>
-                          <FormLabel>Nội dung {index + 1}</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='Nội dung chi tiết khóa học'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className='flex-1 space-y-4'>
+                      <FormField
+                        control={form.control}
+                        name={`detail.${index}.title`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tiêu đề {index + 1}</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='Tiêu đề nội dung chi tiết'
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`detail.${index}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mô tả {index + 1}</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder='Mô tả chi tiết nội dung'
+                                className='resize-none min-h-[80px]'
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <Button
                       type='button'
                       variant='outline'

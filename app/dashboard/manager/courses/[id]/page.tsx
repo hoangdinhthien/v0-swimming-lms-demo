@@ -74,7 +74,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     description: "",
     session_number: 0,
     session_number_duration: "",
-    detail: [{ title: "" }],
+    detail: [{ title: "", description: "" }],
     category: [] as string[],
     price: 0,
     is_active: true,
@@ -241,7 +241,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         description: course.description || "",
         session_number: course.session_number || 0,
         session_number_duration: course.session_number_duration || "",
-        detail: course.detail?.length > 0 ? course.detail : [{ title: "" }],
+        detail: course.detail?.length > 0 ? course.detail : [{ title: "", description: "" }],
         category: Array.isArray(course.category)
           ? course.category.map((cat: any) => cat._id || cat)
           : course.category?._id
@@ -274,7 +274,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const addDetailItem = () => {
     setFormData((prev) => ({
       ...prev,
-      detail: [...prev.detail, { title: "" }],
+      detail: [...prev.detail, { title: "", description: "" }],
     }));
   };
 
@@ -285,10 +285,12 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }));
   };
 
-  const updateDetailItem = (index: number, title: string) => {
+  const updateDetailItem = (index: number, field: "title" | "description", value: string) => {
     setFormData((prev) => ({
       ...prev,
-      detail: prev.detail.map((item, i) => (i === index ? { title } : item)),
+      detail: prev.detail.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      ),
     }));
   };
 
@@ -919,17 +921,25 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   Thêm mục
                 </Button>
               </div>
-              <div className='space-y-2'>
+              <div className='space-y-4'>
                 {formData.detail.map((item, index) => (
                   <div
                     key={index}
                     className='flex gap-2'
                   >
-                    <Input
-                      value={item.title}
-                      onChange={(e) => updateDetailItem(index, e.target.value)}
-                      placeholder={`Nội dung ${index + 1}`}
-                    />
+                    <div className='flex-1 space-y-3'>
+                      <Input
+                        value={item.title}
+                        onChange={(e) => updateDetailItem(index, "title", e.target.value)}
+                        placeholder={`Tiêu đề ${index + 1}`}
+                      />
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) => updateDetailItem(index, "description", e.target.value)}
+                        placeholder={`Mô tả ${index + 1}`}
+                        className='resize-none min-h-[80px]'
+                      />
+                    </div>
                     {formData.detail.length > 1 && (
                       <Button
                         type='button'
