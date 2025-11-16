@@ -1,60 +1,25 @@
-# Tài liệu kỹ thuật: Các loại field & cấu trúc JSON lưu trong `form_judge`
+# Hướng Dẫn Chi Tiết Các Items Manager/Staff Có Thể Dùng Để Generate JSON Schema
 
-## 1. Tổng quan cấu trúc
-
-`form_judge` lưu dữ liệu dưới dạng JSON Schema tùy biến. Mỗi field là do
-manager/staff tự thiết kế trên UI.
-
-```json
-{
-  "type": "object",
-  "items": {
-    "<field_name>": {
-      "type": "<string|number|boolean|select>",
-      "required": true,
-      "is_filter": true
-    }
-  }
-}
-```
+Tài liệu này giải thích rõ ràng và chi tiết về từng loại item mà Manager/Staff có thể sử dụng để cấu hình và generate JSON Schema cho hệ thống.\n\n## Lưu ý chung về Dependencies\nTất cả các item **đều có thể khai báo dependencies**, không chỉ riêng text field. Vì vậy trong hệ thống sẽ có một mục riêng cho Manager/Staff cấu hình dependencies cho từng item trong `form_judge`. Dependencies cho phép hiển thị hoặc ẩn một field dựa vào giá trị của field khác. Mỗi mục bao gồm: mô tả, mục đích, danh sách các thuộc tính, và ví dụ minh họa.
 
 ---
 
-## 2. Các thuộc tính chung
+## 1. Text Short / Text Field
 
----
+### **Mục đích**
 
-Thuộc tính Loại Ý nghĩa
+Dùng để tạo các trường nhập văn bản ngắn, dài, email, URL, datetime, date, time, color hoặc HTML.
 
----
+### **Các thuộc tính**
 
-`type` string Loại field
+- **type**: `string`
+- **required**: bắt buộc hay không
+- **is_filter**: dùng làm filter trong trang list
+- **text_type**: loại text (`short_text`, `long_text`, `email`, `url`, `datetime`, `date`, `time`, `color`, `html`)
+- **min / max**: số ký tự tối thiểu / tối đa
+- **dependencies**: hiển thị field này khi field khác có giá trị cụ thể
 
-`required` boolean Bắt buộc nhập
-
-`is_filter` boolean Dùng để filter
-
-`text_type` string Áp dụng cho string
-
-`is_array` boolean Dạng mảng
-
-`min` / `max` number Giới hạn
-
-`min_array_lenght` / number Giới hạn phần tử array
-`max_array_lenght`
-
-`number_type` string Dạng số đặc biệt
-(coordinates)
-
-`select_values` string Options của select
-
----
-
----
-
-## 3. Chi tiết từng loại field
-
-### String (text)
+### **Ví dụ**
 
 ```json
 {
@@ -66,7 +31,17 @@ Thuộc tính Loại Ý nghĩa
       "is_filter": true,
       "text_type": "short_text",
       "min": 1,
-      "max": 5
+      "max": 5,
+      "dependencies": [
+        {
+          "field": "test1",
+          "value": "test1"
+        },
+        {
+          "field": "test2",
+          "value": "test2"
+        }
+      ]
     }
   }
 }
@@ -74,7 +49,20 @@ Thuộc tính Loại Ý nghĩa
 
 ---
 
-### Number
+## 2. Number
+
+### **Mục đích**
+
+Tạo trường số, có thể đặt giới hạn min/max và hỗ trợ dạng mảng.
+
+### **Các thuộc tính**
+
+- **type**: `number`
+- **is_array**: bật nếu là danh sách số
+- **min / max**: giá trị nhỏ nhất/lớn nhất
+- **min_array_lenght / max_array_lenght**: số lượng phần tử tối thiểu/tối đa
+
+### **Ví dụ**
 
 ```json
 {
@@ -96,7 +84,17 @@ Thuộc tính Loại Ý nghĩa
 
 ---
 
-### Number (coordinates)
+## 3. Number Coordinates
+
+### **Mục đích**
+
+Trường số đặc biệt dạng tọa độ (latitude/longitude). Bắt buộc bật `is_array`.
+
+### **Thuộc tính bổ sung**
+
+- **number_type**: `coordinates`
+
+### **Ví dụ**
 
 ```json
 {
@@ -119,7 +117,13 @@ Thuộc tính Loại Ý nghĩa
 
 ---
 
-### Boolean
+## 4. Boolean
+
+### **Mục đích**
+
+Tạo field dạng `true/false`.
+
+### **Ví dụ**
 
 ```json
 {
@@ -140,7 +144,17 @@ Thuộc tính Loại Ý nghĩa
 
 ---
 
-### Select
+## 5. Select
+
+### **Mục đích**
+
+Tạo dropdown có danh sách giá trị.
+
+### **Thuộc tính**
+
+- **select_values**: dạng `label:value,label2:value2`
+
+### **Ví dụ**
 
 ```json
 {
@@ -161,3 +175,43 @@ Thuộc tính Loại Ý nghĩa
 ```
 
 ---
+
+## 6. Relation
+
+### **Mục đích**
+
+Tạo liên kết (relation) với entity khác trong hệ thống.
+
+### **Thuộc tính**
+
+- **entity**: tên entity cần liên kết
+- **relation_type**: `1-1`, `1-n`, `n-n`
+- **query_search**: query tùy chỉnh
+- **dependencies**: điều kiện hiển thị
+
+### **Ví dụ**
+
+```json
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "relation",
+      "required": true,
+      "is_filter": true,
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10,
+      "entity": "dashboard",
+      "relation_type": "1-1",
+      "query_search": "example[query]search",
+      "dependencies": []
+    }
+  }
+}
+```
+
+---
+
+Nếu bạn muốn tôi bổ sung mục **giải thích use-case**, **so sánh các loại field**, hoặc làm thêm **bảng tổng hợp**, hãy cho tôi biết!

@@ -50,6 +50,10 @@ import { fetchAllCourseCategories } from "@/api/manager/course-categories";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails, uploadMedia, deleteMedia } from "@/api/media-api";
 import config from "@/api/config.json";
+import {
+  FormJudgeBuilder,
+  type FormJudgeSchema,
+} from "@/components/manager/form-judge-builder";
 
 import ManagerNotFound from "@/components/manager/not-found";
 
@@ -84,6 +88,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // State for form_judge for each detail item
+  const [detailFormJudges, setDetailFormJudges] = useState<
+    Record<number, FormJudgeSchema>
+  >({});
 
   const { toast } = useToast();
 
@@ -264,6 +273,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       );
       setSelectedFiles([]);
       setImagesToDelete([]);
+
+      // Load existing form_judge data
+      const formJudges: Record<number, FormJudgeSchema> = {};
+      course.detail?.forEach((item: any, index: number) => {
+        if (item.form_judge) {
+          formJudges[index] = item.form_judge;
+        }
+      });
+      setDetailFormJudges(formJudges);
+
       setIsEditModalOpen(true);
     }
   };
@@ -286,6 +305,18 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       ...prev,
       detail: prev.detail.filter((_, i) => i !== index),
     }));
+
+    // Remove form_judge for this detail
+    const newFormJudges = { ...detailFormJudges };
+    delete newFormJudges[index];
+    // Re-index remaining form_judges
+    const reindexed: Record<number, FormJudgeSchema> = {};
+    Object.keys(newFormJudges).forEach((key) => {
+      const oldIndex = parseInt(key);
+      const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
+      reindexed[newIndex] = newFormJudges[oldIndex];
+    });
+    setDetailFormJudges(reindexed);
   };
 
   const updateDetailItem = (
@@ -372,12 +403,22 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       }
 
       // Prepare update payload
+      const detailWithFormJudge = formData.detail
+        .filter((item) => item.title.trim() !== "")
+        .map((item, index) => ({
+          ...item,
+          form_judge: detailFormJudges[index] || {
+            type: "object" as const,
+            items: {},
+          },
+        }));
+
       const updatePayload = {
         title: formData.title,
         description: formData.description,
         session_number: formData.session_number,
         session_number_duration: formData.session_number_duration,
-        detail: formData.detail.filter((item) => item.title.trim() !== ""),
+        detail: detailWithFormJudge,
         category: formData.category,
         media: remainingMediaIds,
         is_active: formData.is_active,
@@ -930,11 +971,26 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               </div>
               <div className='space-y-4'>
                 {formData.detail.map((item, index) => (
-                  <div
+                  <Card
                     key={index}
-                    className='flex gap-2'
+                    className='border-2'
                   >
-                    <div className='flex-1 space-y-3'>
+                    <CardHeader className='pb-3'>
+                      <div className='flex items-center justify-between'>
+                        <h4 className='font-semibold'>Nội dung {index + 1}</h4>
+                        {formData.detail.length > 1 && (
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='icon'
+                            onClick={() => removeDetailItem(index)}
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
                       <Input
                         value={item.title}
                         onChange={(e) =>
@@ -950,18 +1006,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         placeholder={`Mô tả ${index + 1}`}
                         className='resize-none min-h-[80px]'
                       />
-                    </div>
-                    {formData.detail.length > 1 && (
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='icon'
-                        onClick={() => removeDetailItem(index)}
-                      >
-                        <Trash2 className='h-4 w-4' />
-                      </Button>
-                    )}
-                  </div>
+
+                      {/* FormJudge Builder */}
+                      <div className='mt-4'>
+                        <FormJudgeBuilder
+                          value={detailFormJudges[index]}
+                          onChange={(schema) => {
+                            setDetailFormJudges((prev) => ({
+                              ...prev,
+                              [index]: schema,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>

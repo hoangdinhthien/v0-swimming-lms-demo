@@ -1,3 +1,6 @@
+//  ĐÂY LÀ CÁC ITEMS MÀ MANAGER/STAFF CÓ THỂ SỬ DỤNG ĐỂ GENERATE JSON SCHEMA
+
+
 // text short
 {
   "type": "object",
@@ -9,6 +12,15 @@
       "text_type": "short_text", //or long_text or email or url or datetime or date or time or color or html
       "min": 1,
       "max": 5,
+      "dependencies": [ // sẽ có 1 mục để manager/staff có thể configure dependencies cho các item trong form_judge
+        {
+          "field": "test1", //Field name this depends on
+          "value": "test1" //Show when value is (comma-separated for multiple)
+        }, {
+          "field": "test2",
+          "value": "test2"
+        }
+      ]
     }
   }
 }
@@ -27,7 +39,7 @@
       "min_array_lenght": 1,
       "max_array_lenght": 10
     }
-  }
+  }, 
 }
 
 // number coordinates (have to enable is array)
@@ -81,3 +93,23 @@
   }
 }
 
+
+//Relation
+{
+  "type": "object",
+  "items": {
+    "test": {
+      "type": "relation",
+      "required": true,
+      "is_filter": true,
+      "min": 1,
+      "max": 9,
+      "min_array_lenght": 1,
+      "max_array_lenght": 10,
+      "entity": "dashboard",
+      "relation_type": "1-1",
+      "query_search": "example[query]search",
+      "dependencies": []
+    }
+  }
+}

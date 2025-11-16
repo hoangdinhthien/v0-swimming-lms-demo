@@ -10,6 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  FormJudgeBuilder,
+  type FormJudgeSchema,
+} from "@/components/manager/form-judge-builder";
+import {
   Form,
   FormControl,
   FormDescription,
@@ -77,6 +81,11 @@ export default function NewCoursePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // State to store form_judge for each detail item
+  const [detailFormJudges, setDetailFormJudges] = useState<
+    Record<number, FormJudgeSchema>
+  >({});
 
   // Default values for the form
   const defaultValues: Partial<CourseFormValues> = {
@@ -211,6 +220,18 @@ export default function NewCoursePage() {
     const newDetails = [...currentDetails];
     newDetails.splice(index, 1);
     form.setValue("detail", newDetails);
+
+    // Remove form_judge for this detail
+    const newFormJudges = { ...detailFormJudges };
+    delete newFormJudges[index];
+    // Re-index remaining form_judges
+    const reindexed: Record<number, FormJudgeSchema> = {};
+    Object.keys(newFormJudges).forEach((key) => {
+      const oldIndex = parseInt(key);
+      const newIndex = oldIndex > index ? oldIndex - 1 : oldIndex;
+      reindexed[newIndex] = newFormJudges[oldIndex];
+    });
+    setDetailFormJudges(reindexed);
   };
 
   // Submit the form
@@ -230,9 +251,21 @@ export default function NewCoursePage() {
     setLoading(true);
 
     try {
+      // Merge detail with form_judge data
+      const detailWithFormJudge = values.detail.map((item, index) => ({
+        ...item,
+        form_judge: detailFormJudges[index] || {
+          type: "object" as const,
+          items: {},
+        },
+      }));
+
       // Use our API function to create the course
       await createCourse({
-        courseData: values,
+        courseData: {
+          ...values,
+          detail: detailWithFormJudge,
+        } as any,
         tenantId,
         token,
       });
@@ -459,11 +492,25 @@ export default function NewCoursePage() {
               </CardHeader>
               <CardContent className='space-y-6'>
                 {form.watch("detail")?.map((_, index) => (
-                  <div
+                  <Card
                     key={index}
-                    className='flex gap-2'
+                    className='border-2'
                   >
-                    <div className='flex-1 space-y-4'>
+                    <CardHeader className='pb-4'>
+                      <div className='flex items-center justify-between'>
+                        <h3 className='font-semibold'>Nội dung {index + 1}</h3>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='icon'
+                          onClick={() => removeDetail(index)}
+                          disabled={form.watch("detail")?.length <= 1}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
                       <FormField
                         control={form.control}
                         name={`detail.${index}.title`}
@@ -497,17 +544,21 @@ export default function NewCoursePage() {
                           </FormItem>
                         )}
                       />
-                    </div>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='icon'
-                      onClick={() => removeDetail(index)}
-                      disabled={form.watch("detail")?.length <= 1}
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
-                  </div>
+
+                      {/* FormJudge Builder */}
+                      <div className='mt-4'>
+                        <FormJudgeBuilder
+                          value={detailFormJudges[index]}
+                          onChange={(schema) => {
+                            setDetailFormJudges((prev) => ({
+                              ...prev,
+                              [index]: schema,
+                            }));
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
 
                 <Button
