@@ -241,7 +241,10 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         description: course.description || "",
         session_number: course.session_number || 0,
         session_number_duration: course.session_number_duration || "",
-        detail: course.detail?.length > 0 ? course.detail : [{ title: "", description: "" }],
+        detail:
+          course.detail?.length > 0
+            ? course.detail
+            : [{ title: "", description: "" }],
         category: Array.isArray(course.category)
           ? course.category.map((cat: any) => cat._id || cat)
           : course.category?._id
@@ -285,10 +288,14 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     }));
   };
 
-  const updateDetailItem = (index: number, field: "title" | "description", value: string) => {
+  const updateDetailItem = (
+    index: number,
+    field: "title" | "description",
+    value: string
+  ) => {
     setFormData((prev) => ({
       ...prev,
-      detail: prev.detail.map((item, i) => 
+      detail: prev.detail.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       ),
     }));
@@ -930,12 +937,16 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <div className='flex-1 space-y-3'>
                       <Input
                         value={item.title}
-                        onChange={(e) => updateDetailItem(index, "title", e.target.value)}
+                        onChange={(e) =>
+                          updateDetailItem(index, "title", e.target.value)
+                        }
                         placeholder={`Tiêu đề ${index + 1}`}
                       />
                       <Textarea
                         value={item.description}
-                        onChange={(e) => updateDetailItem(index, "description", e.target.value)}
+                        onChange={(e) =>
+                          updateDetailItem(index, "description", e.target.value)
+                        }
                         placeholder={`Mô tả ${index + 1}`}
                         className='resize-none min-h-[80px]'
                       />

@@ -198,7 +198,10 @@ export default function NewCoursePage() {
   // Add a new detail item
   const addDetail = () => {
     const currentDetails = form.getValues("detail") || [];
-    form.setValue("detail", [...currentDetails, { title: "", description: "" }]);
+    form.setValue("detail", [
+      ...currentDetails,
+      { title: "", description: "" },
+    ]);
   };
 
   // Remove a detail item
