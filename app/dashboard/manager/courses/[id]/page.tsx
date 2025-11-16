@@ -21,6 +21,7 @@ import {
   Trash2,
   Upload,
   X,
+  Settings2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -738,26 +739,136 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className='space-y-3'>
+                  <div className='space-y-4'>
                     {course.detail.map((item: any, idx: number) => (
-                      <div
+                      <Card
                         key={idx}
-                        className='flex items-start gap-3 p-3 bg-muted/50 rounded-lg border'
+                        className='border-2 bg-card'
                       >
-                        <div className='w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 mt-0.5'>
-                          {idx + 1}
-                        </div>
-                        <div className='flex-1'>
-                          <h4 className='font-medium text-foreground'>
-                            {item.title}
-                          </h4>
-                          {item.description && (
-                            <p className='text-sm text-muted-foreground mt-1'>
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                        <CardHeader className='pb-3'>
+                          <div className='flex items-start gap-3'>
+                            <div className='w-7 h-7 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0'>
+                              {idx + 1}
+                            </div>
+                            <div className='flex-1'>
+                              <h4 className='font-semibold text-foreground text-lg'>
+                                {item.title}
+                              </h4>
+                              {item.description && (
+                                <p className='text-sm text-muted-foreground mt-1.5 leading-relaxed'>
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+
+                        {/* Form Judge Information */}
+                        {item.form_judge && item.form_judge.items && Object.keys(item.form_judge.items).length > 0 && (
+                          <CardContent className='pt-0'>
+                            <Separator className='mb-4' />
+                            <div className='bg-muted/50 rounded-lg p-4 border'>
+                              <div className='flex items-center gap-2 mb-3'>
+                                <Settings2 className='h-4 w-4 text-primary' />
+                                <span className='text-sm font-semibold text-foreground'>
+                                  Form đánh giá học viên
+                                </span>
+                                <Badge variant='secondary' className='text-xs'>
+                                  {Object.keys(item.form_judge.items).length} fields
+                                </Badge>
+                              </div>
+
+                              <div className='space-y-2.5'>
+                                {Object.entries(item.form_judge.items).map(([fieldName, fieldConfig]: [string, any]) => (
+                                  <div
+                                    key={fieldName}
+                                    className='bg-background rounded-md p-3 border'
+                                  >
+                                    <div className='flex items-start justify-between gap-2 mb-2'>
+                                      <div className='flex items-center gap-2 flex-1'>
+                                        <span className='font-medium text-sm text-foreground'>
+                                          {fieldName}
+                                        </span>
+                                        <Badge
+                                          variant='outline'
+                                          className='text-xs'
+                                        >
+                                          {fieldConfig.type}
+                                        </Badge>
+                                      </div>
+                                      <div className='flex gap-1.5'>
+                                        {fieldConfig.required && (
+                                          <Badge
+                                            variant='destructive'
+                                            className='text-xs'
+                                          >
+                                            Bắt buộc
+                                          </Badge>
+                                        )}
+                                        {fieldConfig.is_filter && (
+                                          <Badge
+                                            variant='secondary'
+                                            className='text-xs'
+                                          >
+                                            Filter
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Type-specific info */}
+                                    <div className='text-xs text-muted-foreground space-y-1'>
+                                      {fieldConfig.type === 'string' && fieldConfig.text_type && (
+                                        <div>📝 Loại: {fieldConfig.text_type}</div>
+                                      )}
+                                      {fieldConfig.type === 'number' && fieldConfig.is_array && (
+                                        <div>
+                                          🔢 Array {fieldConfig.number_type === 'coordinates' && '(Tọa độ)'}
+                                        </div>
+                                      )}
+                                      {fieldConfig.type === 'select' && fieldConfig.select_values && (
+                                        <div>
+                                          📋 Options: {fieldConfig.select_values.split(',').length} lựa chọn
+                                        </div>
+                                      )}
+                                      {fieldConfig.type === 'relation' && fieldConfig.entity && (
+                                        <div>
+                                          🔗 Entity: {fieldConfig.entity} ({fieldConfig.relation_type})
+                                        </div>
+                                      )}
+                                      {(fieldConfig.min !== undefined || fieldConfig.max !== undefined) && (
+                                        <div>
+                                          📏 Range: {fieldConfig.min ?? 'N/A'} - {fieldConfig.max ?? 'N/A'}
+                                        </div>
+                                      )}
+                                      {fieldConfig.dependencies && fieldConfig.dependencies.length > 0 && (
+                                        <div className='mt-1.5 pt-1.5 border-t'>
+                                          <span className='font-medium'>⚡ Dependencies:</span>
+                                          {fieldConfig.dependencies.map((dep: any, depIdx: number) => (
+                                            <div key={depIdx} className='ml-2 mt-0.5'>
+                                              • Hiện khi <strong>{dep.field}</strong> = <code className='bg-muted px-1 rounded'>{dep.value}</code>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* JSON Preview (collapsed by default) */}
+                              <details className='mt-3'>
+                                <summary className='cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground'>
+                                  🔍 Xem JSON Schema
+                                </summary>
+                                <pre className='mt-2 p-3 bg-background rounded text-xs overflow-auto max-h-48 border'>
+                                  {JSON.stringify(item.form_judge, null, 2)}
+                                </pre>
+                              </details>
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
                     ))}
                   </div>
                 </CardContent>
