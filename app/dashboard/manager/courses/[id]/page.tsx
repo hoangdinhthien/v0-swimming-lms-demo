@@ -764,110 +764,157 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         </CardHeader>
 
                         {/* Form Judge Information */}
-                        {item.form_judge && item.form_judge.items && Object.keys(item.form_judge.items).length > 0 && (
-                          <CardContent className='pt-0'>
-                            <Separator className='mb-4' />
-                            <div className='bg-muted/50 rounded-lg p-4 border'>
-                              <div className='flex items-center gap-2 mb-3'>
-                                <Settings2 className='h-4 w-4 text-primary' />
-                                <span className='text-sm font-semibold text-foreground'>
-                                  Form đánh giá học viên
-                                </span>
-                                <Badge variant='secondary' className='text-xs'>
-                                  {Object.keys(item.form_judge.items).length} fields
-                                </Badge>
-                              </div>
-
-                              <div className='space-y-2.5'>
-                                {Object.entries(item.form_judge.items).map(([fieldName, fieldConfig]: [string, any]) => (
-                                  <div
-                                    key={fieldName}
-                                    className='bg-background rounded-md p-3 border'
+                        {item.form_judge &&
+                          item.form_judge.items &&
+                          Object.keys(item.form_judge.items).length > 0 && (
+                            <CardContent className='pt-0'>
+                              <Separator className='mb-4' />
+                              <div className='bg-muted/50 rounded-lg p-4 border'>
+                                <div className='flex items-center gap-2 mb-3'>
+                                  <Settings2 className='h-4 w-4 text-primary' />
+                                  <span className='text-sm font-semibold text-foreground'>
+                                    Form đánh giá học viên
+                                  </span>
+                                  <Badge
+                                    variant='secondary'
+                                    className='text-xs'
                                   >
-                                    <div className='flex items-start justify-between gap-2 mb-2'>
-                                      <div className='flex items-center gap-2 flex-1'>
-                                        <span className='font-medium text-sm text-foreground'>
-                                          {fieldName}
-                                        </span>
-                                        <Badge
-                                          variant='outline'
-                                          className='text-xs'
-                                        >
-                                          {fieldConfig.type}
-                                        </Badge>
-                                      </div>
-                                      <div className='flex gap-1.5'>
-                                        {fieldConfig.required && (
-                                          <Badge
-                                            variant='destructive'
-                                            className='text-xs'
-                                          >
-                                            Bắt buộc
-                                          </Badge>
-                                        )}
-                                        {fieldConfig.is_filter && (
-                                          <Badge
-                                            variant='secondary'
-                                            className='text-xs'
-                                          >
-                                            Filter
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
+                                    {Object.keys(item.form_judge.items).length}{" "}
+                                    fields
+                                  </Badge>
+                                </div>
 
-                                    {/* Type-specific info */}
-                                    <div className='text-xs text-muted-foreground space-y-1'>
-                                      {fieldConfig.type === 'string' && fieldConfig.text_type && (
-                                        <div>📝 Loại: {fieldConfig.text_type}</div>
-                                      )}
-                                      {fieldConfig.type === 'number' && fieldConfig.is_array && (
-                                        <div>
-                                          🔢 Array {fieldConfig.number_type === 'coordinates' && '(Tọa độ)'}
+                                <div className='space-y-2.5'>
+                                  {Object.entries(item.form_judge.items).map(
+                                    ([fieldName, fieldConfig]: [
+                                      string,
+                                      any
+                                    ]) => (
+                                      <div
+                                        key={fieldName}
+                                        className='bg-background rounded-md p-3 border'
+                                      >
+                                        <div className='flex items-start justify-between gap-2 mb-2'>
+                                          <div className='flex items-center gap-2 flex-1'>
+                                            <span className='font-medium text-sm text-foreground'>
+                                              {fieldName}
+                                            </span>
+                                            <Badge
+                                              variant='outline'
+                                              className='text-xs'
+                                            >
+                                              {fieldConfig.type}
+                                            </Badge>
+                                          </div>
+                                          <div className='flex gap-1.5'>
+                                            {fieldConfig.required && (
+                                              <Badge
+                                                variant='destructive'
+                                                className='text-xs'
+                                              >
+                                                Bắt buộc
+                                              </Badge>
+                                            )}
+                                            {fieldConfig.is_filter && (
+                                              <Badge
+                                                variant='secondary'
+                                                className='text-xs'
+                                              >
+                                                Filter
+                                              </Badge>
+                                            )}
+                                          </div>
                                         </div>
-                                      )}
-                                      {fieldConfig.type === 'select' && fieldConfig.select_values && (
-                                        <div>
-                                          📋 Options: {fieldConfig.select_values.split(',').length} lựa chọn
-                                        </div>
-                                      )}
-                                      {fieldConfig.type === 'relation' && fieldConfig.entity && (
-                                        <div>
-                                          🔗 Entity: {fieldConfig.entity} ({fieldConfig.relation_type})
-                                        </div>
-                                      )}
-                                      {(fieldConfig.min !== undefined || fieldConfig.max !== undefined) && (
-                                        <div>
-                                          📏 Range: {fieldConfig.min ?? 'N/A'} - {fieldConfig.max ?? 'N/A'}
-                                        </div>
-                                      )}
-                                      {fieldConfig.dependencies && fieldConfig.dependencies.length > 0 && (
-                                        <div className='mt-1.5 pt-1.5 border-t'>
-                                          <span className='font-medium'>⚡ Dependencies:</span>
-                                          {fieldConfig.dependencies.map((dep: any, depIdx: number) => (
-                                            <div key={depIdx} className='ml-2 mt-0.5'>
-                                              • Hiện khi <strong>{dep.field}</strong> = <code className='bg-muted px-1 rounded'>{dep.value}</code>
+
+                                        {/* Type-specific info */}
+                                        <div className='text-xs text-muted-foreground space-y-1'>
+                                          {fieldConfig.type === "string" &&
+                                            fieldConfig.text_type && (
+                                              <div>
+                                                Loại: {fieldConfig.text_type}
+                                              </div>
+                                            )}
+                                          {fieldConfig.type === "number" &&
+                                            fieldConfig.is_array && (
+                                              <div>
+                                                Array{" "}
+                                                {fieldConfig.number_type ===
+                                                  "coordinates" && "(Tọa độ)"}
+                                              </div>
+                                            )}
+                                          {fieldConfig.type === "select" &&
+                                            fieldConfig.select_values && (
+                                              <div>
+                                                Options:{" "}
+                                                {
+                                                  fieldConfig.select_values.split(
+                                                    ","
+                                                  ).length
+                                                }{" "}
+                                                lựa chọn
+                                              </div>
+                                            )}
+                                          {fieldConfig.type === "relation" &&
+                                            fieldConfig.entity && (
+                                              <div>
+                                                Entity: {fieldConfig.entity} (
+                                                {fieldConfig.relation_type})
+                                              </div>
+                                            )}
+                                          {(fieldConfig.min !== undefined ||
+                                            fieldConfig.max !== undefined) && (
+                                            <div>
+                                              Range: {fieldConfig.min ?? "N/A"}{" "}
+                                              - {fieldConfig.max ?? "N/A"}
                                             </div>
-                                          ))}
+                                          )}
+                                          {fieldConfig.dependencies &&
+                                            fieldConfig.dependencies.length >
+                                              0 && (
+                                              <div className='mt-1.5 pt-1.5 border-t'>
+                                                <span className='font-medium'>
+                                                  ⚡ Dependencies:
+                                                </span>
+                                                {fieldConfig.dependencies.map(
+                                                  (
+                                                    dep: any,
+                                                    depIdx: number
+                                                  ) => (
+                                                    <div
+                                                      key={depIdx}
+                                                      className='ml-2 mt-0.5'
+                                                    >
+                                                      • Hiện khi{" "}
+                                                      <strong>
+                                                        {dep.field}
+                                                      </strong>{" "}
+                                                      ={" "}
+                                                      <code className='bg-muted px-1 rounded'>
+                                                        {dep.value}
+                                                      </code>
+                                                    </div>
+                                                  )
+                                                )}
+                                              </div>
+                                            )}
                                         </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
 
-                              {/* JSON Preview (collapsed by default) */}
-                              <details className='mt-3'>
-                                <summary className='cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground'>
-                                  🔍 Xem JSON Schema
-                                </summary>
-                                <pre className='mt-2 p-3 bg-background rounded text-xs overflow-auto max-h-48 border'>
-                                  {JSON.stringify(item.form_judge, null, 2)}
-                                </pre>
-                              </details>
-                            </div>
-                          </CardContent>
-                        )}
+                                {/* JSON Preview (collapsed by default) */}
+                                <details className='mt-3'>
+                                  <summary className='cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground'>
+                                    Xem JSON Schema
+                                  </summary>
+                                  <pre className='mt-2 p-3 bg-background rounded text-xs overflow-auto max-h-48 border'>
+                                    {JSON.stringify(item.form_judge, null, 2)}
+                                  </pre>
+                                </details>
+                              </div>
+                            </CardContent>
+                          )}
                       </Card>
                     ))}
                   </div>
@@ -885,7 +932,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               <CardContent className='space-y-4'>
                 <div className='flex items-center justify-between p-3 bg-green-50 rounded-lg border dark:bg-green-950/50 dark:border-green-800'>
                   <div className='flex items-center gap-2'>
-                    <DollarSign className='h-5 w-5 text-green-600 dark:text-green-400' />
                     <span className='font-medium text-green-900 dark:text-green-200'>
                       Giá
                     </span>
@@ -899,7 +945,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                 <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg border dark:bg-blue-950/50 dark:border-blue-800'>
                   <div className='flex items-center gap-2'>
-                    <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
                     <span className='font-medium text-blue-900 dark:text-blue-200'>
                       Số buổi
                     </span>
@@ -913,7 +958,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                 <div className='flex items-center justify-between p-3 bg-purple-50 rounded-lg border dark:bg-purple-950/50 dark:border-purple-800'>
                   <div className='flex items-center gap-2'>
-                    <Clock className='h-5 w-5 text-purple-600 dark:text-purple-400' />
                     <span className='font-medium text-purple-900 dark:text-purple-200'>
                       Thời lượng/buổi
                     </span>
@@ -956,7 +1000,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     <Star className='h-4 w-4 text-muted-foreground' />
                     <span className='text-sm font-medium'>Đánh giá</span>
                   </div>
-                  <span className='text-sm font-bold text-foreground'>
+                  <span className='text-sm font-bold text-foresground'>
                     4.0/5
                   </span>
                 </div>
