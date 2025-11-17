@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
+import { HighlightText } from "@/components/ui/highlight-text";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../../../../hooks/use-auth";
@@ -627,7 +628,12 @@ export default function TransactionsPage() {
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-start flex-col'>
-                            <div className='font-medium'>{userName}</div>
+                            <div className='font-medium'>
+                              <HighlightText
+                                text={userName}
+                                searchQuery={debouncedSearch}
+                              />
+                            </div>
                             <div className='text-xs text-muted-foreground'>
                               {userContact}
                             </div>
@@ -639,7 +645,10 @@ export default function TransactionsPage() {
                               <span className='animate-pulse bg-muted rounded h-4 w-24 block'></span>
                             </div>
                           ) : (
-                            <span>{courseName}</span>
+                            <HighlightText
+                              text={courseName}
+                              searchQuery={debouncedSearch}
+                            />
                           )}
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>

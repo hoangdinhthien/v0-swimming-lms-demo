@@ -19,7 +19,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { columns, ClassItem } from "./components/columns";
+import { createColumns, ClassItem } from "./components/columns";
 
 export default function ClassesPage() {
   const { toast } = useToast();
@@ -30,6 +30,7 @@ export default function ClassesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch all classes with optional searchOr for multiple fields
   const fetchData = async (searchValue?: string, isInitialLoad = false) => {
@@ -94,6 +95,7 @@ export default function ClassesPage() {
 
   // Handler for server-side search
   const handleServerSearch = (value: string) => {
+    setSearchQuery(value); // Store search query for highlighting
     fetchData(value, false);
   };
 
@@ -267,7 +269,7 @@ export default function ClassesPage() {
           </CardHeader>
           <CardContent>
             <DataTable
-              columns={columns}
+              columns={createColumns(searchQuery)}
               data={allClasses}
               searchKey='name'
               searchPlaceholder='Tìm kiếm lớp học (tên, khóa học, giảng viên)...'

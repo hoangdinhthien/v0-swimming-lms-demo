@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { HighlightText } from "@/components/ui/highlight-text";
 import Link from "next/link";
 
 export type ClassItem = {
@@ -19,7 +20,10 @@ export type ClassItem = {
   schedules?: any[];
 };
 
-export const columns: ColumnDef<ClassItem>[] = [
+// Create columns with search query for highlighting
+export const createColumns = (
+  searchQuery: string = ""
+): ColumnDef<ClassItem>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => (
@@ -34,7 +38,7 @@ export const columns: ColumnDef<ClassItem>[] = [
           href={`/dashboard/manager/class/${row.original._id}`}
           className='font-medium hover:text-primary hover:underline transition-colors'
         >
-          {row.original.name}
+          <HighlightText text={row.original.name} searchQuery={searchQuery} />
         </Link>
       );
     },
@@ -48,7 +52,12 @@ export const columns: ColumnDef<ClassItem>[] = [
       />
     ),
     cell: ({ row }) => {
-      return <span>{row.original.course.title}</span>;
+      return (
+        <HighlightText
+          text={row.original.course.title}
+          searchQuery={searchQuery}
+        />
+      );
     },
   },
   {
@@ -74,11 +83,9 @@ export const columns: ColumnDef<ClassItem>[] = [
 
       // Handle object
       if (typeof instructor === "object" && !Array.isArray(instructor)) {
-        return (
-          <span>
-            {instructor.username || instructor.email || "Không có thông tin"}
-          </span>
-        );
+        const displayName =
+          instructor.username || instructor.email || "Không có thông tin";
+        return <HighlightText text={displayName} searchQuery={searchQuery} />;
       }
 
       // Handle array
@@ -109,7 +116,9 @@ export const columns: ColumnDef<ClassItem>[] = [
           );
         }
 
-        return <span>{names.join(", ")}</span>;
+        return (
+          <HighlightText text={names.join(", ")} searchQuery={searchQuery} />
+        );
       }
 
       return (
@@ -195,3 +204,6 @@ export const columns: ColumnDef<ClassItem>[] = [
     },
   },
 ];
+
+// Export default columns for backward compatibility
+export const columns = createColumns("");

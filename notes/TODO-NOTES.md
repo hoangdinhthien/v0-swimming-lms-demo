@@ -33,3 +33,5 @@
 
 - `searchOr[course.title:contains]=Khoá học bơi dành cho trẻ mới bắt đầu&searchOr[user.username:contains]=Khoá học bơi dành cho trẻ mới bắt đầu`
   (`searchOr[course.title%3Acontains]=Kho%C3%A1%20h%E1%BB%8Dc%20b%C6%A1i%20d%C3%A0nh%20cho%20tr%E1%BA%BB%20m%E1%BB%9Bi%20b%E1%BA%AFt%20%C4%91%E1%BA%A7u&searchOr[user.username%3Acontains]=Kho%C3%A1%20h%E1%BB%8Dc%20b%C6%A1i%20d%C3%A0nh%20cho%20tr%E1%BA%BB%20m%E1%BB%9Bi%20b%E1%BA%AFt%20%C4%91%E1%BA%A7u`)
+
+- hiện tại classes và orders đang sử dụng searchOr (theo kiểu find common). vì classes và orders trên UI đang có thể searchOr theo nhiều field, nên tôi muốn sau khi manager/staff gõ kỹ tự trên search và đã trả ra kết quả search thì nên highlight những tên nào mà nó match với ký tự mà manager/staff muốn tìm kiến trên UI
