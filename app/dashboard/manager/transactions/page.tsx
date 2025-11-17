@@ -74,9 +74,6 @@ export default function TransactionsPage() {
   const { toast } = useToast();
   const { token, tenantId, loading: authLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<
-    "user.username" | "course.title"
-  >("user.username");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
@@ -147,14 +144,14 @@ export default function TransactionsPage() {
           tokenLength: token?.length,
           currentPage,
           limit,
-          searchField,
           searchQuery: debouncedSearch,
         });
 
-        // Build search params using Find-common pattern
+        // Build search params using searchOr for multiple fields
         const searchParams = debouncedSearch?.trim()
           ? {
-              [`search[${searchField}:contains]`]: debouncedSearch.trim(),
+              "searchOr[course.title:contains]": debouncedSearch.trim(),
+              "searchOr[user.username:contains]": debouncedSearch.trim(),
             }
           : undefined;
 
@@ -231,15 +228,7 @@ export default function TransactionsPage() {
       }
     }
     getOrders();
-  }, [
-    token,
-    tenantId,
-    currentPage,
-    limit,
-    authLoading,
-    debouncedSearch,
-    searchField,
-  ]);
+  }, [token, tenantId, currentPage, limit, authLoading, debouncedSearch]);
 
   // Fetch course details for a given course ID
   const fetchCourseDetails = async (courseId: string) => {
@@ -516,29 +505,10 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent>
           <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-            <Select
-              value={searchField}
-              onValueChange={(value) =>
-                setSearchField(value as "user.username" | "course.title")
-              }
-            >
-              <SelectTrigger className='w-[200px]'>
-                <SelectValue placeholder='Tìm theo' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='user.username'>Tên học viên</SelectItem>
-                <SelectItem value='course.title'>Tên khoá học</SelectItem>
-              </SelectContent>
-            </Select>
-
             <div className='flex-1 relative'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
-                placeholder={
-                  searchField === "user.username"
-                    ? "Tìm kiếm theo tên học viên..."
-                    : "Tìm kiếm theo tên khoá học..."
-                }
+                placeholder='Tìm kiếm (tên học viên, tên khóa học)...'
                 className='pl-8'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

@@ -66,7 +66,6 @@ export default function ApplicationTypesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchField, setSearchField] = useState<string>("title");
 
   // Modal states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -86,7 +85,6 @@ export default function ApplicationTypesPage() {
   // Fetch application types with optional search
   const fetchApplicationTypes = async (
     searchValue?: string,
-    field?: string,
     isInitialLoad = false
   ) => {
     if (isInitialLoad) {
@@ -96,12 +94,11 @@ export default function ApplicationTypesPage() {
     }
 
     try {
-      // Build search params using Find-common pattern
+      // Build search params using searchOr pattern
       let searchParams: Record<string, string> | undefined;
       if (searchValue?.trim()) {
-        const searchKey = field || searchField;
         searchParams = {
-          [`search[${searchKey}:contains]`]: searchValue.trim(),
+          "searchOr[title:contains]": searchValue.trim(),
         };
       }
 
@@ -121,12 +118,12 @@ export default function ApplicationTypesPage() {
   };
 
   useEffect(() => {
-    fetchApplicationTypes(undefined, undefined, true);
+    fetchApplicationTypes(undefined, true);
   }, []);
 
   // Handler for server-side search
-  const handleServerSearch = (value: string, field?: string) => {
-    fetchApplicationTypes(value, field, false);
+  const handleServerSearch = (value: string) => {
+    fetchApplicationTypes(value, false);
   };
 
   // Handle refresh

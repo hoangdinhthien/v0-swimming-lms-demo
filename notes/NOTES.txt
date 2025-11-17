@@ -29,11 +29,9 @@ FIX:
   . tạm thời (không phải xóa) comment lại field Query Search (Tùy chọn) và Dependencies (Điều kiện hiển thị), tạm thời không cần sử dụng tới => done
 
 - sửa find common: searchOr
-- sửa lại lịch & thêm auto xếp lịch trong lịch (fix lại auto xếp lịch)
+- sửa lại lịch & thêm auto xếp lịch trong lịch (fix lại auto xếp lịch), thêm thông báo/notes rằng hồ bơi quá tải
 - làm phần certifcate: vô bảng certificate review, cái đó là cái frame thôi nha fe lấy thông tin user hiện ra
-- làm phần data-review
-
-
+- làm phần data-review: xong manager, ch xong staff
 
 
 ==========================================================

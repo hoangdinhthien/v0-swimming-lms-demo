@@ -30,16 +30,9 @@ export default function ClassesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [searchField, setSearchField] = useState<
-    "name" | "course.title" | "instructor.username" | "instructor.email"
-  >("name");
 
-  // Fetch all classes with optional search
-  const fetchData = async (
-    searchValue?: string,
-    field?: string,
-    isInitialLoad = false
-  ) => {
+  // Fetch all classes with optional searchOr for multiple fields
+  const fetchData = async (searchValue?: string, isInitialLoad = false) => {
     // Prevent duplicate calls
     if (isFetching) return;
 
@@ -57,12 +50,15 @@ export default function ClassesPage() {
       if (!tenantId || !token)
         throw new Error("Thiếu thông tin tenant hoặc token");
 
-      // Build search params using Find-common pattern with selected field
+      // Build search params using searchOr for multiple fields
       let searchParams: Record<string, string> | undefined;
       if (searchValue?.trim()) {
-        const searchKey = field || searchField;
+        // Search across multiple fields using searchOr pattern
         searchParams = {
-          [`search[${searchKey}:contains]`]: searchValue.trim(),
+          "searchOr[name:contains]": searchValue.trim(),
+          "searchOr[course.title:contains]": searchValue.trim(),
+          "searchOr[instructor.username:contains]": searchValue.trim(),
+          "searchOr[instructor.email:contains]": searchValue.trim(),
         };
       }
 
@@ -86,7 +82,7 @@ export default function ClassesPage() {
     // Only fetch once when component mounts
     const timeoutId = setTimeout(() => {
       if (isMounted) {
-        fetchData(undefined, undefined, true);
+        fetchData(undefined, true);
       }
     }, 100);
 
@@ -97,8 +93,8 @@ export default function ClassesPage() {
   }, []); // Empty dependency - only run once
 
   // Handler for server-side search
-  const handleServerSearch = (value: string, field?: string) => {
-    fetchData(value, field, false);
+  const handleServerSearch = (value: string) => {
+    fetchData(value, false);
   };
 
   // Calculate summary statistics
@@ -274,14 +270,8 @@ export default function ClassesPage() {
               columns={columns}
               data={allClasses}
               searchKey='name'
-              searchPlaceholder='Tìm kiếm lớp học...'
+              searchPlaceholder='Tìm kiếm lớp học (tên, khóa học, giảng viên)...'
               onServerSearch={handleServerSearch}
-              searchFieldOptions={[
-                { value: "name", label: "Tên lớp" },
-                { value: "course.title", label: "Tên khóa học" },
-                { value: "instructor.username", label: "Tên giảng viên" },
-                { value: "instructor.email", label: "Email giảng viên" },
-              ]}
               filterOptions={[
                 {
                   columnId: "status",

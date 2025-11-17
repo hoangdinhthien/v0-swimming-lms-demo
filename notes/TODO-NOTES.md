@@ -1,11 +1,11 @@
 # Search Query Notes
 
 - Đối với những API thuộc dạng **find-common**, ngoài `username` và `title` của các entity ra thì **manager/staff** có thể search theo các field khác nữa dựa theo response data API trả về.  
-  → Trang `app/dashboard/manager/transactions/page.tsx` là một ví dụ. NHƯNG THANH SEARCH CHƯA ĐƯỢC ĐẸP/VỪA Ý TÔI LẮM NÊN CŨNG CẦN PHẢI CHỈNH LẠI UI CỦA PHẦN SEARCH ĐÓ 1 CHÚT
+  → Trang `app/dashboard/manager/transactions/page.tsx` là một ví dụ. NHƯNG THANH SEARCH CHƯA ĐƯỢC ĐẸP/VỪA Ý TÔI LẮM NÊN CŨNG CẦN PHẢI CHỈNH LẠI UI CỦA PHẦN SEARCH ĐÓ 1 CHÚT CHO NÓ DÀI HƠN
 
 - Tôi đã chọn lựa ra những search query dựa theo các field phổ biến / thường được dùng để search cho từng entity.
 
-- Kiểm tra lại file **search-query.document.md** và các file UI để chỉnh sửa lại **thanh search** để manager/staff có thể search theo các field.
+- Kiểm tra lại file **search-query.document.md** và các file UI để chỉnh sửa lại **thanh search** để manager/staff có thể search các field cùng 1 lúc trên UI.
 
 ---
 

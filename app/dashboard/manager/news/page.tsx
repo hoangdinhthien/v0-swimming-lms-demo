@@ -71,9 +71,9 @@ export default function NewsListPage() {
       let searchParams: Record<string, string> | undefined;
 
       if (searchValue && searchValue.trim()) {
-        // Use Find-common search pattern: search[field:operator]=value
+        // Use searchOr pattern for consistency
         searchParams = {
-          "search[title:contains]": searchValue.trim(),
+          "searchOr[title:contains]": searchValue.trim(),
         };
       }
 
