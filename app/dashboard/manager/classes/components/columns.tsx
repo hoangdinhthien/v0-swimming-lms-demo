@@ -38,7 +38,10 @@ export const createColumns = (
           href={`/dashboard/manager/class/${row.original._id}`}
           className='font-medium hover:text-primary hover:underline transition-colors'
         >
-          <HighlightText text={row.original.name} searchQuery={searchQuery} />
+          <HighlightText
+            text={row.original.name}
+            searchQuery={searchQuery}
+          />
         </Link>
       );
     },
@@ -85,7 +88,12 @@ export const createColumns = (
       if (typeof instructor === "object" && !Array.isArray(instructor)) {
         const displayName =
           instructor.username || instructor.email || "Không có thông tin";
-        return <HighlightText text={displayName} searchQuery={searchQuery} />;
+        return (
+          <HighlightText
+            text={displayName}
+            searchQuery={searchQuery}
+          />
+        );
       }
 
       // Handle array
@@ -117,7 +125,10 @@ export const createColumns = (
         }
 
         return (
-          <HighlightText text={names.join(", ")} searchQuery={searchQuery} />
+          <HighlightText
+            text={names.join(", ")}
+            searchQuery={searchQuery}
+          />
         );
       }
 

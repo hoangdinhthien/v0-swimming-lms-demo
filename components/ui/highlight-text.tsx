@@ -39,7 +39,7 @@ export function HighlightText({
         return isMatch ? (
           <mark
             key={index}
-            className="bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-100 font-semibold px-0.5 rounded"
+            className='bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-100 font-semibold px-0.5 rounded'
           >
             {part}
           </mark>
