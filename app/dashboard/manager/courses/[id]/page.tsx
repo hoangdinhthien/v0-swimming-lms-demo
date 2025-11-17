@@ -864,8 +864,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                           {(fieldConfig.min !== undefined ||
                                             fieldConfig.max !== undefined) && (
                                             <div>
-                                              📏 Range: {fieldConfig.min ?? "N/A"}{" "}
-                                              - {fieldConfig.max ?? "N/A"}
+                                              📏 Range:{" "}
+                                              {fieldConfig.min ?? "N/A"} -{" "}
+                                              {fieldConfig.max ?? "N/A"}
                                             </div>
                                           )}
                                           {/* REMOVED: Dependencies display - not needed anymore */}

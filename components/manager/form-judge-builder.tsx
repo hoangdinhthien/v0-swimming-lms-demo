@@ -160,8 +160,10 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                   placeholder='Nhập tên field (VD: diem_so, nhan_xet)...'
                   value={newFieldName}
                   onChange={(e) => setNewFieldName(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && newFieldName.trim() && addField()}
-                  className={!newFieldName.trim() ? 'border-red-300' : ''}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" && newFieldName.trim() && addField()
+                  }
+                  className={!newFieldName.trim() ? "border-red-300" : ""}
                 />
               </div>
               <Button
@@ -175,7 +177,10 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
             </div>
             {!newFieldName.trim() && (
               <p className='text-xs text-red-600 font-medium flex items-center gap-1'>
-                <span>Vui lòng nhập tên field trước khi thêm. Tên field không được để trống.</span>
+                <span>
+                  Vui lòng nhập tên field trước khi thêm. Tên field không được
+                  để trống.
+                </span>
               </p>
             )}
           </div>
