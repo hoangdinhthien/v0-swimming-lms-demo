@@ -7,6 +7,7 @@ export interface DataReviewRecord {
   data?: any;
   method?: string[];
   status?: string[];
+  note?: string;
   created_at?: string;
   created_by?: any;
   updated_at?: string;
@@ -80,4 +81,48 @@ export async function fetchDataReviewList({
   }
 
   return { documents, count };
+}
+
+export async function updateDataReviewStatus({
+  id,
+  service,
+  tenantId,
+  token,
+  status,
+  note,
+}: {
+  id: string;
+  service: string;
+  tenantId: string;
+  token: string;
+  status: "approved" | "rejected";
+  note?: string;
+}): Promise<void> {
+  if (!tenantId || !token) throw new Error("Missing tenantId or token");
+
+  const url = `${config.API}/v1/workflow-process/manager/data-review?id=${id}`;
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "x-tenant-id": String(tenantId),
+      Authorization: `Bearer ${String(token)}`,
+      "Content-Type": "application/json",
+      service: service, // IMPORTANT: service header is required for PUT method
+    },
+    body: JSON.stringify({
+      status: [status],
+      note: note || "",
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("updateDataReviewStatus error", res.status, text);
+    throw new Error(
+      status === "approved"
+        ? "Không thể phê duyệt yêu cầu"
+        : "Không thể từ chối yêu cầu"
+    );
+  }
 }

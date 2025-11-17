@@ -43,37 +43,37 @@ import * as z from "zod";
 
 // Form schema for validation
 const courseFormSchema = z.object({
-  title: z.string().min(1, "⚠️ Tên khóa học không được để trống"),
-  description: z.string().min(1, "⚠️ Mô tả khóa học không được để trống"),
+  title: z.string().min(1, " Tên khóa học không được để trống"),
+  description: z.string().min(1, " Mô tả khóa học không được để trống"),
   session_number: z.coerce
     .number({
-      required_error: "⚠️ Vui lòng nhập số buổi học",
-      invalid_type_error: "⚠️ Số buổi học phải là số nguyên dương",
+      required_error: " Vui lòng nhập số buổi học",
+      invalid_type_error: " Số buổi học phải là số nguyên dương",
     })
-    .int("⚠️ Số buổi học phải là số nguyên")
-    .positive("⚠️ Số buổi học phải lớn hơn 0"),
+    .int(" Số buổi học phải là số nguyên")
+    .positive(" Số buổi học phải lớn hơn 0"),
   session_number_duration: z
     .string()
-    .min(1, "⚠️ Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
+    .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
   detail: z
     .array(
       z.object({
-        title: z.string().min(1, "⚠️ Tiêu đề nội dung không được để trống"),
-        description: z.string().min(1, "⚠️ Mô tả nội dung không được để trống"),
+        title: z.string().min(1, " Tiêu đề nội dung không được để trống"),
+        description: z.string().min(1, " Mô tả nội dung không được để trống"),
       })
     )
-    .min(1, "⚠️ Vui lòng thêm ít nhất 1 nội dung chi tiết cho khóa học"),
+    .min(1, " Vui lòng thêm ít nhất 1 nội dung chi tiết cho khóa học"),
   category: z
     .array(z.string())
-    .min(1, "⚠️ Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
+    .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
   is_active: z.boolean().default(false),
   price: z.coerce
     .number({
-      required_error: "⚠️ Vui lòng nhập giá khóa học",
-      invalid_type_error: "⚠️ Giá khóa học phải là số",
+      required_error: " Vui lòng nhập giá khóa học",
+      invalid_type_error: " Giá khóa học phải là số",
     })
-    .int("⚠️ Giá khóa học phải là số nguyên")
-    .nonnegative("⚠️ Giá khóa học không được là số âm"),
+    .int(" Giá khóa học phải là số nguyên")
+    .nonnegative(" Giá khóa học không được là số âm"),
   media: z.array(z.string()).optional(),
 });
 

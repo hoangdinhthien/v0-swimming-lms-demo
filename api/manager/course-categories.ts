@@ -1,4 +1,5 @@
 import config from "../config.json";
+import { getUserFrontendRole } from "../role-utils";
 
 export interface CourseCategory {
   _id: string;
@@ -57,6 +58,11 @@ export async function fetchAllCourseCategories({
     headers.Authorization = `Bearer ${token}`;
   }
 
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/course-category`,
     {
@@ -96,15 +102,22 @@ export async function createCourseCategory({
     throw new Error("Missing required fields: title, tenantId, or token");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/course-category`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify({ title, is_active }),
     }
   );
@@ -143,15 +156,22 @@ export async function updateCourseCategory({
     requestBody.is_active = is_active;
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/course-category?id=${categoryId}`,
     {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify(requestBody),
     }
   );
@@ -181,14 +201,21 @@ export async function deleteCourseCategory({
     throw new Error("Missing required fields");
   }
 
+  const headers: Record<string, string> = {
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Course";
+  }
+
   const res = await fetch(
     `${config.API}/v1/workflow-process/manager/course-category?id=${categoryId}`,
     {
       method: "DELETE",
-      headers: {
-        "x-tenant-id": tenantId,
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     }
   );
 

@@ -718,9 +718,7 @@ export default function ClassDetailPage() {
           <div className='text-center space-y-6 max-w-md'>
             <div className='relative'>
               <div className='absolute inset-0 rounded-full bg-destructive/20 opacity-20 blur-xl'></div>
-              <div className='relative h-16 w-16 mx-auto bg-destructive rounded-full flex items-center justify-center'>
-                <span className='text-2xl'>⚠️</span>
-              </div>
+              <div className='relative h-16 w-16 mx-auto bg-destructive rounded-full flex items-center justify-center'></div>
             </div>
             <div className='space-y-4'>
               <h3 className='text-xl font-semibold text-destructive'>
@@ -1596,7 +1594,7 @@ export default function ClassDetailPage() {
                     classData.sessions_remaining > 0 && (
                       <div className='bg-muted p-3 rounded-lg border'>
                         <p className='text-sm text-muted-foreground font-medium'>
-                          ⚠️ Còn thiếu
+                          Còn thiếu
                         </p>
                         <p className='text-xl font-bold'>
                           {classData.sessions_remaining} buổi

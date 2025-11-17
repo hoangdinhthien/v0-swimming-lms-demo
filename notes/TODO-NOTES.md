@@ -13,80 +13,23 @@
 
 ### **classes**
 
-- `search[name:contains]`
-- `search[course.title:contains]`
-- `search[instructor.username:contains]`
-- `search[instructor.email:contains]`
+- `searchOr[name:contains]=Lớp moibile&searchOr[course.title:contains]=Lớp moibile&searchOr[instructor.username:contains]=Lớp moibile&searchOr[instructor.email:contains]=Lớp moibile`
+
+(`searchOr[name%3Acontains]=L%E1%BB%9Bp%20moibile&searchOr[course.title%3Acontains]=L%E1%BB%9Bp%20moibile&searchOr[instructor.username%3Acontains]=L%E1%BB%9Bp%20moibile&searchOr[instructor.email%3Acontains]=L%E1%BB%9Bp%20moibile`)
 
 ### **pools**
 
-- `search[title:contains]`
+- `searchOr[title:contains]`
 
 ### **news**
 
-- `search[title:contains]`
+- `searchOr[title:contains]`
 
 ### **application-types**
 
-- `search[title:contains]`
+- `searchOr[title:contains]`
 
 ### **orders**
 
-- `search[course.title:contains]`
-- `search[user.username:contains]`
-
-sửa lại thành searchOr&searchOr
-formjudge: string number boolean select relation
-
-- form_judge này khá là đặc biệt.
-- logic nghiệp vụ: bên UI khi manager/staff tạo mới/chỉnh sửa 1 khóa học. trong phần nội dung khóa học khi manager/staff tạo mới/chỉnh sửa thông tin cho MỖI NỘI DUNG CỦA KHÓA HỌC(field 'detail'), manager/staff có thể thêm/chỉnh sửa 1 field tên là 'form_judge'. field 'form_judge' này sẽ chứa các thông tin để cho instructor(giáo viên/giảng viên) có thể dùng để đánh giá các học viên cho từng buổi học, và các thông tin trong 'form_judge' này sẽ không phải là cố định mà manager/staff sẽ tự tạo/thiết kể riêng cho từng nội dung của mỗi khóa học. nghĩa là khi tạo/sửa nội dung ('detail') cho khóa học, field 'form_judge' sẽ chứa 1 đoạn json schema do manager setup trên UI sau đó lưu lại và send về backend như thế này:
-  "detail": [
-  {
-  "title": "Khởi động và làm quen với nước",
-  "description": "Các bài tập nhẹ nhàng làm nóng cơ thể, hướng dẫn kỹ thuật thở và di chuyển cơ bản trong nước.",
-  "form_judge": {
-  "type": "object", //default
-  "items": {
-  "zxcv": {
-  "type": "string",
-  "required": true,
-  "is_filter": true,
-  "text_type": "long_text",
-  "dependencies": []
-  },
-  "ZXcZXc": {
-  "type": "number",
-  "required": true,
-  "is_filter": true,
-  "is_array": true,
-  "min_array_lenght": 1,
-  "max_array_lenght": 5,
-  "dependencies": []
-  }
-  }
-  }
-  },
-  {
-  "title": "Bài tập tăng cường cơ bắp chân và giữ thăng bằng",
-  "description": "Thực hiện các bước đi trong nước, nâng đầu gối và đứng một chân có hỗ trợ để tăng cường cơ bắp chân và cải thiện khả năng giữ thăng bằng, giúp giảm nguy cơ té ngã.",
-  "form_judge": {
-  "type": "object", //default
-  "items": {
-  "ZXCZXC": { // field name || title
-  "type": "string",
-  "required": false,
-  "is_filter": false,
-  "text_type": "long_text"
-  },
-  "zxcvxzcv": {
-  "type": "string",
-  "required": false,
-  "is_filter": false,
-  "text_type": "long_text"
-  }
-  }
-  }
-  }
-  ]
-- đó là lý do tại sao tôi nói các thông tin trong 'form_judge' này sẽ không phải là cố định mà manager/staff sẽ tự tạo/thiết kể riêng cho từng nội dung của mỗi khóa học.
-- NÓI TÓM LẠI LÀ KHI MANAGER/STAFF TẠO MỚI/CHỈNH SỬA 'detail' CHO 1 KHÓA HỌC, TRONG 'detail' CÓ FIELD 'form_judge', FIELD NÀY SẼ LÀ DO MANAGER/STAFF TỰ NGHĨ RA LÀ THIẾT KẾ SAO CHO HỢP LÝ
+- `searchOr[course.title:contains]=Khoá học bơi dành cho trẻ mới bắt đầu&searchOr[user.username:contains]=Khoá học bơi dành cho trẻ mới bắt đầu`
+  (`searchOr[course.title%3Acontains]=Kho%C3%A1%20h%E1%BB%8Dc%20b%C6%A1i%20d%C3%A0nh%20cho%20tr%E1%BA%BB%20m%E1%BB%9Bi%20b%E1%BA%AFt%20%C4%91%E1%BA%A7u&searchOr[user.username%3Acontains]=Kho%C3%A1%20h%E1%BB%8Dc%20b%C6%A1i%20d%C3%A0nh%20cho%20tr%E1%BA%BB%20m%E1%BB%9Bi%20b%E1%BA%AFt%20%C4%91%E1%BA%A7u`)
