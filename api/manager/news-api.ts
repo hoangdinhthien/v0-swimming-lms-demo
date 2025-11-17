@@ -75,7 +75,7 @@ export async function getNews(searchParams?: Record<string, string>) {
   try {
     // Build query string with search parameters
     let url = `${config.API}/v1/workflow-process/manager/news`;
-    
+
     if (searchParams) {
       const queryParams = new URLSearchParams(searchParams);
       url += `?${queryParams.toString()}`;

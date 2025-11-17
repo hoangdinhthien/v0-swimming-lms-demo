@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Mail,
-  Loader2,
-  RefreshCw,
-  FileText,
-} from "lucide-react";
+import { ArrowLeft, Mail, Loader2, RefreshCw, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,18 +105,20 @@ export default function ApplicationsPage() {
     (app) =>
       !app.status ||
       app.status.length === 0 ||
-      app.status.some((s) =>
-        s.toLowerCase().includes("pending") || s.toLowerCase().includes("chờ")
+      app.status.some(
+        (s) =>
+          s.toLowerCase().includes("pending") || s.toLowerCase().includes("chờ")
       )
   ).length;
 
   const approvedCount = applications.filter(
     (app) =>
       app.status &&
-      app.status.some((s) =>
-        s.toLowerCase().includes("approved") ||
-        s.toLowerCase().includes("duyệt") ||
-        s.toLowerCase().includes("đồng ý")
+      app.status.some(
+        (s) =>
+          s.toLowerCase().includes("approved") ||
+          s.toLowerCase().includes("duyệt") ||
+          s.toLowerCase().includes("đồng ý")
       )
   ).length;
 
@@ -159,8 +155,14 @@ export default function ApplicationsPage() {
   return (
     <>
       <div className='mb-6'>
-        <Button variant='ghost' asChild>
-          <a href='/dashboard/manager' className='inline-flex items-center text-sm font-medium'>
+        <Button
+          variant='ghost'
+          asChild
+        >
+          <a
+            href='/dashboard/manager'
+            className='inline-flex items-center text-sm font-medium'
+          >
             <ArrowLeft className='mr-1 h-4 w-4' />
             Quay lại Dashboard
           </a>
@@ -199,9 +201,7 @@ export default function ApplicationsPage() {
               <FileText className='h-8 w-8 text-primary' />
               <div className='text-2xl font-bold'>{applications.length}</div>
             </div>
-            <p className='text-xs text-muted-foreground'>
-              Tổng số đơn đăng ký
-            </p>
+            <p className='text-xs text-muted-foreground'>Tổng số đơn đăng ký</p>
           </CardContent>
         </Card>
 
@@ -211,9 +211,7 @@ export default function ApplicationsPage() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{pendingCount}</div>
-            <p className='text-xs text-muted-foreground'>
-              Đơn chờ phê duyệt
-            </p>
+            <p className='text-xs text-muted-foreground'>Đơn chờ phê duyệt</p>
           </CardContent>
         </Card>
 
@@ -239,8 +237,8 @@ export default function ApplicationsPage() {
           <DataTable
             columns={columns}
             data={applications}
-            searchKey="title"
-            searchPlaceholder="Tìm kiếm theo tiêu đề..."
+            searchKey='title'
+            searchPlaceholder='Tìm kiếm theo tiêu đề...'
             onServerSearch={handleServerSearch}
             filterOptions={[
               {
@@ -253,7 +251,7 @@ export default function ApplicationsPage() {
                 ],
               },
             ]}
-            emptyMessage="Không tìm thấy đơn đăng ký nào."
+            emptyMessage='Không tìm thấy đơn đăng ký nào.'
           />
         </CardContent>
       </Card>

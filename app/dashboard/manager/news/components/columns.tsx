@@ -172,7 +172,7 @@ export const createColumns = (
       const newsId = row.original._id;
       return (
         <div className='flex flex-col gap-1'>
-          <Link 
+          <Link
             href={`/dashboard/manager/news/${newsId}`}
             className='font-medium hover:text-primary hover:underline transition-colors max-w-[300px] truncate block'
           >

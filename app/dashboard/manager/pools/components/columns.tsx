@@ -124,7 +124,7 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       return (
-        <Link 
+        <Link
           href={`/dashboard/manager/pools/${row.original._id}`}
           className='font-medium hover:text-primary hover:underline transition-colors block'
         >

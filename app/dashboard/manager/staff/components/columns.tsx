@@ -206,15 +206,15 @@ export const columns: ColumnDef<Staff>[] = [
       return (
         <>
           <Button
-            variant="ghost"
-            size="sm"
+            variant='ghost'
+            size='sm'
             onClick={(e) => {
               e.stopPropagation();
               setIsModalOpen(true);
             }}
-            className="h-8 w-8 p-0"
+            className='h-8 w-8 p-0'
           >
-            <Settings className="h-4 w-4" />
+            <Settings className='h-4 w-4' />
           </Button>
           <StaffPermissionModal
             open={isModalOpen}

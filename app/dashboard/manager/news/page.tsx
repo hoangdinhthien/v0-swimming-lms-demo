@@ -67,16 +67,16 @@ export default function NewsListPage() {
       } else if (searchValue !== undefined) {
         setIsSearching(true);
       }
-      
+
       let searchParams: Record<string, string> | undefined;
-      
+
       if (searchValue && searchValue.trim()) {
         // Use Find-common search pattern: search[field:operator]=value
         searchParams = {
           "search[title:contains]": searchValue.trim(),
         };
       }
-      
+
       const news = await getNews(searchParams);
       setNewsItems(news);
     } catch (error) {

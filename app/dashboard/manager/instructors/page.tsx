@@ -16,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   fetchInstructorDetail,
-  fetchInstructors
+  fetchInstructors,
 } from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
@@ -304,7 +304,7 @@ export default function InstructorsPage() {
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
-      
+
       if (!tenantId || !token) {
         throw new Error("Missing tenant or token");
       }
