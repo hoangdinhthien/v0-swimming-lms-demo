@@ -864,39 +864,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                           {(fieldConfig.min !== undefined ||
                                             fieldConfig.max !== undefined) && (
                                             <div>
-                                              Range: {fieldConfig.min ?? "N/A"}{" "}
+                                              📏 Range: {fieldConfig.min ?? "N/A"}{" "}
                                               - {fieldConfig.max ?? "N/A"}
                                             </div>
                                           )}
-                                          {fieldConfig.dependencies &&
-                                            fieldConfig.dependencies.length >
-                                              0 && (
-                                              <div className='mt-1.5 pt-1.5 border-t'>
-                                                <span className='font-medium'>
-                                                  ⚡ Dependencies:
-                                                </span>
-                                                {fieldConfig.dependencies.map(
-                                                  (
-                                                    dep: any,
-                                                    depIdx: number
-                                                  ) => (
-                                                    <div
-                                                      key={depIdx}
-                                                      className='ml-2 mt-0.5'
-                                                    >
-                                                      • Hiện khi{" "}
-                                                      <strong>
-                                                        {dep.field}
-                                                      </strong>{" "}
-                                                      ={" "}
-                                                      <code className='bg-muted px-1 rounded'>
-                                                        {dep.value}
-                                                      </code>
-                                                    </div>
-                                                  )
-                                                )}
-                                              </div>
-                                            )}
+                                          {/* REMOVED: Dependencies display - not needed anymore */}
                                         </div>
                                       </div>
                                     )

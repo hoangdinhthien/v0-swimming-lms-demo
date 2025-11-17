@@ -46,9 +46,8 @@ export interface FormJudgeField {
   // For relation type
   entity?: string;
   relation_type?: "1-1" | "1-n" | "n-n";
-  query_search?: string;
-  // Dependencies
-  dependencies?: Array<{ field: string; value: string }>;
+  // REMOVED: query_search - not needed
+  // REMOVED: dependencies - not needed
 }
 
 export interface FormJudgeSchema {
@@ -94,7 +93,7 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
           required: false,
           is_filter: false,
           text_type: "short_text" as const,
-          dependencies: [],
+          // REMOVED: dependencies - not needed
         },
       },
     };
@@ -154,20 +153,31 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
         </CardHeader>
         <CardContent className='space-y-4'>
           {/* Add new field */}
-          <div className='flex gap-2'>
-            <Input
-              placeholder='Nhập tên field (VD: diem_so, nhan_xet)...'
-              value={newFieldName}
-              onChange={(e) => setNewFieldName(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addField()}
-            />
-            <Button
-              onClick={addField}
-              size='sm'
-            >
-              <Plus className='h-4 w-4 mr-1' />
-              Thêm Field
-            </Button>
+          <div className='space-y-2'>
+            <div className='flex gap-2'>
+              <div className='flex-1'>
+                <Input
+                  placeholder='Nhập tên field (VD: diem_so, nhan_xet)...'
+                  value={newFieldName}
+                  onChange={(e) => setNewFieldName(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && newFieldName.trim() && addField()}
+                  className={!newFieldName.trim() ? 'border-red-300' : ''}
+                />
+              </div>
+              <Button
+                onClick={addField}
+                size='sm'
+                disabled={!newFieldName.trim()}
+              >
+                <Plus className='h-4 w-4 mr-1' />
+                Thêm Field
+              </Button>
+            </div>
+            {!newFieldName.trim() && (
+              <p className='text-xs text-red-600 font-medium flex items-center gap-1'>
+                <span>Vui lòng nhập tên field trước khi thêm. Tên field không được để trống.</span>
+              </p>
+            )}
           </div>
 
           {/* List of fields */}
@@ -233,8 +243,8 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                           }
                         />
 
-                        {/* Dependencies Configuration */}
-                        <FormJudgeDependencyConfig
+                        {/* TEMPORARILY DISABLED: Dependencies Configuration */}
+                        {/* <FormJudgeDependencyConfig
                           fieldName={fieldName}
                           dependencies={field.dependencies || []}
                           availableFields={allFieldNames.filter(
@@ -248,7 +258,7 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                               dependencies: newDeps,
                             })
                           }
-                        />
+                        /> */}
                       </CardContent>
                     )}
                   </Card>

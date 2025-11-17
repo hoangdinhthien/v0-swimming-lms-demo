@@ -42,7 +42,7 @@ export function FormJudgeFieldConfig({
               type: value,
               required: field.required,
               is_filter: field.is_filter,
-              dependencies: field.dependencies || [],
+              // REMOVED: dependencies - not needed
             };
 
             // Add type-specific defaults
@@ -57,9 +57,9 @@ export function FormJudgeFieldConfig({
             } else if (value === "select") {
               baseField.select_values = "Option 1:option1,Option 2:option2";
             } else if (value === "relation") {
-              baseField.entity = "";
+              baseField.entity = "media"; // Default to media
               baseField.relation_type = "1-1";
-              baseField.query_search = "";
+              // REMOVED: query_search - not needed
             }
 
             onChange(baseField);
@@ -290,11 +290,20 @@ export function FormJudgeFieldConfig({
         <div className='space-y-4'>
           <div className='space-y-2'>
             <Label>Entity (Bảng liên kết)</Label>
-            <Input
-              placeholder='VD: students, courses...'
-              value={field.entity || ""}
-              onChange={(e) => updateField({ entity: e.target.value })}
-            />
+            <Select
+              value={field.entity || "media"}
+              onValueChange={(value) => updateField({ entity: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder='Chọn entity...' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='media'>Media (Hình ảnh/File)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className='text-xs text-muted-foreground'>
+              Hiện tại chỉ hỗ trợ liên kết với Media
+            </p>
           </div>
 
           <div className='space-y-2'>
@@ -316,7 +325,8 @@ export function FormJudgeFieldConfig({
             </Select>
           </div>
 
-          <div className='space-y-2'>
+          {/* TEMPORARILY DISABLED: Query Search */}
+          {/* <div className='space-y-2'>
             <Label>Query Search (Tùy chọn)</Label>
             <Input
               placeholder='VD: example[query]search'
@@ -326,7 +336,7 @@ export function FormJudgeFieldConfig({
             <p className='text-xs text-muted-foreground'>
               Query tìm kiếm tùy chỉnh khi load dữ liệu liên kết
             </p>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

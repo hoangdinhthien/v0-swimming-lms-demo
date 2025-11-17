@@ -26,6 +26,14 @@ FIX:
 - làm phần certifcate: vô bảng certificate review, cái đó là cái frame thôi nha fe lấy thông tin user hiện ra
 - làm phần learning path
 - sửa find common: searchOr
+- sửa form judge & trang create course: 
+  . sửa lại thông báo chưa nhập thông tin các field của course
+  . thêm text đỏ thông báo hoặc thêm text hướng dẫn manager phải nhập tên field trước mới có thể click vào nút thêm field
+  . loại field relation: ở phần chọn entity để select và để value là 'media'
+  . tạm thời (không phải xóa) comment lại field Query Search (Tùy chọn) và Dependencies (Điều kiện hiển thị), tạm thời không cần sử dụng tới
+  
+
+
 
 ==========================================================
 
