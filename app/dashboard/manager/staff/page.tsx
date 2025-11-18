@@ -262,6 +262,12 @@ export default function StaffPage() {
             />
             Làm mới
           </Button>
+          <Link href='/dashboard/manager/staff/new'>
+            <Button>
+              <Users className='mr-2 h-4 w-4' />
+              Thêm nhân viên mới
+            </Button>
+          </Link>
         </div>
       </div>
 
