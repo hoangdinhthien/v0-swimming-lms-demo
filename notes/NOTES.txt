@@ -1,15 +1,14 @@
 NOTES:
 
 FIX UI:
-- thêm loading cho những trang còn thiếu: 
-  . 
+
 - thêm logic button 'Thêm vào lớp học' trang manager/student detail, xài api add-student (check xem có order hay ch)
 
 - thêm logic button 'Phân công lớp học mới' trang manager/instructor detail
 
 - thêm logic button 'Xem lịch dạy' trang manager/instructor detail
 
-- sửa find common: searchOr
+- sửa find common: searchOr (done classes & orders)
 
 - sửa lại lịch & thêm auto xếp lịch trong lịch (fix lại auto xếp lịch), thêm thông báo/notes rằng hồ bơi quá tải
 

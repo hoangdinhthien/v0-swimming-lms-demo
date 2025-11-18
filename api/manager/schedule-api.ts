@@ -98,10 +98,24 @@ export interface ScheduleEvent {
   instructor?: Instructor; // Optional instructor object
 }
 
+export interface PoolOverflowWarning {
+  totalMembers: number;
+  poolCapacity: number;
+  overCapacity: number;
+  date: string;
+  slot: Slot;
+  pool: Pool;
+}
+
 export interface ScheduleApiResponse {
   data: ScheduleEvent[][][];
   message: string;
   statusCode: number;
+}
+
+export interface ScheduleDataResult {
+  events: ScheduleEvent[];
+  poolOverflowWarnings: PoolOverflowWarning[];
 }
 
 // Parameters for fetching schedule data
@@ -116,11 +130,11 @@ export interface FetchScheduleParams {
 /**
  * Fetch schedule data from the API
  * @param params - The parameters for fetching schedule data
- * @returns Promise with the flattened schedule events
+ * @returns Promise with the flattened schedule events and pool overflow warnings
  */
 export const fetchScheduleData = async (
   params: FetchScheduleParams
-): Promise<ScheduleEvent[]> => {
+): Promise<ScheduleDataResult> => {
   const { startDate, endDate, tenantId, token } = params;
   const { service } = params;
 
@@ -159,21 +173,29 @@ export const fetchScheduleData = async (
 
   const result: ScheduleApiResponse = await response.json();
 
-  // The API returns nested arrays, so we need to flatten them
+  // The API returns nested arrays: data[0][0] = events, data[0][1] = pool overflow warnings
   const flattenedEvents: ScheduleEvent[] = [];
+  const poolOverflowWarnings: PoolOverflowWarning[] = [];
+
   if (result.data && Array.isArray(result.data)) {
     result.data.forEach((outerArray: any) => {
       if (Array.isArray(outerArray)) {
-        outerArray.forEach((innerArray: any) => {
-          if (Array.isArray(innerArray)) {
-            flattenedEvents.push(...innerArray);
-          }
-        });
+        // First array [0] contains schedule events
+        if (outerArray[0] && Array.isArray(outerArray[0])) {
+          flattenedEvents.push(...outerArray[0]);
+        }
+        // Second array [1] contains pool overflow warnings (only if pools exceed capacity)
+        if (outerArray[1] && Array.isArray(outerArray[1])) {
+          poolOverflowWarnings.push(...outerArray[1]);
+        }
       }
     });
   }
 
-  return flattenedEvents;
+  return {
+    events: flattenedEvents,
+    poolOverflowWarnings,
+  };
 };
 
 /**
@@ -181,14 +203,14 @@ export const fetchScheduleData = async (
  * @param date - Any date within the month to fetch
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
- * @returns Promise with schedule events for the month
+ * @returns Promise with schedule events and pool overflow warnings for the month
  */
 export const fetchMonthSchedule = async (
   date: Date,
   tenantId?: string,
   token?: string,
   service?: string
-): Promise<ScheduleEvent[]> => {
+): Promise<ScheduleDataResult> => {
   // Get the first and last day of the month
   const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
   const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -208,7 +230,7 @@ export const fetchMonthSchedule = async (
  * @param endDate - End date
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
- * @returns Promise with schedule events for the date range
+ * @returns Promise with schedule events and pool overflow warnings for the date range
  */
 export const fetchDateRangeSchedule = async (
   startDate: Date,
@@ -216,7 +238,7 @@ export const fetchDateRangeSchedule = async (
   tenantId?: string,
   token?: string,
   service?: string
-): Promise<ScheduleEvent[]> => {
+): Promise<ScheduleDataResult> => {
   return fetchScheduleData({
     startDate,
     endDate,
@@ -391,13 +413,14 @@ export const getWeeksInYear = (date: Date) => {
  * @param date - Any date within the week to fetch
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
- * @returns Promise with schedule events for the week
+ * @returns Promise with schedule events and pool overflow warnings for the week
  */
 export const fetchWeekSchedule = async (
   date: Date,
   tenantId?: string,
-  token?: string
-): Promise<ScheduleEvent[]> => {
+  token?: string,
+  service?: string
+): Promise<ScheduleDataResult> => {
   const weekStart = getWeekStart(date);
   const weekEnd = getWeekEnd(date);
   return fetchScheduleData({
@@ -405,6 +428,7 @@ export const fetchWeekSchedule = async (
     endDate: weekEnd,
     tenantId,
     token,
+    service,
   });
 };
 
@@ -441,7 +465,7 @@ export const fetchScheduleById = async (
   scheduleId: string,
   tenantId?: string,
   token?: string
-): Promise<ScheduleEvent[]> => {
+): Promise<ScheduleDataResult> => {
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
   const finalToken = token || getAuthToken();
@@ -468,21 +492,29 @@ export const fetchScheduleById = async (
 
   const result: ScheduleApiResponse = await response.json();
 
-  // The API returns nested arrays, so we need to flatten them
+  // The API returns nested arrays: data[0][0] = events, data[0][1] = pool overflow warnings
   const flattenedEvents: ScheduleEvent[] = [];
+  const poolOverflowWarnings: PoolOverflowWarning[] = [];
+
   if (result.data && Array.isArray(result.data)) {
     result.data.forEach((outerArray: any) => {
       if (Array.isArray(outerArray)) {
-        outerArray.forEach((innerArray: any) => {
-          if (Array.isArray(innerArray)) {
-            flattenedEvents.push(...innerArray);
-          }
-        });
+        // First array [0] contains schedule events
+        if (outerArray[0] && Array.isArray(outerArray[0])) {
+          flattenedEvents.push(...outerArray[0]);
+        }
+        // Second array [1] contains pool overflow warnings (only if pools exceed capacity)
+        if (outerArray[1] && Array.isArray(outerArray[1])) {
+          poolOverflowWarnings.push(...outerArray[1]);
+        }
       }
     });
   }
 
-  return flattenedEvents;
+  return {
+    events: flattenedEvents,
+    poolOverflowWarnings,
+  };
 };
 
 /**

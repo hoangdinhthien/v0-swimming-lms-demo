@@ -63,6 +63,7 @@ import {
   type ScheduleEvent,
   type Course,
   type Instructor as ScheduleInstructor,
+  type PoolOverflowWarning,
   convertApiDayToJsDay,
   convertJsDayToApiDay,
 } from "@/api/manager/schedule-api";
@@ -142,6 +143,10 @@ export default function ImprovedAntdCalendarPage() {
   const [currentDate, setCurrentDate] = useState<Dayjs>(dayjs());
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [poolOverflowWarnings, setPoolOverflowWarnings] = useState<
+    PoolOverflowWarning[]
+  >([]);
+  const [isAlertExpanded, setIsAlertExpanded] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -215,17 +220,18 @@ export default function ImprovedAntdCalendarPage() {
           currentDate.format("YYYY-MM-DD")
         );
         // If the current user is staff, the API requires a 'service: Schedule' header
-        const events = await fetchMonthSchedule(
+        const result = await fetchMonthSchedule(
           currentDate.toDate(),
           undefined,
           undefined,
           isStaff ? "Schedule" : undefined
         );
 
-        console.log(" Loaded schedule events:", {
-          count: events.length,
+        console.log(" Loaded schedule data:", {
+          eventsCount: result.events.length,
+          overflowWarningsCount: result.poolOverflowWarnings.length,
           currentDate: currentDate.format("YYYY-MM-DD"),
-          events: events.slice(0, 3).map((e) => ({
+          events: result.events.slice(0, 3).map((e) => ({
             id: e._id,
             date: e.date,
             slotTitle: e.slot?.title || "N/A",
@@ -233,16 +239,25 @@ export default function ImprovedAntdCalendarPage() {
           })),
         });
 
-        setScheduleEvents(events);
+        setScheduleEvents(result.events);
+        setPoolOverflowWarnings(result.poolOverflowWarnings);
+
+        // Show warning toast if there are pool capacity overflows
+        if (result.poolOverflowWarnings.length > 0) {
+          message.warning({
+            content: ` -  Có ${result.poolOverflowWarnings.length} hồ bơi vượt quá sức chứa!`,
+            duration: 5,
+          });
+        }
 
         // Log data structure for debugging
-        if (events.length > 0) {
+        if (result.events.length > 0) {
           console.log("📊 First event structure:", {
-            _id: events[0]._id,
-            date: events[0].date,
-            slot: events[0].slot,
-            classroom: events[0].classroom,
-            pool: events[0].pool,
+            _id: result.events[0]._id,
+            date: result.events[0].date,
+            slot: result.events[0].slot,
+            classroom: result.events[0].classroom,
+            pool: result.events[0].pool,
           });
         }
       } catch (err) {
@@ -483,15 +498,15 @@ export default function ImprovedAntdCalendarPage() {
       message.success(`Đã xóa lớp ${scheduleToDelete.className} khỏi lịch`);
 
       // Refresh data without changing page
-      const { isStaff: isStaff2 } = useStaffPermissions();
-      const events = await fetchMonthSchedule(
+      const result = await fetchMonthSchedule(
         currentDate.toDate(),
         undefined,
         undefined,
-        isStaff2 ? "Schedule" : undefined
+        isStaff ? "Schedule" : undefined
       );
 
-      setScheduleEvents(events);
+      setScheduleEvents(result.events);
+      setPoolOverflowWarnings(result.poolOverflowWarnings);
       setDeleteDialogOpen(false);
       setScheduleToDelete(null);
     } catch (err) {
@@ -710,14 +725,22 @@ export default function ImprovedAntdCalendarPage() {
       message.success("Đã thêm lớp học vào lịch thành công");
 
       // Refresh schedule data
-      const { isStaff: isStaff3 } = useStaffPermissions();
-      const events = await fetchMonthSchedule(
+      const result = await fetchMonthSchedule(
         currentDate.toDate(),
         undefined,
         undefined,
-        isStaff3 ? "Schedule" : undefined
+        isStaff ? "Schedule" : undefined
       );
-      setScheduleEvents(events);
+      setScheduleEvents(result.events);
+      setPoolOverflowWarnings(result.poolOverflowWarnings);
+
+      // Show warning if pools are over capacity
+      if (result.poolOverflowWarnings.length > 0) {
+        message.warning({
+          content: ` -  Có ${result.poolOverflowWarnings.length} hồ bơi vượt quá sức chứa!`,
+          duration: 5,
+        });
+      }
 
       // Reset form
       setClassManagementMode("view");
@@ -797,14 +820,23 @@ export default function ImprovedAntdCalendarPage() {
 
       // Refresh schedule data
       console.log("🔄 Refreshing schedule data...");
-      const events = await fetchMonthSchedule(
+      const result = await fetchMonthSchedule(
         currentDate.toDate(),
         undefined,
         undefined,
         isStaff ? "Schedule" : undefined
       );
-      setScheduleEvents(events);
+      setScheduleEvents(result.events);
+      setPoolOverflowWarnings(result.poolOverflowWarnings);
       console.log("✅ Schedule data refreshed");
+
+      // Show warning if pools are over capacity
+      if (result.poolOverflowWarnings.length > 0) {
+        message.warning({
+          content: ` -  Có ${result.poolOverflowWarnings.length} hồ bơi vượt quá sức chứa!`,
+          duration: 5,
+        });
+      }
 
       // Reset form
       setClassManagementMode("view");
@@ -875,6 +907,153 @@ export default function ImprovedAntdCalendarPage() {
   return (
     <ConfigProvider locale={locale}>
       <div className='container mx-auto py-8 space-y-6'>
+        {/* Pool Overflow Warning Alert */}
+        {poolOverflowWarnings.length > 0 && (
+          <Accordion
+            type='single'
+            collapsible
+            className='w-full mb-4'
+          >
+            <AccordionItem
+              value='pool-warnings'
+              className='border-0'
+            >
+              <AccordionTrigger className='px-6 py-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg hover:no-underline hover:bg-yellow-100 dark:hover:bg-yellow-900/30'>
+                <div className='flex items-center gap-3 w-full'>
+                  <div className='flex-1 text-left'>
+                    <span className='font-semibold text-yellow-800 dark:text-yellow-200'>
+                      Cảnh báo: Hồ bơi vượt sức chứa
+                    </span>
+                    <span className='text-sm text-yellow-700 dark:text-yellow-300 ml-2'>
+                      ({poolOverflowWarnings.length} cảnh báo)
+                    </span>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className='px-6 pb-4 pt-2 bg-yellow-50 dark:bg-yellow-900/20 border-x border-b border-yellow-200 dark:border-yellow-700 rounded-b-lg'>
+                <p className='text-sm text-yellow-700 dark:text-yellow-300 mb-4'>
+                  Các hồ bơi sau đang vượt quá sức chứa. Vui lòng xem xét điều
+                  chỉnh lịch học:
+                </p>
+
+                <div className='space-y-2'>
+                  {(() => {
+                    // Group warnings by pool ID with details
+                    const uniquePools = new Map<
+                      string,
+                      {
+                        pool: (typeof poolOverflowWarnings)[0]["pool"];
+                        maxOverCapacity: number;
+                        totalMembers: number;
+                        poolCapacity: number;
+                        details: Array<{
+                          date: string;
+                          slot: (typeof poolOverflowWarnings)[0]["slot"];
+                        }>;
+                      }
+                    >();
+
+                    poolOverflowWarnings.forEach((warning) => {
+                      const poolId = warning.pool._id;
+                      const existing = uniquePools.get(poolId);
+
+                      if (existing) {
+                        if (warning.overCapacity > existing.maxOverCapacity) {
+                          existing.maxOverCapacity = warning.overCapacity;
+                        }
+                        existing.details.push({
+                          date: warning.date,
+                          slot: warning.slot,
+                        });
+                      } else {
+                        uniquePools.set(poolId, {
+                          pool: warning.pool,
+                          maxOverCapacity: warning.overCapacity,
+                          totalMembers: warning.totalMembers,
+                          poolCapacity: warning.poolCapacity,
+                          details: [
+                            {
+                              date: warning.date,
+                              slot: warning.slot,
+                            },
+                          ],
+                        });
+                      }
+                    });
+
+                    return Array.from(uniquePools.values()).map(
+                      (poolData, index) => (
+                        <div
+                          key={poolData.pool._id}
+                          className='border rounded-lg overflow-hidden bg-white dark:bg-gray-800'
+                        >
+                          <div className='px-4 py-3 bg-yellow-100 dark:bg-yellow-900/30'>
+                            <div className='flex items-center justify-between'>
+                              <div className='flex-1'>
+                                <span className='font-semibold text-yellow-900 dark:text-yellow-100'>
+                                  {poolData.pool.title}
+                                </span>
+                                <span className='text-sm text-yellow-700 dark:text-yellow-300 ml-2'>
+                                  - Sức chứa: {poolData.poolCapacity}, Đang sử
+                                  dụng: {poolData.totalMembers}
+                                </span>
+                                <span className='text-red-600 dark:text-red-400 font-semibold ml-2'>
+                                  (Vượt {poolData.maxOverCapacity})
+                                </span>
+                              </div>
+                              <Tag
+                                color='orange'
+                                className='ml-2'
+                              >
+                                {poolData.details.length} khung giờ
+                              </Tag>
+                            </div>
+                          </div>
+                          <div className='px-4 py-3 bg-white dark:bg-gray-900'>
+                            <div className='space-y-2'>
+                              {poolData.details.map((detail, idx) => (
+                                <div
+                                  key={idx}
+                                  className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 py-2 px-3 rounded bg-gray-50 dark:bg-gray-800'
+                                >
+                                  <span className='font-medium'>
+                                    {dayjs(detail.date).format(
+                                      "DD/MM/YYYY (dddd)"
+                                    )}
+                                  </span>
+                                  <span className='text-gray-400'>-</span>
+                                  <span>
+                                    {detail.slot.title} (
+                                    {Math.floor(detail.slot.start_time)
+                                      .toString()
+                                      .padStart(2, "0")}
+                                    :
+                                    {detail.slot.start_minute
+                                      .toString()
+                                      .padStart(2, "0")}{" "}
+                                    -
+                                    {Math.floor(detail.slot.end_time)
+                                      .toString()
+                                      .padStart(2, "0")}
+                                    :
+                                    {detail.slot.end_minute
+                                      .toString()
+                                      .padStart(2, "0")}
+                                    )
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    );
+                  })()}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}{" "}
         {/* Statistics Cards */}
         {scheduleEvents.length > 0 && (
           <Row gutter={[16, 16]}>
@@ -945,7 +1124,6 @@ export default function ImprovedAntdCalendarPage() {
             </Col>
           </Row>
         )}
-
         {/* Main Calendar */}
         <AntdCard className='shadow-lg calendar-container'>
           <Calendar
@@ -955,7 +1133,6 @@ export default function ImprovedAntdCalendarPage() {
             cellRender={enhancedDateCellRender}
           />
         </AntdCard>
-
         {/* Date Details Drawer */}
         <Drawer
           title={
@@ -1415,16 +1592,40 @@ export default function ImprovedAntdCalendarPage() {
                                         showSearch
                                         optionFilterProp='children'
                                       >
-                                        {availablePools.map((pool) => (
-                                          <Option
-                                            key={pool._id}
-                                            value={pool._id}
-                                          >
-                                            {pool.title} ({pool.type}) - Sức
-                                            chứa: {pool.capacity}
-                                          </Option>
-                                        ))}
+                                        {availablePools.map((pool) => {
+                                          const isOverCapacity =
+                                            poolOverflowWarnings.some(
+                                              (w) => w.pool._id === pool._id
+                                            );
+                                          const warningInfo =
+                                            poolOverflowWarnings.find(
+                                              (w) => w.pool._id === pool._id
+                                            );
+                                          return (
+                                            <Option
+                                              key={pool._id}
+                                              value={pool._id}
+                                              disabled={isOverCapacity}
+                                            >
+                                              {pool.title} ({pool.type}) - Sức
+                                              chứa: {pool.capacity}
+                                              {isOverCapacity &&
+                                                warningInfo && (
+                                                  <span className='text-red-600 font-semibold'>
+                                                    {" "}
+                                                    - Vượt{" "}
+                                                    {warningInfo.overCapacity}
+                                                  </span>
+                                                )}
+                                            </Option>
+                                          );
+                                        })}
                                       </AntdSelect>
+                                      {/* {poolOverflowWarnings.length > 0 && (
+                                        <div className='text-xs text-yellow-600 mt-1'>
+                                          Có hồ bơi vượt sức chứa
+                                        </div>
+                                      )} */}
                                     </Form.Item>
 
                                     <Form.Item
@@ -1598,16 +1799,40 @@ export default function ImprovedAntdCalendarPage() {
                                         showSearch
                                         optionFilterProp='children'
                                       >
-                                        {availablePools.map((pool) => (
-                                          <Option
-                                            key={pool._id}
-                                            value={pool._id}
-                                          >
-                                            {pool.title} ({pool.type}) - Sức
-                                            chứa: {pool.capacity}
-                                          </Option>
-                                        ))}
+                                        {availablePools.map((pool) => {
+                                          const isOverCapacity =
+                                            poolOverflowWarnings.some(
+                                              (w) => w.pool._id === pool._id
+                                            );
+                                          const warningInfo =
+                                            poolOverflowWarnings.find(
+                                              (w) => w.pool._id === pool._id
+                                            );
+                                          return (
+                                            <Option
+                                              key={pool._id}
+                                              value={pool._id}
+                                              disabled={isOverCapacity}
+                                            >
+                                              {pool.title} ({pool.type}) - Sức
+                                              chứa: {pool.capacity}
+                                              {isOverCapacity &&
+                                                warningInfo && (
+                                                  <span className='text-red-600 font-semibold'>
+                                                    {" "}
+                                                    - Vượt{" "}
+                                                    {warningInfo.overCapacity}
+                                                  </span>
+                                                )}
+                                            </Option>
+                                          );
+                                        })}
                                       </AntdSelect>
+                                      {/* {poolOverflowWarnings.length > 0 && (
+                                        <div className='text-xs text-yellow-600 mt-1'>
+                                          Có hồ bơi vượt sức chứa
+                                        </div>
+                                      )} */}
                                     </Form.Item>
 
                                     <Form.Item
@@ -1696,7 +1921,6 @@ export default function ImprovedAntdCalendarPage() {
             )
           )}
         </Drawer>
-
         {/* Delete Confirmation Modal */}
         <Modal
           title={
@@ -1758,7 +1982,6 @@ export default function ImprovedAntdCalendarPage() {
             </div>
           )}
         </Modal>
-
         {/* Class Detail Modal */}
         <ClassDetailModal
           open={detailModalOpen}
