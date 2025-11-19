@@ -390,7 +390,7 @@ export default function DashboardLayout({
           >
             <Waves className='h-6 w-6 text-sky-500' />
             <span className='hidden md:inline-block'>
-              AquaLearn {isStaff ? "Staff" : "Manager"}
+              SCMP {isStaff ? "Staff" : "Manager"}
             </span>
           </Link>
         </nav>
@@ -416,7 +416,7 @@ export default function DashboardLayout({
                   className='flex items-center gap-2 font-semibold text-lg'
                 >
                   <Waves className='h-6 w-6 text-sky-500' />
-                  <span>AquaLearn</span>
+                  <span>SCMP</span>
                 </Link>
               </div>
 
@@ -925,7 +925,7 @@ export default function DashboardLayout({
                 <Waves className='h-3 w-3 text-primary' />
                 {!sidebarCollapsed && (
                   <>
-                    <span className='font-medium'>AquaLearn Manager</span>
+                    <span className='font-medium'>SCMP Manager</span>
                     <span className='text-muted-foreground/60'>v2.0</span>
                   </>
                 )}

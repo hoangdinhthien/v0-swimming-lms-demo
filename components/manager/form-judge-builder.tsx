@@ -145,25 +145,33 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
         <CardHeader>
           <CardTitle className='text-lg flex items-center gap-2'>
             <Settings2 className='h-5 w-5' />
-            Form Đánh Giá (Form Judge)
+            Biểu mẫu đánh giá học viên (Form Judge)
           </CardTitle>
           <p className='text-sm text-muted-foreground'>
-            Thiết kế form để giáo viên có thể đánh giá học viên cho nội dung này
+            Tạo các tiêu chí đánh giá cho giáo viên sử dụng khi đánh giá học
+            viên trong nội dung này
           </p>
         </CardHeader>
         <CardContent className='space-y-4'>
           {/* Add new field */}
           <div className='space-y-2'>
+            <Label className='text-sm font-semibold'>
+              Thêm tiêu chí đánh giá mới
+            </Label>
             <div className='flex gap-2'>
               <div className='flex-1'>
                 <Input
-                  placeholder='Nhập tên field (VD: diem_so, nhan_xet)...'
+                  placeholder='VD: diem_so, nhan_xet, ky_nang_boi...'
                   value={newFieldName}
                   onChange={(e) => setNewFieldName(e.target.value)}
                   onKeyPress={(e) =>
                     e.key === "Enter" && newFieldName.trim() && addField()
                   }
-                  className={!newFieldName.trim() ? "border-red-300" : ""}
+                  className={
+                    !newFieldName.trim()
+                      ? "border-red-300 focus-visible:ring-red-500"
+                      : ""
+                  }
                 />
               </div>
               <Button
@@ -172,42 +180,55 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                 disabled={!newFieldName.trim()}
               >
                 <Plus className='h-4 w-4 mr-1' />
-                Thêm Field
+                Thêm tiêu chí
               </Button>
             </div>
-            {!newFieldName.trim() && (
-              <p className='text-xs text-red-600 font-medium flex items-center gap-1'>
-                <span>
-                  Vui lòng nhập tên field trước khi thêm. Tên field không được
-                  để trống.
-                </span>
-              </p>
-            )}
+            <p className='text-xs text-muted-foreground'>
+              Tên tiêu chí nên viết liền không dấu, sử dụng dấu gạch dưới (_)
+              thay cho khoảng trắng
+            </p>
           </div>
 
           {/* List of fields */}
           {allFieldNames.length === 0 ? (
-            <div className='text-center py-8 text-muted-foreground'>
-              <p>Chưa có field nào. Thêm field đầu tiên để bắt đầu!</p>
+            <div className='text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg'>
+              <Settings2 className='h-12 w-12 mx-auto mb-3 opacity-50' />
+              <p className='font-medium'>Chưa có tiêu chí đánh giá nào</p>
+              <p className='text-xs mt-1'>
+                Thêm tiêu chí đầu tiên để bắt đầu tạo biểu mẫu đánh giá!
+              </p>
             </div>
           ) : (
             <div className='space-y-3'>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Danh sách tiêu chí đánh giá ({allFieldNames.length})
+              </p>
               {allFieldNames.map((fieldName) => {
                 const field = schema.items[fieldName];
                 const isExpanded = expandedFields.has(fieldName);
 
+                // Map field type to Vietnamese
+                const fieldTypeMap: Record<string, string> = {
+                  string: "Văn bản (Text)",
+                  number: "Số (Number)",
+                  boolean: "Có/Không (Yes/No)",
+                  select: "Chọn từ danh sách (Select)",
+                  relation: "Liên kết (Relation)",
+                };
+
                 return (
                   <Card
                     key={fieldName}
-                    className='border-2'
+                    className='border-2 hover:border-primary/50 transition-colors'
                   >
                     <CardHeader className='pb-3'>
                       <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
+                        <div className='flex items-center gap-2 flex-1'>
                           <Button
                             variant='ghost'
                             size='sm'
                             onClick={() => toggleFieldExpansion(fieldName)}
+                            className='hover:bg-muted'
                           >
                             {isExpanded ? (
                               <ChevronUp className='h-4 w-4' />
@@ -215,15 +236,32 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                               <ChevronDown className='h-4 w-4' />
                             )}
                           </Button>
-                          <div>
-                            <p className='font-semibold'>{fieldName}</p>
-                            <div className='flex gap-2 mt-1'>
-                              <Badge variant='outline'>{field.type}</Badge>
+                          <div className='flex-1'>
+                            <p className='font-semibold text-base'>
+                              {fieldName}
+                            </p>
+                            <div className='flex gap-2 mt-1 flex-wrap'>
+                              <Badge
+                                variant='outline'
+                                className='text-xs'
+                              >
+                                {fieldTypeMap[field.type] || field.type}
+                              </Badge>
                               {field.required && (
-                                <Badge variant='destructive'>Bắt buộc</Badge>
+                                <Badge
+                                  variant='destructive'
+                                  className='text-xs'
+                                >
+                                  Bắt buộc
+                                </Badge>
                               )}
                               {field.is_filter && (
-                                <Badge variant='secondary'>Filter</Badge>
+                                <Badge
+                                  variant='secondary'
+                                  className='text-xs'
+                                >
+                                  Dùng làm bộ lọc
+                                </Badge>
                               )}
                             </div>
                           </div>
@@ -232,6 +270,7 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                           variant='ghost'
                           size='sm'
                           onClick={() => removeField(fieldName)}
+                          className='hover:bg-destructive/10'
                         >
                           <Trash2 className='h-4 w-4 text-destructive' />
                         </Button>
@@ -275,10 +314,10 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
           {/* JSON Preview */}
           {allFieldNames.length > 0 && (
             <details className='mt-4'>
-              <summary className='cursor-pointer font-medium text-sm'>
-                Xem JSON Schema
+              <summary className='cursor-pointer font-medium text-sm text-muted-foreground hover:text-foreground transition-colors'>
+                Xem JSON Schema (Dành cho kỹ thuật viên)
               </summary>
-              <pre className='mt-2 p-4 bg-muted rounded-md text-xs overflow-auto max-h-64'>
+              <pre className='mt-2 p-4 bg-slate-950 text-green-400 rounded-md text-xs overflow-auto max-h-64 border'>
                 {JSON.stringify(schema, null, 2)}
               </pre>
             </details>

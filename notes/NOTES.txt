@@ -16,10 +16,8 @@ FIX UI:
 
 - làm phần data-review: xong manager, ch xong staff
 
-- mất nút tạo nhân viên
+- thêm select all trong quản lý học viên ==> done
 
-- thêm select all trong quản lý học viên
+- sửa form_judge lại cho user friendly, hiện tại đang quá kỹ thuật, thêm field mẫu sẵn ==> semi done
 
-- sửa form_judge lại cho user friendly, hiện tại đang quá kỹ thuật, thêm field mẫu sẵn
-
-- sửa lại searchOr trong order: đang không hiện lên UI
+- sửa lại searchOr trong order: đang không hiện lên UI => done

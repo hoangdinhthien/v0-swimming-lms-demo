@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "AquaLearn",
+  title: "SCMP",
   description: "Hệ thống quản lý học tập toàn diện cho việc dạy bơi",
   generator: "v0.dev",
   icons: {

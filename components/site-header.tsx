@@ -116,7 +116,7 @@ export default function SiteHeader() {
             }}
           >
             <Waves className='h-6 w-6 text-sky-500' />
-            <span>AquaLearn Manager</span>
+            <span>SCMP Manager</span>
           </Link>
         </div>
 

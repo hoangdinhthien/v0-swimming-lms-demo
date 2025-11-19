@@ -33,7 +33,7 @@ export function FormJudgeFieldConfig({
     <div className='space-y-4'>
       {/* Field Type Selection */}
       <div className='space-y-2'>
-        <Label>Loại Field</Label>
+        <Label>Loại dữ liệu (Field Type)</Label>
         <Select
           value={field.type}
           onValueChange={(value: FormJudgeField["type"]) => {
@@ -55,7 +55,8 @@ export function FormJudgeFieldConfig({
               baseField.min = 0;
               baseField.max = 100;
             } else if (value === "select") {
-              baseField.select_values = "Option 1:option1,Option 2:option2";
+              baseField.select_values =
+                "Lựa chọn 1:lua_chon_1,Lựa chọn 2:lua_chon_2,Lựa chọn 3:lua_chon_3";
             } else if (value === "relation") {
               baseField.entity = "media"; // Default to media
               baseField.relation_type = "1-1";
@@ -69,18 +70,20 @@ export function FormJudgeFieldConfig({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='string'>Text / String</SelectItem>
-            <SelectItem value='number'>Number</SelectItem>
-            <SelectItem value='boolean'>Boolean (Yes/No)</SelectItem>
-            <SelectItem value='select'>Select (Dropdown)</SelectItem>
-            <SelectItem value='relation'>Relation (Liên kết)</SelectItem>
+            <SelectItem value='string'>Văn bản (Text/String)</SelectItem>
+            <SelectItem value='number'>Số (Number)</SelectItem>
+            <SelectItem value='boolean'>Có/Không (Boolean)</SelectItem>
+            <SelectItem value='select'>Danh sách lựa chọn (Select)</SelectItem>
+            <SelectItem value='relation'>
+              Liên kết tập tin (Relation)
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Common Properties */}
-      <div className='grid grid-cols-2 gap-4'>
-        <div className='flex items-center space-x-2'>
+      <div className='space-y-3'>
+        <div className='flex items-center space-x-2 p-3 bg-muted/50 rounded-lg'>
           <Checkbox
             id={`${fieldName}-required`}
             checked={field.required}
@@ -88,9 +91,19 @@ export function FormJudgeFieldConfig({
               updateField({ required: checked as boolean })
             }
           />
-          <Label htmlFor={`${fieldName}-required`}>Bắt buộc</Label>
+          <div className='flex-1'>
+            <Label
+              htmlFor={`${fieldName}-required`}
+              className='font-medium cursor-pointer'
+            >
+              Bắt buộc phải điền (Required)
+            </Label>
+            <p className='text-xs text-muted-foreground mt-0.5'>
+              Giáo viên phải điền tiêu chí này khi đánh giá
+            </p>
+          </div>
         </div>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center space-x-2 p-3 bg-muted/50 rounded-lg'>
           <Checkbox
             id={`${fieldName}-filter`}
             checked={field.is_filter}
@@ -98,7 +111,17 @@ export function FormJudgeFieldConfig({
               updateField({ is_filter: checked as boolean })
             }
           />
-          <Label htmlFor={`${fieldName}-filter`}>Dùng làm Filter</Label>
+          <div className='flex-1'>
+            <Label
+              htmlFor={`${fieldName}-filter`}
+              className='font-medium cursor-pointer'
+            >
+              Dùng làm bộ lọc (Filter)
+            </Label>
+            <p className='text-xs text-muted-foreground mt-0.5'>
+              Có thể tìm kiếm/lọc đánh giá theo tiêu chí này
+            </p>
+          </div>
         </div>
       </div>
 
@@ -108,7 +131,7 @@ export function FormJudgeFieldConfig({
       {field.type === "string" && (
         <div className='space-y-4'>
           <div className='space-y-2'>
-            <Label>Loại Text</Label>
+            <Label>Kiểu nhập liệu</Label>
             <Select
               value={field.text_type || "short_text"}
               onValueChange={(value) =>
@@ -119,39 +142,52 @@ export function FormJudgeFieldConfig({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='short_text'>Text ngắn</SelectItem>
-                <SelectItem value='long_text'>Text dài (Textarea)</SelectItem>
+                <SelectItem value='short_text'>
+                  Văn bản ngắn (1 dòng)
+                </SelectItem>
+                <SelectItem value='long_text'>
+                  Văn bản dài (Nhiều dòng)
+                </SelectItem>
                 <SelectItem value='email'>Email</SelectItem>
-                <SelectItem value='url'>URL</SelectItem>
-                <SelectItem value='datetime'>Date & Time</SelectItem>
-                <SelectItem value='date'>Date</SelectItem>
-                <SelectItem value='time'>Time</SelectItem>
-                <SelectItem value='color'>Color</SelectItem>
-                <SelectItem value='html'>HTML</SelectItem>
+                <SelectItem value='url'>Đường dẫn web (URL)</SelectItem>
+                <SelectItem value='datetime'>Ngày giờ</SelectItem>
+                <SelectItem value='date'>Chỉ ngày</SelectItem>
+                <SelectItem value='time'>Chỉ giờ</SelectItem>
+                <SelectItem value='color'>Chọn màu</SelectItem>
+                <SelectItem value='html'>Soạn thảo văn bản (HTML)</SelectItem>
               </SelectContent>
             </Select>
+            <p className='text-xs text-muted-foreground'>
+              Chọn kiểu phù hợp với nội dung cần đánh giá
+            </p>
           </div>
 
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <Label>Số ký tự tối thiểu</Label>
+              <Label>Độ dài tối thiểu</Label>
               <Input
                 type='number'
                 value={field.min ?? 0}
                 onChange={(e) =>
                   updateField({ min: parseInt(e.target.value) || 0 })
                 }
+                placeholder='VD: 10'
               />
+              <p className='text-xs text-muted-foreground'>Số ký tự ít nhất</p>
             </div>
             <div className='space-y-2'>
-              <Label>Số ký tự tối đa</Label>
+              <Label>Độ dài tối đa</Label>
               <Input
                 type='number'
                 value={field.max ?? 100}
                 onChange={(e) =>
                   updateField({ max: parseInt(e.target.value) || 100 })
                 }
+                placeholder='VD: 500'
               />
+              <p className='text-xs text-muted-foreground'>
+                Số ký tự nhiều nhất
+              </p>
             </div>
           </div>
         </div>
@@ -159,7 +195,7 @@ export function FormJudgeFieldConfig({
 
       {field.type === "number" && (
         <div className='space-y-4'>
-          <div className='flex items-center space-x-2'>
+          <div className='flex items-center space-x-2 p-3 bg-muted/50 rounded-lg'>
             <Checkbox
               id={`${fieldName}-array`}
               checked={field.is_array || false}
@@ -180,7 +216,17 @@ export function FormJudgeFieldConfig({
                 }
               }}
             />
-            <Label htmlFor={`${fieldName}-array`}>Dạng mảng (Array)</Label>
+            <div className='flex-1'>
+              <Label
+                htmlFor={`${fieldName}-array`}
+                className='font-medium cursor-pointer'
+              >
+                Dạng mảng/nhiều giá trị (Array)
+              </Label>
+              <p className='text-xs text-muted-foreground mt-0.5'>
+                Cho phép nhập nhiều số thay vì chỉ một số
+              </p>
+            </div>
           </div>
 
           {field.is_array && (
@@ -239,75 +285,111 @@ export function FormJudgeFieldConfig({
 
           <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-              <Label>Giá trị tối thiểu</Label>
+              <Label>Giá trị nhỏ nhất</Label>
               <Input
                 type='number'
                 value={field.min ?? 0}
                 onChange={(e) =>
                   updateField({ min: parseInt(e.target.value) || 0 })
                 }
+                placeholder='VD: 0'
               />
+              <p className='text-xs text-muted-foreground'>
+                Số thấp nhất cho phép
+              </p>
             </div>
             <div className='space-y-2'>
-              <Label>Giá trị tối đa</Label>
+              <Label>Giá trị lớn nhất</Label>
               <Input
                 type='number'
                 value={field.max ?? 100}
                 onChange={(e) =>
                   updateField({ max: parseInt(e.target.value) || 100 })
                 }
+                placeholder='VD: 10'
               />
+              <p className='text-xs text-muted-foreground'>
+                Số cao nhất cho phép
+              </p>
             </div>
           </div>
         </div>
       )}
 
       {field.type === "boolean" && (
-        <div className='text-sm text-muted-foreground'>
-          <p>
-            Field Boolean sẽ hiển thị dạng checkbox (Yes/No hoặc True/False)
+        <div className='text-sm text-muted-foreground p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border-l-4 border-blue-500'>
+          <p className='font-medium text-blue-900 dark:text-blue-100 mb-2'>
+            Tiêu chí đánh giá dạng Đạt/Không đạt
+          </p>
+          <p className='text-blue-800 dark:text-blue-200'>
+            Giáo viên sẽ chỉ cần đánh dấu ✓ hoặc để trống. Thích hợp cho các
+            tiêu chí đơn giản như "Có tham gia đủ", "Hoàn thành bài tập", v.v.
           </p>
         </div>
       )}
 
       {field.type === "select" && (
         <div className='space-y-2'>
-          <Label>Danh sách Options</Label>
+          <Label>Danh sách lựa chọn</Label>
           <Input
-            placeholder='Label1:value1,Label2:value2,...'
+            placeholder='Xuất sắc:xuat_sac,Tốt:tot,Khá:kha,Trung bình:trung_binh'
             value={field.select_values || ""}
             onChange={(e) => updateField({ select_values: e.target.value })}
           />
-          <p className='text-xs text-muted-foreground'>
-            Định dạng: <code>Label:Value</code>, cách nhau bởi dấu phẩy.
-            <br />
-            VD: <code>Xuất sắc:excellent,Tốt:good,Khá:fair</code>
-          </p>
+          <div className='text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-3 rounded border border-blue-200 dark:border-blue-800'>
+            <p className='font-medium mb-2 text-blue-900 dark:text-blue-100'>
+              📝 Cách nhập:
+            </p>
+            <div className='space-y-1'>
+              <p>
+                • Mỗi lựa chọn gồm 2 phần: <strong>Tên hiển thị</strong> và{" "}
+                <strong>mã định danh</strong>
+              </p>
+              <p>
+                • Định dạng:{" "}
+                <code className='bg-white dark:bg-slate-900 px-2 py-0.5 rounded border'>
+                  Tên hiển thị:ma_dinh_danh
+                </code>
+              </p>
+              <p>• Cách nhau bằng dấu phẩy (,)</p>
+            </div>
+            <div className='mt-2 pt-2 border-t border-blue-200 dark:border-blue-800'>
+              <p className='font-medium mb-1 text-blue-900 dark:text-blue-100'>
+                Ví dụ thực tế:
+              </p>
+              <code className='block bg-white dark:bg-slate-900 px-2 py-1.5 rounded border text-green-600 dark:text-green-400'>
+                Xuất sắc:xuat_sac,Tốt:tot,Khá:kha,Trung bình:trung_binh
+              </code>
+              <p className='mt-1 text-xs'>
+                → Giáo viên sẽ thấy: "Xuất sắc", "Tốt", "Khá", "Trung bình"
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
       {field.type === "relation" && (
         <div className='space-y-4'>
           <div className='space-y-2'>
-            <Label>Entity (Bảng liên kết)</Label>
+            <Label>Loại tập tin đính kèm</Label>
             <Select
               value={field.entity || "media"}
               onValueChange={(value) => updateField({ entity: value })}
             >
               <SelectTrigger>
-                <SelectValue placeholder='Chọn entity...' />
+                <SelectValue placeholder='Chọn loại tập tin...' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='media'>Media (Hình ảnh/File)</SelectItem>
+                <SelectItem value='media'>Hình ảnh & Video</SelectItem>
               </SelectContent>
             </Select>
             <p className='text-xs text-muted-foreground'>
-              Hiện tại chỉ hỗ trợ liên kết với Media
+              Giáo viên có thể đính kèm ảnh hoặc video khi đánh giá
             </p>
           </div>
 
           <div className='space-y-2'>
-            <Label>Loại Relation</Label>
+            <Label>Số lượng tập tin</Label>
             <Select
               value={field.relation_type || "1-1"}
               onValueChange={(value) =>
@@ -318,11 +400,14 @@ export function FormJudgeFieldConfig({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='1-1'>One to One (1-1)</SelectItem>
-                <SelectItem value='1-n'>One to Many (1-n)</SelectItem>
-                <SelectItem value='n-n'>Many to Many (n-n)</SelectItem>
+                <SelectItem value='1-1'>Chỉ 1 tập tin</SelectItem>
+                <SelectItem value='1-n'>Nhiều tập tin</SelectItem>
+                <SelectItem value='n-n'>Không giới hạn</SelectItem>
               </SelectContent>
             </Select>
+            <p className='text-xs text-muted-foreground'>
+              Giới hạn số ảnh/video giáo viên có thể tải lên
+            </p>
           </div>
 
           {/* TEMPORARILY DISABLED: Query Search */}

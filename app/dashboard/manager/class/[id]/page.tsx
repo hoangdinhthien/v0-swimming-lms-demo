@@ -1918,22 +1918,59 @@ export default function ClassDetailPage() {
               {/* Students to Add */}
               <div className='flex flex-col border rounded-lg overflow-hidden'>
                 <div className='bg-muted/50 px-4 py-3 border-b'>
-                  <h3 className='font-semibold flex items-center gap-2'>
-                    <Users className='h-4 w-4' />
-                    Học viên có thể thêm (
-                    {
-                      students.filter(
-                        (s) =>
-                          !classData?.member?.find(
-                            (m: any) => m._id === s.user._id
-                          )
-                      ).length
-                    }
-                    )
-                  </h3>
-                  <p className='text-sm text-muted-foreground mt-1'>
-                    Đã thanh toán khóa học, chưa có trong lớp
-                  </p>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <h3 className='font-semibold flex items-center gap-2'>
+                        <Users className='h-4 w-4' />
+                        Học viên có thể thêm (
+                        {
+                          students.filter(
+                            (s) =>
+                              !classData?.member?.find(
+                                (m: any) => m._id === s.user._id
+                              )
+                          ).length
+                        }
+                        )
+                      </h3>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        Đã thanh toán khóa học, chưa có trong lớp
+                      </p>
+                    </div>
+                    {students.filter(
+                      (s) =>
+                        !classData?.member?.find(
+                          (m: any) => m._id === s.user._id
+                        )
+                    ).length > 0 && (
+                      <div className='flex gap-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => {
+                            const availableStudents = students.filter(
+                              (s) =>
+                                !classData?.member?.find(
+                                  (m: any) => m._id === s.user._id
+                                )
+                            );
+                            setSelectedMembersToAdd(
+                              availableStudents.map((s) => s.user._id)
+                            );
+                          }}
+                        >
+                          Chọn tất cả
+                        </Button>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => setSelectedMembersToAdd([])}
+                        >
+                          Bỏ chọn
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className='flex-1 overflow-y-auto p-4 space-y-2'>
                   {students.filter(
@@ -2004,13 +2041,39 @@ export default function ClassDetailPage() {
               {/* Students to Remove */}
               <div className='flex flex-col border rounded-lg overflow-hidden'>
                 <div className='bg-muted/50 px-4 py-3 border-b'>
-                  <h3 className='font-semibold flex items-center gap-2'>
-                    <Users className='h-4 w-4' />
-                    Học viên trong lớp ({classData?.member?.length || 0})
-                  </h3>
-                  <p className='text-sm text-muted-foreground mt-1'>
-                    Chọn để xóa khỏi lớp học
-                  </p>
+                  <div className='flex items-center justify-between'>
+                    <div>
+                      <h3 className='font-semibold flex items-center gap-2'>
+                        <Users className='h-4 w-4' />
+                        Học viên trong lớp ({classData?.member?.length || 0})
+                      </h3>
+                      <p className='text-sm text-muted-foreground mt-1'>
+                        Chọn để xóa khỏi lớp học
+                      </p>
+                    </div>
+                    {classData?.member && classData.member.length > 0 && (
+                      <div className='flex gap-2'>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => {
+                            setSelectedMembersToRemove(
+                              classData.member.map((m: any) => m._id)
+                            );
+                          }}
+                        >
+                          Chọn tất cả
+                        </Button>
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() => setSelectedMembersToRemove([])}
+                        >
+                          Bỏ chọn
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className='flex-1 overflow-y-auto p-4 space-y-2'>
                   {classData?.member && classData.member.length > 0 ? (

@@ -16,7 +16,7 @@ export function LoadingScreen({ message = "Đang tải..." }: LoadingScreenProps
         className='flex items-center gap-2 mb-8'
       >
         <Waves className='h-8 w-8 text-sky-500' />
-        <span className='font-bold text-2xl'>AquaLearn</span>
+        <span className='font-bold text-2xl'>SCMP</span>
       </Link>
 
       <div className='flex flex-col items-center justify-center gap-4'>

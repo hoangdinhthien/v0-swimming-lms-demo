@@ -66,7 +66,7 @@ export default function LoginPage() {
           className='flex items-center gap-2 mb-8'
         >
           <Waves className='h-6 w-6 text-sky-500' />
-          <span className='font-bold text-xl'>AquaLearn</span>
+          <span className='font-bold text-xl'>SCMP</span>
         </Link>
 
         <Card className='w-full max-w-md'>

@@ -759,7 +759,7 @@ export default function ImprovedAntdCalendarPage() {
 
   // Handle edit class
   const handleEditClass = (event: CalendarEvent) => {
-    console.log("🔧 handleEditClass called with event:", event);
+    console.log("handleEditClass called with event:", event);
 
     setEditingEvent(event);
     setClassManagementMode("edit");
@@ -770,7 +770,7 @@ export default function ImprovedAntdCalendarPage() {
     setSelectedPool(event.poolId);
     setSelectedInstructor(event.instructorId);
 
-    console.log("🔧 Pre-filled form with:", {
+    console.log(" Pre-filled form with:", {
       slot: event.slotId,
       classroom: event.classroomId,
       pool: event.poolId,
@@ -1993,8 +1993,8 @@ export default function ImprovedAntdCalendarPage() {
           onEdit={(event) => {
             // Convert ScheduleEvent back to CalendarEvent format if needed for editing
             const calendarEvent = formatScheduleEvent(event);
-            console.log("🔧 Editing event - CalendarEvent:", calendarEvent);
-            console.log("🔧 Original ScheduleEvent:", event);
+            console.log(" Editing event - CalendarEvent:", calendarEvent);
+            console.log(" Original ScheduleEvent:", event);
 
             // Set drawer date to the event date for editing
             setDrawerDate(dayjs(event.date));
