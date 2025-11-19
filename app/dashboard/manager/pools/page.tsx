@@ -1,7 +1,14 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, RefreshCw, Loader2, Waves, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  RefreshCw,
+  Loader2,
+  Waves,
+  Pencil,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +25,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { fetchPools, createPool, deletePool, updatePool } from "@/api/manager/pools-api";
+import {
+  fetchPools,
+  createPool,
+  deletePool,
+  updatePool,
+} from "@/api/manager/pools-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -576,7 +588,10 @@ export default function PoolsPage() {
                 placeholder='Nhập tên hồ bơi...'
                 value={editFormData.title}
                 onChange={(e) =>
-                  setEditFormData((prev) => ({ ...prev, title: e.target.value }))
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
                 }
               />
             </div>
@@ -618,7 +633,10 @@ export default function PoolsPage() {
                   placeholder='Ví dụ: 1.2'
                   value={editFormData.depth}
                   onChange={(e) =>
-                    setEditFormData((prev) => ({ ...prev, depth: e.target.value }))
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      depth: e.target.value,
+                    }))
                   }
                 />
               </div>
@@ -632,7 +650,10 @@ export default function PoolsPage() {
                 placeholder='Nhập sức chứa...'
                 value={editFormData.capacity}
                 onChange={(e) =>
-                  setEditFormData((prev) => ({ ...prev, capacity: e.target.value }))
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    capacity: e.target.value,
+                  }))
                 }
               />
             </div>
