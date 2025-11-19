@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
@@ -31,13 +31,15 @@ export type Pool = {
   is_active: boolean;
 };
 
-// Actions cell component - receives delete handler from parent
+// Actions cell component - receives delete and edit handlers from parent
 const ActionsCell = ({
   row,
   onDelete,
+  onEdit,
 }: {
   row: any;
   onDelete: (poolId: string, poolTitle: string) => Promise<void>;
+  onEdit: (pool: Pool) => void;
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -76,6 +78,14 @@ const ActionsCell = ({
       className='flex items-center gap-2'
       onClick={(e) => e.stopPropagation()}
     >
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-8 w-8 p-0 text-primary hover:text-primary'
+        onClick={() => onEdit(pool)}
+      >
+        <Pencil className='h-4 w-4' />
+      </Button>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button
@@ -110,9 +120,10 @@ const ActionsCell = ({
   );
 };
 
-// Create columns function that accepts delete handler
+// Create columns function that accepts delete and edit handlers
 export const createColumns = (
-  onDelete: (poolId: string, poolTitle: string) => Promise<void>
+  onDelete: (poolId: string, poolTitle: string) => Promise<void>,
+  onEdit: (pool: Pool) => void
 ): ColumnDef<Pool>[] => [
   {
     accessorKey: "title",
@@ -213,6 +224,7 @@ export const createColumns = (
       <ActionsCell
         row={row}
         onDelete={onDelete}
+        onEdit={onEdit}
       />
     ),
   },

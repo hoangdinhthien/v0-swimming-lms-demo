@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, RefreshCw, Loader2, Waves } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw, Loader2, Waves, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { fetchPools, createPool, deletePool } from "@/api/manager/pools-api";
+import { fetchPools, createPool, deletePool, updatePool } from "@/api/manager/pools-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 
@@ -35,6 +35,19 @@ export default function PoolsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
+    title: "",
+    type: "",
+    dimensions: "",
+    depth: "",
+    capacity: "",
+    is_active: true,
+  });
+
+  // Edit modal states
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editingPool, setEditingPool] = useState<Pool | null>(null);
+  const [editFormData, setEditFormData] = useState({
     title: "",
     type: "",
     dimensions: "",
@@ -176,6 +189,85 @@ export default function PoolsPage() {
     }
   };
 
+  // Handle open edit modal
+  const handleEditPool = (pool: Pool) => {
+    setEditingPool(pool);
+    // Remove " mét" suffix when editing
+    const dimensions = pool.dimensions?.replace(" mét", "") || "";
+    const depth = pool.depth?.replace(" mét", "") || "";
+    setEditFormData({
+      title: pool.title || "",
+      type: pool.type || "",
+      dimensions,
+      depth,
+      capacity: pool.capacity?.toString() || "",
+      is_active: pool.is_active,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Handle update pool
+  const handleUpdatePool = async () => {
+    if (!editingPool) return;
+
+    if (
+      !editFormData.title.trim() ||
+      !editFormData.dimensions.trim() ||
+      !editFormData.depth.trim() ||
+      !editFormData.capacity
+    ) {
+      toast({
+        title: "Thiếu thông tin",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const requestBody = {
+        title: editFormData.title,
+        type: editFormData.type || undefined,
+        dimensions: `${editFormData.dimensions} mét`,
+        depth: `${editFormData.depth} mét`,
+        capacity: parseInt(editFormData.capacity),
+        is_active: editFormData.is_active,
+      };
+
+      await updatePool(editingPool._id, requestBody);
+
+      // Close modal and reset
+      setIsEditModalOpen(false);
+      setEditingPool(null);
+      setEditFormData({
+        title: "",
+        type: "",
+        dimensions: "",
+        depth: "",
+        capacity: "",
+        is_active: true,
+      });
+
+      // Refresh the pools list
+      await loadPools();
+      toast({
+        title: "Thành công",
+        description: "Cập nhật thông tin hồ bơi thành công!",
+      });
+    } catch (error) {
+      console.error("Error updating pool:", error);
+      toast({
+        title: "Lỗi cập nhật hồ bơi",
+        description:
+          error instanceof Error ? error.message : "Không thể cập nhật hồ bơi",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Handle delete pool
   const handleDeletePool = async (poolId: string, poolTitle: string) => {
     const token = getAuthToken();
@@ -191,8 +283,8 @@ export default function PoolsPage() {
     await loadPools();
   };
 
-  // Create columns with delete handler
-  const columns = createColumns(handleDeletePool);
+  // Create columns with delete and edit handlers
+  const columns = createColumns(handleDeletePool, handleEditPool);
 
   // Reset form when modal closes
   const handleModalClose = () => {
@@ -450,6 +542,129 @@ export default function PoolsPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Edit Pool Modal */}
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) {
+            setEditingPool(null);
+            setEditFormData({
+              title: "",
+              type: "",
+              dimensions: "",
+              depth: "",
+              capacity: "",
+              is_active: true,
+            });
+          }
+        }}
+      >
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Chỉnh sửa hồ bơi</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin hồ bơi &quot;{editingPool?.title}&quot;
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-6'>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-title'>Tên hồ bơi *</Label>
+              <Input
+                id='edit-title'
+                placeholder='Nhập tên hồ bơi...'
+                value={editFormData.title}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='edit-type'>Loại hồ bơi</Label>
+              <Input
+                id='edit-type'
+                placeholder='Ví dụ: Trẻ em, Trung bình, Lớn...'
+                value={editFormData.type}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, type: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='edit-dimensions'>Kích thước (mét) *</Label>
+                <Input
+                  id='edit-dimensions'
+                  type='number'
+                  placeholder='Ví dụ: 10'
+                  value={editFormData.dimensions}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      dimensions: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='edit-depth'>Độ sâu (mét) *</Label>
+                <Input
+                  id='edit-depth'
+                  type='number'
+                  placeholder='Ví dụ: 1.2'
+                  value={editFormData.depth}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, depth: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='edit-capacity'>Sức chứa *</Label>
+              <Input
+                id='edit-capacity'
+                type='number'
+                placeholder='Nhập sức chứa...'
+                value={editFormData.capacity}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, capacity: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className='flex items-center justify-between'>
+              <Label htmlFor='edit-is_active'>Trạng thái hoạt động</Label>
+              <Switch
+                id='edit-is_active'
+                checked={editFormData.is_active}
+                onCheckedChange={(checked) =>
+                  setEditFormData((prev) => ({ ...prev, is_active: checked }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className='flex justify-end gap-2 mt-6'>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleUpdatePool}
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Đang cập nhật..." : "Cập nhật"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
