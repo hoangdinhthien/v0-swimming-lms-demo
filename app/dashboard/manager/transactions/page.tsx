@@ -332,15 +332,13 @@ export default function TransactionsPage() {
     (order) => order.status && order.status[0] === "pending"
   ).length;
 
-  // Filter transactions based on search and filters
+  // Filter transactions based on filters (search is handled by API)
   const filteredTransactions = orders.filter((order) => {
     const orderDate = new Date(order.created_at);
     const formattedDate = format(orderDate, "MMM d, yyyy");
     const courseId = getOrderCourseId(order);
     const courseName =
       courseInfo[courseId]?.title || getOrderCourseTitle(order);
-    const userName = getOrderUserName(order);
-    const userContact = getOrderUserContact(order);
 
     // Filter by status
     const statusMatch =
@@ -355,14 +353,10 @@ export default function TransactionsPage() {
     const dateMatch =
       !dateFilter || formattedDate === format(dateFilter, "MMM d, yyyy");
 
-    // Filter by search query
-    const searchMatch =
-      searchQuery === "" ||
-      userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      userContact.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order._id.toLowerCase().includes(searchQuery.toLowerCase());
+    // Note: Search filtering is handled by API via searchOr params
+    // No need to filter by search query here
 
-    return statusMatch && courseMatch && dateMatch && searchMatch;
+    return statusMatch && courseMatch && dateMatch;
   });
 
   // Calculate pagination values
@@ -373,7 +367,7 @@ export default function TransactionsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, courseFilter, dateFilter, searchQuery]);
+  }, [statusFilter, courseFilter, dateFilter, debouncedSearch]);
 
   if (loading && orders.length === 0) {
     return (
