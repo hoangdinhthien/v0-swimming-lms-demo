@@ -757,110 +757,120 @@ export default function StaffDetailPage() {
                 </h3>
                 <div className='bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
                   <div className='space-y-4'>
-                    {detail.permission.map((perm: any, index: number) => (
-                      <div
-                        key={index}
-                        className='border-b border-blue-200 dark:border-blue-700 last:border-b-0 pb-4 last:pb-0'
-                      >
-                        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                          <div className='flex-1'>
-                            <div className='flex items-center gap-2 mb-2'>
-                              <h4 className='font-medium text-blue-900 dark:text-blue-200'>
-                                {perm.module
-                                  .map((module: string) => {
-                                    const moduleTranslations: {
-                                      [key: string]: string;
-                                    } = {
-                                      Class: "Quản lý lớp học",
-                                      Order: "Quản lý đơn hàng",
-                                      Course: "Quản lý khóa học",
-                                      Student: "Quản lý học viên",
-                                      Instructor: "Quản lý giảng viên",
-                                      Schedule: "Quản lý lịch học",
-                                      Pool: "Quản lý hồ bơi",
-                                      News: "Quản lý tin tức",
-                                      Media: "Quản lý media",
-                                    };
-                                    return moduleTranslations[module] || module;
-                                  })
-                                  .join(", ")}
-                              </h4>
-                              {perm.noReview && (
-                                <Badge
-                                  variant='outline'
-                                  className='bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700 text-xs'
-                                >
-                                  Không cần duyệt
-                                </Badge>
-                              )}
+                    {detail.permission
+                      .filter(
+                        (perm: any) => perm?.module && perm.module.length > 0
+                      )
+                      .map((perm: any, index: number) => (
+                        <div
+                          key={index}
+                          className='border-b border-blue-200 dark:border-blue-700 last:border-b-0 pb-4 last:pb-0'
+                        >
+                          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2 mb-2'>
+                                <h4 className='font-medium text-blue-900 dark:text-blue-200'>
+                                  {perm.module
+                                    .map((module: string) => {
+                                      const moduleTranslations: {
+                                        [key: string]: string;
+                                      } = {
+                                        Class: "Quản lý lớp học",
+                                        Order: "Quản lý đơn hàng",
+                                        Course: "Quản lý khóa học",
+                                        Student: "Quản lý học viên",
+                                        Instructor: "Quản lý giảng viên",
+                                        Schedule: "Quản lý lịch học",
+                                        Pool: "Quản lý hồ bơi",
+                                        News: "Quản lý tin tức",
+                                        Media: "Quản lý media",
+                                      };
+                                      return (
+                                        moduleTranslations[module] || module
+                                      );
+                                    })
+                                    .join(", ")}
+                                </h4>
+                                {perm.noReview && (
+                                  <Badge
+                                    variant='outline'
+                                    className='bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700 text-xs'
+                                  >
+                                    Không cần duyệt
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className='text-sm text-muted-foreground'>
+                                <span className='font-medium'>
+                                  Quyền thao tác:{" "}
+                                </span>
+                                {perm.action && Array.isArray(perm.action)
+                                  ? perm.action
+                                      .map((action: string) => {
+                                        const actionTranslations: {
+                                          [key: string]: string;
+                                        } = {
+                                          GET: "Xem",
+                                          POST: "Tạo mới",
+                                          PUT: "Chỉnh sửa",
+                                          DELETE: "Xóa",
+                                        };
+                                        return (
+                                          actionTranslations[action] || action
+                                        );
+                                      })
+                                      .join(", ")
+                                  : "Không có"}
+                              </div>
                             </div>
-                            <div className='text-sm text-muted-foreground'>
-                              <span className='font-medium'>
-                                Quyền thao tác:{" "}
-                              </span>
-                              {perm.action
-                                .map((action: string) => {
-                                  const actionTranslations: {
-                                    [key: string]: string;
-                                  } = {
-                                    GET: "Xem",
-                                    POST: "Tạo mới",
-                                    PUT: "Chỉnh sửa",
-                                    DELETE: "Xóa",
+                            <div className='flex flex-wrap gap-1'>
+                              {perm.action.map((action: string) => {
+                                const actionConfig: {
+                                  [key: string]: {
+                                    label: string;
+                                    className: string;
                                   };
-                                  return actionTranslations[action] || action;
-                                })
-                                .join(", ")}
-                            </div>
-                          </div>
-                          <div className='flex flex-wrap gap-1'>
-                            {perm.action.map((action: string) => {
-                              const actionConfig: {
-                                [key: string]: {
-                                  label: string;
-                                  className: string;
+                                } = {
+                                  GET: {
+                                    label: "Xem",
+                                    className:
+                                      "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700",
+                                  },
+                                  POST: {
+                                    label: "Tạo",
+                                    className:
+                                      "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700",
+                                  },
+                                  PUT: {
+                                    label: "Sửa",
+                                    className:
+                                      "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700",
+                                  },
+                                  DELETE: {
+                                    label: "Xóa",
+                                    className:
+                                      "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700",
+                                  },
                                 };
-                              } = {
-                                GET: {
-                                  label: "Xem",
+                                const config = actionConfig[action] || {
+                                  label: action,
                                   className:
-                                    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700",
-                                },
-                                POST: {
-                                  label: "Tạo",
-                                  className:
-                                    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700",
-                                },
-                                PUT: {
-                                  label: "Sửa",
-                                  className:
-                                    "bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700",
-                                },
-                                DELETE: {
-                                  label: "Xóa",
-                                  className:
-                                    "bg-red-100 text-red-800 border-red-300 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700",
-                                },
-                              };
-                              const config = actionConfig[action] || {
-                                label: action,
-                                className:
-                                  "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/50 dark:text-gray-300 dark:border-gray-700",
-                              };
-                              return (
-                                <Badge
-                                  key={action}
-                                  variant='outline'
-                                  className={`text-xs ${config.className}`}
-                                >
-                                  {config.label}
-                                </Badge>
-                              );
-                            })}
+                                    "bg-gray-100 text-gray-800 border-gray-300 dark:bg-gray-900/50 dark:text-gray-300 dark:border-gray-700",
+                                };
+                                return (
+                                  <Badge
+                                    key={action}
+                                    variant='outline'
+                                    className={`text-xs ${config.className}`}
+                                  >
+                                    {config.label}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>

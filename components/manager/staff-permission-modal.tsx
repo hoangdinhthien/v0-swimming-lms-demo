@@ -190,6 +190,12 @@ export default function StaffPermissionModal({
   };
 
   const handleModuleToggle = (modulePermission: AvailablePermission) => {
+    // Guard against empty or undefined module array
+    if (!modulePermission?.module || modulePermission.module.length === 0) {
+      console.warn("Invalid module permission:", modulePermission);
+      return;
+    }
+
     const moduleName = modulePermission.module[0];
     const existingIndex = selectedPermissions.findIndex(
       (perm) => perm?.module && perm.module.includes(moduleName)
@@ -219,6 +225,13 @@ export default function StaffPermissionModal({
     console.log("Toggle action:", { moduleIndex, action, checked });
     setSelectedPermissions((prev) => {
       const newPermissions = [...prev];
+
+      // Guard against invalid index or undefined permission
+      if (!newPermissions[moduleIndex] || !newPermissions[moduleIndex].action) {
+        console.warn("Invalid permission at index:", moduleIndex);
+        return prev;
+      }
+
       if (checked) {
         // Add action if not present
         if (!newPermissions[moduleIndex].action.includes(action)) {
@@ -326,8 +339,11 @@ export default function StaffPermissionModal({
             <div className='grid gap-4'>
               {Array.isArray(availablePermissions) &&
               availablePermissions.length > 0 ? (
-                availablePermissions.map(
-                  (modulePermission, permissionIndex) => {
+                availablePermissions
+                  .filter(
+                    (mp) => mp?.module && mp.module.length > 0 // Filter out invalid permissions
+                  )
+                  .map((modulePermission, permissionIndex) => {
                     const moduleName = modulePermission.module[0];
                     const isModuleSelected = selectedPermissions.some(
                       (perm) => perm?.module && perm.module.includes(moduleName)
@@ -457,8 +473,7 @@ export default function StaffPermissionModal({
                         )}
                       </Card>
                     );
-                  }
-                )
+                  })
               ) : (
                 <div className='text-center py-8 text-muted-foreground'>
                   Không có quyền hạn nào có sẵn để cấp cho nhân viên.
@@ -476,20 +491,23 @@ export default function StaffPermissionModal({
               </h4>
               {selectedPermissions.length > 0 ? (
                 <div className='space-y-2'>
-                  {selectedPermissions.map((perm, index) => (
-                    <div
-                      key={index}
-                      className='text-sm text-blue-700'
-                    >
-                      <strong>{getModuleDisplayName(perm.module[0])}:</strong>{" "}
-                      {perm.action
-                        .map((action) => getActionDisplayName(action))
-                        .join(", ")}{" "}
-                      <span className='text-xs'>
-                        ({perm.noReview ? "Không cần duyệt" : "Cần phê duyệt"})
-                      </span>
-                    </div>
-                  ))}
+                  {selectedPermissions
+                    .filter((perm) => perm?.module && perm.module.length > 0)
+                    .map((perm, index) => (
+                      <div
+                        key={index}
+                        className='text-sm text-blue-700'
+                      >
+                        <strong>{getModuleDisplayName(perm.module[0])}:</strong>{" "}
+                        {perm.action
+                          ?.map((action) => getActionDisplayName(action))
+                          .join(", ")}{" "}
+                        <span className='text-xs'>
+                          ({perm.noReview ? "Không cần duyệt" : "Cần phê duyệt"}
+                          )
+                        </span>
+                      </div>
+                    ))}
                 </div>
               ) : (
                 <div className='text-sm text-blue-600'>
