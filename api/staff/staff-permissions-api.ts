@@ -253,7 +253,13 @@ export function hasPermission(
   if (!staffPermission?.permission) return false;
 
   return staffPermission.permission.some(
-    (perm) => perm.module.includes(module) && perm.action.includes(action)
+    (perm) =>
+      perm.module &&
+      Array.isArray(perm.module) &&
+      perm.action &&
+      Array.isArray(perm.action) &&
+      perm.module.includes(module) &&
+      perm.action.includes(action)
   );
 }
 
@@ -266,8 +272,9 @@ export function hasReviewPermission(
 ): boolean {
   if (!staffPermission?.permission) return false;
 
-  const modulePermission = staffPermission.permission.find((perm) =>
-    perm.module.includes(module)
+  const modulePermission = staffPermission.permission.find(
+    (perm) =>
+      perm.module && Array.isArray(perm.module) && perm.module.includes(module)
   );
 
   return modulePermission?.noReview === false;
@@ -283,7 +290,10 @@ export function getAllowedModules(
 
   const modules = new Set<string>();
   staffPermission.permission.forEach((perm) => {
-    perm.module.forEach((mod) => modules.add(mod));
+    // Skip empty permission objects
+    if (perm.module && Array.isArray(perm.module)) {
+      perm.module.forEach((mod) => modules.add(mod));
+    }
   });
 
   return Array.from(modules);
@@ -317,6 +327,16 @@ export function getAllowedNavigationItems(
   const allowedNavItems = new Set<string>();
 
   staffPermission.permission.forEach((perm) => {
+    // Skip empty permission objects (when staff has no permissions assigned yet)
+    if (
+      !perm.action ||
+      !Array.isArray(perm.action) ||
+      !perm.module ||
+      !Array.isArray(perm.module)
+    ) {
+      return;
+    }
+
     // Only include modules where staff has GET permission
     if (perm.action.includes("GET")) {
       perm.module.forEach((module) => {
