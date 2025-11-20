@@ -231,6 +231,11 @@ export const createColumns = (
 ];
 
 // Export default columns for backward compatibility
-export const columns = createColumns(async () => {
-  throw new Error("Delete handler not provided");
-});
+export const columns = createColumns(
+  async () => {
+    throw new Error("Delete handler not provided");
+  },
+  () => {
+    throw new Error("Edit handler not provided");
+  }
+);

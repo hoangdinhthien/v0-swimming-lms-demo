@@ -20,7 +20,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { columns, Staff } from "./components/columns";
+import { createColumns, Staff } from "./components/columns";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -80,6 +80,18 @@ export default function StaffPage() {
   const [permissionModalOpen, setPermissionModalOpen] = useState(false);
   const [selectedStaffForPermission, setSelectedStaffForPermission] =
     useState<any>(null);
+
+  // Handler for edit permissions button click
+  const handleEditPermissions = (staff: Staff) => {
+    setSelectedStaffForPermission({
+      _id: staff.userId || staff.staffId || staff.id,
+      user: {
+        username: staff.name,
+        email: staff.email,
+      },
+    });
+    setPermissionModalOpen(true);
+  };
 
   // Extract load logic into separate function with optional search
   const loadStaff = async (searchValue?: string, isInitialLoad = false) => {
@@ -353,7 +365,7 @@ export default function StaffPage() {
         </CardHeader>
         <CardContent>
           <DataTable
-            columns={columns}
+            columns={createColumns(handleEditPermissions)}
             data={staff}
             searchKey='name'
             searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'

@@ -191,8 +191,8 @@ export default function StaffPermissionModal({
 
   const handleModuleToggle = (modulePermission: AvailablePermission) => {
     const moduleName = modulePermission.module[0];
-    const existingIndex = selectedPermissions.findIndex((perm) =>
-      perm.module.includes(moduleName)
+    const existingIndex = selectedPermissions.findIndex(
+      (perm) => perm?.module && perm.module.includes(moduleName)
     );
 
     if (existingIndex >= 0) {
@@ -329,11 +329,11 @@ export default function StaffPermissionModal({
                 availablePermissions.map(
                   (modulePermission, permissionIndex) => {
                     const moduleName = modulePermission.module[0];
-                    const isModuleSelected = selectedPermissions.some((perm) =>
-                      perm.module.includes(moduleName)
+                    const isModuleSelected = selectedPermissions.some(
+                      (perm) => perm?.module && perm.module.includes(moduleName)
                     );
                     const selectedModuleIndex = selectedPermissions.findIndex(
-                      (perm) => perm.module.includes(moduleName)
+                      (perm) => perm?.module && perm.module.includes(moduleName)
                     );
 
                     return (

@@ -7,14 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, Calendar, Settings } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import Link from "next/link";
-import { useState } from "react";
-import dynamic from "next/dynamic";
-
-// Dynamically import StaffPermissionModal to avoid SSR issues
-const StaffPermissionModal = dynamic(
-  () => import("@/components/manager/staff-permission-modal"),
-  { ssr: false }
-);
 
 // Helper function to get user initials
 function getUserInitials(name: string) {
@@ -39,7 +31,10 @@ export type Staff = {
   staffId?: string;
 };
 
-export const columns: ColumnDef<Staff>[] = [
+// Create columns factory that accepts callback
+export const createColumns = (
+  onEditPermissions: (staff: Staff) => void
+): ColumnDef<Staff>[] => [
   {
     accessorKey: "name",
     id: "name",
@@ -201,37 +196,24 @@ export const columns: ColumnDef<Staff>[] = [
     header: "Thao tác",
     cell: ({ row }) => {
       const staff = row.original;
-      const [isModalOpen, setIsModalOpen] = useState(false);
 
       return (
-        <>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsModalOpen(true);
-            }}
-            className='h-8 w-8 p-0'
-          >
-            <Settings className='h-4 w-4' />
-          </Button>
-          <StaffPermissionModal
-            open={isModalOpen}
-            onOpenChange={setIsModalOpen}
-            staffData={{
-              _id: staff.userId || staff.staffId || staff.id,
-              user: {
-                username: staff.name,
-                email: staff.email,
-              },
-            }}
-            onSuccess={() => {
-              setIsModalOpen(false);
-            }}
-          />
-        </>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditPermissions(staff);
+          }}
+          className='h-8 w-8 p-0'
+          title='Chỉnh sửa quyền'
+        >
+          <Settings className='h-4 w-4' />
+        </Button>
       );
     },
   },
 ];
+
+// Default columns export for backward compatibility
+export const columns = createColumns(() => {});
