@@ -856,7 +856,7 @@ export default function InstructorDetailPage() {
 
                         <div className='mt-4 pt-3 border-t border-indigo-200 dark:border-indigo-800'>
                           <Link
-                            href={`/dashboard/manager/classes/${
+                            href={`/dashboard/manager/class/${
                               classItem._id || classItem.id
                             }`}
                             className='inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors w-full justify-center'

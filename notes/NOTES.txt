@@ -27,5 +27,3633 @@ FIX UI:
 - vẽ diagram source code folder
 
 TÔI CẦN BẠN CHECK VÀ LÀM NHỮNG VIỆC SAU ĐÂY:
+- ở trang student detail (/dashboard/manager/students/[id]) có 1 nút tên là 'Xem lịch học', khi manager/staff click vào nút này họ có thể xem được lịch học của student(member) đó. 
+- đây là api dùng để xem được lịch học của student đó: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedules?user=67cd20759d0aaee8d9cd88ad
+- đây là response data của api này (về cơ bản nó là response data của api fetchScheduleData, array đầu tiên trong data là data lịch học của student đó, đừng quan tâm tới array thứ hai trong data bạn không cần phải display lên UI phần đó):
+{
+    "data": [
+        [
+            [
+                {
+                    "_id": "690c1fd95da586be136f0575",
+                    "slot": {
+                        "_id": "681f0de10e90714dae7a5e7c",
+                        "title": "Slot 8",
+                        "start_time": 15,
+                        "end_time": 15,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:13.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:13.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-06T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "created_at": "2025-11-06T11:11:05.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-11-06T17:41:40.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": [
+                        "67cd20759d0aaee8d9cd88ad"
+                    ]
+                },
+                {
+                    "_id": "690c20030346d643815ced1b",
+                    "slot": {
+                        "_id": "681f0dfb0e90714dae7a5e91",
+                        "title": "Slot 9",
+                        "start_time": 16,
+                        "end_time": 16,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:39.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:39.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-06T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "created_at": "2025-11-06T11:11:47.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-11-06T11:11:47.000Z",
+                    "updated_by": "6711e8a47b45b2974bd6133c",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "690c20185da586be136f0576",
+                    "slot": {
+                        "_id": "681f0de10e90714dae7a5e7c",
+                        "title": "Slot 8",
+                        "start_time": 15,
+                        "end_time": 15,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:13.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:13.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-07T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "created_at": "2025-11-06T11:12:08.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-11-08T22:30:58.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": []
+                },
+                {
+                    "_id": "6910d2a61f08779f12af29ba",
+                    "slot": {
+                        "_id": "681f0d110e90714dae7a5dc5",
+                        "title": "Slot 4",
+                        "start_time": 10,
+                        "end_time": 10,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:45.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:45.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-13T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a7c47a021d00f67caf91",
+                        "username": "Lâm Anh Khoa",
+                        "email": "lam.khoa@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0916678901",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Bình Chánh, TP.HCM",
+                        "created_at": "2025-11-03T01:49:40.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:17:56.943Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-10T00:43:02.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-11-11T21:33:03.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": []
+                },
+                {
+                    "_id": "691199296c27611952c21d3e",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-15T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886bcb4e8cbef8e57f02b",
+                        "title": "Hồ bơi PB01",
+                        "type": "oke",
+                        "dimensions": "15 mét",
+                        "depth": "1 mét",
+                        "capacity": 1,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:00.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:56:00.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-10T14:50:01.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-15T22:23:41.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": [
+                        "67cd20759d0aaee8d9cd88ad"
+                    ]
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8db",
+                    "date": "2025-11-15T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c8f2150d14de0012b0011",
+                    "slot": {
+                        "_id": "681f0de10e90714dae7a5e7c",
+                        "title": "Slot 8",
+                        "start_time": 15,
+                        "end_time": 15,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:13.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:13.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-18T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "created_at": "2025-11-18T22:22:09.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-11-18T22:22:09.000Z",
+                    "updated_by": "6711e8a47b45b2974bd6133c",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a2",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "date": "2025-11-18T13:30:16.000Z",
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c2860c5cca7e9393762b6",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T15:03:44.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-19T19:44:37.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": [
+                        "67cd20759d0aaee8d9cd88ad"
+                    ]
+                },
+                {
+                    "_id": "691c286fc5cca7e9393762b7",
+                    "slot": {
+                        "_id": "681f0d110e90714dae7a5dc5",
+                        "title": "Slot 4",
+                        "start_time": 10,
+                        "end_time": 10,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:45.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:45.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T15:03:59.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T15:03:59.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "691c2886c5cca7e9393762b8",
+                    "slot": {
+                        "_id": "681f0d450e90714dae7a5dda",
+                        "title": "Slot 5",
+                        "start_time": 11,
+                        "end_time": 11,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:24:37.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:24:37.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T15:04:22.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T15:04:22.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "691c26aac5cca7e9393762b3",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-20T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690a0d4276aeee203cad48cf",
+                        "name": "Lớp moibile test order",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "schedule_plan": [
+                            {
+                                "days_of_week": [
+                                    "T3"
+                                ],
+                                "slot": "681f0b4c0e90714dae7a5d2d"
+                            }
+                        ],
+                        "show_on_regist_course": true,
+                        "created_at": "2025-11-04T21:27:14.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-11-15T21:05:55.000Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "member_passed": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886bcb4e8cbef8e57f02b",
+                        "title": "Hồ bơi PB01",
+                        "type": "oke",
+                        "dimensions": "15 mét",
+                        "depth": "1 mét",
+                        "capacity": 1,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:00.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:56:00.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T14:56:26.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T14:56:26.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "691c25a73da2ff9cbd16d770",
+                    "slot": {
+                        "_id": "681f0b6f0e90714dae7a5d42",
+                        "title": "Slot 2",
+                        "start_time": 8,
+                        "end_time": 8,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:47.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:01.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-21T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088704b4e8cbef8e57f02d",
+                        "title": "Hồ bơi PB03",
+                        "type": "Thi đấu",
+                        "dimensions": "50 mét",
+                        "depth": "2 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:15:04.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "created_at": "2025-11-18T14:52:07.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-19T19:44:19.000Z",
+                    "updated_by": "683c810c0707d1bbac3063f0",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "attendees": [
+                        "67cd20759d0aaee8d9cd88ad",
+                        "6904bba850fd6979c38cd6c7",
+                        "6904bcb6f1c0cd3b2ab80ca1"
+                    ]
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8dd",
+                    "date": "2025-11-21T22:26:43.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "slot": {
+                        "_id": "681f0cfb0e90714dae7a5db0",
+                        "title": "Slot 3",
+                        "start_time": 9,
+                        "end_time": 9,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:23.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:23.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8de",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "date": "2025-11-22T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0d110e90714dae7a5dc5",
+                        "title": "Slot 4",
+                        "start_time": 10,
+                        "end_time": 10,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:45.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:45.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a3",
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "date": "2025-11-23T13:30:16.000Z",
+                    "slot": {
+                        "_id": "681f0b6f0e90714dae7a5d42",
+                        "title": "Slot 2",
+                        "start_time": 8,
+                        "end_time": 8,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:47.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:01.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a4",
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "date": "2025-11-24T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0cfb0e90714dae7a5db0",
+                        "title": "Slot 3",
+                        "start_time": 9,
+                        "end_time": 9,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:23.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:23.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6711e8a47b45b2974bd6133c",
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "updated_at": "2025-11-18T23:56:25.000Z"
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a5",
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "date": "2025-11-25T13:30:16.000Z",
+                    "slot": {
+                        "_id": "681f0d110e90714dae7a5dc5",
+                        "title": "Slot 4",
+                        "start_time": 10,
+                        "end_time": 10,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:45.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:45.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8df",
+                    "date": "2025-11-27T22:26:43.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "slot": {
+                        "_id": "681f0d450e90714dae7a5dda",
+                        "title": "Slot 5",
+                        "start_time": 11,
+                        "end_time": 11,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:24:37.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:24:37.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c2ac30e0f88a9a38709b5",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-28T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T15:13:55.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T15:13:55.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8e0",
+                    "date": "2025-11-28T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0d630e90714dae7a5def",
+                        "title": "Slot 6",
+                        "start_time": 13,
+                        "end_time": 13,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:25:07.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:25:07.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c28e53da2ff9cbd16d771",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-29T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "pool": {
+                        "_id": "690886bcb4e8cbef8e57f02b",
+                        "title": "Hồ bơi PB01",
+                        "type": "oke",
+                        "dimensions": "15 mét",
+                        "depth": "1 mét",
+                        "capacity": 1,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:00.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:56:00.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a5cd7a021d00f67caf87",
+                        "username": "Đỗ Thanh Tâm",
+                        "email": "do.tam@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0911123456",
+                        "is_active": true,
+                        "birthday": "1999-01-01T00:00:00.000Z",
+                        "address": "Quận Gò Vấp, TP.HCM",
+                        "created_at": "2025-11-03T01:41:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-13T14:19:47.833Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "parent_id": null,
+                        "role": []
+                    },
+                    "created_at": "2025-11-18T15:05:57.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T15:05:57.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "691c30363fdcb8b6154f41ba",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-29T00:00:00.000Z",
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "pool": {
+                        "_id": "69088722b4e8cbef8e57f02e",
+                        "title": "Hồ bơi PB04",
+                        "type": "oke",
+                        "dimensions": "20 mét",
+                        "depth": "1.5 mét",
+                        "capacity": 9,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:42.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:44:40.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "instructor": {
+                        "_id": "6907a4867a021d00f67caf7f",
+                        "username": "Võ Thị Mai",
+                        "email": "vo.mai@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0906678901",
+                        "is_active": true,
+                        "birthday": "1991-02-14T00:00:00.000Z",
+                        "address": "Quận Phú Nhuận, TP.HCM",
+                        "created_at": "2025-11-03T01:35:50.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:35:50.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "created_at": "2025-11-18T15:37:10.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "updated_at": "2025-11-18T15:37:10.000Z",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "tenant_id": "67cabc98c87dc080914265d4"
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8e1",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "slot": {
+                        "_id": "681f0d7c0e90714dae7a5e1e",
+                        "title": "Slot 7",
+                        "start_time": 14,
+                        "end_time": 14,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:25:32.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:25:32.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "date": "2025-11-29T22:26:43.000Z",
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a6",
+                    "date": "2025-11-30T13:30:16.000Z",
+                    "slot": {
+                        "_id": "681f0d450e90714dae7a5dda",
+                        "title": "Slot 5",
+                        "start_time": 11,
+                        "end_time": 11,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:24:37.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:24:37.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a7",
+                    "slot": {
+                        "_id": "681f0d630e90714dae7a5def",
+                        "title": "Slot 6",
+                        "start_time": 13,
+                        "end_time": 13,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:25:07.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:25:07.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "date": "2025-12-01T13:30:16.000Z",
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "691c1278b6d3312e25ecf3a8",
+                    "date": "2025-12-02T13:30:16.000Z",
+                    "slot": {
+                        "_id": "681f0d7c0e90714dae7a5e1e",
+                        "title": "Slot 7",
+                        "start_time": 14,
+                        "end_time": 14,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:25:32.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:25:32.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "690883a86eb4d483d336f419",
+                        "name": "NC01 - Bơi Nâng Cao Tổng Hợp – Lớp 01",
+                        "course": {
+                            "_id": "68f36cbe54cacb49c451087b",
+                            "title": "Khóa học căn bản chống chết đuối",
+                            "slug": "kha-hc-cn-bn-chng-cht-ui",
+                            "description": "Khóa học căn bản chống chết đuối",
+                            "price": 100000,
+                            "session_number": 7,
+                            "session_number_duration": "45 phút",
+                            "media": [
+                                "690c7c8e5ee5a7cfed5df684"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-18T17:32:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-10T17:58:38.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "detail": [
+                                {
+                                    "title": "Tập đứng nước",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "Đứng nước thành công ": {
+                                                "type": "boolean",
+                                                "required": false,
+                                                "is_filter": false
+                                            },
+                                            "Khả năng đứng nước ": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "category": [
+                                "6904c470cc2afe263bd2761e",
+                                "6904c45acc2afe263bd2761d"
+                            ]
+                        },
+                        "instructor": "6907a4d87a021d00f67caf81",
+                        "created_at": "2025-11-03T17:27:52.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-15T14:30:43.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad"
+                        ],
+                        "order": [
+                            null
+                        ]
+                    },
+                    "created_at": "2025-11-18T13:30:16.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "6907a4d87a021d00f67caf81",
+                        "username": "Phan Văn Toàn",
+                        "email": "phan.toan@instructor.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "phone": "0907789012",
+                        "is_active": true,
+                        "birthday": "1986-05-30T00:00:00.000Z",
+                        "address": "Quận 5, TP.HCM",
+                        "created_at": "2025-11-03T01:37:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T01:37:12.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8e2",
+                    "date": "2025-12-04T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0de10e90714dae7a5e7c",
+                        "title": "Slot 8",
+                        "start_time": 15,
+                        "end_time": 15,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:13.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:13.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8e3",
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "date": "2025-12-05T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0dfb0e90714dae7a5e91",
+                        "title": "Slot 9",
+                        "start_time": 16,
+                        "end_time": 16,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:27:39.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:27:39.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                },
+                {
+                    "_id": "69189bb3555cb6f125d4d8e4",
+                    "date": "2025-12-06T22:26:43.000Z",
+                    "slot": {
+                        "_id": "681f0ef50e90714dae7a5ece",
+                        "title": "Slot 10",
+                        "start_time": 17,
+                        "end_time": 17,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:31:49.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:31:49.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "classroom": {
+                        "_id": "6916bf4fce2eb1def9bb3654",
+                        "name": "TEST",
+                        "course": {
+                            "_id": "681eee580e90714dae7a57ba",
+                            "title": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "created_at": "2025-05-10T13:12:40.000Z",
+                            "created_by": "6711e8a47b45b2974bd6133c",
+                            "updated_at": "2025-11-16T11:20:36.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "category": [
+                                "681ef03f0e90714dae7a58ec",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "description": "Khoá học bơi dành cho trẻ mới bắt đầu",
+                            "price": 29000,
+                            "session_number": 10,
+                            "session_number_duration": "2 tiếng",
+                            "detail": [
+                                {
+                                    "title": "Vận động cơ bản (buổi 1))",
+                                    "description": "Vận động cơ bản (buổi 1))"
+                                },
+                                {
+                                    "title": "Các bài tập trên cạn",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "media": {
+                                                "type": "relation",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "entity": "media",
+                                                "relation_type": "1-1"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "is_active": true,
+                            "slug": "khoa-hoc-boi-danh-cho-tre-moi-bat-dau",
+                            "media": [
+                                "690c7c7e5ee5a7cfed5df681"
+                            ]
+                        },
+                        "instructor": "683c810c0707d1bbac3063f0",
+                        "created_at": "2025-11-14T12:34:07.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T23:16:03.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            "67cd20759d0aaee8d9cd88ad",
+                            "6904bcb6f1c0cd3b2ab80ca1",
+                            "6904bba850fd6979c38cd6c7"
+                        ],
+                        "schedule_plan": [
+                            {}
+                        ],
+                        "order": [
+                            "68f10e487bfea86fbb61de01",
+                            "6916c81af96a1cdade6dba03",
+                            "6916c8cdf96a1cdade6dba04"
+                        ]
+                    },
+                    "created_at": "2025-11-15T22:26:43.000Z",
+                    "created_by": "6831d35a95ac46cc9b686001",
+                    "instructor": {
+                        "_id": "683c810c0707d1bbac3063f0",
+                        "username": "Instructor 1",
+                        "featured_image": [
+                            "68e61450c5b03cd632357c5d"
+                        ],
+                        "email": "instructor1@gmail.com",
+                        "role_front": [
+                            "instructor"
+                        ],
+                        "created_at": "2025-06-01T16:34:19.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-19T12:34:36.392Z",
+                        "updated_by": "683c810c0707d1bbac3063f0",
+                        "is_active": true,
+                        "parent_id": null,
+                        "role": [],
+                        "address": "123 duong thong nhat p1 go vap",
+                        "birthday": "2000-02-16T00:00:00.000Z",
+                        "phone": "0656756586"
+                    },
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "updated_by": "6831d35a95ac46cc9b686001",
+                    "pool": []
+                }
+            ],
+            [
+                {
+                    "totalMembers": 3,
+                    "poolCapacity": 0,
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "overCapacity": 3
+                },
+                {
+                    "totalMembers": 3,
+                    "poolCapacity": 0,
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0d110e90714dae7a5dc5",
+                        "title": "Slot 4",
+                        "start_time": 10,
+                        "end_time": 10,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:23:45.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:45.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "overCapacity": 3
+                },
+                {
+                    "totalMembers": 3,
+                    "poolCapacity": 0,
+                    "date": "2025-11-19T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0d450e90714dae7a5dda",
+                        "title": "Slot 5",
+                        "start_time": 11,
+                        "end_time": 11,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:24:37.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:24:37.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "pool": {
+                        "_id": "690886eab4e8cbef8e57f02c",
+                        "title": "Hồ bơi PB02",
+                        "type": "Người lớn",
+                        "dimensions": "25 mét",
+                        "depth": "1.8 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:46.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:14:58.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "overCapacity": 3
+                },
+                {
+                    "totalMembers": 3,
+                    "poolCapacity": 0,
+                    "date": "2025-11-21T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0b6f0e90714dae7a5d42",
+                        "title": "Slot 2",
+                        "start_time": 8,
+                        "end_time": 8,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:47.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:23:01.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "pool": {
+                        "_id": "69088704b4e8cbef8e57f02d",
+                        "title": "Hồ bơi PB03",
+                        "type": "Thi đấu",
+                        "dimensions": "50 mét",
+                        "depth": "2 mét",
+                        "capacity": 0,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:42:12.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-08T21:15:04.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "overCapacity": 3
+                },
+                {
+                    "totalMembers": 4,
+                    "poolCapacity": 1,
+                    "date": "2025-11-29T00:00:00.000Z",
+                    "slot": {
+                        "_id": "681f0b4c0e90714dae7a5d2d",
+                        "title": "Slot 1",
+                        "start_time": 7,
+                        "end_time": 7,
+                        "duration": "45 phút",
+                        "start_minute": 0,
+                        "end_minute": 45,
+                        "created_at": "2025-05-10T15:16:12.000Z",
+                        "created_by": "6711e8a47b45b2974bd6133c",
+                        "updated_at": "2025-05-10T15:16:12.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "pool": {
+                        "_id": "690886bcb4e8cbef8e57f02b",
+                        "title": "Hồ bơi PB01",
+                        "type": "oke",
+                        "dimensions": "15 mét",
+                        "depth": "1 mét",
+                        "capacity": 1,
+                        "is_active": true,
+                        "created_at": "2025-11-03T17:41:00.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-18T14:56:00.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    "overCapacity": 3
+                }
+            ]
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- về cơ bản api này là api của lịch do endpoint của nó là như thế này: dev/api/v1/workflow-process/manager/schedules
+- NHƯNG VẪN ĐỀ Ở ĐÂY LÀ TÔI ĐANG KHÔNG BIẾT KHI CLICK VÀO NÚT 'Xem lịch học' THÌ UI SẼ LÀM GÌ? SẼ ĐI TỚI TRANG LỊCH '/dashboard/manager/calendar' ĐỂ XEM ĐƯỢC LỊCH HỌC CỦA MỖI STUDENT ĐÓ THÔI. HAY ĐƠN GIẢN HƠN LÀ KHI CLICK VÀO NÚT 'Xem lịch học' THÌ SẼ HIỆN LÊN 1 MODAL LIST RA CÁC LỊCH HỌC CỦA STUDENT ĐÓ THÔI. BẠN CÓ Ý KIẾN GÌ KHÔNG? 
+
+
 - hồ bơi không cần có trang detail. hiện tại tôi đang thấy ở trong trang '/dashboard/manager/pools' khi click vào tên hồ vơi thì trên search bar đi tới url này '/dashboard/manager/pools/[id của hồ bơi]', nhưng về cơ bản là không có trang detail cho hồ bơi nên nó hiện lên trang 404 (not-found.tsx)
 - hiện tại các trang có data-table khi hover vào thì sẽ có hiện lên 1 tool tip 'Click vào tên để xem chi tiết'. đây là những trang có data-table mà tôi KHÔNG CẦN CÁI TOOLTIP ĐÓ: /dashboard/manager/pools (vì pools không cần có trang detail), /dashboard/manager/application-types (vì application-types không cần có trang detail), TÔI KHÔNG CẦN TOOLTIP đó ở những trang này.
+
+- xem lịch học của member
+- xem lịch dạy của instructor
+- update order
