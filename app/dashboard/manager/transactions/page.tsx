@@ -439,7 +439,7 @@ export default function TransactionsPage() {
             Quản lý tất cả các giao dịch tài chính tại trung tâm bơi lội
           </p>
         </div>
-        <div className='flex gap-2'>
+        {/* <div className='flex gap-2'>
           <Button variant='outline'>
             <Download className='mr-2 h-4 w-4' />
             Xuất dữ liệu
@@ -447,7 +447,7 @@ export default function TransactionsPage() {
           <Link href='/dashboard/manager/transactions/new'>
             <Button>Ghi nhận thanh toán</Button>
           </Link>
-        </div>
+        </div> */}
       </div>
 
       <div className='mt-8 grid gap-6 md:grid-cols-4'>

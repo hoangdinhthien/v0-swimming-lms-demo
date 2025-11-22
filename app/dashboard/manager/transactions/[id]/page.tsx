@@ -591,12 +591,12 @@ export default function TransactionDetailPage() {
           <h1 className='text-3xl font-bold'>Chi tiết giao dịch</h1>
           <p className='text-muted-foreground'>Mã giao dịch: {order._id}</p>
         </div>
-        <div className='flex gap-2'>
+        {/* <div className='flex gap-2'>
           <Button variant='outline'>
             <FileText className='mr-2 h-4 w-4' />
             In hóa đơn
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -995,7 +995,7 @@ export default function TransactionDetailPage() {
         </div>
 
         <div>
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle>Quản lý trạng thái</CardTitle>
             </CardHeader>
@@ -1042,7 +1042,7 @@ export default function TransactionDetailPage() {
                 {updatingStatus ? "Đang xử lý..." : "Cập nhật"}
               </Button>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Transaction Timeline */}
           <Card className='mt-4'>
