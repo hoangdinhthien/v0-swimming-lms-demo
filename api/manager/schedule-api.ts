@@ -621,3 +621,49 @@ export const autoScheduleClass = async (
   const result = await response.json();
   return result;
 };
+
+/**
+ * Fetch schedule for a specific user (student or instructor)
+ * @param userId - The ID of the user (student/instructor)
+ * @param tenantId - Optional tenant ID (will use getSelectedTenant if not provided)
+ * @param token - Optional auth token (will use getAuthToken if not provided)
+ * @returns Schedule data for the user
+ */
+export const fetchUserSchedule = async (
+  userId: string,
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing tenant ID or auth token");
+  }
+
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/schedules?user=${userId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Failed to fetch user schedule: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};

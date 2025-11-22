@@ -27,8 +27,8 @@ FIX UI:
 - vẽ diagram source code folder
 
 TÔI CẦN BẠN CHECK VÀ LÀM NHỮNG VIỆC SAU ĐÂY:
-- ở trang student detail (/dashboard/manager/students/[id]) có 1 nút tên là 'Xem lịch học', khi manager/staff click vào nút này họ có thể xem được lịch học của student(member) đó. 
-- đây là api dùng để xem được lịch học của student đó: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedules?user=67cd20759d0aaee8d9cd88ad
+- ở trang student detail và trang instructor detail (/dashboard/manager/students/[id] và /dashboard/manager/instructors/[id]) có 1 nút tên là 'Xem lịch học'/'Xem lịch dạy', khi manager/staff click vào nút này họ có thể xem được lịch học của student(member) đó và lịch dạy của instructor đó. 
+- đây là api dùng để xem được lịch học của student đó và instructor đó: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedules?user=67cd20759d0aaee8d9cd88ad
 - đây là response data của api này (về cơ bản nó là response data của api fetchScheduleData, array đầu tiên trong data là data lịch học của student đó, đừng quan tâm tới array thứ hai trong data bạn không cần phải display lên UI phần đó):
 {
     "data": [

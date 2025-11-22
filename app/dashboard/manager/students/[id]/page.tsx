@@ -52,6 +52,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import ManagerNotFound from "@/components/manager/not-found";
+import { ScheduleModal } from "@/components/manager/schedule-modal";
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -66,6 +67,7 @@ export default function StudentDetailPage() {
   const [isFetchingTenant, setIsFetchingTenant] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // New state to track avatar upload for form submission
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
@@ -965,7 +967,11 @@ export default function StudentDetailPage() {
                 >
                   <User className='mr-2 h-4 w-4' /> Chỉnh sửa
                 </Button>
-                <Button className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'>
+                <Button
+                  size='sm'
+                  onClick={() => setIsScheduleModalOpen(true)}
+                  className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'
+                >
                   <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
                 </Button>
               </div>
@@ -1113,10 +1119,21 @@ export default function StudentDetailPage() {
             </div>
 
             <div className='space-y-6'>
-              <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2'>
-                <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
-                Lớp học đang tham gia
-              </h3>
+              <div className='flex items-center justify-between mb-4 border-b pb-2'>
+                <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center'>
+                  <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
+                  Lớp học đang tham gia
+                </h3>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={() => setIsScheduleModalOpen(true)}
+                  className='gap-2'
+                >
+                  <Calendar className='h-4 w-4' />
+                  Xem lịch học
+                </Button>
+              </div>
               {detail.classesAsMember &&
               detail.classesAsMember.filter(
                 (classItem: any) => classItem.status === "attending"
@@ -1534,6 +1551,15 @@ export default function StudentDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Schedule Modal */}
+      <ScheduleModal
+        open={isScheduleModalOpen}
+        onOpenChange={setIsScheduleModalOpen}
+        userId={detail?.user?._id || studentId}
+        userName={detail?.user?.username || ""}
+        userType='student'
+      />
     </div>
   );
 }

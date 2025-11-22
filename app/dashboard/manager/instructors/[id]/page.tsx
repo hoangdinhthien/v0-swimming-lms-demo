@@ -41,6 +41,7 @@ import { getMediaDetails, uploadMedia } from "@/api/media-api";
 import { getTenantInfo } from "@/api/tenant-api";
 import { useToast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
+import { ScheduleModal } from "@/components/manager/schedule-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -137,6 +138,7 @@ export default function InstructorDetailPage() {
   const [tenantName, setTenantName] = useState<string>("");
   const [isFetchingTenant, setIsFetchingTenant] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
   // New state to track avatar upload for form submission
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
@@ -603,7 +605,10 @@ export default function InstructorDetailPage() {
                 >
                   <User className='mr-2 h-4 w-4' /> Chỉnh sửa
                 </Button>
-                <Button className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'>
+                <Button
+                  className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'
+                  onClick={() => setIsScheduleModalOpen(true)}
+                >
                   <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
                 </Button>
               </div>
@@ -1081,6 +1086,15 @@ export default function InstructorDetailPage() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule Modal */}
+      <ScheduleModal
+        open={isScheduleModalOpen}
+        onOpenChange={setIsScheduleModalOpen}
+        userId={detail?.user?._id || instructorId}
+        userName={detail?.user?.username || ""}
+        userType='instructor'
+      />
     </div>
   );
 }
