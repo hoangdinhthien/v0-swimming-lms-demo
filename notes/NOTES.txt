@@ -25,3 +25,7 @@ FIX UI:
 - check lại UI của staff: nếu ko có permission thì vẫn phải login đc vào system nhưng ko cho xem j hết
 
 - vẽ diagram source code folder
+
+TÔI CẦN BẠN CHECK VÀ LÀM NHỮNG VIỆC SAU ĐÂY:
+- hồ bơi không cần có trang detail. hiện tại tôi đang thấy ở trong trang '/dashboard/manager/pools' khi click vào tên hồ vơi thì trên search bar đi tới url này '/dashboard/manager/pools/[id của hồ bơi]', nhưng về cơ bản là không có trang detail cho hồ bơi nên nó hiện lên trang 404 (not-found.tsx)
+- hiện tại các trang có data-table khi hover vào thì sẽ có hiện lên 1 tool tip 'Click vào tên để xem chi tiết'. đây là những trang có data-table mà tôi KHÔNG CẦN CÁI TOOLTIP ĐÓ: /dashboard/manager/pools (vì pools không cần có trang detail), /dashboard/manager/application-types (vì application-types không cần có trang detail), TÔI KHÔNG CẦN TOOLTIP đó ở những trang này.

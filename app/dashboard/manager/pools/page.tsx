@@ -551,6 +551,7 @@ export default function PoolsPage() {
               },
             ]}
             emptyMessage='Không tìm thấy hồ bơi nào.'
+            enableRowHover={false}
           />
         </CardContent>
       </Card>

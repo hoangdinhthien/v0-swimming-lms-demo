@@ -424,6 +424,7 @@ export default function ApplicationTypesPage() {
             searchPlaceholder='Tìm kiếm theo tiêu đề...'
             onServerSearch={handleServerSearch}
             emptyMessage='Không tìm thấy loại đơn từ nào.'
+            enableRowHover={false}
           />
         </CardContent>
       </Card>

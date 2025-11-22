@@ -4,7 +4,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import Link from "next/link";
 import { Trash2, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -134,14 +133,7 @@ export const createColumns = (
       />
     ),
     cell: ({ row }) => {
-      return (
-        <Link
-          href={`/dashboard/manager/pools/${row.original._id}`}
-          className='font-medium hover:text-primary hover:underline transition-colors block'
-        >
-          {row.original.title}
-        </Link>
-      );
+      return <div className='font-medium'>{row.original.title}</div>;
     },
   },
   {
