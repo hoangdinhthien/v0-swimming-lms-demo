@@ -599,7 +599,9 @@ export async function fetchClassroomsByCourseAndSchedule(
   }
 
   const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/classes?${params.toString()}`,
+    `${
+      config.API
+    }/v1/workflow-process/manager/classes?${params.toString()}&limit=100`,
     {
       method: "GET",
       headers,
