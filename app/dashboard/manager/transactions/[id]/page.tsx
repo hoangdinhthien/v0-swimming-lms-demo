@@ -320,9 +320,12 @@ export default function TransactionDetailPage() {
   // Show this if the order has user data (regardless of guest data) AND no class assigned yet
   const isPaidMemberOrder = () => {
     if (!order) return false;
+    // Check if user exists and is not an empty array
+    const hasUser =
+      order.user && (!Array.isArray(order.user) || order.user.length > 0);
     return (
       order.status?.includes("paid") &&
-      order.user && // Has user data (converted from guest or original member)
+      hasUser && // Has user data (converted from guest or original member)
       !order.class // Has NOT been assigned to a class yet
     );
   };
@@ -331,18 +334,27 @@ export default function TransactionDetailPage() {
   // Show this only if it has guest data but NO user data AND no class assigned yet
   const isPaidGuestOrder = () => {
     if (!order) return false;
-    return (
+    // Check if user is missing or is an empty array
+    const hasNoUser =
+      !order.user || (Array.isArray(order.user) && order.user.length === 0);
+
+    const result =
       order.status?.includes("paid") &&
+      order.type?.includes("guest") &&
       order.guest && // Has guest data
-      !order.user && // Does NOT have user data yet
-      !order.class // Has NOT been assigned to a class yet
-    );
+      hasNoUser && // Does NOT have user data yet (or empty array)
+      !order.class; // Has NOT been assigned to a class yet
+
+    return result;
   };
 
   // Check if student has already been assigned to a class
   const isAlreadyAssignedToClass = () => {
     if (!order) return false;
-    return order.status?.includes("paid") && order.class;
+    // Check if class exists and is not an empty array
+    const hasClass =
+      order.class && (!Array.isArray(order.class) || order.class.length > 0);
+    return order.status?.includes("paid") && hasClass;
   };
 
   // Handle adding member to class
