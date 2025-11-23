@@ -621,3 +621,133 @@ export async function addMemberToClass(
 
   return response.json();
 }
+
+/**
+ * Delete an order
+ * @param orderId - The ID of the order to delete
+ * @param tenantId - Tenant ID
+ * @param token - Auth token
+ * @returns Promise with the API response
+ */
+export async function deleteOrder(
+  orderId: string,
+  tenantId: string,
+  token: string
+): Promise<any> {
+  if (!tenantId || !token) {
+    throw new Error("Thiếu thông tin tenant hoặc token");
+  }
+
+  const headers: Record<string, string> = {
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Order";
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/order?id=${orderId}`;
+
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to delete order: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      try {
+        const errorText = await response.text();
+        errorMessage = `Failed to delete order: ${response.status}, ${errorText}`;
+      } catch (textError) {
+        errorMessage = `Failed to delete order: ${response.status}`;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+/**
+ * Create a new order
+ * @param orderData - The order data to create
+ * @param tenantId - Tenant ID
+ * @param token - Auth token
+ * @returns Promise with the created order
+ */
+export interface CreateOrderData {
+  type: string[]; // "member", "guest", or "cash"
+  course: string; // course ID
+  user?: string; // user ID (for member or cash with existing user)
+  guest?: {
+    username: string;
+    phone: string;
+    email: string;
+  }; // guest data (for guest or cash with new user)
+  status: string[]; // "pending", "paid", or "expired"
+  price: number;
+}
+
+export async function createOrder(
+  orderData: CreateOrderData,
+  tenantId: string,
+  token: string
+): Promise<Order> {
+  if (!tenantId || !token) {
+    throw new Error("Thiếu thông tin tenant hoặc token");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Order";
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/order`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(orderData),
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Failed to create order: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (parseError) {
+      try {
+        const errorText = await response.text();
+        errorMessage = `Failed to create order: ${response.status}, ${errorText}`;
+      } catch (textError) {
+        errorMessage = `Failed to create order: ${response.status}`;
+      }
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  const result = await response.json();
+  // Extract the order from the response structure
+  const order = result.data || result;
+  return order;
+}

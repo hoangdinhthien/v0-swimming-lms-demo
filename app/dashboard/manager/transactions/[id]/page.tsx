@@ -17,6 +17,7 @@ import {
   UserCheck,
   Search,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -55,6 +66,7 @@ import {
   updateOrderWithUser,
   fetchOrderById,
   addMemberToClass,
+  deleteOrder,
 } from "@/api/manager/orders-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
 import {
@@ -100,6 +112,10 @@ export default function TransactionDetailPage() {
   // State for assigned class details
   const [assignedClassDetails, setAssignedClassDetails] = useState<any>(null);
   const [loadingClassDetails, setLoadingClassDetails] = useState(false);
+
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch order details and related course
   useEffect(() => {
@@ -280,6 +296,37 @@ export default function TransactionDetailPage() {
     fetchAssignedClassDetails();
   }, [order?.class, token, tenantId, courseDetails, order]);
 
+  // Handle delete order
+  const handleDeleteOrder = async () => {
+    if (!order || !token || !tenantId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteOrder(order._id, tenantId, token);
+
+      toast({
+        title: "Thành công",
+        description: "Đã xóa giao dịch thành công",
+      });
+
+      // Redirect to transactions list
+      router.push("/dashboard/manager/transactions");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast({
+        title: "Lỗi",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Không thể xóa giao dịch. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
   // Handle status update
   const handleStatusUpdate = async () => {
     if (!order || !newStatus || !token || !tenantId) return;
@@ -340,7 +387,7 @@ export default function TransactionDetailPage() {
 
     const result =
       order.status?.includes("paid") &&
-      order.type?.includes("guest") &&
+      (order.type?.includes("guest") || order.type?.includes("cash")) &&
       order.guest && // Has guest data
       hasNoUser && // Does NOT have user data yet (or empty array)
       !order.class; // Has NOT been assigned to a class yet
@@ -603,12 +650,16 @@ export default function TransactionDetailPage() {
           <h1 className='text-3xl font-bold'>Chi tiết giao dịch</h1>
           <p className='text-muted-foreground'>Mã giao dịch: {order._id}</p>
         </div>
-        {/* <div className='flex gap-2'>
-          <Button variant='outline'>
-            <FileText className='mr-2 h-4 w-4' />
-            In hóa đơn
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            className='text-destructive hover:text-destructive'
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className='mr-2 h-4 w-4' />
+            Xóa giao dịch
           </Button>
-        </div> */}
+        </div>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
@@ -777,7 +828,7 @@ export default function TransactionDetailPage() {
                         {userName}
                       </div>
                     </div>
-                    <div className='space-y-1'>
+                    {/* <div className='space-y-1'>
                       <div className='text-sm text-muted-foreground'>
                         Loại khách hàng
                       </div>
@@ -786,7 +837,7 @@ export default function TransactionDetailPage() {
                           {getOrderTypeDisplayName(order)}
                         </Badge>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Guest Information */}
                     {order.guest && (
@@ -1322,6 +1373,36 @@ export default function TransactionDetailPage() {
         onSuccess={handleStudentCreated}
         guestData={order?.guest}
       />
+
+      {/* Delete Order Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa giao dịch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa giao dịch{" "}
+              <span className='font-semibold'>
+                {order?._id.substring(0, 8)}...
+              </span>{" "}
+              không? Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu
+              liên quan đến giao dịch này.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOrder}
+              disabled={isDeleting}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {isDeleting ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

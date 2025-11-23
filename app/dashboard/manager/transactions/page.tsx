@@ -12,6 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +47,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { HighlightText } from "@/components/ui/highlight-text";
@@ -61,9 +74,11 @@ import {
   getOrderCourseId,
   getOrderCourseTitle,
   updateOrderStatus,
+  deleteOrder,
   Order,
 } from "@/api/manager/orders-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
+import { CreateOrderModal } from "@/components/manager/create-order-modal";
 
 interface CourseInfo {
   title: string;
@@ -97,6 +112,17 @@ export default function TransactionsPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Refresh state
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Create Order Modal states
+  const [createOrderModalOpen, setCreateOrderModalOpen] = useState(false);
 
   // Debounce timer for search
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -244,6 +270,82 @@ export default function TransactionsPage() {
         ...prev,
         [courseId]: false,
       }));
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    if (!token || !tenantId) return;
+
+    setRefreshing(true);
+    try {
+      const ordersData = await fetchOrders({
+        tenantId,
+        token,
+        page: currentPage,
+        limit,
+        searchParams: debouncedSearch?.trim()
+          ? {
+              "searchOr[course.title:contains]": debouncedSearch.trim(),
+              "searchOr[user.username:contains]": debouncedSearch.trim(),
+            }
+          : undefined,
+      });
+
+      if (ordersData && ordersData.orders) {
+        setOrders(ordersData.orders);
+        setTotalOrders(ordersData.total);
+      }
+
+      toast({
+        title: "Đã làm mới",
+        description: "Dữ liệu giao dịch đã được cập nhật",
+      });
+    } catch (err) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể làm mới dữ liệu",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Handle delete order
+  const handleDeleteOrder = async () => {
+    if (!deletingOrder || !token || !tenantId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteOrder(deletingOrder._id, tenantId, token);
+
+      // Remove the order from the local state
+      setOrders((prev) =>
+        prev.filter((order) => order._id !== deletingOrder._id)
+      );
+      setTotalOrders((prev) => prev - 1);
+
+      toast({
+        title: "Thành công",
+        description: "Đã xóa giao dịch thành công",
+      });
+
+      // Close dialog and reset state
+      setDeleteDialogOpen(false);
+      setDeletingOrder(null);
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast({
+        title: "Lỗi",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Không thể xóa giao dịch. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -425,15 +527,22 @@ export default function TransactionsPage() {
             Quản lý tất cả các giao dịch tài chính tại trung tâm bơi lội
           </p>
         </div>
-        {/* <div className='flex gap-2'>
-          <Button variant='outline'>
-            <Download className='mr-2 h-4 w-4' />
-            Xuất dữ liệu
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+          >
+            <RefreshCw
+              className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Làm mới
           </Button>
-          <Link href='/dashboard/manager/transactions/new'>
-            <Button>Ghi nhận thanh toán</Button>
-          </Link>
-        </div> */}
+          <Button onClick={() => setCreateOrderModalOpen(true)}>
+            <Plus className='mr-2 h-4 w-4' />
+            Tạo giao dịch mới
+          </Button>
+        </div>
       </div>
 
       <div className='mt-8 grid gap-6 md:grid-cols-4'>
@@ -568,13 +677,14 @@ export default function TransactionsPage() {
                   <TableHead>Ngày</TableHead>
                   <TableHead>Loại</TableHead>
                   <TableHead>Trạng thái</TableHead>
+                  <TableHead className='w-[80px]'>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && orders.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className='text-center py-10'
                     >
                       <div className='flex justify-center'>
@@ -641,17 +751,32 @@ export default function TransactionsPage() {
                           <span>{getOrderTypeDisplayName(order)}</span>
                         </TableCell>
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
-                          <div className='flex items-center justify-between'>
-                            <Badge
-                              variant='outline'
-                              className={`${getStatusClass(
-                                order.status
-                              )} transition-all duration-200`}
-                            >
-                              {getStatusName(order.status)}
-                            </Badge>
-                            <ChevronRight className='h-4 w-4 text-gray-400' />
-                          </div>
+                          <Badge
+                            variant='outline'
+                            className={`${getStatusClass(
+                              order.status
+                            )} transition-all duration-200`}
+                          >
+                            {getStatusName(order.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell
+                          className='group-hover:bg-muted/50 transition-colors duration-200'
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='h-8 w-8 p-0 text-destructive hover:text-destructive'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeletingOrder(order);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -659,7 +784,7 @@ export default function TransactionsPage() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={8}
                       className='text-center py-8 text-muted-foreground'
                     >
                       Không tìm thấy giao dịch phù hợp với bộ lọc hiện tại.
@@ -772,6 +897,42 @@ export default function TransactionsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Order Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa giao dịch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa giao dịch{" "}
+              <span className='font-semibold'>
+                {deletingOrder?._id.substring(0, 8)}...
+              </span>{" "}
+              không? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOrder}
+              disabled={isDeleting}
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+            >
+              {isDeleting ? "Đang xóa..." : "Xóa"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Order Modal */}
+      <CreateOrderModal
+        open={createOrderModalOpen}
+        onOpenChange={setCreateOrderModalOpen}
+        onSuccess={handleRefresh}
+      />
     </>
   );
 }
