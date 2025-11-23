@@ -18,6 +18,7 @@ import {
   Search,
   Loader2,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +68,7 @@ import {
   fetchOrderById,
   addMemberToClass,
   deleteOrder,
+  updateOrder,
 } from "@/api/manager/orders-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
 import {
@@ -77,6 +79,7 @@ import {
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import ManagerNotFound from "@/components/manager/not-found";
 import CreateStudentModal from "@/components/create-student-modal";
+import { EditOrderModal } from "@/components/manager/edit-order-modal";
 
 export default function TransactionDetailPage() {
   const params = useParams();
@@ -116,6 +119,9 @@ export default function TransactionDetailPage() {
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Edit modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   // Fetch order details and related course
   useEffect(() => {
@@ -653,6 +659,13 @@ export default function TransactionDetailPage() {
         <div className='flex gap-2'>
           <Button
             variant='outline'
+            onClick={() => setEditModalOpen(true)}
+          >
+            <Pencil className='mr-2 h-4 w-4' />
+            Chỉnh sửa
+          </Button>
+          <Button
+            variant='outline'
             className='text-destructive hover:text-destructive'
             onClick={() => setDeleteDialogOpen(true)}
           >
@@ -1124,11 +1137,11 @@ export default function TransactionDetailPage() {
                         {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
                       </time>
                     </div>
-                    {order.created_by && (
+                    {/* {order.created_by && (
                       <p className='text-xs text-muted-foreground mt-1'>
                         Tạo bởi: {order.created_by}
                       </p>
-                    )}
+                    )} */}
                   </div>
                 </div>
 
@@ -1403,6 +1416,40 @@ export default function TransactionDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Order Modal */}
+      <EditOrderModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        order={order}
+        onSuccess={async () => {
+          // Refresh order data after successful update
+          if (!token || !tenantId || !order) return;
+
+          try {
+            const updatedOrder = await fetchOrderById({
+              orderId: order._id,
+              tenantId,
+              token,
+            });
+            setOrder(updatedOrder);
+
+            // Also refresh course details if course changed
+            if (typeof updatedOrder.course === "object") {
+              setCourseDetails(updatedOrder.course);
+            } else if (updatedOrder.course) {
+              const courseData = await fetchCourseById({
+                courseId: updatedOrder.course,
+                tenantId,
+                token,
+              });
+              setCourseDetails(courseData);
+            }
+          } catch (err) {
+            console.error("Error refreshing order data:", err);
+          }
+        }}
+      />
     </>
   );
 }
