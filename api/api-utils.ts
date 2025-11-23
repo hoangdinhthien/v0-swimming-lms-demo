@@ -47,7 +47,6 @@ export async function apiRequest(
     });
     const cachedData = apiCache.get(cacheKey);
     if (cachedData) {
-      console.log("🚀 API Cache hit for:", url);
       return new Response(JSON.stringify(cachedData), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -100,7 +99,6 @@ export async function apiRequest(
       headers: fetchOptions.headers,
     });
     apiCache.set(cacheKey, responseData, cacheTTL);
-    console.log("💾 API response cached for:", url);
   }
 
   return response;

@@ -22,8 +22,6 @@ export async function createStudent({
   tenantId: string;
   token: string;
 }) {
-  console.log("Creating student with data:", data);
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
@@ -219,8 +217,6 @@ export async function fetchStudentDetail({
     headers["service"] = "User";
   }
 
-  console.log("[fetchStudentDetail] URL:", url);
-  console.log("[fetchStudentDetail] Headers:", headers);
   const res = await fetch(url, {
     headers,
     cache: "no-store",
@@ -264,8 +260,6 @@ export async function fetchUsersWithoutParent({
   if (getUserFrontendRole() === "staff") {
     headers["service"] = "User";
   }
-
-  console.log("[fetchUsersWithoutParent] URL:", url);
 
   const res = await fetch(url, {
     headers,
@@ -337,9 +331,6 @@ export async function fetchStudentsByCourseOrder({
     headers["service"] = "User";
   }
 
-  console.log("[fetchStudentsByCourse] URL:", url);
-  console.log("[fetchStudentsByCourse] Headers:", headers);
-
   const res = await fetch(url, {
     headers,
     cache: "no-store",
@@ -353,8 +344,6 @@ export async function fetchStudentsByCourseOrder({
 
   const data = await res.json();
 
-  console.log("[fetchStudentsByCourse] Full API response:", data);
-
   // Extract data from the nested structure: data.data[0][0]
   // Each item in the array represents a student with their information
   try {
@@ -363,21 +352,13 @@ export async function fetchStudentsByCourseOrder({
     // Try different possible structures
     if (data.data?.[0]?.[0]) {
       studentsArray = data.data[0][0];
-      console.log(
-        "[fetchStudentsByCourse] Using nested structure data.data[0][0]"
-      );
     } else if (data.data?.[0]) {
       studentsArray = data.data[0];
-      console.log("[fetchStudentsByCourse] Using structure data.data[0]");
     } else if (data.data) {
       studentsArray = data.data;
-      console.log("[fetchStudentsByCourse] Using structure data.data");
     } else {
-      console.log("[fetchStudentsByCourse] No valid data structure found");
       return [];
     }
-
-    console.log("[fetchStudentsByCourse] Raw students array:", studentsArray);
 
     // Handle case where each student might be a single object instead of array
     const transformedStudents = studentsArray
@@ -426,10 +407,6 @@ export async function fetchStudentsByCourseOrder({
       })
       .filter((student: any) => student !== null); // Remove any null entries
 
-    console.log(
-      "[fetchStudentsByCourse] Transformed students:",
-      transformedStudents
-    );
     return transformedStudents;
   } catch (err) {
     console.error("Error parsing students by course:", err);

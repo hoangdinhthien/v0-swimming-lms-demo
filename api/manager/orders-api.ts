@@ -117,14 +117,6 @@ export async function fetchOrders({
   limit?: number;
   searchParams?: Record<string, string>;
 }): Promise<{ orders: Order[]; total: number; currentPage: number }> {
-  // Debug: log input params
-  console.log("[fetchOrders] called with", {
-    tenantId,
-    token,
-    page,
-    limit,
-    searchParams,
-  });
   if (!tenantId || !token) {
     console.error("[fetchOrders] Missing tenantId or token", {
       tenantId,
@@ -152,9 +144,6 @@ export async function fetchOrders({
     headers.service = "Order";
   }
 
-  console.log("[fetchOrders] URL:", url);
-  console.log("[fetchOrders] Headers:", headers);
-
   try {
     const res = await fetch(url, {
       headers,
@@ -168,7 +157,6 @@ export async function fetchOrders({
     }
 
     const data: OrdersResponse = await res.json();
-    console.log("[fetchOrders] API Response:", data);
 
     // Robust parsing: support both old shape (data[0][0].data + meta_data)
     // and new shape (data[0][0].documents + limit/skip/count)
@@ -425,14 +413,6 @@ export async function fetchOrdersForCourse({
   status?: string;
   type?: string;
 }): Promise<Order[]> {
-  console.log("[fetchOrdersForCourse] called with", {
-    tenantId,
-    token,
-    courseId,
-    classId,
-    status,
-    type,
-  });
   if (!tenantId || !token) {
     console.error("[fetchOrdersForCourse] Missing tenantId or token", {
       tenantId,
@@ -463,9 +443,6 @@ export async function fetchOrdersForCourse({
     headers.service = "Order";
   }
 
-  console.log("[fetchOrdersForCourse] URL:", url);
-  console.log("[fetchOrdersForCourse] Headers:", headers);
-
   try {
     const res = await fetch(url, {
       headers,
@@ -479,11 +456,9 @@ export async function fetchOrdersForCourse({
     }
 
     const data: OrdersResponse = await res.json();
-    console.log("[fetchOrdersForCourse] API Response:", data);
 
     const ordersData = data.data?.[0]?.[0] || {};
     const orders = ordersData?.documents || ordersData?.data || [];
-    console.log("[fetchOrdersForCourse] Parsed orders count:", orders.length);
 
     return orders;
   } catch (error) {
@@ -504,7 +479,6 @@ export async function fetchOrderById({
   tenantId: string;
   token: string;
 }): Promise<Order> {
-  console.log("[fetchOrderById] called with", { orderId, tenantId, token });
   if (!tenantId || !token) {
     console.error("[fetchOrderById] Missing tenantId or token", {
       tenantId,
@@ -526,9 +500,6 @@ export async function fetchOrderById({
     headers.service = "Order";
   }
 
-  console.log("[fetchOrderById] URL:", url);
-  console.log("[fetchOrderById] Headers:", headers);
-
   try {
     const res = await fetch(url, {
       headers,
@@ -545,7 +516,6 @@ export async function fetchOrderById({
     }
 
     const data = await res.json();
-    console.log("[fetchOrderById] API Response:", data);
 
     // New shape: data[0][0].documents[0]
     const block = data.data?.[0]?.[0] || {};

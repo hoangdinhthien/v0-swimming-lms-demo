@@ -96,16 +96,7 @@ export default function DashboardLayout({
     isStaff,
     loading: permissionsLoading,
   } = useStaffPermissions(); // Handle tenant switching
-  // Debug info for active highlight issues (logged after isStaff is available)
-  if (typeof window !== "undefined") {
-    console.log("[DashboardLayout DEBUG] pathname:", pathname);
-    console.log("[DashboardLayout DEBUG] normalized:", normalizePath(pathname));
-    console.log(
-      "[DashboardLayout DEBUG] expected staff path:",
-      normalizePath("/dashboard/staff")
-    );
-    console.log("[DashboardLayout DEBUG] isStaff:", isStaff);
-  }
+
   const handleTenantSwitch = async (newTenantId: string) => {
     try {
       // Set the new tenant ID
@@ -314,22 +305,13 @@ export default function DashboardLayout({
   }[] => {
     const baseNavItems = navItems.manager;
 
-    console.log("[getFilteredNavItems] Input:", {
-      isManager,
-      isStaff,
-      allowedNavigationItems,
-      baseNavItemsCount: baseNavItems.length,
-    });
-
     // If user is manager, show all items with manager routes
     if (isManager) {
-      console.log("[getFilteredNavItems] User is manager, showing all items");
       return baseNavItems;
     }
 
     // If user is staff, filter based on permissions and use staff routes
     if (isStaff) {
-      console.log("[getFilteredNavItems] User is staff, filtering items");
       return baseNavItems
         .filter((item) => {
           // Extract the route from href (e.g., "/dashboard/manager/students" -> "students")
@@ -337,9 +319,6 @@ export default function DashboardLayout({
           const route = routeParts[routeParts.length - 1];
 
           const allowed = allowedNavigationItems.includes(route);
-          console.log(
-            `[getFilteredNavItems] Item: ${item.name}, Route: ${route}, Allowed: ${allowed}`
-          );
 
           // Always allow dashboard access
           if (route === "manager") {
@@ -366,17 +345,12 @@ export default function DashboardLayout({
     }
 
     // Default to empty for other roles
-    console.log("[getFilteredNavItems] User has other role, showing no items");
     return [];
   };
 
   // For this version of the application, we're focusing on manager functionality
   // Default to manager navigation items unless explicitly overridden  // For this version, we always use manager navigation items
   const currentNavItems = getFilteredNavItems();
-  console.log(
-    "[DashboardLayout] Final navigation items:",
-    currentNavItems.map((item) => ({ name: item.name, href: item.href }))
-  );
 
   // Build the content
   const content = (

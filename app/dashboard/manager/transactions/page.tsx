@@ -125,7 +125,6 @@ export default function TransactionsPage() {
     if (authLoading) return;
 
     async function getOrders() {
-      console.log("[Transactions] Auth state:", { token, tenantId });
       if (!token || !tenantId) {
         console.error(
           "[Transactions] Missing token or tenantId - cannot fetch orders"
@@ -140,13 +139,6 @@ export default function TransactionsPage() {
         } else {
           setLoading(true);
         }
-        console.log("[Transactions] Fetching orders with:", {
-          tenantId,
-          tokenLength: token?.length,
-          currentPage,
-          limit,
-          searchQuery: debouncedSearch,
-        });
 
         // Build search params using searchOr for multiple fields
         const searchParams = debouncedSearch?.trim()
@@ -164,11 +156,6 @@ export default function TransactionsPage() {
           searchParams,
         });
 
-        console.log("[Transactions] Orders data received:", {
-          count: ordersData?.orders?.length || 0,
-          total: ordersData?.total || 0,
-        });
-
         if (!ordersData || !ordersData.orders) {
           throw new Error("API returned invalid data format");
         }
@@ -184,7 +171,6 @@ export default function TransactionsPage() {
               .filter(Boolean)
           ),
         ];
-        console.log("[Transactions] Found course IDs:", courseIds);
 
         // Pre-populate course info for orders that already have course objects embedded
         const embeddedCourseInfo: Record<string, CourseInfo> = {};

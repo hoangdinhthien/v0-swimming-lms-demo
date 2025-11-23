@@ -160,14 +160,10 @@ export function useOptimisticUpdate<T>(
 export function usePerformanceMonitor(name: string) {
   useEffect(() => {
     const startTime = performance.now();
-    console.log(`🚀 [Performance] ${name} - Started`);
 
     return () => {
       const endTime = performance.now();
       const duration = endTime - startTime;
-      console.log(
-        `⚡ [Performance] ${name} - Completed in ${duration.toFixed(2)}ms`
-      );
 
       // Log slow operations
       if (duration > 1000) {

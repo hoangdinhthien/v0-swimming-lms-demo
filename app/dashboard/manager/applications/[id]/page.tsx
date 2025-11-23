@@ -67,7 +67,6 @@ function ProfileImage({
   useEffect(() => {
     async function loadImage() {
       if (!featuredImage) {
-        console.log("[ProfileImage] No featured image provided");
         return;
       }
 
@@ -77,18 +76,15 @@ function ProfileImage({
         const imageId = Array.isArray(featuredImage)
           ? featuredImage[0]
           : featuredImage;
-        console.log("[ProfileImage] Loading image for ID:", imageId);
 
         if (imageId) {
           const url = await getMediaDetails(imageId);
-          console.log("[ProfileImage] Retrieved URL:", url);
 
           if (url) {
             // Ensure the URL is absolute
             const fullUrl = url.startsWith("http")
               ? url
               : `${window.location.origin}${url}`;
-            console.log("[ProfileImage] Setting full URL:", fullUrl);
             setImageUrl(fullUrl);
           }
         }
@@ -166,8 +162,6 @@ export default function ApplicationDetailPage() {
           tenantId,
           token
         );
-        console.log("[ApplicationDetailPage] Loaded application:", appData);
-        console.log("[ApplicationDetailPage] Application type:", appData?.type);
         setApplication(appData);
       } catch (e: any) {
         setError(e.message || "Lỗi không xác định");

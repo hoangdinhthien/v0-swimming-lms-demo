@@ -222,16 +222,12 @@ export default function CreateStudentModal({
       if (data.address) studentData.address = data.address;
       if (data.parent_id) studentData.parent_id = data.parent_id;
 
-      console.log("Sending student data:", studentData);
-
       // Call the API to create student
       const result = await createStudent({
         data: studentData,
         tenantId,
         token,
       });
-
-      console.log("Student creation result:", result);
 
       // Extract the insertedId from the nested response structure
       let studentId = null;

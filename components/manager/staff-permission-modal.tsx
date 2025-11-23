@@ -57,17 +57,8 @@ export default function StaffPermissionModal({
   const [saving, setSaving] = useState(false);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
 
-  // Debug logs
-  console.log("StaffPermissionModal props:", {
-    open,
-    staffData,
-    token,
-    tenantId,
-  });
-
   // Load available permissions when modal opens
   useEffect(() => {
-    console.log("Modal open effect triggered:", { open, token, tenantId });
     if (open && token && tenantId) {
       loadAvailablePermissions();
     }
@@ -86,10 +77,6 @@ export default function StaffPermissionModal({
       ) {
         setLoadingPermissions(true);
         try {
-          console.log(
-            "Fetching staff permissions from API for:",
-            staffData._id
-          );
           const detailData = await fetchStaffDetailWithModule({
             staffId: staffData._id,
             tenantId,
@@ -97,10 +84,8 @@ export default function StaffPermissionModal({
           });
 
           if (detailData && detailData.permission) {
-            console.log("Fetched permissions:", detailData.permission);
             setSelectedPermissions([...detailData.permission]);
           } else {
-            console.log("No permissions found for staff");
             setSelectedPermissions([]);
           }
         } catch (error) {
@@ -110,13 +95,8 @@ export default function StaffPermissionModal({
           setLoadingPermissions(false);
         }
       } else if (staffData?.currentPermissions) {
-        console.log(
-          "Using provided currentPermissions:",
-          staffData.currentPermissions
-        );
         setSelectedPermissions([...staffData.currentPermissions]);
       } else if (open && staffData && !token) {
-        console.log("No token available, setting empty permissions");
         setSelectedPermissions([]);
       }
     }
@@ -126,15 +106,9 @@ export default function StaffPermissionModal({
 
   // Initialize selected permissions when staff data changes
   useEffect(() => {
-    console.log("Staff data changed:", staffData);
     if (staffData?.currentPermissions) {
-      console.log(
-        "Setting selected permissions:",
-        staffData.currentPermissions
-      );
       setSelectedPermissions([...staffData.currentPermissions]);
     } else {
-      console.log("No current permissions, will be fetched or set to empty");
       // Don't set to empty here - let the previous useEffect handle it
     }
   }, [staffData]);
@@ -144,21 +118,13 @@ export default function StaffPermissionModal({
 
     setLoading(true);
     try {
-      console.log("Loading available permissions...");
       const permissions = await fetchAvailablePermissions({
         tenantId,
         token,
       });
 
-      console.log("Permissions from fetchAvailablePermissions:", permissions);
-      console.log("Type of permissions:", typeof permissions);
-      console.log("Is permissions an array:", Array.isArray(permissions));
-
       // Ensure permissions is always an array
       const validPermissions = Array.isArray(permissions) ? permissions : [];
-      console.log("Valid permissions after array check:", validPermissions);
-      console.log("Valid permissions length:", validPermissions.length);
-      console.log("First permission item:", validPermissions[0]);
 
       // The API function already handles deduplication, but let's add a safety check
       const uniquePermissions = validPermissions.filter(
@@ -170,9 +136,6 @@ export default function StaffPermissionModal({
           return index === self.findIndex((p) => p.module?.[0] === moduleName);
         }
       );
-
-      console.log("Final permissions to set:", uniquePermissions);
-      console.log("Number of available permissions:", uniquePermissions.length);
 
       setAvailablePermissions(uniquePermissions);
     } catch (error) {
@@ -222,7 +185,6 @@ export default function StaffPermissionModal({
     action: string,
     checked: boolean
   ) => {
-    console.log("Toggle action:", { moduleIndex, action, checked });
     setSelectedPermissions((prev) => {
       const newPermissions = [...prev];
 
@@ -249,7 +211,6 @@ export default function StaffPermissionModal({
           ),
         };
       }
-      console.log("Updated permissions:", newPermissions);
       return newPermissions;
     });
   };
@@ -267,19 +228,8 @@ export default function StaffPermissionModal({
 
   const handleSave = async () => {
     if (!staffData || !token || !tenantId) {
-      console.log("Missing required data for save:", {
-        staffData,
-        token,
-        tenantId,
-      });
       return;
     }
-
-    console.log("Saving permissions:", {
-      userId: staffData._id,
-      permissions: selectedPermissions,
-      tenantId,
-    });
 
     setSaving(true);
     try {

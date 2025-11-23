@@ -153,10 +153,8 @@ export default function NewsDetailPage() {
 
   // Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input clicked!", e.target.files); // Debug log
     const file = e.target.files?.[0];
     if (file) {
-      console.log("File selected:", file.name); // Debug log
       setFormData((prev) => ({
         ...prev,
         coverFile: file,
@@ -174,7 +172,6 @@ export default function NewsDetailPage() {
 
   // Alternative file upload trigger function
   const triggerFileUpload = () => {
-    console.log("Triggering file upload..."); // Debug log
     const fileInput = document.getElementById(
       "edit-cover-upload"
     ) as HTMLInputElement;

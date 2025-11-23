@@ -59,9 +59,6 @@ export async function fetchAvailablePermissions({
     "Content-Type": "application/json",
   };
 
-  console.log("[fetchAvailablePermissions] URL:", url);
-  console.log("[fetchAvailablePermissions] Headers:", headers);
-
   const res = await fetch(url, {
     method: "GET",
     headers,
@@ -75,22 +72,15 @@ export async function fetchAvailablePermissions({
   }
 
   const data: AvailablePermissionsResponse = await res.json();
-  console.log(
-    "[fetchAvailablePermissions] Raw API Response:",
-    JSON.stringify(data, null, 2)
-  );
 
   // Unwrap the nested structure to get the permissions array
   // Based on the actual API response: { data: [{ data: permissions_array }], message: "Success", statusCode: 200 }
   let permissions: AvailablePermission[] = [];
 
   if (data?.data) {
-    console.log("[fetchAvailablePermissions] data.data:", data.data);
-
     // The response structure is: data[0].data contains the array of permissions
     if (Array.isArray(data.data) && data.data.length > 0) {
       const firstLevel = data.data[0];
-      console.log("[fetchAvailablePermissions] firstLevel:", firstLevel);
 
       if (
         firstLevel &&
@@ -98,10 +88,6 @@ export async function fetchAvailablePermissions({
         "data" in firstLevel
       ) {
         const permissionsArray = firstLevel.data;
-        console.log(
-          "[fetchAvailablePermissions] permissionsArray:",
-          permissionsArray
-        );
 
         // permissionsArray should be the array of permissions
         if (Array.isArray(permissionsArray)) {
@@ -110,11 +96,6 @@ export async function fetchAvailablePermissions({
       }
     }
   }
-
-  console.log(
-    "[fetchAvailablePermissions] Extracted permissions:",
-    permissions
-  );
 
   // Ensure we always return an array
   if (!Array.isArray(permissions)) {
@@ -133,15 +114,6 @@ export async function fetchAvailablePermissions({
     // Keep only the first occurrence of each module
     return index === self.findIndex((p) => p.module?.[0] === moduleName);
   });
-
-  console.log(
-    "[fetchAvailablePermissions] Deduplicated permissions:",
-    uniquePermissions
-  );
-  console.log(
-    "[fetchAvailablePermissions] Removed duplicates:",
-    permissions.length - uniquePermissions.length
-  );
 
   return uniquePermissions;
 }
@@ -175,10 +147,6 @@ export async function updateStaffPermissions({
     permission: permissions,
   };
 
-  console.log("[updateStaffPermissions] URL:", url);
-  console.log("[updateStaffPermissions] Headers:", headers);
-  console.log("[updateStaffPermissions] Body:", requestBody);
-
   const res = await fetch(url, {
     method: "PUT",
     headers,
@@ -193,7 +161,6 @@ export async function updateStaffPermissions({
   }
 
   const data = await res.json();
-  console.log("[updateStaffPermissions] Response:", data);
 }
 
 /**
@@ -217,9 +184,6 @@ export async function fetchStaffPermissions({
     "Content-Type": "application/json",
   };
 
-  console.log("[fetchStaffPermissions] URL:", url);
-  console.log("[fetchStaffPermissions] Headers:", headers);
-
   const res = await fetch(url, {
     method: "GET",
     headers,
@@ -233,7 +197,6 @@ export async function fetchStaffPermissions({
   }
 
   const data: StaffPermissionResponse = await res.json();
-  console.log("[fetchStaffPermissions] Response:", data);
 
   // Unwrap the nested structure to get the staff permission
   const staffPermission = data.data?.[0]?.[0]?.[0] || null;

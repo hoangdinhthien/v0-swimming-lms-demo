@@ -211,50 +211,6 @@ export function formatVietnamDate(
  * @param timestamp - The timestamp to log information about
  * @param showFormatted - Whether to show the formatted output using formatMessageTime
  */
-export function logTimestampDebugInfo(
-  label: string,
-  timestamp: any,
-  showFormatted: boolean = true
-): void {
-  try {
-    const date = new Date(timestamp);
-    console.group(`Timestamp Debug: ${label}`);
-    console.log(`- Original value: ${timestamp}`);
-    console.log(`- Type: ${typeof timestamp}`);
-
-    if (!isNaN(date.getTime())) {
-      console.log(`- Parsed local date: ${date.toString()}`);
-      console.log(`- ISO string: ${date.toISOString()}`);
-      console.log(`- Locale string: ${date.toLocaleString()}`);
-      console.log(`- UTC string: ${date.toUTCString()}`);
-      console.log(`- Timezone offset: ${date.getTimezoneOffset()} minutes`);
-      console.log(
-        `- Browser timezone: ${
-          Intl.DateTimeFormat().resolvedOptions().timeZone
-        }`
-      );
-      console.log(`- Time components:`, {
-        year: date.getFullYear(),
-        month: date.getMonth() + 1,
-        day: date.getDate(),
-        hours: date.getHours(),
-        minutes: date.getMinutes(),
-        seconds: date.getSeconds(),
-      });
-
-      if (showFormatted) {
-        console.log(
-          `- Formatted with formatMessageTime: ${formatMessageTime(date)}`
-        );
-      }
-    } else {
-      console.warn(`- Invalid date value`);
-    }
-    console.groupEnd();
-  } catch (error) {
-    console.error("Error logging timestamp debug info:", error);
-  }
-}
 
 /**
  * Convert backend day number to Vietnamese day name

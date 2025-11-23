@@ -20,10 +20,6 @@ export default function AuthProvider({
 
       // Token checking is handled by isAuthenticated(), which
       // will automatically redirect if token is invalid
-      console.log(
-        "Auth check complete:",
-        authValid ? "Valid session" : "Invalid session"
-      );
     }
 
     // Create an interval to periodically check token validity (every 30 minutes)

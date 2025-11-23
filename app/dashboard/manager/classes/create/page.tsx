@@ -44,11 +44,7 @@ import { getAuthToken } from "@/api/auth-utils";
 async function getAvatarUrl(featured_image?: any): Promise<string> {
   const placeholder = "/placeholder.svg";
 
-  // Debug logging
-  console.log("Processing featured_image:", featured_image);
-
   if (!featured_image) {
-    console.log("No featured_image found, using placeholder");
     return placeholder;
   }
 
@@ -57,14 +53,12 @@ async function getAvatarUrl(featured_image?: any): Promise<string> {
 
     // Case 1: Empty array - return placeholder
     if (Array.isArray(featured_image) && featured_image.length === 0) {
-      console.log("Empty array, using placeholder");
       return placeholder;
     }
 
     // Case 2: Object with direct path property
     if (featured_image.path && typeof featured_image.path === "string") {
       imageUrl = featured_image.path;
-      console.log("Found direct path:", imageUrl);
     }
 
     // Case 3: Array with objects containing path arrays
@@ -73,10 +67,8 @@ async function getAvatarUrl(featured_image?: any): Promise<string> {
       if (firstItem.path) {
         if (Array.isArray(firstItem.path) && firstItem.path.length > 0) {
           imageUrl = firstItem.path[0];
-          console.log("Found path in array:", imageUrl);
         } else if (typeof firstItem.path === "string") {
           imageUrl = firstItem.path;
-          console.log("Found string path in array:", imageUrl);
         }
       }
     }
@@ -84,11 +76,9 @@ async function getAvatarUrl(featured_image?: any): Promise<string> {
     // Case 4: Direct string (legacy format)
     else if (typeof featured_image === "string") {
       imageUrl = featured_image;
-      console.log("Found direct string:", imageUrl);
     }
 
     const finalUrl = imageUrl || placeholder;
-    console.log("Final avatar URL:", finalUrl);
     return finalUrl;
   } catch (error) {
     console.error("Error processing avatar image:", error);

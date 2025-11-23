@@ -183,15 +183,11 @@ export default function InstructorDetailPage() {
         const token = getAuthToken();
         if (!token) throw new Error("Không có thông tin xác thực");
 
-        console.log("[DEBUG] Fetching instructor with ID:", instructorId);
-
         const detailData = await fetchInstructorDetail({
           instructorId,
           tenantId,
           token,
         });
-
-        console.log("[DEBUG] Fetched instructor data:", detailData);
 
         setDetail(detailData);
 
@@ -283,11 +279,6 @@ export default function InstructorDetailPage() {
     if (!tenantId || !token) return;
 
     try {
-      console.log("[DEBUG] Updating instructor with ID:", instructorId);
-      console.log("[DEBUG] Instructor detail data:", detail);
-      console.log("[DEBUG] User ID from detail:", detail?.user?._id);
-      console.log("[DEBUG] Update data:", data);
-
       // Use the user._id for the actual update, not the outer instructorId
       const actualUserId = detail?.user?._id;
       if (!actualUserId) {
@@ -308,9 +299,6 @@ export default function InstructorDetailPage() {
       if (uploadedAvatarId) {
         updateData.featured_image = [uploadedAvatarId]; // Send as array of strings
       }
-
-      console.log("[DEBUG] Final update data being sent:", updateData);
-      console.log("[DEBUG] Using actual user ID for update:", actualUserId);
 
       // Send request to update instructor using the correct user ID
       await updateInstructor({

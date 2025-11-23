@@ -40,7 +40,6 @@ export default function LoginPage() {
       if (token && user) {
         setAuthCookies(token, user);
       } // Debug: log user data
-      console.log("Login response:", data);
 
       // Show loading screen while redirecting
       setRedirecting(true);

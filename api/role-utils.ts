@@ -18,39 +18,29 @@ export function getUserFrontendRole(): string {
   const user = getAuthenticatedUser();
   if (!user) return "";
 
-  console.log("[getUserFrontendRole] User data:", user);
-
   // Check for staff role first
   if (hasSpecificRole(user, "staff")) {
-    console.log("[getUserFrontendRole] Detected staff role");
     return "staff";
   }
 
   // Check for manager role
   if (hasSpecificRole(user, "manager")) {
-    console.log("[getUserFrontendRole] Detected manager role");
     return "manager";
   }
 
   // Check for other roles
   if (hasSpecificRole(user, "admin")) {
-    console.log("[getUserFrontendRole] Detected admin role");
     return "admin";
   }
 
   if (hasSpecificRole(user, "instructor")) {
-    console.log("[getUserFrontendRole] Detected instructor role");
     return "instructor";
   }
 
   if (hasSpecificRole(user, "student")) {
-    console.log("[getUserFrontendRole] Detected student role");
     return "student";
   }
 
-  console.log(
-    "[getUserFrontendRole] No specific role found, defaulting to manager"
-  );
   return "manager"; // Default fallback
 }
 
@@ -60,22 +50,17 @@ export function getUserFrontendRole(): string {
 function hasSpecificRole(user: any, roleToCheck: string): boolean {
   const roleLower = roleToCheck.toLowerCase();
 
-  console.log(`[hasSpecificRole] Checking for role: ${roleToCheck}`);
-  console.log(`[hasSpecificRole] User object:`, user);
-
   // Check in role_front
   if (
     Array.isArray(user.role_front) &&
     user.role_front.some((r: string) => r.toLowerCase() === roleLower)
   ) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in role_front array`);
     return true;
   }
   if (
     typeof user.role_front === "string" &&
     user.role_front.toLowerCase() === roleLower
   ) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in role_front string`);
     return true;
   }
 
@@ -84,14 +69,12 @@ function hasSpecificRole(user: any, roleToCheck: string): boolean {
     Array.isArray(user.role_system) &&
     user.role_system.some((r: string) => r.toLowerCase() === roleLower)
   ) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in role_system array`);
     return true;
   }
   if (
     typeof user.role_system === "string" &&
     user.role_system.toLowerCase() === roleLower
   ) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in role_system string`);
     return true;
   }
 
@@ -100,15 +83,12 @@ function hasSpecificRole(user: any, roleToCheck: string): boolean {
     Array.isArray(user.role) &&
     user.role.some((r: string) => r.toLowerCase() === roleLower)
   ) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in legacy role array`);
     return true;
   }
   if (typeof user.role === "string" && user.role.toLowerCase() === roleLower) {
-    console.log(`[hasSpecificRole] Found ${roleToCheck} in legacy role string`);
     return true;
   }
 
-  console.log(`[hasSpecificRole] Role ${roleToCheck} not found in any field`);
   return false;
 }
 
@@ -130,8 +110,6 @@ export function hasRequiredRole(requiredRoles: RoleFront[]): boolean {
  */
 export function getUserDashboardPath(): string {
   const role = getUserFrontendRole();
-
-  console.log("[getUserDashboardPath] User role:", role);
 
   switch (role) {
     case "admin":

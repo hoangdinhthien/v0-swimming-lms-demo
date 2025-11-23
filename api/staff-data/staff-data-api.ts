@@ -37,10 +37,6 @@ export async function fetchStaffData({
     "Content-Type": "application/json",
   };
 
-  console.log(`[fetchStaffData] Fetching ${module} data with service header`);
-  console.log(`[fetchStaffData] URL:`, url);
-  console.log(`[fetchStaffData] Headers:`, headers);
-
   const res = await fetch(url, {
     method: "GET",
     headers,
@@ -58,7 +54,6 @@ export async function fetchStaffData({
   }
 
   const data = await res.json();
-  console.log(`[fetchStaffData] ${module} response:`, data);
 
   return data;
 }
@@ -86,11 +81,6 @@ export async function fetchStaffSchedules(startDate: string, endDate: string) {
     "Content-Type": "application/json",
   };
 
-  console.log(
-    `[fetchStaffSchedules] Fetching schedules from ${startDate} to ${endDate}`
-  );
-  console.log(`[fetchStaffSchedules] URL:`, url);
-
   const res = await fetch(url, {
     method: "GET",
     headers,
@@ -104,7 +94,6 @@ export async function fetchStaffSchedules(startDate: string, endDate: string) {
   }
 
   const responseData = await res.json();
-  console.log(`[fetchStaffSchedules] Response:`, responseData);
 
   return responseData.data || [];
 }

@@ -136,8 +136,6 @@ export async function fetchStaff({
   filters?: StaffFilters;
   searchKey?: string;
 }): Promise<Staff[]> {
-  console.log("Fetching staff for tenant:", tenantId, "with filters:", filters);
-
   try {
     // Build query parameters - using the actual API endpoint
     const params = new URLSearchParams();
@@ -171,7 +169,6 @@ export async function fetchStaff({
     const url = buildApiUrl(
       `/v1/workflow-process/manager/users?${params.toString()}`
     );
-    console.log("Fetching staff from URL:", url);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -195,7 +192,6 @@ export async function fetchStaff({
     }
 
     const data = await response.json();
-    console.log("Staff API response:", data);
 
     // Handle the specific nested array response format
     // Response structure: { data: [[{ data: [...], meta_data: {...} }]], message: "Success", statusCode: 200 }
@@ -204,7 +200,6 @@ export async function fetchStaff({
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
         if (actualData && actualData.data && Array.isArray(actualData.data)) {
-          console.log("Found staff data:", actualData.data);
           return actualData.data;
         }
       }
@@ -228,18 +223,10 @@ export async function fetchStaffDetailWithModule({
   tenantId: string;
   token?: string;
 }): Promise<StaffWithPermissions | null> {
-  console.log(
-    "Fetching staff detail with permissions for user ID:",
-    staffId,
-    "tenant:",
-    tenantId
-  );
-
   try {
     const url = buildApiUrl(
       `/v1/workflow-process/manager/staff-permission?user=${staffId}`
     );
-    console.log("Fetching staff with permissions from URL:", url);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -269,27 +256,20 @@ export async function fetchStaffDetailWithModule({
     }
 
     const data = await response.json();
-    console.log("Staff with permissions API response:", data);
 
     // Handle the specific nested array response format
     // Response structure: { data: [[[{ _id, user, permission, ... }]]], message: "Success", statusCode: 200 }
     // or when empty: { data: [[[]]], message: "Success", statusCode: 200 }
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
       const nestedData = data.data[0];
-      console.log("First level nested data:", nestedData);
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
-        console.log("Second level nested data:", actualData);
         if (Array.isArray(actualData)) {
           // Check if actualData is an empty array (no permissions/staff data)
           if (actualData.length === 0) {
-            console.log(
-              "Staff with permissions returned empty array - staff has no permissions"
-            );
             return null; // Return null to trigger fallback to fetchStaffDetail
           }
           // This is the new format: triple nested arrays with data
-          console.log("Found staff with permissions data:", actualData[0]);
           return actualData[0];
         } else if (
           actualData &&
@@ -298,26 +278,18 @@ export async function fetchStaffDetailWithModule({
           actualData.documents.length > 0
         ) {
           // Fallback to old format with documents property
-          console.log(
-            "Found staff with permissions data (documents format):",
-            actualData.documents[0]
-          );
+
           return actualData.documents[0];
         } else if (actualData && actualData._id) {
           // Direct object format
-          console.log(
-            "Found staff with permissions data (direct object):",
-            actualData
-          );
+
           return actualData;
         }
       }
     }
 
     // Staff member not found - this is expected behavior when staff has no permissions
-    console.log(
-      "No staff permissions data found, will fallback to fetchStaffDetail"
-    );
+
     return null; // Return null instead of throwing error
   } catch (error) {
     // Only log actual errors, not 404s which are expected
@@ -338,17 +310,9 @@ export async function fetchStaffDetail({
   tenantId: string;
   token?: string;
 }): Promise<Staff> {
-  console.log(
-    "Fetching staff detail for user ID:",
-    staffId,
-    "tenant:",
-    tenantId
-  );
-
   try {
     // Use the direct endpoint to get staff detail by user ID
     const url = buildApiUrl(`/v1/workflow-process/manager/user?id=${staffId}`);
-    console.log("Fetching staff detail from URL:", url);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -378,7 +342,6 @@ export async function fetchStaffDetail({
     }
 
     const data = await response.json();
-    console.log("Staff detail API response:", data);
 
     // Handle the specific nested array response format
     // Response structure: { data: [[[{ _id, user, classesAsInstructor, classesAsMember }]]], message: "Success", statusCode: 200 }
@@ -387,7 +350,6 @@ export async function fetchStaffDetail({
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
         if (Array.isArray(actualData) && actualData.length > 0) {
-          console.log("Found staff detail data:", actualData[0]);
           return actualData[0];
         }
       }
@@ -411,12 +373,9 @@ export async function createStaff({
   token: string;
   staffData: CreateStaffRequest;
 }): Promise<Staff> {
-  console.log("Creating staff for tenant:", tenantId, "with data:", staffData);
-
   try {
     // Use the workflow-process endpoint pattern for creation
     const url = buildApiUrl("/v1/workflow-process/manager/user");
-    console.log("Creating staff at URL:", url);
 
     const requestBody = {
       ...staffData,
@@ -449,7 +408,6 @@ export async function createStaff({
     }
 
     const data = await response.json();
-    console.log("Create staff API response:", data);
 
     // Handle similar nested response format
     if (data && data.data) {
@@ -490,19 +448,9 @@ export async function updateStaff({
   token: string;
   updates: UpdateStaffRequest;
 }): Promise<Staff> {
-  console.log(
-    "Updating staff with user ID:",
-    staffId,
-    "for tenant:",
-    tenantId,
-    "with updates:",
-    updates
-  );
-
   try {
     // Use the correct POST endpoint with user ID as query parameter
     const url = buildApiUrl(`/v1/workflow-process/manager/user?id=${staffId}`);
-    console.log("Updating staff at URL:", url);
 
     // Map the updates to match the API expected fields
     const requestBody: any = {};
@@ -520,8 +468,6 @@ export async function updateStaff({
 
     // Note: parent_id, birthday are available in API but not commonly updated
     // from the staff management interface, so we don't include them unless specifically needed
-
-    console.log("Request body for staff update:", requestBody);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -548,7 +494,6 @@ export async function updateStaff({
     }
 
     const data = await response.json();
-    console.log("Update staff API response:", data);
 
     // Handle similar nested response format
     if (data && data.data) {
@@ -570,7 +515,6 @@ export async function updateStaff({
     }
 
     // Fallback return - after successful update, fetch the updated data
-    console.log("Update successful, fetching updated staff detail");
     return await fetchStaffDetail({
       staffId,
       tenantId,
@@ -592,12 +536,9 @@ export async function deleteStaff({
   tenantId: string;
   token: string;
 }): Promise<{ success: boolean }> {
-  console.log("Deleting staff:", staffId, "for tenant:", tenantId);
-
   try {
     // Use the workflow-process endpoint pattern for deletion
     const url = buildApiUrl(`/v1/workflow-process/manager/users/${staffId}`);
-    console.log("Deleting staff at URL:", url);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -623,7 +564,6 @@ export async function deleteStaff({
     }
 
     const data = await response.json();
-    console.log("Delete staff API response:", data);
 
     return { success: true };
   } catch (error) {
@@ -646,11 +586,8 @@ export async function getStaffStatistics({
   departments: string[];
   positions: string[];
 }> {
-  console.log("Fetching staff statistics for tenant:", tenantId);
-
   try {
     const url = buildApiUrl(`/staff/statistics?tenant_id=${tenantId}`);
-    console.log("Fetching staff statistics from URL:", url);
 
     const response = await fetch(url, {
       method: "GET",
@@ -670,7 +607,6 @@ export async function getStaffStatistics({
     }
 
     const data = await response.json();
-    console.log("Staff statistics API response:", data);
 
     // Handle different response formats
     if (data.data) {
@@ -703,13 +639,6 @@ export async function toggleStaffStatus({
   token: string;
   isActive: boolean;
 }): Promise<Staff> {
-  console.log(
-    "Toggling staff status:",
-    staffId,
-    "to",
-    isActive ? "active" : "inactive"
-  );
-
   return updateStaff({
     staffId,
     tenantId,
@@ -730,11 +659,8 @@ export async function bulkUpdateStaff({
   token: string;
   updates: UpdateStaffRequest;
 }): Promise<{ success: boolean; updated: number }> {
-  console.log("Bulk updating staff:", staffIds, "with updates:", updates);
-
   try {
     const url = buildApiUrl("/staff/bulk-update");
-    console.log("Bulk updating staff at URL:", url);
 
     const requestBody = {
       staff_ids: staffIds,
@@ -757,7 +683,6 @@ export async function bulkUpdateStaff({
     }
 
     const data = await response.json();
-    console.log("Bulk update staff API response:", data);
 
     return {
       success: true,
@@ -777,13 +702,10 @@ export async function fetchAvailablePermissions({
   tenantId: string;
   token: string;
 }): Promise<AvailablePermission[]> {
-  console.log("Fetching available permissions for tenant:", tenantId);
-
   try {
     const url = buildApiUrl(
       "/v1/workflow-process/manager/staff-permission/list"
     );
-    console.log("Fetching available permissions from URL:", url);
 
     // Create headers with both token and tenant ID
     const headers: Record<string, string> = {
@@ -813,7 +735,6 @@ export async function fetchAvailablePermissions({
     }
 
     const data = await response.json();
-    console.log("Available permissions API response:", data);
 
     // Handle the nested array response format: { data: [[[...]]], message: "Success", statusCode: 200 }
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -821,7 +742,6 @@ export async function fetchAvailablePermissions({
       if (Array.isArray(nestedData) && nestedData.length > 0) {
         const actualData = nestedData[0];
         if (Array.isArray(actualData)) {
-          console.log("Found available permissions data:", actualData);
           return actualData;
         }
       }
@@ -847,18 +767,10 @@ export async function updateStaffPermissions({
   token: string;
   permissions: Permission[];
 }): Promise<{ success: boolean }> {
-  console.log(
-    "Updating staff permissions for user ID:",
-    staffId,
-    "with permissions:",
-    permissions
-  );
-
   try {
     const url = buildApiUrl(
       `/v1/workflow-process/manager/staff-permission?user=${staffId}`
     );
-    console.log("Updating staff permissions at URL:", url);
 
     const requestBody = {
       permission: permissions,
@@ -893,7 +805,6 @@ export async function updateStaffPermissions({
     }
 
     const data = await response.json();
-    console.log("Update staff permissions API response:", data);
 
     return { success: true };
   } catch (error) {

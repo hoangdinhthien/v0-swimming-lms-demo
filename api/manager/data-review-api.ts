@@ -60,7 +60,6 @@ export async function fetchDataReviewList({
   }
 
   const body = (await res.json()) as DataReviewListResponse;
-  console.log("[fetchDataReviewList] raw response:", body);
 
   // Unwrap nested structure. API returns data as [[{ limit, skip, count, documents }]]
   let documents: DataReviewRecord[] = [];

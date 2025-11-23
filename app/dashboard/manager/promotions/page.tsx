@@ -119,7 +119,6 @@ export default function PromotionsPage() {
 
   // Handle adding a new promotion
   const handleAddPromotion = () => {
-    console.log("Adding new promotion:", newPromotion);
     // Here you would typically make an API call to add the promotion
     setIsAddDialogOpen(false);
     setNewPromotion({

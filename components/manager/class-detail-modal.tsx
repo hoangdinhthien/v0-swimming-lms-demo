@@ -166,11 +166,6 @@ export default function ClassDetailModal({
         return;
       }
 
-      console.log("🔍 Starting loadDetailedInformation with:", {
-        tenantId,
-        token: token ? "present" : "missing",
-      });
-
       // Fetch slot details để lấy thông tin chi tiết về schedule
       if (scheduleEvent.slot?._id && scheduleEvent.date) {
         try {
@@ -187,8 +182,6 @@ export default function ClassDetailModal({
           );
 
           if (currentSchedule) {
-            console.log("🔍 Current schedule found:", currentSchedule);
-
             // Cast schedule để phù hợp với structure thực tế
             const actualSchedule: ActualSchedule = {
               _id: currentSchedule._id,
@@ -200,21 +193,15 @@ export default function ClassDetailModal({
               date: currentSchedule.date,
             };
             setDetailedSchedule(actualSchedule);
-            console.log("🔍 Actual schedule set:", actualSchedule);
 
             // Fetch course details
             if (actualSchedule.classroom?.course) {
               try {
-                console.log(
-                  "🔍 Fetching course details for:",
-                  actualSchedule.classroom.course
-                );
                 const course = await fetchCourseById({
                   courseId: actualSchedule.classroom.course,
                   tenantId,
                   token,
                 });
-                console.log("✅ Course details fetched:", course);
                 setCourseDetail(course);
               } catch (error) {
                 console.warn("❌ Failed to fetch course details:", error);
@@ -226,22 +213,15 @@ export default function ClassDetailModal({
               actualSchedule.classroom?.member &&
               actualSchedule.classroom.member.length > 0
             ) {
-              console.log(
-                "🔍 Fetching students for members:",
-                actualSchedule.classroom.member
-              );
-
               // Test với student ID cụ thể từ response data
               const testStudentId = "68e9111431a4b3bf3e942d56";
               if (actualSchedule.classroom.member.includes(testStudentId)) {
-                console.log("🧪 Testing specific student ID:", testStudentId);
                 try {
                   const testStudent = await fetchStudentDetail({
                     studentId: testStudentId,
                     tenantId,
                     token,
                   });
-                  console.log("🧪 Test student result:", testStudent);
                 } catch (testError) {
                   console.error("🧪 Test student failed:", testError);
                 }
@@ -251,24 +231,16 @@ export default function ClassDetailModal({
                 const studentsData = await Promise.all(
                   actualSchedule.classroom.member.map(
                     async (studentId: string) => {
-                      console.log(`🔍 Fetching student: ${studentId}`);
                       try {
                         const studentResponse = await fetchStudentDetail({
                           studentId,
                           tenantId,
                           token,
                         });
-                        console.log(`✅ Student fetched:`, studentResponse);
 
                         // Extract user data from the nested response structure
                         const student =
                           studentResponse?.user || studentResponse;
-                        console.log(
-                          `🔍 Student extracted:`,
-                          typeof student,
-                          student?._id,
-                          student?.username
-                        );
 
                         // Ensure we have a valid student object
                         if (!student || !student._id) {
@@ -310,29 +282,15 @@ export default function ClassDetailModal({
                           }
                         }
 
-                        console.log(
-                          `🔍 Featured image path for student ${studentId}:`,
-                          featuredImagePath
-                        );
-
                         // If we have a direct URL, use it; otherwise try to fetch media details
                         if (featuredImagePath) {
                           if (featuredImagePath.startsWith("http")) {
                             avatarUrl = featuredImagePath;
-                            console.log(
-                              `✅ Direct URL for student avatar:`,
-                              avatarUrl
-                            );
                           } else {
                             try {
-                              console.log(
-                                `🔍 Fetching media details for student ${studentId}:`,
-                                featuredImagePath
-                              );
                               avatarUrl =
                                 (await getMediaDetails(featuredImagePath)) ||
                                 "";
-                              console.log(`✅ Student avatar URL:`, avatarUrl);
                             } catch (error) {
                               console.warn(
                                 "Failed to fetch student avatar:",
@@ -362,10 +320,7 @@ export default function ClassDetailModal({
                 );
 
                 const validStudents = studentsData.filter(Boolean);
-                console.log(
-                  "🎯 Valid students after filtering:",
-                  validStudents
-                );
+
                 setStudentsDetails(validStudents);
               } catch (error) {
                 console.warn("Failed to fetch students details:", error);
@@ -374,27 +329,16 @@ export default function ClassDetailModal({
 
             // Fetch class instructor (giáo viên cố định của lớp)
             if (actualSchedule.classroom?.instructor) {
-              console.log(
-                "🔍 Fetching class instructor:",
-                actualSchedule.classroom.instructor
-              );
               try {
                 const instructorResponse = await fetchInstructorDetail({
                   instructorId: actualSchedule.classroom.instructor,
                   tenantId,
                   token,
                 });
-                console.log("✅ Class instructor fetched:", instructorResponse);
 
                 // Extract user data from the nested response structure
                 const instructor =
                   instructorResponse?.user || instructorResponse;
-                console.log(
-                  "🔍 Class instructor extracted:",
-                  typeof instructor,
-                  instructor?._id,
-                  instructor?.username
-                );
 
                 // Ensure we have a valid instructor object
                 if (instructor && instructor._id) {
@@ -430,31 +374,14 @@ export default function ClassDetailModal({
                     }
                   }
 
-                  console.log(
-                    "🔍 Class instructor featured image path:",
-                    featuredImagePath
-                  );
-
                   // If we have a direct URL, use it; otherwise try to fetch media details
                   if (featuredImagePath) {
                     if (featuredImagePath.startsWith("http")) {
                       avatarUrl = featuredImagePath;
-                      console.log(
-                        "✅ Direct URL for class instructor avatar:",
-                        avatarUrl
-                      );
                     } else {
                       try {
-                        console.log(
-                          "🔍 Fetching class instructor media details:",
-                          featuredImagePath
-                        );
                         avatarUrl =
                           (await getMediaDetails(featuredImagePath)) || "";
-                        console.log(
-                          "✅ Class instructor avatar URL:",
-                          avatarUrl
-                        );
                       } catch (error) {
                         console.warn(
                           "Failed to fetch class instructor avatar:",
@@ -481,27 +408,16 @@ export default function ClassDetailModal({
               actualSchedule.instructor &&
               actualSchedule.instructor !== actualSchedule.classroom?.instructor
             ) {
-              console.log(
-                "🔍 Fetching slot instructor:",
-                actualSchedule.instructor
-              );
               try {
                 const instructorResponse = await fetchInstructorDetail({
                   instructorId: actualSchedule.instructor,
                   tenantId,
                   token,
                 });
-                console.log("✅ Slot instructor fetched:", instructorResponse);
 
                 // Extract user data from the nested response structure
                 const instructor =
                   instructorResponse?.user || instructorResponse;
-                console.log(
-                  "🔍 Slot instructor extracted:",
-                  typeof instructor,
-                  instructor?._id,
-                  instructor?.username
-                );
 
                 // Ensure we have a valid instructor object
                 if (instructor && instructor._id) {
@@ -537,31 +453,14 @@ export default function ClassDetailModal({
                     }
                   }
 
-                  console.log(
-                    "🔍 Slot instructor featured image path:",
-                    featuredImagePath
-                  );
-
                   // If we have a direct URL, use it; otherwise try to fetch media details
                   if (featuredImagePath) {
                     if (featuredImagePath.startsWith("http")) {
                       avatarUrl = featuredImagePath;
-                      console.log(
-                        "✅ Direct URL for slot instructor avatar:",
-                        avatarUrl
-                      );
                     } else {
                       try {
-                        console.log(
-                          "🔍 Fetching slot instructor media details:",
-                          featuredImagePath
-                        );
                         avatarUrl =
                           (await getMediaDetails(featuredImagePath)) || "";
-                        console.log(
-                          "✅ Slot instructor avatar URL:",
-                          avatarUrl
-                        );
                       } catch (error) {
                         console.warn(
                           "Failed to fetch slot instructor avatar:",
@@ -590,7 +489,6 @@ export default function ClassDetailModal({
     } catch (error) {
       console.error("❌ Error loading detailed information:", error);
     } finally {
-      console.log("✅ Loading completed");
       setLoading(false);
     }
   };
@@ -632,14 +530,6 @@ export default function ClassDetailModal({
   if (!scheduleEvent) {
     return null;
   }
-
-  // Debug logging
-  console.log("🎯 Modal render - studentsDetails:", studentsDetails);
-  console.log("🎯 Modal render - detailedSchedule:", detailedSchedule);
-  console.log("🎯 Modal render - studentsAvatars:", studentsAvatars);
-  console.log("🎯 Modal render - courseDetail:", courseDetail);
-  console.log("🎯 Modal render - classInstructor:", classInstructor);
-  console.log("🎯 Modal render - slotInstructor:", slotInstructor);
 
   return (
     <Modal
@@ -927,12 +817,6 @@ export default function ClassDetailModal({
                   {studentsDetails.length > 0 ? (
                     <div className='grid grid-cols-2 gap-2'>
                       {studentsDetails.map((student, index) => {
-                        console.log(
-                          "🎯 Rendering student:",
-                          student,
-                          "Avatar:",
-                          studentsAvatars[student._id]
-                        );
                         return (
                           <div
                             key={student._id}

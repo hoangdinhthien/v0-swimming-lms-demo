@@ -36,13 +36,6 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
   const isManager = userRole === "manager" || userRole === "admin";
   const isStaff = userRole === "staff";
 
-  console.log("[useStaffPermissions] Role detection:", {
-    userRole,
-    isManager,
-    isStaff,
-    user: getAuthenticatedUser(),
-  });
-
   const fetchPermissions = async () => {
     if (!token || !tenantId || !isStaff) return;
 
@@ -63,19 +56,11 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
 
   // Fetch permissions when component mounts and user is staff
   useEffect(() => {
-    console.log("[useStaffPermissions] useEffect triggered", {
-      isStaff,
-      isManager,
-      token: !!token,
-      tenantId: !!tenantId,
-    });
     if (isStaff) {
       fetchPermissions();
     } else if (isManager) {
       // Managers have full permissions, no need to fetch
-      console.log(
-        "[useStaffPermissions] Manager detected, setting full permissions"
-      );
+
       setStaffPermissions(null);
       setLoading(false);
       setError(null);
@@ -84,36 +69,19 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
 
   // Permission checker function
   const checkPermission = (module: string, action: string): boolean => {
-    console.log("[useStaffPermissions] checkPermission called", {
-      module,
-      action,
-      isManager,
-      isStaff,
-      hasStaffPermissions: !!staffPermissions,
-    });
     if (isManager) {
       // Managers have all permissions
-      console.log(
-        "[useStaffPermissions] Manager has permission for",
-        module,
-        action
-      );
+
       return true;
     }
 
     if (isStaff) {
       const result = hasPermission(staffPermissions, module, action);
-      console.log("[useStaffPermissions] Staff permission result", {
-        module,
-        action,
-        result,
-        staffPermissions,
-      });
+
       return result;
     }
 
     // Other roles default to no permissions
-    console.log("[useStaffPermissions] No permission for other roles");
     return false;
   };
 
@@ -135,21 +103,6 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
         "reports",
       ] // Managers see everything
     : getAllowedNavigationItems(staffPermissions);
-
-  console.log("[useStaffPermissions] Final state:", {
-    userRole,
-    isManager,
-    isStaff,
-    allowedNavigationItems,
-    staffPermissions: staffPermissions
-      ? {
-          _id: staffPermissions._id,
-          permission: staffPermissions.permission,
-        }
-      : null,
-    loading,
-    error,
-  });
 
   return {
     staffPermissions,

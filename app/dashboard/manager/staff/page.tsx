@@ -24,46 +24,35 @@ import { createColumns, Staff } from "./components/columns";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
-  console.log("Extracting avatar from featured_image:", featuredImage);
-
   if (!featuredImage) {
-    console.log("No featured_image provided");
     return "/placeholder.svg";
   }
 
   // Handle empty array - return placeholder immediately
   if (Array.isArray(featuredImage) && featuredImage.length === 0) {
-    console.log("Empty featured_image array, using placeholder");
     return "/placeholder.svg";
   }
 
   // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
   if (Array.isArray(featuredImage) && featuredImage.length > 0) {
-    console.log("Handling array format featured_image");
     const firstImage = featuredImage[0];
     if (firstImage?.path) {
       if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
-        console.log("Found URL in array path:", firstImage.path[0]);
         return firstImage.path[0];
       } else if (typeof firstImage.path === "string") {
-        console.log("Found URL in string path:", firstImage.path);
         return firstImage.path;
       }
     }
   }
   // Handle Object format: featured_image: { path: "url" } or { path: ["url"] }
   else if (typeof featuredImage === "object" && featuredImage.path) {
-    console.log("Handling object format featured_image");
     if (Array.isArray(featuredImage.path) && featuredImage.path.length > 0) {
-      console.log("Found URL in object array path:", featuredImage.path[0]);
       return featuredImage.path[0];
     } else if (typeof featuredImage.path === "string") {
-      console.log("Found URL in object string path:", featuredImage.path);
       return featuredImage.path;
     }
   }
 
-  console.log("No valid avatar URL found, using placeholder");
   return "/placeholder.svg";
 }
 
@@ -119,13 +108,6 @@ export default function StaffPage() {
       const processedStaff = data.map((item: any, index: number) => {
         // Extract avatar URL using helper function
         const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-        console.log(`Avatar for staff ${item.user?.username}:`, avatarUrl);
-
-        // Debug logging for ID issues
-        console.log(`Processing staff: ${item.user?.username}`);
-        console.log(`- Staff ID (item._id): ${item._id}`);
-        console.log(`- User ID (item.user._id): ${item.user?._id}`);
-        console.log(`- Full item:`, item);
 
         // Use user._id for navigation since that's what the detail page expects
         // This ensures consistent ID usage throughout the application
@@ -153,19 +135,7 @@ export default function StaffPage() {
         };
       });
 
-      console.log("Processed staff array:", processedStaff);
-      console.log(
-        "Staff IDs:",
-        processedStaff.map((s) => ({
-          name: s.name,
-          id: s.id,
-          userId: s.userId,
-          staffId: s.staffId,
-        }))
-      );
-
       // Since we're now always using staff._id, no need for duplicate checking
-      console.log("Final staff array:", processedStaff);
       setStaff(processedStaff);
     } catch (e: any) {
       setError(e.message || "Failed to fetch staff");

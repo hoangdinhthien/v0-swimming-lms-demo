@@ -261,13 +261,6 @@ export default function ClassDetailPage() {
       setCourses(coursesData.data || []);
       setInstructors(instructorsData || []);
       setStudents(studentsData || []);
-
-      console.log("[loadEditData] Students loaded:", studentsData);
-      console.log("[loadEditData] Instructors loaded:", instructorsData);
-      console.log(
-        "[loadEditData] Current formData.instructor:",
-        formData.instructor
-      );
     } catch (error) {
       console.error("Error loading edit data:", error);
       toast({
@@ -307,12 +300,6 @@ export default function ClassDetailPage() {
           (classData.instructor as any).user?._id ||
           "";
       }
-
-      console.log(
-        "[handleEditClick] classData.instructor:",
-        classData.instructor
-      );
-      console.log("[handleEditClick] extracted instructorId:", instructorId);
 
       setFormData({
         course: classData.course._id || "",
@@ -365,8 +352,6 @@ export default function ClassDetailPage() {
         name: formData.name,
         instructor: formData.instructor,
       };
-
-      console.log("Sending update data:", updateData);
 
       await updateClass(classroomId, updateData, tenantId, token);
 
@@ -540,58 +525,6 @@ export default function ClassDetailPage() {
         array_number_in_week: autoScheduleData.array_number_in_week,
         class_id: classroomId,
       };
-
-      console.log("🔍 Auto Schedule Request Data:", requestData);
-      console.log("📅 Selected days breakdown:");
-      console.log("=".repeat(60));
-      console.log("TESTING BACKEND DAY MAPPING:");
-      console.log(
-        "You selected these day numbers:",
-        requestData.array_number_in_week
-      );
-      console.log("");
-      console.log(
-        "After auto-schedule completes, check the ACTUAL dates created"
-      );
-      console.log(
-        "and compare with this table to determine the correct mapping:"
-      );
-      console.log("");
-      console.log("Possible Mappings:");
-      console.log("─".repeat(60));
-      console.log(
-        "If 0 = Monday:    ",
-        "0=T2, 1=T3, 2=T4, 3=T5, 4=T6, 5=T7, 6=CN"
-      );
-      console.log(
-        "If 0 = Tuesday:   ",
-        "0=T3, 1=T4, 2=T5, 3=T6, 4=T7, 5=CN, 6=T2"
-      );
-      console.log(
-        "If 0 = Wednesday: ",
-        "0=T4, 1=T5, 2=T6, 3=T7, 4=CN, 5=T2, 6=T3"
-      );
-      console.log(
-        "If 0 = Thursday:  ",
-        "0=T5, 1=T6, 2=T7, 3=CN, 4=T2, 5=T3, 6=T4"
-      );
-      console.log(
-        "If 0 = Friday:    ",
-        "0=T6, 1=T7, 2=CN, 3=T2, 4=T3, 5=T4, 6=T5"
-      );
-      console.log(
-        "If 0 = Saturday:  ",
-        "0=T7, 1=CN, 2=T2, 3=T3, 4=T4, 5=T5, 6=T6"
-      );
-      console.log(
-        "If 0 = Sunday:    ",
-        "0=CN, 1=T2, 2=T3, 3=T4, 4=T5, 5=T6, 6=T7"
-      );
-      console.log("=".repeat(60));
-
-      requestData.array_number_in_week.forEach((day) => {
-        console.log(`  Day number: ${day}`);
-      });
 
       const result = await autoScheduleClass(requestData);
 

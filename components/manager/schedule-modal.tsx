@@ -51,7 +51,6 @@ export function ScheduleModal({
     setError(null);
     try {
       const response = await fetchUserSchedule(userId);
-      console.log("Schedule API Response:", response);
 
       // API returns data in format: { data: [[[schedules], []]] }
       // Extract schedules from data[0][0]
@@ -63,7 +62,6 @@ export function ScheduleModal({
         response.data[0][0]
       ) {
         const scheduleData = response.data[0][0];
-        console.log("Extracted schedule data:", scheduleData);
 
         // Sort by date, newest first
         const sortedSchedules = scheduleData.sort(
@@ -72,7 +70,6 @@ export function ScheduleModal({
         );
         setSchedules(sortedSchedules);
       } else {
-        console.log("No schedule data found in response");
         setSchedules([]);
       }
     } catch (err: any) {

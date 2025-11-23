@@ -22,8 +22,6 @@ export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
     return { data: [], total: 0 };
   }
 
-  console.log("[parseApiResponse] Parsing response:", response);
-
   // Type 1: News structure - data[0][0].documents
   if (
     response.data &&
@@ -55,7 +53,6 @@ export function parseApiResponse<T = any>(response: any): ParsedApiResponse<T> {
     Array.isArray(response.data.data) &&
     response.data.meta_data
   ) {
-    console.log("[parseApiResponse] Using Type 2: Nested data structure");
     return {
       data: response.data.data,
       total: response.data.meta_data.count || response.data.data.length,

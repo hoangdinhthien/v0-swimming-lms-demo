@@ -218,18 +218,7 @@ export function useStaffUsers(
     : true; // Managers have all permissions
 
   const fetchData = async () => {
-    console.log("[useStaffUsers] fetchData called", {
-      token: !!token,
-      tenantId: !!tenantId,
-      hasPermission,
-      role,
-    });
     if (!token || !tenantId || !hasPermission) {
-      console.log("[useStaffUsers] Missing requirements:", {
-        token: !!token,
-        tenantId: !!tenantId,
-        hasPermission,
-      });
       return;
     }
 
@@ -237,19 +226,12 @@ export function useStaffUsers(
     setError(null);
 
     try {
-      console.log("[useStaffUsers] Calling fetchStaffUsers with:", {
-        tenantId,
-        role,
-        page,
-        limit,
-      });
       const additionalParams: Record<string, string | number> = {
         page,
         limit,
       };
       if (role) additionalParams.role = role;
       const response = await fetchStaffUsers(additionalParams, tenantId, token);
-      console.log("[useStaffUsers] Response received:", response);
       setData(response);
     } catch (err) {
       console.error("[useStaffUsers] Error:", err);
@@ -260,12 +242,6 @@ export function useStaffUsers(
   };
 
   useEffect(() => {
-    console.log("[useStaffUsers] useEffect triggered", {
-      autoFetch,
-      hasPermission,
-      token: !!token,
-      tenantId: !!tenantId,
-    });
     if (autoFetch && hasPermission) {
       fetchData();
     }

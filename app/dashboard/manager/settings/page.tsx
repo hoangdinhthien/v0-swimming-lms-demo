@@ -102,7 +102,6 @@ export default function SettingsPage() {
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Cập nhật thông tin cá nhân:", profileForm);
     // Here you would typically make an API call to update the profile
   };
 

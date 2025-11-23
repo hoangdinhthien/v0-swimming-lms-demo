@@ -215,10 +215,6 @@ export default function ImprovedAntdCalendarPage() {
       setError(null);
 
       try {
-        console.log(
-          "🗓️ Fetching month schedule for:",
-          currentDate.format("YYYY-MM-DD")
-        );
         // If the current user is staff, the API requires a 'service: Schedule' header
         const result = await fetchMonthSchedule(
           currentDate.toDate(),
@@ -226,18 +222,6 @@ export default function ImprovedAntdCalendarPage() {
           undefined,
           isStaff ? "Schedule" : undefined
         );
-
-        console.log(" Loaded schedule data:", {
-          eventsCount: result.events.length,
-          overflowWarningsCount: result.poolOverflowWarnings.length,
-          currentDate: currentDate.format("YYYY-MM-DD"),
-          events: result.events.slice(0, 3).map((e) => ({
-            id: e._id,
-            date: e.date,
-            slotTitle: e.slot?.title || "N/A",
-            classroomName: e.classroom?.name || "N/A",
-          })),
-        });
 
         setScheduleEvents(result.events);
         setPoolOverflowWarnings(result.poolOverflowWarnings);
@@ -247,17 +231,6 @@ export default function ImprovedAntdCalendarPage() {
           message.warning({
             content: ` -  Có ${result.poolOverflowWarnings.length} hồ bơi vượt quá sức chứa!`,
             duration: 5,
-          });
-        }
-
-        // Log data structure for debugging
-        if (result.events.length > 0) {
-          console.log("📊 First event structure:", {
-            _id: result.events[0]._id,
-            date: result.events[0].date,
-            slot: result.events[0].slot,
-            classroom: result.events[0].classroom,
-            pool: result.events[0].pool,
           });
         }
       } catch (err) {
@@ -558,11 +531,6 @@ export default function ImprovedAntdCalendarPage() {
         .reduce((acc, result) => ({ ...acc, ...result }), {});
 
       setInstructorAvatars(avatarMap);
-      console.log(
-        "🖼️ Loaded avatars for",
-        Object.keys(avatarMap).length,
-        "instructors"
-      );
     } catch (error) {
       console.error("Error loading instructor avatars:", error);
     }
@@ -623,11 +591,6 @@ export default function ImprovedAntdCalendarPage() {
       availablePools.length > 0 &&
       availableInstructors.length > 0
     ) {
-      console.log(
-        "🚀 Using cached class management data (",
-        Math.round((now - lastClassDataLoad) / 1000),
-        "s ago)"
-      );
       return;
     }
 
@@ -635,8 +598,6 @@ export default function ImprovedAntdCalendarPage() {
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
-
-      console.log("🔍 Loading class management data...");
 
       const [slotsData, classesResponse, poolsData, instructorsData] =
         await Promise.all([
@@ -659,13 +620,6 @@ export default function ImprovedAntdCalendarPage() {
       const classroomsData = Array.isArray(classesResponse?.data)
         ? classesResponse.data
         : [];
-
-      console.log("🔍 Data loaded:", {
-        slots: slotsData.length,
-        classrooms: classroomsData.length,
-        pools: poolsData.pools.length,
-        instructors: instructorsData.length,
-      });
 
       setAvailableSlots(slotsData);
       setAvailableClassrooms(classroomsData as Classroom[]);
@@ -717,10 +671,8 @@ export default function ImprovedAntdCalendarPage() {
         pool: selectedPool,
         instructor: selectedInstructor,
       };
-      console.log("➕ Adding new class with data:", newClassData);
 
       await addClassToSchedule(newClassData);
-      console.log("✅ New class added successfully");
 
       message.success("Đã thêm lớp học vào lịch thành công");
 
@@ -759,8 +711,6 @@ export default function ImprovedAntdCalendarPage() {
 
   // Handle edit class
   const handleEditClass = (event: CalendarEvent) => {
-    console.log("handleEditClass called with event:", event);
-
     setEditingEvent(event);
     setClassManagementMode("edit");
 
@@ -769,13 +719,6 @@ export default function ImprovedAntdCalendarPage() {
     setSelectedClassroom(event.classroomId); // Use classroomId instead of id
     setSelectedPool(event.poolId);
     setSelectedInstructor(event.instructorId);
-
-    console.log(" Pre-filled form with:", {
-      slot: event.slotId,
-      classroom: event.classroomId,
-      pool: event.poolId,
-      instructor: event.instructorId,
-    });
 
     // Only load class management data if not already loaded (optimized)
     loadClassManagementData(false); // false = don't force reload, use cache if available
@@ -796,12 +739,8 @@ export default function ImprovedAntdCalendarPage() {
 
     setClassManagementLoading(true);
     try {
-      console.log("🔄 Starting class update process...");
-
       // First delete the old one
-      console.log("🗑️ Deleting old schedule event:", editingEvent.scheduleId);
       await deleteScheduleEvent(editingEvent.scheduleId);
-      console.log("✅ Old schedule event deleted successfully");
 
       // Then add the new one
       const newClassData = {
@@ -811,15 +750,12 @@ export default function ImprovedAntdCalendarPage() {
         pool: selectedPool,
         instructor: selectedInstructor,
       };
-      console.log("➕ Adding new class with data:", newClassData);
 
       await addClassToSchedule(newClassData);
-      console.log("✅ New class added successfully");
 
       message.success("Đã cập nhật lớp học thành công");
 
       // Refresh schedule data
-      console.log("🔄 Refreshing schedule data...");
       const result = await fetchMonthSchedule(
         currentDate.toDate(),
         undefined,
@@ -828,7 +764,6 @@ export default function ImprovedAntdCalendarPage() {
       );
       setScheduleEvents(result.events);
       setPoolOverflowWarnings(result.poolOverflowWarnings);
-      console.log("✅ Schedule data refreshed");
 
       // Show warning if pools are over capacity
       if (result.poolOverflowWarnings.length > 0) {
@@ -1993,8 +1928,6 @@ export default function ImprovedAntdCalendarPage() {
           onEdit={(event) => {
             // Convert ScheduleEvent back to CalendarEvent format if needed for editing
             const calendarEvent = formatScheduleEvent(event);
-            console.log(" Editing event - CalendarEvent:", calendarEvent);
-            console.log(" Original ScheduleEvent:", event);
 
             // Set drawer date to the event date for editing
             setDrawerDate(dayjs(event.date));

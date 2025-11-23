@@ -26,46 +26,35 @@ import { useRouter } from "next/navigation";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
-  console.log("Extracting avatar from featured_image:", featuredImage);
-
   if (!featuredImage) {
-    console.log("No featured_image provided");
     return "/placeholder.svg";
   }
 
   // Handle empty array - return placeholder immediately
   if (Array.isArray(featuredImage) && featuredImage.length === 0) {
-    console.log("Empty featured_image array, using placeholder");
     return "/placeholder.svg";
   }
 
   // Handle Array format: featured_image: [{ path: ["url"] }] or [{ path: "url" }]
   if (Array.isArray(featuredImage) && featuredImage.length > 0) {
-    console.log("Handling array format featured_image");
     const firstImage = featuredImage[0];
     if (firstImage?.path) {
       if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
-        console.log("Found URL in array path:", firstImage.path[0]);
         return firstImage.path[0];
       } else if (typeof firstImage.path === "string") {
-        console.log("Found URL in string path:", firstImage.path);
         return firstImage.path;
       }
     }
   }
   // Handle Object format: featured_image: { path: "url" } or { path: ["url"] }
   else if (typeof featuredImage === "object" && featuredImage.path) {
-    console.log("Handling object format featured_image");
     if (Array.isArray(featuredImage.path) && featuredImage.path.length > 0) {
-      console.log("Found URL in object array path:", featuredImage.path[0]);
       return featuredImage.path[0];
     } else if (typeof featuredImage.path === "string") {
-      console.log("Found URL in object string path:", featuredImage.path);
       return featuredImage.path;
     }
   }
 
-  console.log("No valid avatar URL found, using placeholder");
   return "/placeholder.svg";
 }
 
@@ -125,7 +114,6 @@ export default function StudentsPage() {
       const processedStudents = data.map((item: any) => {
         // Extract avatar URL using helper function
         const avatarUrl = extractAvatarUrl(item.user?.featured_image);
-        console.log(`Avatar for student ${item.user?.username}:`, avatarUrl);
 
         // Extract parent name directly from the response data
         let parentName = null;

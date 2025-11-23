@@ -155,9 +155,6 @@ export async function deleteMedia({
       const errorText = await response.text();
       throw new Error(`Delete failed: ${response.status} ${errorText}`);
     }
-
-    // Response might be empty for successful deletion
-    console.log(`Successfully deleted ${mediaIds.length} media file(s)`);
   } catch (error) {
     console.error("Error deleting media:", error);
     throw error;

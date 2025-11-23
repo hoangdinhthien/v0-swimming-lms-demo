@@ -48,14 +48,11 @@ async function createStaffMember(staffData: any, avatarFile: File | null) {
   if (!tenantId) throw new Error("No tenant selected");
   if (!token) throw new Error("Not authenticated");
 
-  console.log("Creating staff:", staffData);
-
   let uploadedMediaId = null;
 
   // Upload avatar image if provided
   if (avatarFile) {
     try {
-      console.log("Uploading avatar image...");
       const uploadResult = await uploadMedia({
         file: avatarFile,
         title: `Avatar for ${staffData.username}`,
@@ -65,7 +62,6 @@ async function createStaffMember(staffData: any, avatarFile: File | null) {
       });
 
       uploadedMediaId = uploadResult.data._id;
-      console.log("Avatar uploaded successfully with ID:", uploadedMediaId);
     } catch (error) {
       console.error("Failed to upload avatar:", error);
       throw new Error("Không thể tải lên ảnh đại diện. Vui lòng thử lại.");

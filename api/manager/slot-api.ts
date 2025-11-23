@@ -200,8 +200,6 @@ export const fetchAllSlots = async (
 
   const result: SlotDetailApiResponse = await response.json();
 
-  console.log("📊 Raw API response for fetchAllSlots:", result);
-
   // The API returns nested arrays, so we need to flatten them
   let slots: SlotDetail[] = [];
   if (result.data && Array.isArray(result.data)) {
@@ -215,11 +213,6 @@ export const fetchAllSlots = async (
       }
     });
   }
-
-  console.log(
-    "📊 Parsed slots from API:",
-    slots.map((s) => ({ id: s._id, title: s.title }))
-  );
 
   // Sort slots by start time
   return slots.sort((a, b) => {

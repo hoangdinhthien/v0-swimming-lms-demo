@@ -682,8 +682,6 @@ export async function addClassToSchedule(
     try {
       const errorData = await response.json();
 
-      console.log("🚨 Backend error response:", errorData);
-
       // Handle specific backend validation errors
       if (response.status === 400 && errorData.message) {
         if (
@@ -717,7 +715,6 @@ export async function addClassToSchedule(
       // If JSON parsing fails, fall back to text
       try {
         const errorText = await response.text();
-        console.log("🚨 Backend error text:", errorText);
         errorMessage = `Failed to add class to schedule: ${response.status}, ${errorText}`;
       } catch (textError) {
         errorMessage = `Failed to add class to schedule: ${response.status}`;

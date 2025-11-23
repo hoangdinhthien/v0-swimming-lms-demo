@@ -101,15 +101,6 @@ export default function AddClassToSchedulePage() {
   };
 
   useEffect(() => {
-    // Debug log the URL parameters
-    console.log("🔍 Add-class page URL parameters:", {
-      date,
-      slotId,
-      slotKey,
-      slotTitle,
-      timeRange,
-    });
-
     // Format the date for display and check if it's in the past
     if (date) {
       const dateObj = new Date(date);
@@ -230,21 +221,6 @@ export default function AddClassToSchedulePage() {
     setErrorMessage(null);
 
     try {
-      console.log("Adding class to schedule with parameters:", {
-        date,
-        slotId, // This should be the actual slot ID from the slot object
-        classroom: classroomId,
-        pool: selectedPool,
-      });
-
-      console.log("Slot ID validation:", {
-        slotId,
-        startsWithSlot: slotId.startsWith("slot"),
-        length: slotId.length,
-        isValidLength: slotId.length === 24,
-        isValidFormat: !slotId.startsWith("slot") && slotId.length === 24,
-      });
-
       // Call the API to add the class to the schedule
       await addClassToSchedule({
         date: date,
