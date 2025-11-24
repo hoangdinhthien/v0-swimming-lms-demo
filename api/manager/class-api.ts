@@ -247,6 +247,7 @@ export const fetchClassDetails = async (
  * @param token - Optional auth token
  * @param page - Page number for pagination
  * @param limit - Number of items per page
+ * @param searchKey - Search key for searching by class name, course title, or instructor name
  * @returns Promise with classes data
  */
 export const fetchClasses = async (
@@ -254,7 +255,7 @@ export const fetchClasses = async (
   token?: string,
   page: number = 1,
   limit: number = 10,
-  searchParams?: Record<string, string>
+  searchKey?: string
 ): Promise<ClassesResponse> => {
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
@@ -275,11 +276,10 @@ export const fetchClasses = async (
     headers["service"] = "Class";
   }
 
-  // Build URL with search params
+  // Build URL with searchKey param
   let url = `${config.API}/v1/workflow-process/manager/classes?page=${page}&limit=${limit}`;
-  if (searchParams) {
-    const params = new URLSearchParams(searchParams);
-    url += `&${params.toString()}`;
+  if (searchKey && searchKey.trim()) {
+    url += `&searchKey=${encodeURIComponent(searchKey.trim())}`;
   }
 
   const response = await fetch(url, {
@@ -291,22 +291,27 @@ export const fetchClasses = async (
     throw new Error(`Failed to fetch classes: ${response.status}`);
   }
 
-  const result: ClassesApiResponse = await response.json();
+  const result = await response.json();
 
-  // Extract classes from the new response structure: data[0][0].documents
+  // Parse new response structure: data[0][0].data with meta_data
   let classes: ClassItem[] = [];
   let count = 0;
   let limit_val = limit;
 
   if (
     result.data &&
+    Array.isArray(result.data) &&
     result.data[0] &&
+    Array.isArray(result.data[0]) &&
     result.data[0][0] &&
-    result.data[0][0].documents
+    result.data[0][0].data
   ) {
-    classes = result.data[0][0].documents;
-    count = result.data[0][0].count;
-    limit_val = result.data[0][0].limit;
+    classes = result.data[0][0].data;
+    const metaData = result.data[0][0].meta_data;
+    if (metaData) {
+      count = metaData.count || 0;
+      limit_val = metaData.limit || limit;
+    }
   }
 
   return {

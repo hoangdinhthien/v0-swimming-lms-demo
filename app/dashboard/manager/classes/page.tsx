@@ -32,7 +32,7 @@ export default function ClassesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch all classes with optional searchOr for multiple fields
+  // Fetch all classes with optional searchKey (searches by class name, course title, or instructor name)
   const fetchData = async (searchValue?: string, isInitialLoad = false) => {
     // Prevent duplicate calls
     if (isFetching) return;
@@ -51,20 +51,11 @@ export default function ClassesPage() {
       if (!tenantId || !token)
         throw new Error("Thiếu thông tin tenant hoặc token");
 
-      // Build search params using searchOr for multiple fields
-      let searchParams: Record<string, string> | undefined;
-      if (searchValue?.trim()) {
-        // Search across multiple fields using searchOr pattern
-        searchParams = {
-          "searchOr[name:contains]": searchValue.trim(),
-          "searchOr[course.title:contains]": searchValue.trim(),
-          "searchOr[instructor.username:contains]": searchValue.trim(),
-          "searchOr[instructor.email:contains]": searchValue.trim(),
-        };
-      }
+      // Use searchKey param - backend will search across name, course.title, and instructor.username
+      const searchKey = searchValue?.trim() || undefined;
 
       // Fetch ALL classes at once (instead of 2 separate API calls)
-      const result = await fetchClasses(tenantId, token, 1, 1000, searchParams);
+      const result = await fetchClasses(tenantId, token, 1, 1000, searchKey);
       setAllClasses(result.data);
     } catch (e: any) {
       setError(e.message || "Lỗi không xác định");

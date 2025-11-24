@@ -33,23 +33,434 @@ FIX UI:
 - thêm nút refresh vào trang orders giống các trang còn lại => done
 - thêm thông báo/toast cho staff có noReview: false
 
-TÔI CẦN BẠN CHECK VÀ FIX LẠI NHỮNG LỖI NÀY: 
-- hiện tại ở trang '/dashboard/manager', ở phần 'Lớp Học Sắp Tới' đang bị lỗi
-Console Error
-Error: events.sort is not a function
+// lấy ngày hiện tại => sau đó 
+const today = new Date();
+const dayOfWeek = today.getDay();
+// 0 = Chủ Nhật
+// 1 = Thứ 2
+// 2 = Thứ 3
+// ...
+// 6 = Thứ 7
 
-app\dashboard\manager\page.tsx (172:37) @ fetchUpcomingSchedule
+mặc định: chủ nhật=0, t2 = 1, t3 = 2, t4 = 3, t5 = 4, t6 = 5, t7 = 6
 
 
-  170 |
-  171 |         // Sort by date and time
-> 172 |         const sortedEvents = events.sort((a, b) => {
-      |                                     ^
-  173 |           const dateComparison =
-  174 |             new Date(a.date).getTime() - new Date(b.date).getTime();
-  175 |           if (dateComparison !== 0) return dateComparison;
-Call Stack
-1
 
-fetchUpcomingSchedule
-app\dashboard\manager\page.tsx (172:37)
+- sửa class thành find (searchKey)
+
+TÔI CẦN BẠN CHECK VÀ SỬA LẠI (NHỮNG) PHẦN NÀY:
+- hiện tại api get all của class (get tất cả lớp học) đang sử dụng findcommon (search query), và bây giờ bên phía BE mới đổi lại find theo kiểu param 'searchKey', sửa lại giúp tôi phần này
+- đây là response body của api fetchClasses: 
+{
+    "data": [
+        [
+            {
+                "data": [
+                    {
+                        "_id": "69087fc548055f110cb18626",
+                        "name": "BE01 - Bơi Ếch Cho Người Mới Bắt Đầu – Lớp 01",
+                        "course": {
+                            "_id": "6904c51a9cfd48321e3c608a",
+                            "title": "Bơi Ếch Cho Người Mới Bắt Đầu",
+                            "slug": "bi-ch-cho-ngi-mi-bt-u",
+                            "description": "Học viên làm quen nước, học động tác bơi ếch cơ bản.",
+                            "price": 180000,
+                            "category": [
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "session_number": 12,
+                            "session_number_duration": "60 phút",
+                            "detail": [
+                                {
+                                    "title": "Làm quen nước"
+                                },
+                                {
+                                    "title": "Thở & nổi"
+                                },
+                                {
+                                    "title": "Động tác tay & chân"
+                                },
+                                {
+                                    "title": "Bơi 25m"
+                                }
+                            ],
+                            "media": [],
+                            "is_active": false,
+                            "created_at": "2025-10-31T21:18:02.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-10-31T21:18:02.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4"
+                        },
+                        "instructor": {
+                            "_id": "6907a5cd7a021d00f67caf87",
+                            "username": "Đỗ Thanh Tâm",
+                            "email": "do.tam@instructor.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0911123456",
+                            "is_active": true,
+                            "birthday": "1999-01-01T00:00:00.000Z",
+                            "address": "Quận Gò Vấp, TP.HCM",
+                            "created_at": "2025-11-03T01:41:17.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-13T14:19:47.833Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "created_at": "2025-11-03T17:11:17.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T17:11:17.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "id": "69087fc548055f110cb18626",
+                        "schedules": [
+                            {
+                                "_id": "6914022dde48cb2726b7d2eb",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-13T10:42:37.000Z",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2ec",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-17T10:42:37.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2ed",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-18T10:42:37.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "691c26bec5cca7e9393762b4",
+                                "slot": "681f0d110e90714dae7a5dc5",
+                                "date": "2025-11-20T00:00:00.000Z",
+                                "classroom": "69087fc548055f110cb18626",
+                                "pool": "690886bcb4e8cbef8e57f02b",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "created_at": "2025-11-18T14:56:46.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-11-18T14:56:46.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2ef",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-24T10:42:37.000Z",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f0",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-25T10:42:37.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f1",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-11-27T10:42:37.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f2",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-12-01T10:42:37.000Z",
+                                "slot": "681f0d110e90714dae7a5dc5",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f3",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-12-02T10:42:37.000Z",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f4",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-12-04T10:42:37.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f5",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-12-08T10:42:37.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914022dde48cb2726b7d2f6",
+                                "slot": "681f0d110e90714dae7a5dc5",
+                                "classroom": "69087fc548055f110cb18626",
+                                "date": "2025-12-09T10:42:37.000Z",
+                                "created_at": "2025-11-12T10:42:37.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            }
+                        ],
+                        "member": []
+                    },
+                    {
+                        "_id": "69087fec48055f110cb18627",
+                        "name": "BE02 - Bơi Ếch Cho Người Mới Bắt Đầu – Lớp 02",
+                        "course": {
+                            "_id": "6904c51a9cfd48321e3c608a",
+                            "title": "Bơi Ếch Cho Người Mới Bắt Đầu",
+                            "slug": "bi-ch-cho-ngi-mi-bt-u",
+                            "description": "Học viên làm quen nước, học động tác bơi ếch cơ bản.",
+                            "price": 180000,
+                            "category": [
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "session_number": 12,
+                            "session_number_duration": "60 phút",
+                            "detail": [
+                                {
+                                    "title": "Làm quen nước"
+                                },
+                                {
+                                    "title": "Thở & nổi"
+                                },
+                                {
+                                    "title": "Động tác tay & chân"
+                                },
+                                {
+                                    "title": "Bơi 25m"
+                                }
+                            ],
+                            "media": [],
+                            "is_active": false,
+                            "created_at": "2025-10-31T21:18:02.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-10-31T21:18:02.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4"
+                        },
+                        "instructor": {
+                            "_id": "68f36bf448c74512c431ac56",
+                            "username": "instructor3",
+                            "email": "instructor3@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0989657754",
+                            "is_active": true,
+                            "birthday": "2000-10-18T00:00:00.000Z",
+                            "address": "123 test",
+                            "created_at": "2025-10-18T17:29:08.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-02T20:33:22.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": "69075d97a9b79d1790190863"
+                        },
+                        "created_at": "2025-11-03T17:11:56.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-11-03T17:11:56.000Z",
+                        "updated_by": "6831d35a95ac46cc9b686001",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "id": "69087fec48055f110cb18627",
+                        "schedules": [
+                            {
+                                "_id": "6914029ede48cb2726b7d2f7",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-12T10:44:30.000Z",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2f8",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-14T10:44:30.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2f9",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-15T10:44:30.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "691c284bc5cca7e9393762b5",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "date": "2025-11-19T00:00:00.000Z",
+                                "classroom": "69087fec48055f110cb18627",
+                                "pool": "690886eab4e8cbef8e57f02c",
+                                "instructor": "6907a5cd7a021d00f67caf87",
+                                "created_at": "2025-11-18T15:03:23.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-11-18T15:03:23.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2fb",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-21T10:44:30.000Z",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2fc",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-22T10:44:30.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2fd",
+                                "date": "2025-11-26T10:44:30.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "classroom": "69087fec48055f110cb18627",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2fe",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-28T10:44:30.000Z",
+                                "slot": "681f0d110e90714dae7a5dc5",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d2ff",
+                                "slot": "681f0b4c0e90714dae7a5d2d",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-11-29T10:44:30.000Z",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d300",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-12-03T10:44:30.000Z",
+                                "slot": "681f0b6f0e90714dae7a5d42",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d301",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-12-05T10:44:30.000Z",
+                                "slot": "681f0cfb0e90714dae7a5db0",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            },
+                            {
+                                "_id": "6914029ede48cb2726b7d302",
+                                "classroom": "69087fec48055f110cb18627",
+                                "date": "2025-12-06T10:44:30.000Z",
+                                "slot": "681f0d110e90714dae7a5dc5",
+                                "created_at": "2025-11-12T10:44:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "instructor": "68f36bf448c74512c431ac56",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "updated_by": "6831d35a95ac46cc9b686001"
+                            }
+                        ],
+                        "member": []
+                    }
+                ],
+                "meta_data": {
+                    "count": 2,
+                    "page": 1,
+                    "limit": 1000
+                }
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- tiếp theo tôi muốn áp dụng phần highlight kết quả search trên UI khi search và trả ra kết quả khi search giống với của trang '/dashboard/manager/transactions'
