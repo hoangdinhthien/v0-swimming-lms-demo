@@ -467,12 +467,29 @@ export default function ClassDetailPage() {
     setAutoScheduleData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Helper function: Convert JavaScript day (0=Sunday, 1=Monday...) to backend array_number_in_week
+  // Based on today's day of week using formula: (selectedDay - todayDay + 7) % 7
+  const convertJsDayToBackendDay = (jsDay: number): number => {
+    const today = new Date();
+    const todayDay = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+    // Formula: (selectedDay - todayDay + 7) % 7
+    // Examples:
+    // Today=Monday(1), Selected=Monday(1): (1-1+7)%7 = 0
+    // Today=Monday(1), Selected=Saturday(6): (6-1+7)%7 = 5
+    // Today=Monday(1), Selected=Sunday(0): (0-1+7)%7 = 6
+    return (jsDay - todayDay + 7) % 7;
+  };
+
   // Handle day selection for auto schedule
-  const handleDayToggle = (dayIndex: number) => {
+  const handleDayToggle = (jsDay: number) => {
+    // Convert JS day to backend day based on today
+    const backendDay = convertJsDayToBackendDay(jsDay);
+
     setAutoScheduleData((prev) => {
-      const newDays = prev.array_number_in_week.includes(dayIndex)
-        ? prev.array_number_in_week.filter((day) => day !== dayIndex)
-        : [...prev.array_number_in_week, dayIndex].sort((a, b) => a - b);
+      const newDays = prev.array_number_in_week.includes(backendDay)
+        ? prev.array_number_in_week.filter((day) => day !== backendDay)
+        : [...prev.array_number_in_week, backendDay].sort((a, b) => a - b);
 
       return {
         ...prev,
@@ -1685,44 +1702,49 @@ export default function ClassDetailPage() {
                   </p>
                   <div className='grid grid-cols-7 gap-2'>
                     {[
-                      { label: "T2", fullLabel: "Thứ 2 (Monday)", value: 5 },
-                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", value: 6 },
-                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", value: 0 },
-                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", value: 1 },
-                      { label: "T6", fullLabel: "Thứ 6 (Friday)", value: 2 },
-                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", value: 3 },
-                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", value: 4 },
-                    ].map((day) => (
-                      <div
-                        key={day.value}
-                        className={`
-                          border rounded p-2 cursor-pointer transition-all text-center
-                          ${
-                            autoScheduleData.array_number_in_week.includes(
-                              day.value
-                            )
-                              ? "border-primary bg-primary/10"
-                              : "border-border hover:border-primary/50"
-                          }
-                        `}
-                        onClick={() => handleDayToggle(day.value)}
-                      >
-                        <Checkbox
-                          id={`day-${day.value}`}
-                          checked={autoScheduleData.array_number_in_week.includes(
-                            day.value
-                          )}
-                          onCheckedChange={() => handleDayToggle(day.value)}
-                          className='mx-auto mb-1'
-                        />
-                        <Label
-                          htmlFor={`day-${day.value}`}
-                          className='text-sm font-medium block cursor-pointer'
+                      { label: "T2", fullLabel: "Thứ 2 (Monday)", jsDay: 1 },
+                      { label: "T3", fullLabel: "Thứ 3 (Tuesday)", jsDay: 2 },
+                      { label: "T4", fullLabel: "Thứ 4 (Wednesday)", jsDay: 3 },
+                      { label: "T5", fullLabel: "Thứ 5 (Thursday)", jsDay: 4 },
+                      { label: "T6", fullLabel: "Thứ 6 (Friday)", jsDay: 5 },
+                      { label: "T7", fullLabel: "Thứ 7 (Saturday)", jsDay: 6 },
+                      { label: "CN", fullLabel: "Chủ nhật (Sunday)", jsDay: 0 },
+                    ].map((day) => {
+                      // Convert JS day to backend day to check if selected
+                      const backendDay = convertJsDayToBackendDay(day.jsDay);
+                      const isSelected =
+                        autoScheduleData.array_number_in_week.includes(
+                          backendDay
+                        );
+
+                      return (
+                        <div
+                          key={day.jsDay}
+                          className={`
+                            border rounded p-2 cursor-pointer transition-all text-center
+                            ${
+                              isSelected
+                                ? "border-primary bg-primary/10"
+                                : "border-border hover:border-primary/50"
+                            }
+                          `}
+                          onClick={() => handleDayToggle(day.jsDay)}
                         >
-                          {day.label}
-                        </Label>
-                      </div>
-                    ))}
+                          <Checkbox
+                            id={`day-${day.jsDay}`}
+                            checked={isSelected}
+                            onCheckedChange={() => handleDayToggle(day.jsDay)}
+                            className='mx-auto mb-1'
+                          />
+                          <Label
+                            htmlFor={`day-${day.jsDay}`}
+                            className='text-sm font-medium block cursor-pointer'
+                          >
+                            {day.label}
+                          </Label>
+                        </div>
+                      );
+                    })}
                   </div>
                   <p className='text-sm text-muted-foreground mt-3'>
                     Số buổi học/tuần:{" "}
