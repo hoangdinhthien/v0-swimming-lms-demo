@@ -65,7 +65,7 @@ export const createColumns = (
   },
   {
     accessorKey: "instructor",
-    header: "Giảng viên",
+    header: "Giáo viên",
     cell: ({ row }) => {
       const instructor = row.original.instructor;
 

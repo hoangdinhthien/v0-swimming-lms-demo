@@ -27,41 +27,29 @@ FIX UI:
 - vẽ diagram source code folder
 
 
-- xem lịch học của member
-- xem lịch dạy của instructor
-- update order || tạo order
-- thêm nút refresh vào trang orders giống các trang còn lại
+- xem lịch học của member => done
+- xem lịch dạy của instructor => done
+- update order || tạo order => done
+- thêm nút refresh vào trang orders giống các trang còn lại => done
 - thêm thông báo/toast cho staff có noReview: false
 
-TÔI CẦN BẠN CHECK KỸ LẠI VÀ LÀM NHỮNG VIỆC NÀY:
-- hiện tại trang /dashboard/manager/transactions chưa có nút refresh "Làm mới" giống với các trang có data-table, check lại và thêm vào cho tôi
+TÔI CẦN BẠN CHECK VÀ FIX LẠI NHỮNG LỖI NÀY: 
+- hiện tại ở trang '/dashboard/manager', ở phần 'Lớp Học Sắp Tới' đang bị lỗi
+Console Error
+Error: events.sort is not a function
 
-- trang '/dashboard/manager/transactions' và trang '/dashboard/manager/transactions/[id]' đang chưa có tính năng/chức năng xóa giao dịch, NHƯNG CÓ API ĐỂ XÓA GIAO DỊCH rồi, thêm vào trang này cho tôi. đối với trang '/dashboard/manager/transactions' thì sẽ có 1 cột thao tác, trong cột thao tác sẽ có 1 nút icon thùng rác giống trong trang 'dashboard/manager/pools'. còn ở trong trang '/dashboard/manager/transactions/[id]' bạn sẽ thiết kế UI sao cho có 1 nút xóa giao dịch đó là được
-- đây là api delete method để xóa 1 giao dịch: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/order?id=6922a4b03d7a3078eb055e59
+app\dashboard\manager\page.tsx (172:37) @ fetchUpcomingSchedule
 
-- sẽ có 1 use case/trường hợp mà manager/staff sẽ là người tạo 1 giao dịch, tôi muốn có 1 nút 'Tạo giao dịch mới' ở trong trang '/dashboard/manager/transactions', khi click vào sẽ hiện lên 1 modal để manager/staff có thể nhập thông tin để tạo 1 giao dịch mới. trong modal này sẽ show ra các khóa học để cho manager chọn cho giao dịch đó, bạn cần phải sử dụng fetchCourses để show ra các khóa học, và bạn có thể thêm param 'searchKey' để tìm kiếm tên khóa học đó nhanh hơn. 
-   - trong case này sẽ có thêm 3 trường hợp nữa sẽ xảy ra, tôi sẽ giải thích dưới đây:
-    - trường hợp 1 (type member): khi manager/staff tạo 1 giao dịch mới, nếu như khách hàng đó đã là 1 student (đã có tài khoản student trong hệ thống rồi), thì type trong request body sẽ để là member và field 'user' sẽ được sử dụng, field 'guest' sẽ không được sử dụng
-    - trường hợp 2 (type guest): khi manager/staff tạo 1 giao dịch mới, nếu như khách hàng đó là người mới (chưa có tài khoản student trong hệ thống), thì type trong request body sẽ để là guest và field 'guest' sẽ được sử dụng, field 'user' sẽ không được sử dụng. khi 'guest' được sử dụng, manager/staff sẽ phải nhập các thông tin của khách hàng đó vào (username, phone, email) 
-    - trường hợp 3 (type cash): trường hợp này sẽ đặc biệt hơn 1 chút vì nó sẽ có cả trường hợp 1 và 2. Nghĩa là vì cả khách đã có tài khoản student hoặc chưa có tài khoản student đều có thể thanh toán bằng tiền mặt
-- đây post method api để tạo 1 giao dịch mới: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/order
-- đây là request body của api: 
-  {
-    "type": [
-        "guest" // có 3 loại type: cash, member, guest
-    ],
-    "course": "68f36cbe54cacb49c451087b", // id của khóa học
-    // "user": "67cd20759d0aaee8d9cd88ad", // id của student
-    "status": [
-        "paid" // có 3 loại status: pending, paid, expired
-    ],
-    "price": 100000, 
-    "guest": { // manager/staff sẽ nhập 
-        "username": "test manager create order", 
-        "phone": "0123456789",
-        "email": "testuser@gmail.com"
-    }
-}
 
-- LƯU Ý: NHỚ THÊM 'service: Order' VÀO TRONG PHẦN HEADER, ĐỂ DÀNH CHO STAFF SỬ DỤNG GIỐNG VỚI NHỮNG API KHÁC ĐÃ LÀM
+  170 |
+  171 |         // Sort by date and time
+> 172 |         const sortedEvents = events.sort((a, b) => {
+      |                                     ^
+  173 |           const dateComparison =
+  174 |             new Date(a.date).getTime() - new Date(b.date).getTime();
+  175 |           if (dateComparison !== 0) return dateComparison;
+Call Stack
+1
 
+fetchUpcomingSchedule
+app\dashboard\manager\page.tsx (172:37)

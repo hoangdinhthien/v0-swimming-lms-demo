@@ -1078,7 +1078,7 @@ export default function ClassDetailPage() {
                   >
                     <span className='text-sm font-medium flex items-center gap-2'>
                       <GraduationCap className='h-4 w-4' />
-                      Giảng viên
+                      Giáo viên
                     </span>
                     <div className='flex items-center gap-2'>
                       <span className='font-bold text-lg'>
@@ -1306,14 +1306,14 @@ export default function ClassDetailPage() {
                     } else {
                       toast({
                         title: "Thông báo",
-                        description: "Lớp học này chưa có giảng viên nào",
+                        description: "Lớp học này chưa có giáo viên nào",
                         variant: "default",
                       });
                     }
                   }}
                 >
                   <User className='mr-2 h-4 w-4' />
-                  Xem giảng viên
+                  Xem giáo viên
                 </Button>
                 <Button
                   className='w-full'
@@ -1410,7 +1410,7 @@ export default function ClassDetailPage() {
 
               {/* Instructor Selection */}
               <div className='space-y-2'>
-                <Label htmlFor='instructor'>Giảng viên *</Label>
+                <Label htmlFor='instructor'>Giáo viên *</Label>
                 <Select
                   value={formData.instructor}
                   onValueChange={(value) =>
@@ -1418,7 +1418,7 @@ export default function ClassDetailPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='Chọn giảng viên' />
+                    <SelectValue placeholder='Chọn Giáo viên' />
                   </SelectTrigger>
                   <SelectContent>
                     {instructors.map((instructor) => (

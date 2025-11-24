@@ -1183,7 +1183,7 @@ export default function ImprovedAntdCalendarPage() {
                                 {/* Search Bar */}
                                 <div className='mb-4'>
                                   <Input
-                                    placeholder='Tìm kiếm theo lớp học, hồ bơi, giảng viên, khóa học...'
+                                    placeholder='Tìm kiếm theo lớp học, hồ bơi, giáo viên, khóa học...'
                                     prefix={<SearchOutlined />}
                                     value={searchQuery}
                                     onChange={(e) =>

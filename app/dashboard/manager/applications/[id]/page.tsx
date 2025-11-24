@@ -485,7 +485,7 @@ export default function ApplicationDetailPage() {
                         return application.type
                           .map((t) =>
                             t === "instructor"
-                              ? "Giảng viên"
+                              ? "Giáo viên"
                               : t === "member"
                               ? "Thành viên"
                               : t === "staff"
@@ -496,7 +496,7 @@ export default function ApplicationDetailPage() {
                       }
                       if (typeof application.type === "string") {
                         return application.type === "instructor"
-                          ? "Giảng viên"
+                          ? "Giáo viên"
                           : application.type === "member"
                           ? "Thành viên"
                           : application.type === "staff"
@@ -757,7 +757,7 @@ export default function ApplicationDetailPage() {
                     </div>
                     <div className='text-sm text-muted-foreground'>
                       {application.created_by?.role_front?.[0] === "instructor"
-                        ? "Giảng viên"
+                        ? "Giáo viên"
                         : application.created_by?.role_front?.[0] === "member"
                         ? "Thành viên"
                         : application.created_by?.role_front?.[0] === "staff"

@@ -272,7 +272,7 @@ export default function ClassesPage() {
               columns={createColumns(searchQuery)}
               data={allClasses}
               searchKey='name'
-              searchPlaceholder='Tìm kiếm lớp học (tên, khóa học, giảng viên)...'
+              searchPlaceholder='Tìm kiếm lớp học (tên, khóa học, giáo viên)...'
               onServerSearch={handleServerSearch}
               filterOptions={[
                 {

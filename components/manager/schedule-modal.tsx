@@ -126,7 +126,9 @@ export function ScheduleModal({
           </DialogTitle>
           <DialogDescription>
             Danh sách tất cả các buổi học{" "}
-            {userType === "student" ? "của học viên" : "giảng viên phụ trách"}
+            {userType === "student"
+              ? "của học viên"
+              : "của giáo viên phụ trách"}
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +151,7 @@ export function ScheduleModal({
               <p className='text-sm text-muted-foreground mt-2'>
                 {userType === "student"
                   ? "Học viên chưa có buổi học nào được xếp lịch"
-                  : "Giảng viên chưa có buổi dạy nào được xếp lịch"}
+                  : "Giáo viên chưa có buổi dạy nào được xếp lịch"}
               </p>
             </div>
           ) : (

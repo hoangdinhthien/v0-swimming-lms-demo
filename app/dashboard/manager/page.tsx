@@ -166,10 +166,10 @@ function ManagerDashboardPage() {
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
 
-        const events = await fetchDateRangeSchedule(today, nextWeek);
+        const result = await fetchDateRangeSchedule(today, nextWeek);
 
         // Sort by date and time
-        const sortedEvents = events.sort((a, b) => {
+        const sortedEvents = result.events.sort((a, b) => {
           const dateComparison =
             new Date(a.date).getTime() - new Date(b.date).getTime();
           if (dateComparison !== 0) return dateComparison;

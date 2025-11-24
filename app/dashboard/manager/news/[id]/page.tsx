@@ -755,8 +755,8 @@ export default function NewsDetailPage() {
                   },
                   {
                     id: "instructor",
-                    label: "Giảng viên",
-                    description: "Quản lý và giảng viên",
+                    label: "Giáo viên",
+                    description: "Quản lý và giáo viên",
                   },
                   {
                     id: "member",

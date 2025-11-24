@@ -226,7 +226,7 @@ export async function deleteApplicationType(id: string): Promise<void> {
 export function getRoleDisplayName(role: string): string {
   const roleMap: { [key: string]: string } = {
     member: "Học viên",
-    instructor: "Giảng viên",
+    instructor: "Giáo viên",
     staff: "Nhân viên",
     manager: "Quản lý",
   };
