@@ -1059,7 +1059,6 @@ export default function ImprovedAntdCalendarPage() {
             Tự động xếp lịch học
           </AntdButton>
         </div>
-
         {/* Pool Overflow Warning Alert */}
         {poolOverflowWarnings.length > 0 && (
           <Accordion
@@ -2218,8 +2217,7 @@ export default function ImprovedAntdCalendarPage() {
                           isClassFullyScheduled(classItem);
                         const remainingSessions =
                           getRemainingSessionsCount(classItem);
-                        const schedulesCount =
-                          classItem.schedules?.length || 0;
+                        const schedulesCount = classItem.schedules?.length || 0;
 
                         return (
                           <div
@@ -2279,8 +2277,7 @@ export default function ImprovedAntdCalendarPage() {
                               </div>
                               <Radio
                                 checked={
-                                  selectedClassForAutoSchedule ===
-                                  classItem._id
+                                  selectedClassForAutoSchedule === classItem._id
                                 }
                                 disabled={isFullyScheduled}
                               />
@@ -2294,10 +2291,9 @@ export default function ImprovedAntdCalendarPage() {
               ) : (
                 <>
                   {(() => {
-                    const selectedClass =
-                      availableClassesForAutoSchedule.find(
-                        (c) => c._id === selectedClassForAutoSchedule
-                      );
+                    const selectedClass = availableClassesForAutoSchedule.find(
+                      (c) => c._id === selectedClassForAutoSchedule
+                    );
                     return (
                       <>
                         {/* BEFORE/AFTER Comparison */}
@@ -2512,8 +2508,9 @@ export default function ImprovedAntdCalendarPage() {
                                   { label: "T7", value: 6 },
                                   { label: "CN", value: 0 },
                                 ].map((day) => {
-                                  const backendDay =
-                                    convertJsDayToBackendDay(day.value);
+                                  const backendDay = convertJsDayToBackendDay(
+                                    day.value
+                                  );
                                   const isSelected =
                                     autoScheduleData.array_number_in_week.includes(
                                       backendDay
@@ -2578,8 +2575,7 @@ export default function ImprovedAntdCalendarPage() {
                                     .map((backendDay) => {
                                       const today = new Date();
                                       const todayDay = today.getDay();
-                                      const jsDay =
-                                        (backendDay + todayDay) % 7;
+                                      const jsDay = (backendDay + todayDay) % 7;
                                       const dayNames = [
                                         "CN",
                                         "T2",
