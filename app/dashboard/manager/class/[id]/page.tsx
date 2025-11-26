@@ -1499,7 +1499,6 @@ export default function ClassDetailPage() {
         <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2 text-2xl'>
-              <CalendarPlus className='h-6 w-6 text-green-600' />
               Tự động xếp lịch học cho lớp
             </DialogTitle>
             <DialogDescription className='text-base'>
@@ -1587,7 +1586,7 @@ export default function ClassDetailPage() {
                   </div>
                   <div className='bg-muted p-3 rounded-lg border'>
                     <p className='text-sm text-muted-foreground font-medium'>
-                      ✅ Trạng thái
+                      Trạng thái
                     </p>
                     <p className='text-base font-semibold'>Đủ lịch học</p>
                   </div>
@@ -1730,12 +1729,6 @@ export default function ClassDetailPage() {
                           `}
                           onClick={() => handleDayToggle(day.jsDay)}
                         >
-                          <Checkbox
-                            id={`day-${day.jsDay}`}
-                            checked={isSelected}
-                            onCheckedChange={() => handleDayToggle(day.jsDay)}
-                            className='mx-auto mb-1'
-                          />
                           <Label
                             htmlFor={`day-${day.jsDay}`}
                             className='text-sm font-medium block cursor-pointer'
