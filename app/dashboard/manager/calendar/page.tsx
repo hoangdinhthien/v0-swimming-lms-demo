@@ -2184,7 +2184,6 @@ export default function ImprovedAntdCalendarPage() {
           <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
             <DialogHeader>
               <DialogTitle className='flex items-center gap-2 text-2xl'>
-                <CalendarPlus className='h-6 w-6' />
                 Tự động xếp lịch học
               </DialogTitle>
               <DialogDescription className='text-base'>
@@ -2391,7 +2390,6 @@ export default function ImprovedAntdCalendarPage() {
                         {/* Info Box */}
                         <div className='bg-muted/50 border rounded-lg p-4'>
                           <div className='flex gap-3'>
-                            <Settings className='h-5 w-5 text-muted-foreground mt-0.5' />
                             <div className='flex-1'>
                               <h4 className='font-semibold mb-2'>
                                 Hệ thống sẽ tự động:
@@ -2423,7 +2421,7 @@ export default function ImprovedAntdCalendarPage() {
                             {/* Time Range */}
                             <div>
                               <Label className='font-medium mb-2 block'>
-                                🕐 Khung giờ học trong ngày
+                                Khung giờ học trong ngày
                               </Label>
                               <p className='text-sm text-muted-foreground mb-3'>
                                 Chọn khoảng thời gian trong ngày mà lớp có thể
@@ -2493,7 +2491,7 @@ export default function ImprovedAntdCalendarPage() {
                             {/* Days of Week Selection */}
                             <div className='pt-4 border-t'>
                               <Label className='font-medium mb-2 block'>
-                                📅 Chọn các ngày trong tuần *
+                                Chọn các ngày trong tuần *
                               </Label>
                               <p className='text-sm text-muted-foreground mb-3'>
                                 Chọn những ngày nào trong tuần mà lớp sẽ học

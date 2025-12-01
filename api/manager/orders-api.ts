@@ -273,6 +273,8 @@ export function getOrderUserName(order: Order): string {
     return order.guest.username;
   } else if (orderType === "member" && order.user?.username) {
     return order.user.username;
+  } else if (orderType === "cash" && order.user?.username) {
+    return order.user.username;
   }
   return "Không xác định";
 }
@@ -286,6 +288,8 @@ export function getOrderUserContact(order: Order): string {
   if (orderType === "guest" && order.guest) {
     return order.guest.phone || order.guest.email || "N/A";
   } else if (orderType === "member" && order.user) {
+    return order.user.phone || order.user.email || order.user._id || "N/A";
+  } else if (orderType === "cash" && order.user) {
     return order.user.phone || order.user.email || order.user._id || "N/A";
   }
   return "N/A";
@@ -390,6 +394,8 @@ export function getOrderTypeDisplayName(order: Order): string {
       return "Khách";
     case "member":
       return "Thành viên";
+    case "cash":
+      return "Tiền mặt";
     default:
       return orderType || "Không xác định";
   }

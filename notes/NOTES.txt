@@ -59,6 +59,5 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 - sửa class thành find (searchKey)
 
 TÔI CẦN BẠN CHECK VÀ SỬA LẠI (NHỮNG) PHẦN NÀY:
-- ở trang lịch '/dashboard/manager/calendar'. tôi muốn có thêm 1 nút là 'Tự động xếp lịch học'. nút này sẽ có logic y chang với nút tự động xếp lịch cho lớp học ở trang /dashboard/manager/class/[id], chỉ đơn giản là ta thêm nó vào trang lịch thôi.
-- khi manager/staff click vào nút này, đầu tiên manager/staff sẽ thấy được modal list những tất cả lớp học (CHỈ CHO CHỌN XẾP LỊCH TỰ ĐỘNG LỚP NÀO ĐANG CÓ SỐ BUỔI HỌC CÒN THIẾU HOẶC CHƯA ĐƯỢC XẾP LỊCH HỌC THÔI), sau đó manager/staff sẽ chọn 1 lớp để xếp lịch học. LOGIC VÀ UI CÒN LẠI SẼ Y CHANG VỚI Ở TRANG /dashboard/manager/class/[id]
-- sau chọn lớp để tự động xếp lịch học xong thì trên lịch sẽ hiện ra thôi.
+- ở trang lịch '/dashboard/manager/calendar', tôi muốn thêm nút 'Làm mới' để manager/staff click vào sẽ refresh lại trang này giống với các trang khác của manager/staff
+- 
