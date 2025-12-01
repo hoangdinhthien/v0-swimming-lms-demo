@@ -5,14 +5,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import "../../../../styles/calendar-dark-mode.css";
 import {
-  Calendar,
-  Badge as AntdBadge,
   message,
-  Modal,
   Button as AntdButton,
   Select as AntdSelect,
-  Card as AntdCard,
-  Drawer,
   List,
   Avatar,
   Typography,
@@ -29,7 +24,6 @@ import {
   Form,
   Input as AntdInput,
   TimePicker,
-  Tabs,
   Radio,
 } from "antd";
 import {
@@ -47,7 +41,6 @@ import {
   CloseOutlined,
 } from "@ant-design/icons";
 import { Loader2, RefreshCw } from "lucide-react";
-import type { CalendarProps } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -95,6 +88,10 @@ import {
 } from "@/components/ui/accordion";
 import ClassDetailModal from "@/components/manager/class-detail-modal";
 import {
+  ScheduleCalendar,
+  type CalendarEvent as ScheduleCalendarEvent,
+} from "@/components/manager/schedule-calendar";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -102,6 +99,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -114,8 +129,7 @@ import {
 import { Clock, CheckCircle2, Settings, CalendarPlus } from "lucide-react";
 
 const { Option } = AntdSelect;
-const { Text, Title } = Typography;
-const { TabPane } = Tabs;
+const { Text } = Typography;
 
 // Set Vietnamese locale for dayjs
 dayjs.locale("vi");
@@ -295,6 +309,47 @@ export default function ImprovedAntdCalendarPage() {
     return dayEvents.map(formatScheduleEvent);
   };
 
+  // Get all calendar events (for ScheduleCalendar component)
+  const getAllCalendarEvents = (): ScheduleCalendarEvent[] => {
+    return scheduleEvents.map((scheduleEvent) => {
+      const slot = scheduleEvent.slot;
+      const classroom = scheduleEvent.classroom;
+      const pool = scheduleEvent.pool;
+      const instructor = scheduleEvent.instructor;
+      const eventDate = dayjs(scheduleEvent.date.split("T")[0]);
+      const course = classroom?.course;
+
+      return {
+        scheduleId: scheduleEvent._id,
+        classroomId: classroom?._id || "",
+        className: classroom?.name || "Không xác định",
+        slotId: slot?._id || "",
+        slotTitle: slot?.title || "Không xác định",
+        slotTime: `${eventDate.format("DD/MM/YYYY")} - ${
+          slot
+            ? `${Math.floor(slot.start_time)
+                .toString()
+                .padStart(2, "0")}:${slot.start_minute
+                .toString()
+                .padStart(2, "0")} - ${Math.floor(slot.end_time)
+                .toString()
+                .padStart(2, "0")}:${slot.end_minute
+                .toString()
+                .padStart(2, "0")}`
+            : ""
+        }`,
+        date: eventDate.format("YYYY-MM-DD"), // Add date field for easier filtering
+        course: getCourseName(course),
+        courseId: typeof course === "object" && course?._id ? course._id : "",
+        poolId: pool?._id || "",
+        poolTitle: pool?.title || "Không xác định",
+        instructorId: instructor?._id || "",
+        instructorName: instructor?.username || "Không xác định",
+        color: getEventColor(course),
+      };
+    });
+  };
+
   // Get course name from course object
   const getCourseName = (course: any): string => {
     if (course && typeof course === "object" && course.title) {
@@ -401,15 +456,7 @@ export default function ImprovedAntdCalendarPage() {
     // Don't update currentDate to prevent automatic month navigation
   };
 
-  // Handle panel change (month/year navigation) - only via header controls
-  const onPanelChange = (date: Dayjs, mode: CalendarProps<Dayjs>["mode"]) => {
-    // Only update if it's a genuine month/year change from header
-    if (!date.isSame(currentDate, "month")) {
-      setCurrentDate(date);
-    }
-  };
-
-  // Custom date cell renderer
+  // Custom date cell renderer (kept for backward compatibility but not used directly)
   const dateCellRender = (value: Dayjs) => {
     const events = getEventsForDate(value);
     const isToday = value.isSame(dayjs(), "day");
@@ -1027,11 +1074,6 @@ export default function ImprovedAntdCalendarPage() {
     }
   };
 
-  // Enhanced date cell with drawer trigger
-  const enhancedDateCellRender = (value: Dayjs) => {
-    return dateCellRender(value);
-  };
-
   // Get statistics
   const getStatistics = () => {
     const totalEvents = scheduleEvents.length;
@@ -1253,210 +1295,244 @@ export default function ImprovedAntdCalendarPage() {
               xs={24}
               sm={8}
             >
-              <AntdCard
-                size='small'
-                className='text-center bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-              >
-                <div className='flex flex-col items-center'>
-                  <div className='text-2xl font-bold text-gray-700 dark:text-gray-300 mb-1'>
-                    {stats.totalEvents}
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
+                      {stats.totalEvents}
+                    </div>
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
+                      <TeamOutlined /> Tổng lớp học
+                    </p>
                   </div>
-                  <Text
-                    type='secondary'
-                    className='flex items-center gap-1 text-gray-600 dark:text-gray-400'
-                  >
-                    <TeamOutlined /> Tổng lớp học
-                  </Text>
-                </div>
-              </AntdCard>
+                </CardContent>
+              </Card>
             </Col>
 
             <Col
               xs={24}
               sm={8}
             >
-              <AntdCard
-                size='small'
-                className='text-center bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-              >
-                <div className='flex flex-col items-center'>
-                  <div className='text-2xl font-bold text-gray-700 dark:text-gray-300 mb-1'>
-                    {stats.totalSlots}
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
+                      {stats.totalSlots}
+                    </div>
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
+                      <ClockCircleOutlined /> Tổng khung giờ
+                    </p>
                   </div>
-                  <Text
-                    type='secondary'
-                    className='flex items-center gap-1 text-gray-600 dark:text-gray-400'
-                  >
-                    <ClockCircleOutlined /> Tổng khung giờ
-                  </Text>
-                </div>
-              </AntdCard>
+                </CardContent>
+              </Card>
             </Col>
 
             <Col
               xs={24}
               sm={8}
             >
-              <AntdCard
-                size='small'
-                className='text-center bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-              >
-                <div className='flex flex-col items-center'>
-                  <div className='text-2xl font-bold text-gray-700 dark:text-gray-300 mb-1'>
-                    {stats.uniquePools}
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
+                      {stats.uniquePools}
+                    </div>
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
+                      <EnvironmentOutlined /> Hồ bơi sử dụng
+                    </p>
                   </div>
-                  <Text
-                    type='secondary'
-                    className='flex items-center gap-1 text-gray-600 dark:text-gray-400'
-                  >
-                    <EnvironmentOutlined /> Hồ bơi sử dụng
-                  </Text>
-                </div>
-              </AntdCard>
+                </CardContent>
+              </Card>
             </Col>
           </Row>
         )}
         {/* Main Calendar */}
-        <AntdCard className='shadow-lg calendar-container'>
-          <Calendar
-            value={currentDate}
-            onSelect={onSelect}
-            onPanelChange={onPanelChange}
-            cellRender={enhancedDateCellRender}
+        <Card className='shadow-lg'>
+          <ScheduleCalendar
+            currentDate={currentDate}
+            selectedDate={selectedDate || undefined}
+            events={getAllCalendarEvents()}
+            onDateSelect={onSelect}
+            onMonthChange={(date) => {
+              // Only update if it's a genuine month change
+              if (!date.isSame(currentDate, "month")) {
+                setCurrentDate(date);
+              }
+            }}
+            dateCellRender={(date, events) => {
+              // Use existing dateCellRender logic
+              const isPast = date.isBefore(dayjs(), "day");
+
+              if (events.length === 0) {
+                return (
+                  <div className='text-xs text-muted-foreground text-center py-2'>
+                    Chưa có lớp học
+                  </div>
+                );
+              }
+
+              return (
+                <ul className='space-y-1 max-h-[80px] overflow-y-auto'>
+                  {events.map((event, index) => (
+                    <li key={index}>
+                      <div
+                        className='text-xs px-2 py-1 rounded truncate hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors'
+                        style={{
+                          backgroundColor: `${event.color}15`,
+                          borderLeft: `3px solid ${event.color}`,
+                        }}
+                      >
+                        <span className='font-medium'>{event.slotTitle}</span>
+                        {" - "}
+                        <span>{event.className}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              );
+            }}
           />
-        </AntdCard>
-        {/* Date Details Drawer */}
-        <Drawer
-          title={
-            <div className='flex items-center gap-3'>
-              <CalendarOutlined className='text-blue-500' />
-              <div>
-                <div className='text-lg font-semibold'>
-                  {drawerDate
-                    ? drawerDate.format("DD/MM/YYYY")
-                    : "Chi tiết lịch học"}
-                </div>
-                <div className='text-sm text-gray-500 dark:text-gray-400'>
-                  {drawerDate ? drawerDate.format("dddd") : ""}
-                </div>
-              </div>
-            </div>
-          }
-          placement='right'
-          width={480}
+        </Card>
+        {/* Date Details Sheet */}
+        <Sheet
           open={drawerOpen}
-          onClose={() => {
-            setDrawerOpen(false);
-            setSearchQuery(""); // Reset search query
-            resetClassManagementForm();
+          onOpenChange={(open) => {
+            setDrawerOpen(open);
+            if (!open) {
+              setSearchQuery(""); // Reset search query
+              resetClassManagementForm();
+              setSelectedDate(undefined); // Reset selected date to remove highlight
+            }
           }}
-          className='calendar-drawer'
         >
-          {drawerLoading ? (
-            <div className='flex flex-col items-center justify-center py-12'>
-              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
-              <p className='text-muted-foreground'>Đang tải chi tiết...</p>
-            </div>
-          ) : (
-            drawerDate && (
-              <div className='space-y-6'>
-                <Tabs
-                  activeKey={classManagementMode}
-                  onChange={(key) =>
-                    setClassManagementMode(key as "view" | "add" | "edit")
-                  }
-                  items={[
-                    {
-                      key: "view",
-                      label: "Xem lịch học",
-                      children: (
-                        <div className='space-y-4'>
-                          {(() => {
-                            const events = getEventsForDate(drawerDate);
+          <SheetContent
+            side='right'
+            className='w-[480px] sm:max-w-[480px] overflow-y-auto'
+          >
+            <SheetHeader>
+              <SheetTitle className='flex items-center gap-3'>
+                <CalendarOutlined className='text-blue-500' />
+                <div>
+                  <div className='text-lg font-semibold'>
+                    {drawerDate
+                      ? drawerDate.format("DD/MM/YYYY")
+                      : "Chi tiết lịch học"}
+                  </div>
+                  <div className='text-sm text-gray-500 dark:text-gray-400'>
+                    {drawerDate ? drawerDate.format("dddd") : ""}
+                  </div>
+                </div>
+              </SheetTitle>
+            </SheetHeader>
+            {drawerLoading ? (
+              <div className='flex flex-col items-center justify-center py-12'>
+                <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+                <p className='text-muted-foreground'>Đang tải chi tiết...</p>
+              </div>
+            ) : (
+              drawerDate && (
+                <div className='space-y-6'>
+                  <Tabs
+                    value={classManagementMode}
+                    onValueChange={(value) =>
+                      setClassManagementMode(value as "view" | "add" | "edit")
+                    }
+                  >
+                    <TabsList className='grid w-full grid-cols-3'>
+                      <TabsTrigger value='view'>Xem lịch học</TabsTrigger>
+                      {!drawerDate.isBefore(dayjs(), "day") && (
+                        <TabsTrigger value='add'>Thêm lớp học</TabsTrigger>
+                      )}
+                      {editingEvent && (
+                        <TabsTrigger value='edit'>
+                          Chỉnh sửa buổi học
+                        </TabsTrigger>
+                      )}
+                    </TabsList>
 
-                            if (events.length === 0) {
-                              const isPast = drawerDate.isBefore(
-                                dayjs(),
-                                "day"
-                              );
-                              const isToday = drawerDate.isSame(dayjs(), "day");
-                              const isFuture = drawerDate.isAfter(
-                                dayjs(),
-                                "day"
-                              );
+                    <TabsContent
+                      value='view'
+                      className='mt-4'
+                    >
+                      <div className='space-y-4'>
+                        {(() => {
+                          const events = getEventsForDate(drawerDate);
 
-                              let message = "";
-                              let showAddButton = false;
+                          if (events.length === 0) {
+                            const isPast = drawerDate.isBefore(dayjs(), "day");
+                            const isToday = drawerDate.isSame(dayjs(), "day");
+                            const isFuture = drawerDate.isAfter(dayjs(), "day");
 
-                              if (isPast) {
-                                message = "Không có lớp học nào trong ngày này";
-                              } else if (isToday) {
-                                message = "Chưa có lớp học nào trong hôm nay";
-                                showAddButton = true;
-                              } else if (isFuture) {
-                                message =
-                                  "Chưa có lớp học nào được lên lịch cho ngày này";
-                                showAddButton = true;
-                              }
+                            let message = "";
+                            let showAddButton = false;
 
-                              return (
-                                <div className='text-center py-12'>
-                                  <Empty
-                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                    description={
-                                      <div>
-                                        <div className='text-gray-500 dark:text-gray-400 mb-4'>
-                                          {message}
-                                        </div>
-                                        {showAddButton && (
-                                          <AntdButton
-                                            type='primary'
-                                            icon={<PlusOutlined />}
-                                            onClick={() => {
-                                              setClassManagementMode("add");
-                                              loadClassManagementData(false); // Use cache
-                                            }}
-                                          >
-                                            {isToday
-                                              ? "Thêm lớp học cho hôm nay"
-                                              : "Thêm lớp học mới"}
-                                          </AntdButton>
-                                        )}
-                                        {isPast && (
-                                          <div className='text-xs text-gray-400 dark:text-gray-600 mt-2'>
-                                            Không thể thêm lớp học cho ngày
-                                            trong quá khứ
-                                          </div>
-                                        )}
-                                      </div>
-                                    }
-                                  />
-                                </div>
-                              );
+                            if (isPast) {
+                              message = "Không có lớp học nào trong ngày này";
+                            } else if (isToday) {
+                              message = "Chưa có lớp học nào trong hôm nay";
+                              showAddButton = true;
+                            } else if (isFuture) {
+                              message =
+                                "Chưa có lớp học nào được lên lịch cho ngày này";
+                              showAddButton = true;
                             }
 
                             return (
-                              <div>
-                                {/* Search Bar */}
-                                <div className='mb-4'>
-                                  <AntdInput
-                                    placeholder='Tìm kiếm theo lớp học, hồ bơi, giáo viên, khóa học...'
-                                    prefix={<SearchOutlined />}
-                                    value={searchQuery}
-                                    onChange={(e) =>
-                                      setSearchQuery(e.target.value)
-                                    }
-                                    allowClear
-                                    size='large'
-                                  />
-                                </div>
+                              <div className='text-center py-12'>
+                                <Empty
+                                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                  description={
+                                    <div>
+                                      <div className='text-gray-500 dark:text-gray-400 mb-4'>
+                                        {message}
+                                      </div>
+                                      {showAddButton && (
+                                        <AntdButton
+                                          type='primary'
+                                          icon={<PlusOutlined />}
+                                          onClick={() => {
+                                            setClassManagementMode("add");
+                                            loadClassManagementData(false); // Use cache
+                                          }}
+                                        >
+                                          {isToday
+                                            ? "Thêm lớp học cho hôm nay"
+                                            : "Thêm lớp học mới"}
+                                        </AntdButton>
+                                      )}
+                                      {isPast && (
+                                        <div className='text-xs text-gray-400 dark:text-gray-600 mt-2'>
+                                          Không thể thêm lớp học cho ngày trong
+                                          quá khứ
+                                        </div>
+                                      )}
+                                    </div>
+                                  }
+                                />
+                              </div>
+                            );
+                          }
 
-                                {/* Summary */}
-                                <div className='mb-4'>
-                                  <AntdCard
-                                    size='small'
-                                    className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
-                                  >
+                          return (
+                            <div>
+                              {/* Search Bar */}
+                              <div className='mb-4'>
+                                <AntdInput
+                                  placeholder='Tìm kiếm theo lớp học, hồ bơi, giáo viên, khóa học...'
+                                  prefix={<SearchOutlined />}
+                                  value={searchQuery}
+                                  onChange={(e) =>
+                                    setSearchQuery(e.target.value)
+                                  }
+                                  allowClear
+                                  size='large'
+                                />
+                              </div>
+
+                              {/* Summary */}
+                              <div className='mb-4'>
+                                <Card className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'>
+                                  <CardContent className='p-4'>
                                     <div className='flex items-center justify-between'>
                                       <div className='flex items-center gap-2'>
                                         <TeamOutlined className='text-blue-600 dark:text-blue-400' />
@@ -1468,88 +1544,88 @@ export default function ImprovedAntdCalendarPage() {
                                         {filterEvents(events).length}
                                       </div>
                                     </div>
-                                  </AntdCard>
-                                </div>
+                                  </CardContent>
+                                </Card>
+                              </div>
 
-                                {/* Add Class Button */}
-                                <div className='mb-4 flex justify-end'>
-                                  <AntdButton
-                                    type='dashed'
-                                    icon={<PlusOutlined />}
-                                    onClick={() => {
-                                      setClassManagementMode("add");
-                                      loadClassManagementData(false);
-                                    }}
-                                  >
-                                    Thêm lớp
-                                  </AntdButton>
-                                </div>
+                              {/* Add Class Button */}
+                              <div className='mb-4 flex justify-end'>
+                                <AntdButton
+                                  type='dashed'
+                                  icon={<PlusOutlined />}
+                                  onClick={() => {
+                                    setClassManagementMode("add");
+                                    loadClassManagementData(false);
+                                  }}
+                                >
+                                  Thêm lớp
+                                </AntdButton>
+                              </div>
 
-                                {/* Events List by Slot (Accordion) */}
-                                <div className='space-y-2'>
-                                  {(() => {
-                                    const filteredEvents = filterEvents(events);
-                                    const groupedEvents =
-                                      groupEventsBySlot(filteredEvents);
+                              {/* Events List by Slot (Accordion) */}
+                              <div className='space-y-2'>
+                                {(() => {
+                                  const filteredEvents = filterEvents(events);
+                                  const groupedEvents =
+                                    groupEventsBySlot(filteredEvents);
 
-                                    if (filteredEvents.length === 0) {
-                                      return (
-                                        <div className='text-center py-8'>
-                                          <Empty
-                                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                            description={
-                                              <span className='text-gray-500 dark:text-gray-400'>
-                                                {searchQuery
-                                                  ? "Không tìm thấy lớp học nào phù hợp"
-                                                  : "Không có lớp học nào"}
-                                              </span>
-                                            }
-                                          />
-                                        </div>
-                                      );
-                                    }
-
+                                  if (filteredEvents.length === 0) {
                                     return (
-                                      <Accordion
-                                        type='multiple'
-                                        defaultValue={groupedEvents.map(
-                                          (_, index) => `slot-${index}`
-                                        )}
-                                        className='w-full'
-                                      >
-                                        {groupedEvents.map(
-                                          ([slotTitle, slotEvents], index) => (
-                                            <AccordionItem
-                                              key={`slot-${index}`}
-                                              value={`slot-${index}`}
-                                              className='border rounded-lg mb-2 overflow-hidden'
-                                            >
-                                              <AccordionTrigger className='px-4 hover:no-underline bg-gray-50 dark:bg-gray-800'>
-                                                <div className='flex items-center gap-3 w-full'>
-                                                  <ClockCircleOutlined className='text-blue-600 dark:text-blue-400' />
-                                                  <div className='flex-1 text-left'>
-                                                    <span className='font-semibold'>
-                                                      {slotTitle}
-                                                    </span>
-                                                    <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
-                                                      ({slotEvents[0]?.slotTime}
-                                                      )
-                                                    </span>
-                                                  </div>
-                                                  <Tag color='blue'>
-                                                    {slotEvents.length} lớp
-                                                  </Tag>
+                                      <div className='text-center py-8'>
+                                        <Empty
+                                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                          description={
+                                            <span className='text-gray-500 dark:text-gray-400'>
+                                              {searchQuery
+                                                ? "Không tìm thấy lớp học nào phù hợp"
+                                                : "Không có lớp học nào"}
+                                            </span>
+                                          }
+                                        />
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <Accordion
+                                      type='multiple'
+                                      defaultValue={groupedEvents.map(
+                                        (_, index) => `slot-${index}`
+                                      )}
+                                      className='w-full'
+                                    >
+                                      {groupedEvents.map(
+                                        ([slotTitle, slotEvents], index) => (
+                                          <AccordionItem
+                                            key={`slot-${index}`}
+                                            value={`slot-${index}`}
+                                            className='border rounded-lg mb-2 overflow-hidden'
+                                          >
+                                            <AccordionTrigger className='px-4 hover:no-underline bg-gray-50 dark:bg-gray-800'>
+                                              <div className='flex items-center gap-3 w-full'>
+                                                <ClockCircleOutlined className='text-blue-600 dark:text-blue-400' />
+                                                <div className='flex-1 text-left'>
+                                                  <span className='font-semibold'>
+                                                    {slotTitle}
+                                                  </span>
+                                                  <span className='text-sm text-gray-500 dark:text-gray-400 ml-2'>
+                                                    ({slotEvents[0]?.slotTime})
+                                                  </span>
                                                 </div>
-                                              </AccordionTrigger>
-                                              <AccordionContent className='px-0 pb-0'>
-                                                <div className='space-y-2 p-2'>
-                                                  {slotEvents.map(
-                                                    (event, eventIndex) => (
-                                                      <AntdCard
-                                                        key={eventIndex}
-                                                        size='small'
-                                                        className='hover:shadow-md transition-all'
-                                                      >
+                                                <Tag color='blue'>
+                                                  {slotEvents.length} lớp
+                                                </Tag>
+                                              </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className='px-0 pb-0'>
+                                              <div className='space-y-2 p-2'>
+                                                {slotEvents.map(
+                                                  (event, eventIndex) => (
+                                                    <Card
+                                                      key={eventIndex}
+                                                      className='hover:shadow-md transition-all'
+                                                    >
+                                                      <CardContent className='p-4'>
                                                         <div className='flex items-start justify-between'>
                                                           <div className='flex items-start gap-3 flex-1'>
                                                             <Avatar
@@ -1564,14 +1640,11 @@ export default function ImprovedAntdCalendarPage() {
                                                             />
                                                             <div className='flex-1'>
                                                               <div className='flex items-center gap-2 mb-2'>
-                                                                <Text
-                                                                  strong
-                                                                  className='text-base'
-                                                                >
+                                                                <span className='font-semibold text-base'>
                                                                   {
                                                                     event.className
                                                                   }
-                                                                </Text>
+                                                                </span>
                                                               </div>
                                                               <Tag
                                                                 color={
@@ -1656,524 +1729,527 @@ export default function ImprovedAntdCalendarPage() {
                                                             </Tooltip>
                                                           </div>
                                                         </div>
-                                                      </AntdCard>
-                                                    )
-                                                  )}
-                                                </div>
-                                              </AccordionContent>
-                                            </AccordionItem>
-                                          )
+                                                      </CardContent>
+                                                    </Card>
+                                                  )
+                                                )}
+                                              </div>
+                                            </AccordionContent>
+                                          </AccordionItem>
+                                        )
+                                      )}
+                                    </Accordion>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </TabsContent>
+
+                    {!drawerDate.isBefore(dayjs(), "day") && (
+                      <TabsContent
+                        value='add'
+                        className='mt-4'
+                      >
+                        <div className='space-y-4'>
+                          <Alert
+                            message={`Thêm lớp học cho ngày ${drawerDate.format(
+                              "DD/MM/YYYY"
+                            )}`}
+                            type='info'
+                            showIcon
+                            className='mb-4'
+                          />
+
+                          {availableInstructors.length === 0 && (
+                            <Alert
+                              message='Không có giáo viên nào'
+                              description='Vui lòng thêm giáo viên vào hệ thống trước khi tạo lớp học.'
+                              type='warning'
+                              showIcon
+                              className='mb-4'
+                            />
+                          )}
+
+                          {classManagementLoading ? (
+                            <div className='flex flex-col items-center justify-center py-8'>
+                              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+                              <p className='text-muted-foreground'>
+                                Đang tải dữ liệu...
+                              </p>
+                            </div>
+                          ) : (
+                            <Form layout='vertical'>
+                              <Form.Item
+                                label='Khung giờ'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedSlot}
+                                  onChange={setSelectedSlot}
+                                  placeholder='Chọn khung giờ'
+                                  showSearch
+                                  optionFilterProp='children'
+                                >
+                                  {availableSlots.map((slot) => (
+                                    <Option
+                                      key={slot._id}
+                                      value={slot._id}
+                                    >
+                                      {slot.title} (
+                                      {Math.floor(slot.start_time)
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :
+                                      {slot.start_minute
+                                        .toString()
+                                        .padStart(2, "0")}{" "}
+                                      -
+                                      {Math.floor(slot.end_time)
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :
+                                      {slot.end_minute
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      )
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
+
+                              <Form.Item
+                                label='Lớp học'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedClassroom}
+                                  onChange={setSelectedClassroom}
+                                  placeholder='Chọn lớp học'
+                                  showSearch
+                                  optionFilterProp='children'
+                                >
+                                  {availableClassrooms.map((classroom) => (
+                                    <Option
+                                      key={classroom._id}
+                                      value={classroom._id}
+                                    >
+                                      {classroom.name} -{" "}
+                                      {classroom.course?.title ||
+                                        "Không có khóa học"}
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
+
+                              <Form.Item
+                                label='Hồ bơi'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedPool}
+                                  onChange={setSelectedPool}
+                                  placeholder='Chọn hồ bơi'
+                                  showSearch
+                                  optionFilterProp='children'
+                                >
+                                  {availablePools.map((pool) => {
+                                    const isOverCapacity =
+                                      poolOverflowWarnings.some(
+                                        (w) => w.pool._id === pool._id
+                                      );
+                                    const warningInfo =
+                                      poolOverflowWarnings.find(
+                                        (w) => w.pool._id === pool._id
+                                      );
+                                    return (
+                                      <Option
+                                        key={pool._id}
+                                        value={pool._id}
+                                        disabled={isOverCapacity}
+                                      >
+                                        {pool.title} ({pool.type}) - Sức chứa:{" "}
+                                        {pool.capacity}
+                                        {isOverCapacity && warningInfo && (
+                                          <span className='text-red-600 font-semibold'>
+                                            {" "}
+                                            - Vượt {warningInfo.overCapacity}
+                                          </span>
                                         )}
-                                      </Accordion>
+                                      </Option>
                                     );
-                                  })()}
-                                </div>
+                                  })}
+                                </AntdSelect>
+                                {/* {poolOverflowWarnings.length > 0 && (
+                                        <div className='text-xs text-yellow-600 mt-1'>
+                                          Có hồ bơi vượt sức chứa
+                                        </div>
+                                      )} */}
+                              </Form.Item>
+
+                              <Form.Item
+                                label='Giáo viên'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedInstructor}
+                                  onChange={setSelectedInstructor}
+                                  placeholder='Chọn giáo viên'
+                                  showSearch
+                                  optionFilterProp='children'
+                                >
+                                  {availableInstructors.map((instructor) => (
+                                    <Option
+                                      key={instructor._id}
+                                      value={instructor._id}
+                                    >
+                                      <div className='flex items-center gap-2'>
+                                        <Avatar
+                                          size={24}
+                                          src={
+                                            instructorAvatars[instructor._id]
+                                          }
+                                          icon={<UserOutlined />}
+                                        />
+                                        <span>
+                                          {instructor.username} (
+                                          {instructor.email})
+                                          {instructor.is_active === false && (
+                                            <span className='text-red-500'>
+                                              {" "}
+                                              - Không hoạt động
+                                            </span>
+                                          )}
+                                        </span>
+                                      </div>
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
+
+                              <div className='flex gap-2 pt-4'>
+                                <AntdButton
+                                  type='primary'
+                                  icon={<SaveOutlined />}
+                                  loading={classManagementLoading}
+                                  onClick={handleAddNewClass}
+                                  disabled={
+                                    !selectedSlot ||
+                                    !selectedClassroom ||
+                                    !selectedPool ||
+                                    !selectedInstructor ||
+                                    availableInstructors.length === 0
+                                  }
+                                  title={
+                                    availableInstructors.length === 0
+                                      ? "Không thể thêm lớp học: Không có giáo viên nào"
+                                      : ""
+                                  }
+                                >
+                                  Thêm lớp học
+                                </AntdButton>
+                                <AntdButton
+                                  icon={<CloseOutlined />}
+                                  onClick={resetClassManagementForm}
+                                >
+                                  Hủy
+                                </AntdButton>
                               </div>
-                            );
-                          })()}
+                            </Form>
+                          )}
                         </div>
-                      ),
-                    },
-                    ...(!drawerDate.isBefore(dayjs(), "day")
-                      ? [
-                          {
-                            key: "add",
-                            label: "Thêm lớp học",
-                            children: (
-                              <div className='space-y-4'>
-                                <Alert
-                                  message={`Thêm lớp học cho ngày ${drawerDate.format(
-                                    "DD/MM/YYYY"
-                                  )}`}
-                                  type='info'
-                                  showIcon
-                                  className='mb-4'
-                                />
+                      </TabsContent>
+                    )}
 
-                                {availableInstructors.length === 0 && (
-                                  <Alert
-                                    message='Không có giáo viên nào'
-                                    description='Vui lòng thêm giáo viên vào hệ thống trước khi tạo lớp học.'
-                                    type='warning'
-                                    showIcon
-                                    className='mb-4'
-                                  />
-                                )}
-
-                                {classManagementLoading ? (
-                                  <div className='flex flex-col items-center justify-center py-8'>
-                                    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
-                                    <p className='text-muted-foreground'>
-                                      Đang tải dữ liệu...
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <Form layout='vertical'>
-                                    <Form.Item
-                                      label='Khung giờ'
-                                      required
+                    {editingEvent && (
+                      <TabsContent
+                        value='edit'
+                        className='mt-4'
+                      >
+                        <div className='space-y-4'>
+                          {classManagementLoading ? (
+                            <div className='flex flex-col items-center justify-center py-8'>
+                              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
+                              <p className='text-muted-foreground'>
+                                Đang tải dữ liệu...
+                              </p>
+                            </div>
+                          ) : (
+                            <Form layout='vertical'>
+                              <Form.Item
+                                label='Khung giờ'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedSlot}
+                                  onChange={setSelectedSlot}
+                                  placeholder='Chọn khung giờ'
+                                  showSearch
+                                  optionFilterProp='children'
+                                  getPopupContainer={(trigger) =>
+                                    trigger.parentElement || document.body
+                                  }
+                                >
+                                  {availableSlots.map((slot) => (
+                                    <Option
+                                      key={slot._id}
+                                      value={slot._id}
                                     >
-                                      <AntdSelect
-                                        value={selectedSlot}
-                                        onChange={setSelectedSlot}
-                                        placeholder='Chọn khung giờ'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availableSlots.map((slot) => (
-                                          <Option
-                                            key={slot._id}
-                                            value={slot._id}
-                                          >
-                                            {slot.title} (
-                                            {Math.floor(slot.start_time)
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            :
-                                            {slot.start_minute
-                                              .toString()
-                                              .padStart(2, "0")}{" "}
-                                            -
-                                            {Math.floor(slot.end_time)
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            :
-                                            {slot.end_minute
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            )
-                                          </Option>
-                                        ))}
-                                      </AntdSelect>
-                                    </Form.Item>
+                                      {slot.title} (
+                                      {Math.floor(slot.start_time)
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :
+                                      {slot.start_minute
+                                        .toString()
+                                        .padStart(2, "0")}{" "}
+                                      -
+                                      {Math.floor(slot.end_time)
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      :
+                                      {slot.end_minute
+                                        .toString()
+                                        .padStart(2, "0")}
+                                      )
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
 
-                                    <Form.Item
-                                      label='Lớp học'
-                                      required
+                              <Form.Item
+                                label='Lớp học'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedClassroom}
+                                  onChange={setSelectedClassroom}
+                                  placeholder='Chọn lớp học'
+                                  showSearch
+                                  optionFilterProp='children'
+                                  getPopupContainer={(trigger) =>
+                                    trigger.parentElement || document.body
+                                  }
+                                >
+                                  {availableClassrooms.map((classroom) => (
+                                    <Option
+                                      key={classroom._id}
+                                      value={classroom._id}
                                     >
-                                      <AntdSelect
-                                        value={selectedClassroom}
-                                        onChange={setSelectedClassroom}
-                                        placeholder='Chọn lớp học'
-                                        showSearch
-                                        optionFilterProp='children'
+                                      {classroom.name} -{" "}
+                                      {classroom.course?.title ||
+                                        "Không có khóa học"}
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
+
+                              <Form.Item
+                                label='Hồ bơi'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedPool}
+                                  onChange={setSelectedPool}
+                                  placeholder='Chọn hồ bơi'
+                                  showSearch
+                                  optionFilterProp='children'
+                                  getPopupContainer={(trigger) =>
+                                    trigger.parentElement || document.body
+                                  }
+                                >
+                                  {availablePools.map((pool) => {
+                                    const isOverCapacity =
+                                      poolOverflowWarnings.some(
+                                        (w) => w.pool._id === pool._id
+                                      );
+                                    const warningInfo =
+                                      poolOverflowWarnings.find(
+                                        (w) => w.pool._id === pool._id
+                                      );
+                                    return (
+                                      <Option
+                                        key={pool._id}
+                                        value={pool._id}
+                                        disabled={isOverCapacity}
                                       >
-                                        {availableClassrooms.map(
-                                          (classroom) => (
-                                            <Option
-                                              key={classroom._id}
-                                              value={classroom._id}
-                                            >
-                                              {classroom.name} -{" "}
-                                              {classroom.course?.title ||
-                                                "Không có khóa học"}
-                                            </Option>
-                                          )
+                                        {pool.title} ({pool.type}) - Sức chứa:{" "}
+                                        {pool.capacity}
+                                        {isOverCapacity && warningInfo && (
+                                          <span className='text-red-600 font-semibold'>
+                                            {" "}
+                                            - Vượt {warningInfo.overCapacity}
+                                          </span>
                                         )}
-                                      </AntdSelect>
-                                    </Form.Item>
-
-                                    <Form.Item
-                                      label='Hồ bơi'
-                                      required
-                                    >
-                                      <AntdSelect
-                                        value={selectedPool}
-                                        onChange={setSelectedPool}
-                                        placeholder='Chọn hồ bơi'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availablePools.map((pool) => {
-                                          const isOverCapacity =
-                                            poolOverflowWarnings.some(
-                                              (w) => w.pool._id === pool._id
-                                            );
-                                          const warningInfo =
-                                            poolOverflowWarnings.find(
-                                              (w) => w.pool._id === pool._id
-                                            );
-                                          return (
-                                            <Option
-                                              key={pool._id}
-                                              value={pool._id}
-                                              disabled={isOverCapacity}
-                                            >
-                                              {pool.title} ({pool.type}) - Sức
-                                              chứa: {pool.capacity}
-                                              {isOverCapacity &&
-                                                warningInfo && (
-                                                  <span className='text-red-600 font-semibold'>
-                                                    {" "}
-                                                    - Vượt{" "}
-                                                    {warningInfo.overCapacity}
-                                                  </span>
-                                                )}
-                                            </Option>
-                                          );
-                                        })}
-                                      </AntdSelect>
-                                      {/* {poolOverflowWarnings.length > 0 && (
+                                      </Option>
+                                    );
+                                  })}
+                                </AntdSelect>
+                                {/* {poolOverflowWarnings.length > 0 && (
                                         <div className='text-xs text-yellow-600 mt-1'>
                                           Có hồ bơi vượt sức chứa
                                         </div>
                                       )} */}
-                                    </Form.Item>
+                              </Form.Item>
 
-                                    <Form.Item
-                                      label='Giáo viên'
-                                      required
+                              <Form.Item
+                                label='Giáo viên phụ trách buổi học'
+                                required
+                              >
+                                <AntdSelect
+                                  value={selectedInstructor}
+                                  onChange={setSelectedInstructor}
+                                  placeholder='Chọn giáo viên'
+                                  showSearch
+                                  optionFilterProp='children'
+                                  getPopupContainer={(trigger) =>
+                                    trigger.parentElement || document.body
+                                  }
+                                >
+                                  {availableInstructors.map((instructor) => (
+                                    <Option
+                                      key={instructor._id}
+                                      value={instructor._id}
                                     >
-                                      <AntdSelect
-                                        value={selectedInstructor}
-                                        onChange={setSelectedInstructor}
-                                        placeholder='Chọn giáo viên'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availableInstructors.map(
-                                          (instructor) => (
-                                            <Option
-                                              key={instructor._id}
-                                              value={instructor._id}
-                                            >
-                                              <div className='flex items-center gap-2'>
-                                                <Avatar
-                                                  size={24}
-                                                  src={
-                                                    instructorAvatars[
-                                                      instructor._id
-                                                    ]
-                                                  }
-                                                  icon={<UserOutlined />}
-                                                />
-                                                <span>
-                                                  {instructor.username} (
-                                                  {instructor.email})
-                                                  {instructor.is_active ===
-                                                    false && (
-                                                    <span className='text-red-500'>
-                                                      {" "}
-                                                      - Không hoạt động
-                                                    </span>
-                                                  )}
-                                                </span>
-                                              </div>
-                                            </Option>
-                                          )
-                                        )}
-                                      </AntdSelect>
-                                    </Form.Item>
+                                      <div className='flex items-center gap-2'>
+                                        <Avatar
+                                          size={24}
+                                          src={
+                                            instructorAvatars[instructor._id]
+                                          }
+                                          icon={<UserOutlined />}
+                                        />
+                                        <span>
+                                          {instructor.username} (
+                                          {instructor.email})
+                                          {instructor.is_active === false && (
+                                            <span className='text-red-500'>
+                                              {" "}
+                                              - Không hoạt động
+                                            </span>
+                                          )}
+                                        </span>
+                                      </div>
+                                    </Option>
+                                  ))}
+                                </AntdSelect>
+                              </Form.Item>
 
-                                    <div className='flex gap-2 pt-4'>
-                                      <AntdButton
-                                        type='primary'
-                                        icon={<SaveOutlined />}
-                                        loading={classManagementLoading}
-                                        onClick={handleAddNewClass}
-                                        disabled={
-                                          !selectedSlot ||
-                                          !selectedClassroom ||
-                                          !selectedPool ||
-                                          !selectedInstructor ||
-                                          availableInstructors.length === 0
-                                        }
-                                        title={
-                                          availableInstructors.length === 0
-                                            ? "Không thể thêm lớp học: Không có giáo viên nào"
-                                            : ""
-                                        }
-                                      >
-                                        Thêm lớp học
-                                      </AntdButton>
-                                      <AntdButton
-                                        icon={<CloseOutlined />}
-                                        onClick={resetClassManagementForm}
-                                      >
-                                        Hủy
-                                      </AntdButton>
-                                    </div>
-                                  </Form>
-                                )}
+                              <div className='flex gap-2 pt-4'>
+                                <AntdButton
+                                  type='primary'
+                                  icon={<SaveOutlined />}
+                                  loading={classManagementLoading}
+                                  onClick={handleUpdateClass}
+                                  disabled={
+                                    !selectedSlot ||
+                                    !selectedClassroom ||
+                                    !selectedPool ||
+                                    !selectedInstructor ||
+                                    availableInstructors.length === 0
+                                  }
+                                  title={
+                                    availableInstructors.length === 0
+                                      ? "Không thể cập nhật lớp học: Không có giáo viên nào"
+                                      : ""
+                                  }
+                                >
+                                  Cập nhật
+                                </AntdButton>
+                                <AntdButton
+                                  icon={<CloseOutlined />}
+                                  onClick={resetClassManagementForm}
+                                >
+                                  Hủy
+                                </AntdButton>
                               </div>
-                            ),
-                          },
-                        ]
-                      : []),
-                    ...(editingEvent
-                      ? [
-                          {
-                            key: "edit",
-                            label: "Chỉnh sửa buổi học",
-                            children: (
-                              <div className='space-y-4'>
-                                {classManagementLoading ? (
-                                  <div className='flex flex-col items-center justify-center py-8'>
-                                    <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
-                                    <p className='text-muted-foreground'>
-                                      Đang tải dữ liệu...
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <Form layout='vertical'>
-                                    <Form.Item
-                                      label='Khung giờ'
-                                      required
-                                    >
-                                      <AntdSelect
-                                        value={selectedSlot}
-                                        onChange={setSelectedSlot}
-                                        placeholder='Chọn khung giờ'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availableSlots.map((slot) => (
-                                          <Option
-                                            key={slot._id}
-                                            value={slot._id}
-                                          >
-                                            {slot.title} (
-                                            {Math.floor(slot.start_time)
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            :
-                                            {slot.start_minute
-                                              .toString()
-                                              .padStart(2, "0")}{" "}
-                                            -
-                                            {Math.floor(slot.end_time)
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            :
-                                            {slot.end_minute
-                                              .toString()
-                                              .padStart(2, "0")}
-                                            )
-                                          </Option>
-                                        ))}
-                                      </AntdSelect>
-                                    </Form.Item>
-
-                                    <Form.Item
-                                      label='Lớp học'
-                                      required
-                                    >
-                                      <AntdSelect
-                                        value={selectedClassroom}
-                                        onChange={setSelectedClassroom}
-                                        placeholder='Chọn lớp học'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availableClassrooms.map(
-                                          (classroom) => (
-                                            <Option
-                                              key={classroom._id}
-                                              value={classroom._id}
-                                            >
-                                              {classroom.name} -{" "}
-                                              {classroom.course?.title ||
-                                                "Không có khóa học"}
-                                            </Option>
-                                          )
-                                        )}
-                                      </AntdSelect>
-                                    </Form.Item>
-
-                                    <Form.Item
-                                      label='Hồ bơi'
-                                      required
-                                    >
-                                      <AntdSelect
-                                        value={selectedPool}
-                                        onChange={setSelectedPool}
-                                        placeholder='Chọn hồ bơi'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availablePools.map((pool) => {
-                                          const isOverCapacity =
-                                            poolOverflowWarnings.some(
-                                              (w) => w.pool._id === pool._id
-                                            );
-                                          const warningInfo =
-                                            poolOverflowWarnings.find(
-                                              (w) => w.pool._id === pool._id
-                                            );
-                                          return (
-                                            <Option
-                                              key={pool._id}
-                                              value={pool._id}
-                                              disabled={isOverCapacity}
-                                            >
-                                              {pool.title} ({pool.type}) - Sức
-                                              chứa: {pool.capacity}
-                                              {isOverCapacity &&
-                                                warningInfo && (
-                                                  <span className='text-red-600 font-semibold'>
-                                                    {" "}
-                                                    - Vượt{" "}
-                                                    {warningInfo.overCapacity}
-                                                  </span>
-                                                )}
-                                            </Option>
-                                          );
-                                        })}
-                                      </AntdSelect>
-                                      {/* {poolOverflowWarnings.length > 0 && (
-                                        <div className='text-xs text-yellow-600 mt-1'>
-                                          Có hồ bơi vượt sức chứa
-                                        </div>
-                                      )} */}
-                                    </Form.Item>
-
-                                    <Form.Item
-                                      label='Giáo viên phụ trách buổi học'
-                                      required
-                                    >
-                                      <AntdSelect
-                                        value={selectedInstructor}
-                                        onChange={setSelectedInstructor}
-                                        placeholder='Chọn giáo viên'
-                                        showSearch
-                                        optionFilterProp='children'
-                                      >
-                                        {availableInstructors.map(
-                                          (instructor) => (
-                                            <Option
-                                              key={instructor._id}
-                                              value={instructor._id}
-                                            >
-                                              <div className='flex items-center gap-2'>
-                                                <Avatar
-                                                  size={24}
-                                                  src={
-                                                    instructorAvatars[
-                                                      instructor._id
-                                                    ]
-                                                  }
-                                                  icon={<UserOutlined />}
-                                                />
-                                                <span>
-                                                  {instructor.username} (
-                                                  {instructor.email})
-                                                  {instructor.is_active ===
-                                                    false && (
-                                                    <span className='text-red-500'>
-                                                      {" "}
-                                                      - Không hoạt động
-                                                    </span>
-                                                  )}
-                                                </span>
-                                              </div>
-                                            </Option>
-                                          )
-                                        )}
-                                      </AntdSelect>
-                                    </Form.Item>
-
-                                    <div className='flex gap-2 pt-4'>
-                                      <AntdButton
-                                        type='primary'
-                                        icon={<SaveOutlined />}
-                                        loading={classManagementLoading}
-                                        onClick={handleUpdateClass}
-                                        disabled={
-                                          !selectedSlot ||
-                                          !selectedClassroom ||
-                                          !selectedPool ||
-                                          !selectedInstructor ||
-                                          availableInstructors.length === 0
-                                        }
-                                        title={
-                                          availableInstructors.length === 0
-                                            ? "Không thể cập nhật lớp học: Không có giáo viên nào"
-                                            : ""
-                                        }
-                                      >
-                                        Cập nhật
-                                      </AntdButton>
-                                      <AntdButton
-                                        icon={<CloseOutlined />}
-                                        onClick={resetClassManagementForm}
-                                      >
-                                        Hủy
-                                      </AntdButton>
-                                    </div>
-                                  </Form>
-                                )}
-                              </div>
-                            ),
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              </div>
-            )
-          )}
-        </Drawer>
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title={
-            <Space>
-              <DeleteOutlined className='text-red-500' />
-              Xác nhận xóa lớp học
-            </Space>
-          }
+                            </Form>
+                          )}
+                        </div>
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                </div>
+              )
+            )}
+          </SheetContent>
+        </Sheet>
+        {/* Delete Confirmation AlertDialog */}
+        <AlertDialog
           open={deleteDialogOpen}
-          onCancel={() => setDeleteDialogOpen(false)}
-          footer={[
-            <AntdButton
-              key='cancel'
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Hủy
-            </AntdButton>,
-            <AntdButton
-              key='delete'
-              type='primary'
-              danger
-              loading={isDeleting}
-              onClick={handleDeleteScheduleEvent}
-            >
-              Xóa lớp học
-            </AntdButton>,
-          ]}
+          onOpenChange={setDeleteDialogOpen}
         >
-          {scheduleToDelete && (
-            <div>
-              <Alert
-                message='Bạn đang xóa lớp học khỏi lịch'
-                type='warning'
-                showIcon
-                className='mb-4'
-              />
-              <div className='space-y-2'>
-                <div className='flex justify-between'>
-                  <Text type='secondary'>Lớp học:</Text>
-                  <Text strong>{scheduleToDelete.className}</Text>
-                </div>
-                <div className='flex justify-between'>
-                  <Text type='secondary'>Ngày:</Text>
-                  <Text>
-                    {dayjs(scheduleToDelete.date).format("DD/MM/YYYY dddd")}
-                  </Text>
-                </div>
-                <div className='flex justify-between'>
-                  <Text type='secondary'>Khung giờ:</Text>
-                  <Tag>{scheduleToDelete.slotTitle}</Tag>
-                </div>
-              </div>
-              <Alert
-                message='Lưu ý: Hành động này không thể hoàn tác!'
-                type='error'
-                showIcon
-                className='mt-4'
-              />
-            </div>
-          )}
-        </Modal>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className='flex items-center gap-2'>
+                <DeleteOutlined className='text-red-500' />
+                Xác nhận xóa lớp học
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {scheduleToDelete && (
+                  <div className='space-y-4'>
+                    <Alert
+                      message='Bạn đang xóa lớp học khỏi lịch'
+                      type='warning'
+                      showIcon
+                      className='mb-4'
+                    />
+                    <div className='space-y-2 text-sm'>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Lớp học:</span>
+                        <span className='font-semibold'>
+                          {scheduleToDelete.className}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Ngày:</span>
+                        <span>
+                          {dayjs(scheduleToDelete.date).format(
+                            "DD/MM/YYYY dddd"
+                          )}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>
+                          Khung giờ:
+                        </span>
+                        <Tag>{scheduleToDelete.slotTitle}</Tag>
+                      </div>
+                    </div>
+                    <Alert
+                      message='Lưu ý: Hành động này không thể hoàn tác!'
+                      type='error'
+                      showIcon
+                      className='mt-4'
+                    />
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                disabled={isDeleting}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleDeleteScheduleEvent();
+                }}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Đang xóa...
+                  </>
+                ) : (
+                  "Xóa lớp học"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         {/* Class Detail Modal */}
         <ClassDetailModal
           open={detailModalOpen}
