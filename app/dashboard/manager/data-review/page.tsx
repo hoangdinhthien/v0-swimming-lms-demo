@@ -64,7 +64,7 @@ export default function ManagerDataReviewPage() {
     await loadRecords(false);
     setRefreshing(false);
     toast({
-      title: "✅ Đã làm mới",
+      title: "Đã làm mới",
       description: "Danh sách data-review đã được cập nhật",
     });
   };

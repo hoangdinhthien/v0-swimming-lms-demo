@@ -32,6 +32,7 @@ import {
   CreditCard as PaymentIcon,
   Tag,
   Cog,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -217,6 +218,11 @@ export default function DashboardLayout({
         icon: <Waves className='h-4 w-4' />,
       },
       {
+        name: "Data Review",
+        href: "/dashboard/manager/data-review",
+        icon: <FileCheck className='h-4 w-4' />,
+      },
+      {
         name: "Tin tức",
         href: "/dashboard/manager/news",
         icon: <Bell className='h-4 w-4' />,
@@ -241,11 +247,11 @@ export default function DashboardLayout({
         href: "/dashboard/manager/transactions",
         icon: <PaymentIcon className='h-4 w-4' />,
       },
-      {
-        name: "Khuyến Mãi",
-        href: "/dashboard/manager/promotions",
-        icon: <Tag className='h-4 w-4' />,
-      },
+      // {
+      //   name: "Khuyến Mãi",
+      //   href: "/dashboard/manager/promotions",
+      //   icon: <Tag className='h-4 w-4' />,
+      // },
       {
         name: "Cài Đặt Tài Khoản",
         href: "/dashboard/manager/settings",
@@ -284,11 +290,11 @@ export default function DashboardLayout({
         href: "/dashboard/admin/analytics",
         icon: <BarChart3 className='h-4 w-4 mr-2' />,
       },
-      {
-        name: "Khuyến Mãi",
-        href: "/dashboard/admin/promotions",
-        icon: <Percent className='h-4 w-4 mr-2' />,
-      },
+      // {
+      //   name: "Khuyến Mãi",
+      //   href: "/dashboard/admin/promotions",
+      //   icon: <Percent className='h-4 w-4 mr-2' />,
+      // },
       {
         name: "Cài Đặt Hệ Thống",
         href: "/dashboard/admin/settings",
@@ -697,6 +703,16 @@ export default function DashboardLayout({
                             name: "Hồ Bơi",
                             href: "/dashboard/manager/pools",
                             icon: <Waves className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Data Review - only for managers
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Data Review",
+                            href: "/dashboard/manager/data-review",
+                            icon: <FileCheck className='h-4 w-4' />,
                           },
                         ]
                       : []),

@@ -139,130 +139,131 @@ const ActionsCell = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={setIsOpen}
-    >
-      <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          size='sm'
-          className='h-8 w-8 p-0'
-        >
-          <Eye className='h-4 w-4' />
-        </Button>
-      </DialogTrigger>
-      <DialogContent
-        className='max-w-3xl max-h-[85vh]'
-        onClick={(e) => e.stopPropagation()}
+    <>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-8 w-8 p-0'
+        onClick={() => setIsOpen(true)}
       >
-        <DialogHeader>
-          <DialogTitle>Chi tiết yêu cầu - {service}</DialogTitle>
-          <DialogDescription>
-            ID: {record._id} | Trạng thái: {getStatusLabel(record.status)}
-          </DialogDescription>
-        </DialogHeader>
+        <Eye className='h-4 w-4' />
+      </Button>
+      <Dialog
+        open={isOpen}
+        onOpenChange={setIsOpen}
+      >
+        <DialogContent
+          className='max-w-3xl max-h-[85vh]'
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DialogHeader>
+            <DialogTitle>Chi tiết yêu cầu - {service}</DialogTitle>
+            <DialogDescription>
+              ID: {record._id} | Trạng thái: {getStatusLabel(record.status)}
+            </DialogDescription>
+          </DialogHeader>
 
-        <ScrollArea className='h-[50vh] pr-4'>
-          <div className='space-y-4'>
-            {/* Metadata */}
-            <div className='grid grid-cols-2 gap-4 text-sm'>
-              <div>
-                <span className='font-semibold'>Loại:</span>{" "}
-                {Array.isArray(record.type) ? record.type[0] : record.type}
+          <ScrollArea className='h-[50vh] pr-4'>
+            <div className='space-y-4'>
+              {/* Metadata */}
+              <div className='grid grid-cols-2 gap-4 text-sm'>
+                <div>
+                  <span className='font-semibold'>Loại:</span>{" "}
+                  {Array.isArray(record.type) ? record.type[0] : record.type}
+                </div>
+                <div>
+                  <span className='font-semibold'>Phương thức:</span>{" "}
+                  <Badge variant={getMethodVariant(record.method)}>
+                    {getMethodLabel(record.method)}
+                  </Badge>
+                </div>
+                <div>
+                  <span className='font-semibold'>Tạo bởi:</span>{" "}
+                  {record.created_by?.username || "N/A"}
+                </div>
+                <div>
+                  <span className='font-semibold'>Tạo lúc:</span>{" "}
+                  {formatDate(record.created_at)}
+                </div>
               </div>
+
+              {/* Show note if exists (for approved/rejected records) */}
+              {record.note && (
+                <div className='bg-muted p-3 rounded-md'>
+                  <h4 className='font-semibold mb-1 text-sm'>
+                    Ghi chú từ Manager:
+                  </h4>
+                  <p className='text-sm text-muted-foreground'>{record.note}</p>
+                </div>
+              )}
+
+              {/* Data payload */}
               <div>
-                <span className='font-semibold'>Phương thức:</span>{" "}
-                <Badge variant={getMethodVariant(record.method)}>
-                  {getMethodLabel(record.method)}
-                </Badge>
-              </div>
-              <div>
-                <span className='font-semibold'>Tạo bởi:</span>{" "}
-                {record.created_by?.username || "N/A"}
-              </div>
-              <div>
-                <span className='font-semibold'>Tạo lúc:</span>{" "}
-                {formatDate(record.created_at)}
+                <h4 className='font-semibold mb-2'>Dữ liệu yêu cầu:</h4>
+                <pre className='bg-muted p-4 rounded-md text-xs overflow-x-auto'>
+                  {JSON.stringify(record.data, null, 2)}
+                </pre>
               </div>
             </div>
+          </ScrollArea>
 
-            {/* Show note if exists (for approved/rejected records) */}
-            {record.note && (
-              <div className='bg-muted p-3 rounded-md'>
-                <h4 className='font-semibold mb-1 text-sm'>
-                  Ghi chú từ Manager:
-                </h4>
-                <p className='text-sm text-muted-foreground'>{record.note}</p>
+          {/* Note input and actions - only show if pending */}
+          {isPending && (
+            <>
+              <div className='space-y-2'>
+                <Label htmlFor='note'>Ghi chú (tùy chọn)</Label>
+                <Textarea
+                  id='note'
+                  placeholder='Nhập ghi chú cho quyết định của bạn...'
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                />
               </div>
-            )}
 
-            {/* Data payload */}
-            <div>
-              <h4 className='font-semibold mb-2'>Dữ liệu yêu cầu:</h4>
-              <pre className='bg-muted p-4 rounded-md text-xs overflow-x-auto'>
-                {JSON.stringify(record.data, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </ScrollArea>
+              <DialogFooter className='gap-2'>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsOpen(false)}
+                  disabled={isProcessing}
+                >
+                  Đóng
+                </Button>
+                <Button
+                  variant='destructive'
+                  onClick={handleReject}
+                  disabled={isProcessing}
+                >
+                  <XCircle className='h-4 w-4 mr-2' />
+                  {isProcessing ? "Đang xử lý..." : "Từ chối"}
+                </Button>
+                <Button
+                  variant='default'
+                  onClick={handleApprove}
+                  disabled={isProcessing}
+                  className='bg-green-600 hover:bg-green-700'
+                >
+                  <CheckCircle2 className='h-4 w-4 mr-2' />
+                  {isProcessing ? "Đang xử lý..." : "Phê duyệt"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
 
-        {/* Note input and actions - only show if pending */}
-        {isPending && (
-          <>
-            <div className='space-y-2'>
-              <Label htmlFor='note'>Ghi chú (tùy chọn)</Label>
-              <Textarea
-                id='note'
-                placeholder='Nhập ghi chú cho quyết định của bạn...'
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <DialogFooter className='gap-2'>
+          {/* If not pending, just show close button */}
+          {!isPending && (
+            <DialogFooter>
               <Button
                 variant='outline'
                 onClick={() => setIsOpen(false)}
-                disabled={isProcessing}
               >
                 Đóng
               </Button>
-              <Button
-                variant='destructive'
-                onClick={handleReject}
-                disabled={isProcessing}
-              >
-                <XCircle className='h-4 w-4 mr-2' />
-                {isProcessing ? "Đang xử lý..." : "Từ chối"}
-              </Button>
-              <Button
-                variant='default'
-                onClick={handleApprove}
-                disabled={isProcessing}
-                className='bg-green-600 hover:bg-green-700'
-              >
-                <CheckCircle2 className='h-4 w-4 mr-2' />
-                {isProcessing ? "Đang xử lý..." : "Phê duyệt"}
-              </Button>
             </DialogFooter>
-          </>
-        )}
-
-        {/* If not pending, just show close button */}
-        {!isPending && (
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setIsOpen(false)}
-            >
-              Đóng
-            </Button>
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

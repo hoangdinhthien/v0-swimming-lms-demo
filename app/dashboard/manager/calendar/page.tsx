@@ -48,7 +48,7 @@ import {
   CloseOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import type { CalendarProps } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
@@ -173,6 +173,7 @@ export default function ImprovedAntdCalendarPage() {
   const [drawerDate, setDrawerDate] = useState<Dayjs | null>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [refreshing, setRefreshing] = useState(false);
 
   // Performance optimization: Track last load time to avoid redundant calls
   const [lastClassDataLoad, setLastClassDataLoad] = useState<number>(0);
@@ -425,6 +426,10 @@ export default function ImprovedAntdCalendarPage() {
             isPast ? "opacity-60" : ""
           } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
           onClick={handleCellClick}
+          onClickCapture={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <div className='text-xs text-gray-400 dark:text-gray-600 text-center py-2'>
             Chưa có lớp học
@@ -439,6 +444,10 @@ export default function ImprovedAntdCalendarPage() {
           isPast ? "opacity-60" : ""
         } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
         onClick={handleCellClick}
+        onClickCapture={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
       >
         <ul className='events-list max-h-[135px] overflow-y-auto overflow-x-auto space-y-2 pr-1 pb-2'>
           {events.map((event, index) => (
@@ -999,6 +1008,36 @@ export default function ImprovedAntdCalendarPage() {
     }
   };
 
+  // Handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const result = await fetchMonthSchedule(
+        currentDate.toDate(),
+        undefined,
+        undefined,
+        isStaff ? "Schedule" : undefined
+      );
+
+      setScheduleEvents(result.events);
+      setPoolOverflowWarnings(result.poolOverflowWarnings);
+
+      toast({
+        title: "Đã làm mới",
+        description: "Lịch học đã được cập nhật",
+      });
+    } catch (err) {
+      console.error("Error refreshing calendar:", err);
+      toast({
+        title: "❌ Lỗi",
+        description: "Không thể làm mới lịch học",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   // Enhanced date cell with drawer trigger
   const enhancedDateCellRender = (value: Dayjs) => {
     return dateCellRender(value);
@@ -1043,7 +1082,7 @@ export default function ImprovedAntdCalendarPage() {
   return (
     <ConfigProvider locale={locale}>
       <div className='container mx-auto py-8 space-y-6'>
-        {/* Header with Auto Schedule Button */}
+        {/* Header with Auto Schedule and Refresh Buttons */}
         <div className='flex justify-between items-center mb-4'>
           <div>
             <h1 className='text-2xl font-bold'>Lịch học</h1>
@@ -1051,13 +1090,25 @@ export default function ImprovedAntdCalendarPage() {
               Quản lý và xếp lịch học cho các lớp
             </p>
           </div>
-          <AntdButton
-            type='primary'
-            size='large'
-            onClick={handleOpenCalendarAutoSchedule}
-          >
-            Tự động xếp lịch học
-          </AntdButton>
+          <div className='flex items-center gap-2'>
+            <AntdButton
+              onClick={handleRefresh}
+              disabled={refreshing}
+              size='large'
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Làm mới
+            </AntdButton>
+            <AntdButton
+              type='primary'
+              size='large'
+              onClick={handleOpenCalendarAutoSchedule}
+            >
+              Tự động xếp lịch học
+            </AntdButton>
+          </div>
         </div>
         {/* Pool Overflow Warning Alert */}
         {poolOverflowWarnings.length > 0 && (
