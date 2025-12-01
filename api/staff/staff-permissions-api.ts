@@ -270,11 +270,13 @@ export function getModuleNavigationMapping(): Record<string, string> {
     Course: "courses",
     Order: "orders",
     Class: "classes",
-    Calendar: "calendar", // Calendar module mapping
+    Schedule: "calendar", // Schedule module controls calendar access
     User: "students", // assuming User module refers to students
     News: "news",
     Blog: "news", // assuming Blog is part of news
     Application: "applications",
+    Pool: "pools", // Pool module controls pools access
+    LearningPath: "courses", // LearningPath is part of courses
   };
 }
 
@@ -312,7 +314,10 @@ export function getAllowedNavigationItems(
             break;
           case "Class":
             allowedNavItems.add("classes");
-            allowedNavItems.add("calendar"); // Calendar belongs to Class module
+            break;
+          case "Schedule":
+            // Schedule module controls calendar access
+            allowedNavItems.add("calendar");
             break;
           case "User":
             // User module includes students, instructors, and staff management
@@ -328,6 +333,14 @@ export function getAllowedNavigationItems(
             break;
           case "Application":
             allowedNavItems.add("applications");
+            break;
+          case "Pool":
+            // Pool module controls pools access
+            allowedNavItems.add("pools");
+            break;
+          case "LearningPath":
+            // LearningPath is part of courses
+            allowedNavItems.add("courses");
             break;
         }
       });

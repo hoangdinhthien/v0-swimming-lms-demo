@@ -694,10 +694,8 @@ export default function DashboardLayout({
                           },
                         ]
                       : []),
-                    // Pool module - show for manager and staff (or if explicit permission exists)
-                    ...(isManager ||
-                    isStaff ||
-                    allowedNavigationItems.includes("pools")
+                    // Pool module - only show if has Pool permission
+                    ...(isManager || allowedNavigationItems.includes("pools")
                       ? [
                           {
                             name: "Hồ Bơi",

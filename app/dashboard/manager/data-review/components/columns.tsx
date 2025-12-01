@@ -99,7 +99,7 @@ const ActionsCell = ({
     try {
       await onUpdateStatus(record._id, service, "approved", note);
       toast({
-        title: "✅ Đã phê duyệt",
+        title: "Đã phê duyệt",
         description: `Đã phê duyệt yêu cầu ${service}`,
       });
       setIsOpen(false);
@@ -121,7 +121,7 @@ const ActionsCell = ({
     try {
       await onUpdateStatus(record._id, service, "rejected", note);
       toast({
-        title: "✅ Đã từ chối",
+        title: "Đã từ chối",
         description: `Đã từ chối yêu cầu ${service}`,
       });
       setIsOpen(false);
