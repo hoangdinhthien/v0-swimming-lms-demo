@@ -33,7 +33,6 @@ import {
   Radio,
 } from "antd";
 import {
-  ArrowLeftOutlined,
   PlusOutlined,
   EyeOutlined,
   EditOutlined,
@@ -43,10 +42,9 @@ import {
   EnvironmentOutlined,
   CalendarOutlined,
   TeamOutlined,
-  BookOutlined,
+  SearchOutlined,
   SaveOutlined,
   CloseOutlined,
-  SearchOutlined,
 } from "@ant-design/icons";
 import { Loader2, RefreshCw } from "lucide-react";
 import type { CalendarProps } from "antd";
@@ -394,15 +392,21 @@ export default function ImprovedAntdCalendarPage() {
     }
   };
 
-  // Handle date select from calendar
+  // Handle date select from calendar - open drawer but prevent month navigation
   const onSelect = (date: Dayjs) => {
     setSelectedDate(date);
-    setCurrentDate(date);
+    // Open drawer when clicking a date
+    setDrawerDate(date);
+    setDrawerOpen(true);
+    // Don't update currentDate to prevent automatic month navigation
   };
 
-  // Handle panel change (month/year navigation)
+  // Handle panel change (month/year navigation) - only via header controls
   const onPanelChange = (date: Dayjs, mode: CalendarProps<Dayjs>["mode"]) => {
-    setCurrentDate(date);
+    // Only update if it's a genuine month/year change from header
+    if (!date.isSame(currentDate, "month")) {
+      setCurrentDate(date);
+    }
   };
 
   // Custom date cell renderer
@@ -412,24 +416,14 @@ export default function ImprovedAntdCalendarPage() {
     const isPast = value.isBefore(dayjs(), "day");
     const isFuture = value.isAfter(dayjs(), "day");
 
-    const handleCellClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDrawerDate(value);
-      setDrawerOpen(true);
-    };
+    // No need for handleCellClick - onSelect handles drawer opening
 
     if (events.length === 0) {
       return (
         <div
           className={`h-full min-h-[120px] p-2 ${
             isPast ? "opacity-60" : ""
-          } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
-          onClick={handleCellClick}
-          onClickCapture={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
+          } hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
         >
           <div className='text-xs text-gray-400 dark:text-gray-600 text-center py-2'>
             Chưa có lớp học
@@ -442,12 +436,7 @@ export default function ImprovedAntdCalendarPage() {
       <div
         className={`h-full min-h-[120px] p-1 ${
           isPast ? "opacity-60" : ""
-        } cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
-        onClick={handleCellClick}
-        onClickCapture={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
+        } hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
       >
         <ul className='events-list max-h-[135px] overflow-y-auto overflow-x-auto space-y-2 pr-1 pb-2'>
           {events.map((event, index) => (
