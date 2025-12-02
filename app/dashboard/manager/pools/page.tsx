@@ -119,10 +119,6 @@ export default function PoolsPage() {
     setRefreshing(true);
     try {
       await loadPools();
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu hồ bơi đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

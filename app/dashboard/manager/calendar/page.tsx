@@ -1057,11 +1057,6 @@ export default function ImprovedAntdCalendarPage() {
 
       setScheduleEvents(result.events);
       setPoolOverflowWarnings(result.poolOverflowWarnings);
-
-      toast({
-        title: "Đã làm mới",
-        description: "Lịch học đã được cập nhật",
-      });
     } catch (err) {
       console.error("Error refreshing calendar:", err);
       toast({

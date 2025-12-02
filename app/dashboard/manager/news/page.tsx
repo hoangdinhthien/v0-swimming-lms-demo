@@ -102,10 +102,6 @@ export default function NewsListPage() {
     setRefreshing(true);
     try {
       await fetchNews();
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu tin tức đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

@@ -155,10 +155,6 @@ export default function StaffPage() {
     setRefreshing(true);
     try {
       await loadStaff();
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu nhân viên đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

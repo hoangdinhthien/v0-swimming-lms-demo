@@ -113,10 +113,6 @@ export default function ClassesPage() {
 
       const result = await fetchClasses(tenantId, token, 1, 1000);
       setAllClasses(result.data);
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu lớp học đã được cập nhật",
-      });
     } catch (e: any) {
       setError(e.message || "Lỗi không xác định");
       toast({

@@ -70,10 +70,6 @@ export default function CoursesPage() {
     setRefreshing(true);
     try {
       await loadCourses(searchKey, false);
-      toast({
-        title: "Đã làm mới",
-        description: "Danh sách khóa học đã được cập nhật",
-      });
     } catch (e: any) {
       toast({
         title: "Lỗi",

@@ -131,10 +131,6 @@ export default function ApplicationTypesPage() {
     setRefreshing(true);
     try {
       await fetchApplicationTypes();
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu loại đơn từ đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

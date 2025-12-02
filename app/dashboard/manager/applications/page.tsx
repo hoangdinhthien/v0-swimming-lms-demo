@@ -86,10 +86,6 @@ export default function ApplicationsPage() {
     setRefreshing(true);
     try {
       await fetchApplications();
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu đơn đăng ký đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

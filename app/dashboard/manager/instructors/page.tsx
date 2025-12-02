@@ -333,10 +333,6 @@ export default function InstructorsPage() {
     setRefreshing(true);
     try {
       await fetchData(undefined, false);
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu giáo viên đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

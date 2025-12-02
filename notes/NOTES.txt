@@ -58,3 +58,8 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - sửa class thành find (searchKey)
 
+- data review: thêm filter find common , thêm tab cho module, fix trạng thái toast khi close, thêm compare data khi review
+
+- thêm dấu , trong các số tiền
+
+- thêm required trên UI

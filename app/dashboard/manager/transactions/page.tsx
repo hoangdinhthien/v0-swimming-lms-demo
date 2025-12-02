@@ -296,11 +296,6 @@ export default function TransactionsPage() {
         setOrders(ordersData.orders);
         setTotalOrders(ordersData.total);
       }
-
-      toast({
-        title: "Đã làm mới",
-        description: "Dữ liệu giao dịch đã được cập nhật",
-      });
     } catch (err) {
       toast({
         title: "Lỗi",

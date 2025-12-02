@@ -155,10 +155,6 @@ export default function StudentsPage() {
     setRefreshing(true);
     await loadStudents(searchKey, false);
     setRefreshing(false);
-    toast({
-      title: "Đã làm mới",
-      description: "Danh sách học viên đã được cập nhật",
-    });
   };
 
   useEffect(() => {

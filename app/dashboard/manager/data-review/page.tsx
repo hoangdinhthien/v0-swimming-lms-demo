@@ -63,10 +63,6 @@ export default function ManagerDataReviewPage() {
     setRefreshing(true);
     await loadRecords(false);
     setRefreshing(false);
-    toast({
-      title: "Đã làm mới",
-      description: "Danh sách data-review đã được cập nhật",
-    });
   };
 
   // Handle update status (approve or reject with note)
