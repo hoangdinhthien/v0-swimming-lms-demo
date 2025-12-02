@@ -113,7 +113,9 @@ const ActionsCell = ({
   const service = Array.isArray(record.type) ? record.type[0] : record.type;
   const isPending =
     Array.isArray(record.status) && record.status[0] === "pending";
-  const method = Array.isArray(record.method) ? record.method[0] : record.method;
+  const method = Array.isArray(record.method)
+    ? record.method[0]
+    : record.method;
   const isPutRequest = method === "PUT";
 
   // Load original data when modal opens for PUT requests
@@ -128,7 +130,12 @@ const ActionsCell = ({
             throw new Error("Thiếu thông tin tenant hoặc token");
           }
 
-          const data = await fetchOriginalData(service, record.data_id!, tenantId, token);
+          const data = await fetchOriginalData(
+            service,
+            record.data_id!,
+            tenantId,
+            token
+          );
           setOriginalData(data);
         } catch (error) {
           console.error("Failed to load original data:", error);
@@ -250,9 +257,9 @@ const ActionsCell = ({
                 <div>
                   <h4 className='font-semibold mb-3'>So sánh thay đổi:</h4>
                   {loadingOriginal ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="ml-2 text-sm text-muted-foreground">
+                    <div className='flex items-center justify-center py-8'>
+                      <Loader2 className='h-6 w-6 animate-spin text-primary' />
+                      <span className='ml-2 text-sm text-muted-foreground'>
                         Đang tải dữ liệu gốc...
                       </span>
                     </div>

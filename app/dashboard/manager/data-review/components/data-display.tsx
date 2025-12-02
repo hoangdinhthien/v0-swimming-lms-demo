@@ -22,8 +22,8 @@ export function DataDisplay({ data, moduleType }: DataDisplayProps) {
   if (!data || typeof data !== "object") {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground">Không có dữ liệu</p>
+        <CardContent className='pt-6'>
+          <p className='text-sm text-muted-foreground'>Không có dữ liệu</p>
         </CardContent>
       </Card>
     );
@@ -52,7 +52,14 @@ export function DataDisplay({ data, moduleType }: DataDisplayProps) {
     // Skip if already shown or if it's internal field
     if (
       fieldConfig.find((c: FieldConfig) => c.key === key) ||
-      ["_id", "tenant_id", "created_at", "created_by", "updated_at", "updated_by"].includes(key)
+      [
+        "_id",
+        "tenant_id",
+        "created_at",
+        "created_by",
+        "updated_at",
+        "updated_by",
+      ].includes(key)
     ) {
       return;
     }
@@ -69,11 +76,14 @@ export function DataDisplay({ data, moduleType }: DataDisplayProps) {
 
   return (
     <Card>
-      <CardContent className="pt-4 pb-4">
-        <div className="grid grid-cols-1 gap-4">
+      <CardContent className='pt-4 pb-4'>
+        <div className='grid grid-cols-1 gap-4'>
           {fieldsToShow.map((field, index) => (
-            <div key={index} className="grid grid-cols-[140px_1fr] gap-4 items-start">
-              <p className="text-sm font-semibold text-muted-foreground">
+            <div
+              key={index}
+              className='grid grid-cols-[140px_1fr] gap-4 items-start'
+            >
+              <p className='text-sm font-semibold text-muted-foreground'>
                 {field.label}:
               </p>
               <div>{formatValue(field.value, field.type, moduleType)}</div>
@@ -159,7 +169,11 @@ function getFieldConfig(moduleType: string): FieldConfig[] {
 // Format value based on type
 function formatValue(value: any, type: string, moduleType?: string) {
   if (value === null || value === undefined) {
-    return <span className="text-muted-foreground italic text-sm">Không có dữ liệu</span>;
+    return (
+      <span className='text-muted-foreground italic text-sm'>
+        Không có dữ liệu
+      </span>
+    );
   }
 
   switch (type) {
@@ -167,19 +181,25 @@ function formatValue(value: any, type: string, moduleType?: string) {
       // Special handling for Course detail array
       if (Array.isArray(value) && value.length > 0) {
         return (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {value.map((item: any, i: number) => (
-              <div key={i} className="bg-muted/30 p-3 rounded-md border">
-                <p className="font-medium text-sm mb-1">
+              <div
+                key={i}
+                className='bg-muted/30 p-3 rounded-md border'
+              >
+                <p className='font-medium text-sm mb-1'>
                   {i + 1}. {item.title || "Không có tiêu đề"}
                 </p>
                 {item.description && (
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <p className='text-xs text-muted-foreground mb-2'>
                     {item.description}
                   </p>
                 )}
                 {item.form_judge && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge
+                    variant='outline'
+                    className='text-xs'
+                  >
                     Có form đánh giá kỹ thuật
                   </Badge>
                 )}
@@ -188,19 +208,26 @@ function formatValue(value: any, type: string, moduleType?: string) {
           </div>
         );
       }
-      return <span className="text-muted-foreground italic text-sm">Chưa có nội dung</span>;
+      return (
+        <span className='text-muted-foreground italic text-sm'>
+          Chưa có nội dung
+        </span>
+      );
 
     case "boolean":
     case "boolean":
       return (
-        <Badge variant={value ? "default" : "secondary"} className="w-fit">
+        <Badge
+          variant={value ? "default" : "secondary"}
+          className='w-fit'
+        >
           {value ? "✓ Hoạt động" : "✗ Không hoạt động"}
         </Badge>
       );
 
     case "currency":
       return (
-        <span className="font-medium text-base">
+        <span className='font-medium text-base'>
           {new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
@@ -209,13 +236,17 @@ function formatValue(value: any, type: string, moduleType?: string) {
       );
 
     case "number":
-      return <span className="font-medium text-base">{value.toLocaleString("vi-VN")}</span>;
+      return (
+        <span className='font-medium text-base'>
+          {value.toLocaleString("vi-VN")}
+        </span>
+      );
 
     case "date":
       try {
         const date = new Date(value);
         return (
-          <span className="text-sm">
+          <span className='text-sm'>
             {date.toLocaleDateString("vi-VN", {
               year: "numeric",
               month: "long",
@@ -224,29 +255,38 @@ function formatValue(value: any, type: string, moduleType?: string) {
           </span>
         );
       } catch {
-        return <span className="text-sm">{String(value)}</span>;
+        return <span className='text-sm'>{String(value)}</span>;
       }
 
     case "array":
       if (Array.isArray(value) && value.length > 0) {
         return (
-          <div className="flex flex-wrap gap-1.5">
+          <div className='flex flex-wrap gap-1.5'>
             {value.map((item, i) => (
-              <Badge key={i} variant="outline" className="text-xs">
+              <Badge
+                key={i}
+                variant='outline'
+                className='text-xs'
+              >
                 {typeof item === "string" ? item : JSON.stringify(item)}
               </Badge>
             ))}
           </div>
         );
       }
-      return <span className="text-muted-foreground italic text-sm">Trống</span>;
+      return (
+        <span className='text-muted-foreground italic text-sm'>Trống</span>
+      );
 
     case "html":
       // Strip HTML tags for preview
       const textContent = value.replace(/<[^>]*>/g, "");
-      const preview = textContent.length > 200 ? textContent.slice(0, 200) + "..." : textContent;
+      const preview =
+        textContent.length > 200
+          ? textContent.slice(0, 200) + "..."
+          : textContent;
       return (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+        <p className='text-sm leading-relaxed whitespace-pre-wrap break-words'>
           {preview}
         </p>
       );
@@ -255,38 +295,41 @@ function formatValue(value: any, type: string, moduleType?: string) {
       // Format JSON objects nicely
       if (typeof value === "object") {
         return (
-          <div className="bg-muted/50 p-3 rounded-md">
-            <pre className="text-xs overflow-x-auto whitespace-pre-wrap break-words">
+          <div className='bg-muted/50 p-3 rounded-md'>
+            <pre className='text-xs overflow-x-auto whitespace-pre-wrap break-words'>
               {JSON.stringify(value, null, 2)}
             </pre>
           </div>
         );
       }
-      return <span className="text-sm">{String(value)}</span>;
+      return <span className='text-sm'>{String(value)}</span>;
 
     case "reference":
       if (typeof value === "object" && value !== null) {
         return (
-          <span className="text-sm font-medium">
+          <span className='text-sm font-medium'>
             {value.title || value.name || value.username || value._id || "N/A"}
           </span>
         );
       }
-      return <span className="text-sm">{String(value)}</span>;
+      return <span className='text-sm'>{String(value)}</span>;
 
     case "auto":
       // Auto-detect type
-      if (typeof value === "boolean") return formatValue(value, "boolean", moduleType);
-      if (typeof value === "number") return formatValue(value, "number", moduleType);
+      if (typeof value === "boolean")
+        return formatValue(value, "boolean", moduleType);
+      if (typeof value === "number")
+        return formatValue(value, "number", moduleType);
       if (Array.isArray(value)) return formatValue(value, "array", moduleType);
-      if (typeof value === "object") return formatValue(value, "json", moduleType);
+      if (typeof value === "object")
+        return formatValue(value, "json", moduleType);
       return formatValue(value, "text", moduleType);
 
     case "text":
     default:
       const textValue = String(value);
       return (
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+        <p className='text-sm leading-relaxed whitespace-pre-wrap break-words'>
           {textValue}
         </p>
       );

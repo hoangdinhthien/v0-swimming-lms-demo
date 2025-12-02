@@ -22,10 +22,12 @@ export function DataComparison({
 }: DataComparisonProps) {
   if (!originalData) {
     return (
-      <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
-        <CardContent className="pt-6">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            ⚠️ Không thể tải dữ liệu gốc để so sánh. Module <strong>{moduleType}</strong> có thể chưa hỗ trợ xem chi tiết hoặc dữ liệu đã bị xóa.
+      <Card className='border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20'>
+        <CardContent className='pt-6'>
+          <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+            ⚠️ Không thể tải dữ liệu gốc để so sánh. Module{" "}
+            <strong>{moduleType}</strong> có thể chưa hỗ trợ xem chi tiết hoặc
+            dữ liệu đã bị xóa.
           </p>
         </CardContent>
       </Card>
@@ -36,13 +38,17 @@ export function DataComparison({
   const fieldConfig = getFieldConfig(moduleType);
 
   // Find changed fields
-  const changedFields = findChangedFields(originalData, updatedData, fieldConfig);
+  const changedFields = findChangedFields(
+    originalData,
+    updatedData,
+    fieldConfig
+  );
 
   if (changedFields.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-6">
-          <p className="text-sm text-muted-foreground text-center">
+        <CardContent className='pt-6'>
+          <p className='text-sm text-muted-foreground text-center'>
             Không có thay đổi nào được phát hiện
           </p>
         </CardContent>
@@ -51,34 +57,38 @@ export function DataComparison({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Badge variant="outline">{changedFields.length} thay đổi</Badge>
+    <div className='space-y-4'>
+      <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+        <Badge variant='outline'>{changedFields.length} thay đổi</Badge>
         <span>được phát hiện</span>
       </div>
 
       {changedFields.map((field, index) => (
         <Card key={index}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{field.label}</CardTitle>
+          <CardHeader className='pb-3'>
+            <CardTitle className='text-sm font-medium'>{field.label}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+            <div className='grid grid-cols-[1fr_auto_1fr] gap-4 items-center'>
               {/* Before */}
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Trước khi cập nhật</p>
-                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md p-3">
+              <div className='space-y-1'>
+                <p className='text-xs text-muted-foreground'>
+                  Trước khi cập nhật
+                </p>
+                <div className='bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md p-3'>
                   {formatValue(field.oldValue, field.type)}
                 </div>
               </div>
 
               {/* Arrow */}
-              <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <ArrowRight className='h-5 w-5 text-muted-foreground flex-shrink-0' />
 
               {/* After */}
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Sau khi cập nhật</p>
-                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md p-3">
+              <div className='space-y-1'>
+                <p className='text-xs text-muted-foreground'>
+                  Sau khi cập nhật
+                </p>
+                <div className='bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md p-3'>
                   {formatValue(field.newValue, field.type)}
                 </div>
               </div>
@@ -134,7 +144,11 @@ function getFieldConfig(moduleType: string) {
 }
 
 // Find fields that have changed
-function findChangedFields(originalData: any, updatedData: any, fieldConfig: any[]) {
+function findChangedFields(
+  originalData: any,
+  updatedData: any,
+  fieldConfig: any[]
+) {
   const changedFields: any[] = [];
 
   fieldConfig.forEach((config) => {
@@ -172,7 +186,9 @@ function isEqual(a: any, b: any): boolean {
 // Format value based on type
 function formatValue(value: any, type: string) {
   if (value === null || value === undefined) {
-    return <span className="text-muted-foreground italic">Không có dữ liệu</span>;
+    return (
+      <span className='text-muted-foreground italic'>Không có dữ liệu</span>
+    );
   }
 
   switch (type) {
@@ -185,7 +201,7 @@ function formatValue(value: any, type: string) {
 
     case "currency":
       return (
-        <span className="font-medium">
+        <span className='font-medium'>
           {new Intl.NumberFormat("vi-VN", {
             style: "currency",
             currency: "VND",
@@ -194,49 +210,60 @@ function formatValue(value: any, type: string) {
       );
 
     case "number":
-      return <span className="font-medium">{value.toLocaleString("vi-VN")}</span>;
+      return (
+        <span className='font-medium'>{value.toLocaleString("vi-VN")}</span>
+      );
 
     case "array":
       if (Array.isArray(value) && value.length > 0) {
         return (
-          <div className="flex flex-wrap gap-1">
+          <div className='flex flex-wrap gap-1'>
             {value.map((item, i) => (
-              <Badge key={i} variant="outline" className="text-xs">
+              <Badge
+                key={i}
+                variant='outline'
+                className='text-xs'
+              >
                 {typeof item === "string" ? item : JSON.stringify(item)}
               </Badge>
             ))}
           </div>
         );
       }
-      return <span className="text-muted-foreground italic">Trống</span>;
+      return <span className='text-muted-foreground italic'>Trống</span>;
 
     case "html":
       // Strip HTML tags for preview
       const textContent = value.replace(/<[^>]*>/g, "");
-      const preview = textContent.length > 100 ? textContent.slice(0, 100) + "..." : textContent;
-      return <p className="text-sm">{preview}</p>;
+      const preview =
+        textContent.length > 100
+          ? textContent.slice(0, 100) + "..."
+          : textContent;
+      return <p className='text-sm'>{preview}</p>;
 
     case "reference":
       if (typeof value === "object" && value !== null) {
         return (
-          <span className="text-sm">
+          <span className='text-sm'>
             {value.title || value.name || value.username || value._id}
           </span>
         );
       }
-      return <span className="text-sm">{String(value)}</span>;
+      return <span className='text-sm'>{String(value)}</span>;
 
     case "text":
     default:
       const textValue = String(value);
       if (textValue.length > 150) {
         return (
-          <p className="text-sm break-words">
+          <p className='text-sm break-words'>
             {textValue.slice(0, 150)}
-            <span className="text-muted-foreground">... (còn {textValue.length - 150} ký tự)</span>
+            <span className='text-muted-foreground'>
+              ... (còn {textValue.length - 150} ký tự)
+            </span>
           </p>
         );
       }
-      return <p className="text-sm break-words">{textValue}</p>;
+      return <p className='text-sm break-words'>{textValue}</p>;
   }
 }
