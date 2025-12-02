@@ -359,7 +359,6 @@ export default function StudentsPage() {
       <Card className='mt-8 bg-card/80 backdrop-blur-sm border shadow-lg'>
         <CardHeader>
           <CardTitle className='flex items-center gap-3'>
-            <Users className='h-5 w-5 text-primary' />
             Danh sách học viên
           </CardTitle>
         </CardHeader>

@@ -153,9 +153,11 @@ export default function ManagerDataReviewPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-semibold'>Data Review</h1>
+          <h1 className='text-2xl font-semibold'>
+            Phê Duyệt Các Cập Nhật Từ Nhân Viên
+          </h1>
           <p className='text-sm text-muted-foreground mt-1'>
-            Danh sách các yêu cầu từ Staff cần Manager phê duyệt
+            Danh sách các yêu cầu từ Nhân viên cần Quản lý phê duyệt
           </p>
         </div>
 
@@ -240,6 +242,35 @@ export default function ManagerDataReviewPage() {
                   searchKey='type'
                   searchPlaceholder='Tìm kiếm...'
                   emptyMessage={`Không có yêu cầu ${module.label.toLowerCase()} nào cần duyệt`}
+                  filterOptions={[
+                    {
+                      columnId: "type",
+                      title: "Loại dữ liệu",
+                      options: MODULES.filter((m) => m.value !== "all").map(
+                        (m) => ({
+                          label: m.label,
+                          value: m.key,
+                        })
+                      ),
+                    },
+                    {
+                      columnId: "method",
+                      title: "Hành động",
+                      options: [
+                        { label: "Tạo mới", value: "POST" },
+                        { label: "Cập nhật", value: "PUT" },
+                      ],
+                    },
+                    {
+                      columnId: "status",
+                      title: "Trạng thái",
+                      options: [
+                        { label: "Chờ duyệt", value: "pending" },
+                        { label: "Đã duyệt", value: "approved" },
+                        { label: "Từ chối", value: "rejected" },
+                      ],
+                    },
+                  ]}
                 />
               </CardContent>
             </Card>

@@ -5,6 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { DataReviewRecord } from "@/api/manager/data-review-api";
+
+// Mapping tiếng Anh -> tiếng Việt
+const MODULE_LABELS: Record<string, string> = {
+  User: "Người dùng",
+  Class: "Lớp học",
+  Course: "Khóa học",
+  Order: "Đơn hàng",
+  Pool: "Hồ bơi",
+  Schedule: "Lịch học",
+  News: "Tin tức",
+  Application: "Đơn từ",
+  Blog: "Blog",
+};
 import {
   Dialog,
   DialogContent,
@@ -14,12 +27,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CheckCircle2, XCircle, Eye, Clock } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, XCircle, Eye, Clock, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DataComparison } from "./data-comparison";
+import { DataDisplay } from "./data-display";
+import { fetchOriginalData } from "@/api/manager/data-review-helpers";
+import { getAuthToken } from "@/api/auth-utils";
+import { getSelectedTenant } from "@/utils/tenant-utils";
 
 // Helper function to format date
 const formatDate = (dateString?: string) => {
@@ -88,11 +106,41 @@ const ActionsCell = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [note, setNote] = useState("");
+  const [originalData, setOriginalData] = useState<any>(null);
+  const [loadingOriginal, setLoadingOriginal] = useState(false);
   const record = row.original as DataReviewRecord;
 
   const service = Array.isArray(record.type) ? record.type[0] : record.type;
   const isPending =
     Array.isArray(record.status) && record.status[0] === "pending";
+  const method = Array.isArray(record.method) ? record.method[0] : record.method;
+  const isPutRequest = method === "PUT";
+
+  // Load original data when modal opens for PUT requests
+  useEffect(() => {
+    if (isOpen && isPutRequest && record.data_id) {
+      const loadOriginal = async () => {
+        setLoadingOriginal(true);
+        try {
+          const tenantId = getSelectedTenant();
+          const token = getAuthToken();
+          if (!tenantId || !token) {
+            throw new Error("Thiếu thông tin tenant hoặc token");
+          }
+
+          const data = await fetchOriginalData(service, record.data_id!, tenantId, token);
+          setOriginalData(data);
+        } catch (error) {
+          console.error("Failed to load original data:", error);
+          setOriginalData(null);
+        } finally {
+          setLoadingOriginal(false);
+        }
+      };
+
+      loadOriginal();
+    }
+  }, [isOpen, isPutRequest, record.data_id, service]);
 
   const handleApprove = async () => {
     setIsProcessing(true);
@@ -197,13 +245,34 @@ const ActionsCell = ({
                 </div>
               )}
 
-              {/* Data payload */}
-              <div>
-                <h4 className='font-semibold mb-2'>Dữ liệu yêu cầu:</h4>
-                <pre className='bg-muted p-4 rounded-md text-xs overflow-x-auto'>
-                  {JSON.stringify(record.data, null, 2)}
-                </pre>
-              </div>
+              {/* Data content - show comparison for PUT, formatted display for POST/DELETE */}
+              {isPutRequest ? (
+                <div>
+                  <h4 className='font-semibold mb-3'>So sánh thay đổi:</h4>
+                  {loadingOriginal ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        Đang tải dữ liệu gốc...
+                      </span>
+                    </div>
+                  ) : (
+                    <DataComparison
+                      originalData={originalData}
+                      updatedData={record.data}
+                      moduleType={service}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <h4 className='font-semibold mb-3'>Dữ liệu yêu cầu:</h4>
+                  <DataDisplay
+                    data={record.data}
+                    moduleType={service}
+                  />
+                </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -286,7 +355,16 @@ export const createColumns = (
     cell: ({ row }) => {
       const type = row.getValue("type") as string[] | string;
       const displayType = Array.isArray(type) ? type[0] : type;
-      return <span className='font-medium'>{displayType}</span>;
+      return (
+        <span className='font-medium'>
+          {MODULE_LABELS[displayType] || displayType}
+        </span>
+      );
+    },
+    filterFn: (row, id, value) => {
+      const type = row.getValue(id) as string[] | string;
+      const displayType = Array.isArray(type) ? type[0] : type;
+      return value.includes(displayType);
     },
   },
   {
@@ -304,6 +382,11 @@ export const createColumns = (
           {getMethodLabel(method as string[])}
         </Badge>
       );
+    },
+    filterFn: (row, id, value) => {
+      const method = row.getValue(id) as string[] | string | undefined;
+      const methodValue = Array.isArray(method) ? method[0] : method;
+      return value.includes(methodValue);
     },
   },
   {
@@ -332,6 +415,11 @@ export const createColumns = (
           </Badge>
         </div>
       );
+    },
+    filterFn: (row, id, value) => {
+      const status = row.getValue(id) as string[] | string | undefined;
+      const statusValue = Array.isArray(status) ? status[0] : status;
+      return value.includes(statusValue);
     },
   },
   {
