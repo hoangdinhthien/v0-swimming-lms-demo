@@ -1401,7 +1401,7 @@ export default function ImprovedAntdCalendarPage() {
             if (!open) {
               setSearchQuery(""); // Reset search query
               resetClassManagementForm();
-              setSelectedDate(undefined); // Reset selected date to remove highlight
+              setSelectedDate(null); // Reset selected date to remove highlight
             }
           }}
         >

@@ -58,9 +58,3 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - sửa class thành find (searchKey)
 
-TÔI CẦN BẠN CHECK VÀ SỬA LẠI (NHỮNG) PHẦN NÀY:
-- hiện tại tôi thật sự đang không hài lòng lắm với UI lịch hiện tại
-- tôi đang phân vân có nên thay đổi UI của lịch hay không? vì tôi vừa tìm được một UI lịch khác đẹp hơn tên là 'mina scheduler'. tôi thấy mina scheduler đang có cả 3 dạng format lịch là ngày, tháng và năm luôn
-- đây là link của mina scheduler: https://mina-scheduler.vercel.app/
-- đây là link github: https://github.com/Mina-Massoud/mina-scheduler
-- bạn check xem việc thay đổi UI lịch từ antd sang mina scheduler có được không? có hợp lý không? có những bất cập gì không?
