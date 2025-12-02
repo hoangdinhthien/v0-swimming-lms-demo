@@ -105,16 +105,15 @@ class PerformanceCache {
       const tenantKey = "tenant_info";
       if (!this.get(tenantKey)) {
         // This would be replaced with actual tenant API call
-        console.log("Preloading tenant data...");
       }
 
       // Preload user permissions
       const permissionsKey = "user_permissions";
       if (!this.get(permissionsKey)) {
-        console.log("Preloading user permissions...");
+        // Preload user permissions
       }
     } catch (error) {
-      console.error("Failed to preload common data:", error);
+      // Failed to preload common data
     }
   }
 }
@@ -135,11 +134,8 @@ export function withCache<T extends any[], R>(
     // Try to get from cache first
     const cached = performanceCache.get<R>(cacheKey);
     if (cached !== null) {
-      console.log(`✅ Cache HIT: ${cacheKey}`);
       return cached;
     }
-
-    console.log(`❌ Cache MISS: ${cacheKey}`);
 
     // Fetch fresh data
     const result = await fn(...args);

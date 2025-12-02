@@ -63,15 +63,11 @@ export function isTokenExpired(token: string): boolean {
       new Date(decoded.iat * 1000).toISOString().slice(0, 10) <
         APP_VERSION_TIMESTAMP
     ) {
-      console.log(
-        "Token was issued before the current app version - forcing refresh"
-      );
       return true;
     }
 
     return decoded.exp < now;
   } catch (e) {
-    console.error("Error checking token expiration:", e);
     return true;
   }
 }
@@ -100,7 +96,7 @@ export function getAuthenticatedUser() {
       try {
         return JSON.parse(userCookie);
       } catch (e) {
-        console.error("Failed to parse user data from cookie", e);
+        // Invalid cookie data
       }
     }
 
@@ -110,7 +106,7 @@ export function getAuthenticatedUser() {
       try {
         return JSON.parse(userLocal);
       } catch (e) {
-        console.error("Failed to parse user data from localStorage", e);
+        // Invalid localStorage data
       }
     }
   }

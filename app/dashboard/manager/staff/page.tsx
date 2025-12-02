@@ -369,7 +369,7 @@ export default function StaffPage() {
         onOpenChange={setPermissionModalOpen}
         staffData={selectedStaffForPermission}
         onSuccess={() => {
-          console.log("Staff permissions updated successfully");
+          // Staff permissions updated successfully
         }}
       />
     </>

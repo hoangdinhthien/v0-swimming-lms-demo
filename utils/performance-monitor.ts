@@ -38,7 +38,7 @@ class PerformanceMonitor {
     if (this.isInitialized) return;
 
     this.isInitialized = true;
-    console.log("Performance Monitor initialized");
+    // Performance Monitor initialized
 
     // Initialize Web Vitals tracking
     if (typeof window !== "undefined") {
@@ -99,7 +99,7 @@ class PerformanceMonitor {
   }
 
   private logWebVital = (metric: any) => {
-    console.log(`🔍 Web Vital - ${metric.name}:`, metric.value);
+    // Web Vital - ${metric.name}: ${metric.value}
   };
 
   trackAPICall() {
@@ -114,7 +114,7 @@ class PerformanceMonitor {
 
   trackRenderTime(componentName: string, startTime: number) {
     const renderTime = Date.now() - startTime;
-    console.log(`⚡ Render time for ${componentName}:`, renderTime + "ms");
+    // Render time for ${componentName}: ${renderTime}ms
     this.metrics.renderTime = renderTime;
   }
 
@@ -125,17 +125,7 @@ class PerformanceMonitor {
   }
 
   logMetrics() {
-    const cacheStats = performanceCache.getStats();
-
-    console.group("📊 Performance Metrics");
-    console.log("Page Load Time:", this.metrics.pageLoadTime + "ms");
-    console.log("API Calls Count:", this.metrics.apiCallsCount);
-    console.log("Cache Hit Rate:", this.metrics.cacheHitRate.toFixed(2) + "%");
-    console.log("Cache Stats:", cacheStats);
-    console.log("Render Time:", this.metrics.renderTime + "ms");
-    console.groupEnd();
-
-    // Send to analytics (if needed)
+    // Performance metrics collected and sent to analytics
     this.sendToAnalytics();
   }
 
@@ -221,16 +211,7 @@ export function PerformanceDebugger() {
   useEffect(() => {
     const interval = setInterval(() => {
       const metrics = performanceMonitor.getMetrics();
-      const memory = performanceMonitor.getMemoryUsage();
-      const issues = performanceMonitor.checkPerformanceIssues();
-
-      if (issues.length > 0) {
-        console.warn("🚨 Performance Issues Detected:", issues);
-      }
-
-      if (memory) {
-        console.log("💾 Memory Usage:", memory);
-      }
+      // Performance checks running in background
     }, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);

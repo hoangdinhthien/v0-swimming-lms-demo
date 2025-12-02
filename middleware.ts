@@ -108,7 +108,7 @@ export function middleware(request: NextRequest) {
           return NextResponse.redirect(new URL("/", request.url));
         }
       } catch (e) {
-        console.error("Failed to parse user data from cookie", e);
+        // Invalid cookie data
       }
     }
   }

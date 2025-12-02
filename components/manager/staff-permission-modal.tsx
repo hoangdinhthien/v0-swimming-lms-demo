@@ -155,7 +155,6 @@ export default function StaffPermissionModal({
   const handleModuleToggle = (modulePermission: AvailablePermission) => {
     // Guard against empty or undefined module array
     if (!modulePermission?.module || modulePermission.module.length === 0) {
-      console.warn("Invalid module permission:", modulePermission);
       return;
     }
 
@@ -190,7 +189,6 @@ export default function StaffPermissionModal({
 
       // Guard against invalid index or undefined permission
       if (!newPermissions[moduleIndex] || !newPermissions[moduleIndex].action) {
-        console.warn("Invalid permission at index:", moduleIndex);
         return prev;
       }
 
