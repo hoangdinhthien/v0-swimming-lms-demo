@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Loader2, FileCheck } from "lucide-react";
+import { RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,21 @@ import {
 } from "@/api/manager/data-review-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+
+// Define modules that can appear in data-review
+const MODULES = [
+  { value: "all", label: "Tất cả", key: "all" },
+  { value: "User", label: "Người dùng", key: "User" },
+  { value: "Class", label: "Lớp học", key: "Class" },
+  { value: "Course", label: "Khóa học", key: "Course" },
+  { value: "Order", label: "Đơn hàng", key: "Order" },
+  { value: "Pool", label: "Hồ bơi", key: "Pool" },
+  { value: "Schedule", label: "Lịch học", key: "Schedule" },
+  { value: "News", label: "Tin tức", key: "News" },
+  { value: "Application", label: "Đơn từ", key: "Application" },
+] as const;
 
 export default function ManagerDataReviewPage() {
   const { toast } = useToast();
@@ -21,6 +36,7 @@ export default function ManagerDataReviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   // Load data review records
   const loadRecords = async (isInitialLoad = false) => {
@@ -92,7 +108,34 @@ export default function ManagerDataReviewPage() {
     }
   };
 
+  // Filter records by active tab
+  const getFilteredRecords = () => {
+    if (activeTab === "all") return records;
+    return records.filter((record) => {
+      const type = Array.isArray(record.type) ? record.type[0] : record.type;
+      return type === activeTab;
+    });
+  };
+
+  // Count records by module
+  const getModuleCounts = () => {
+    const counts: Record<string, number> = { all: records.length };
+    MODULES.forEach((module) => {
+      if (module.value !== "all") {
+        counts[module.value] = records.filter((record) => {
+          const type = Array.isArray(record.type)
+            ? record.type[0]
+            : record.type;
+          return type === module.value;
+        }).length;
+      }
+    });
+    return counts;
+  };
+
   const columns = createColumns(handleUpdateStatus);
+  const filteredRecords = getFilteredRecords();
+  const moduleCounts = getModuleCounts();
 
   if (loading) {
     return (
@@ -110,10 +153,7 @@ export default function ManagerDataReviewPage() {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div>
-          <div className='flex items-center gap-2'>
-            <FileCheck className='h-6 w-6 text-primary' />
-            <h1 className='text-2xl font-semibold'>Data Review</h1>
-          </div>
+          <h1 className='text-2xl font-semibold'>Data Review</h1>
           <p className='text-sm text-muted-foreground mt-1'>
             Danh sách các yêu cầu từ Staff cần Manager phê duyệt
           </p>
@@ -141,23 +181,71 @@ export default function ManagerDataReviewPage() {
         </Card>
       )}
 
-      {/* Data Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-lg'>
-            Danh sách yêu cầu ({records.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={records}
-            searchKey='type'
-            searchPlaceholder='Tìm kiếm theo loại dữ liệu...'
-            emptyMessage='Không có yêu cầu nào cần duyệt'
-          />
-        </CardContent>
-      </Card>
+      {/* Tabs with filtered data - Browser-style tabs */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className='space-y-0'
+      >
+        <div className='border-b'>
+          <TabsList className='inline-flex h-auto flex-wrap gap-1 bg-transparent p-0 w-full justify-start'>
+            {MODULES.map((module) => {
+              const count = moduleCounts[module.value] || 0;
+              return (
+                <TabsTrigger
+                  key={module.value}
+                  value={module.value}
+                  className='relative rounded-b-none border-b-2 border-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-muted-foreground transition-all hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none'
+                >
+                  {module.label}
+                  {count > 0 && (
+                    <Badge
+                      variant='secondary'
+                      className='ml-2 h-5 min-w-5 px-1.5 text-xs'
+                    >
+                      {count}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
+
+        {MODULES.map((module) => (
+          <TabsContent
+            key={module.value}
+            value={module.value}
+            className='mt-0'
+          >
+            <Card className='rounded-tl-none border-t-0'>
+              <CardHeader>
+                <CardTitle className='text-lg'>
+                  {module.label} ({moduleCounts[module.value] || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  columns={columns}
+                  data={
+                    module.value === "all"
+                      ? records
+                      : records.filter((record) => {
+                          const type = Array.isArray(record.type)
+                            ? record.type[0]
+                            : record.type;
+                          return type === module.value;
+                        })
+                  }
+                  searchKey='type'
+                  searchPlaceholder='Tìm kiếm...'
+                  emptyMessage={`Không có yêu cầu ${module.label.toLowerCase()} nào cần duyệt`}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }

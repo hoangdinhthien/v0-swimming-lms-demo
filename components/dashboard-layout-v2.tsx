@@ -218,7 +218,7 @@ export default function DashboardLayout({
         icon: <Waves className='h-4 w-4' />,
       },
       {
-        name: "Data Review",
+        name: "Phê duyệt",
         href: "/dashboard/manager/data-review",
         icon: <FileCheck className='h-4 w-4' />,
       },
@@ -708,7 +708,7 @@ export default function DashboardLayout({
                     ...(isManager
                       ? [
                           {
-                            name: "Data Review",
+                            name: "Phê duyệt",
                             href: "/dashboard/manager/data-review",
                             icon: <FileCheck className='h-4 w-4' />,
                           },

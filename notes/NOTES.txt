@@ -55,11 +55,20 @@ T7 (6)  | 1-6=-5→2   | 6-6=0      | 0-6=-6→1      | [0, 1, 2]
 CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 - NẾU CÓ THẮC MẮC GÌ THÌ CỨ HỎI TÔI NHÉ
 
-
-- sửa class thành find (searchKey)
-
 - data review: thêm filter find common , thêm tab cho module, fix trạng thái toast khi close, thêm compare data khi review
 
 - thêm dấu , trong các số tiền
 
 - thêm required trên UI
+
+- thêm api contact form
+
+- thêm field max_member khi tạo course (field này required)
+
+- thêm api slot còn thiếu
+
+TÔI CẦN BẠN CHECK VÀ LÀM NHỮNG VIỆC NÀY:
+- hiện tại trang data-review của manager đang nhìn quá chung chung, không được chi tiết
+- tôi muốn ở trang này manager có thể filter để xem được các data-review, PHẦN CHIA CÁC TAB cho mỗi module (gộp chung như vậy thì nhìn vào sẽ rất rối)
+- manager click vào tab nào thì sẽ show ra data-review của tab (module) đó thôi, nhưng vẫn sẽ có option là cho manager xem tất cả các data-review luôn
+- thiết kế UI sao cho hợp lý nhé, và đừng để icon vào quá nhiều
