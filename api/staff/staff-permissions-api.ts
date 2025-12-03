@@ -277,6 +277,8 @@ export function getModuleNavigationMapping(): Record<string, string> {
     Application: "applications",
     Pool: "pools", // Pool module controls pools access
     LearningPath: "courses", // LearningPath is part of courses
+    Slot: "slots", // Slot module controls slots access
+    ContactForm: "contacts", // ContactForm module controls contacts access
   };
 }
 
@@ -341,6 +343,14 @@ export function getAllowedNavigationItems(
           case "LearningPath":
             // LearningPath is part of courses
             allowedNavItems.add("courses");
+            break;
+          case "Slot":
+            // Slot module controls slots access
+            allowedNavItems.add("slots");
+            break;
+          case "ContactForm":
+            // ContactForm module controls contacts access
+            allowedNavItems.add("contacts");
             break;
         }
       });

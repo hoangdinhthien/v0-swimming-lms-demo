@@ -715,7 +715,7 @@ export default function DashboardLayout({
                         ]
                       : []),
                     // Data Review - only for managers
-                    ...(isManager
+                    ...(isManager || allowedNavigationItems.includes("slots")
                       ? [
                           {
                             name: "Slots",
@@ -804,7 +804,7 @@ export default function DashboardLayout({
                         ]
                       : []),
 
-                    ...(isManager
+                    ...(isManager || allowedNavigationItems.includes("contacts")
                       ? [
                           {
                             name: "Liên hệ",
