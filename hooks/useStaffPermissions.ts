@@ -100,6 +100,7 @@ export function useStaffPermissions(): UseStaffPermissionsReturn {
         "transactions",
         "news",
         "calendar",
+        "contacts",
         "data-review",
         "promotions",
         "settings",

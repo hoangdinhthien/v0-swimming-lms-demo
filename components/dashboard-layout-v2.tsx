@@ -238,6 +238,11 @@ export default function DashboardLayout({
         icon: <Clock className='h-4 w-4' />,
       },
       {
+        name: "Liên hệ",
+        href: "/dashboard/manager/contacts",
+        icon: <MessageSquare className='h-4 w-4' />,
+      },
+      {
         name: "Đơn từ",
         href: "/dashboard/manager/applications",
         icon: <FileText className='h-4 w-4' />,
@@ -795,6 +800,16 @@ export default function DashboardLayout({
                             // but staff will access with the required 'service: Schedule' header.
                             href: "/dashboard/manager/calendar",
                             icon: <Clock className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Liên hệ",
+                            href: "/dashboard/manager/contacts",
+                            icon: <MessageSquare className='h-4 w-4' />,
                           },
                         ]
                       : []),

@@ -61,31 +61,99 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - thêm api contact form
 
-- thêm field max_member khi tạo course (field này required)
-
-- thêm api slot còn thiếu
-
-TÔI LÀM NHỮNG VIỆC NÀY:
-- hiện tại đang chưa có trang để manager/staff quản lý các 'slots' trong hệ thống
-- tôi muốn tạo UI để quản lý slots giống với các trang quản lý khác của manager/staff
-- lưu ý: khi manager/staff click tạo slot nào đó thì chỉ cần mở lên 1 modal để điền thông tin để tạo slot, không cần phải qua 1 trang mới để tạo slot mới
-- lưu ý: không cần có trang slot detail nhé
-
-- ngoài 2 api về slot đã có trong file slot-api.ts, tôi cần bạn thêm các api slot mới
--  dưới đây là các api của slot:
-    - tạo slot mới (post method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot
-    - đây là request body: {
-    "title": "Slot 12",
-    "start_time": 19,
-    "end_time": 19,
-    "duration": "45 phút",
-    "start_minute": 0,
-    "end_minute": 45
-        }
-
-    -  chỉnh sửa/cập nhật slot (put method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot?id=681f0f080e90714dae7a5ee3
-    - request body của api này sẽ giống với request body của tạo slot mới (post method)
-
-    - xóa slot (delete method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot?id=681f0f080e90714dae7a5ee3
-
-
+TÔI CẦN BẠN LÀM VIỆC NÀY:
+- tôi muốn thêm 1 tab ngay dưới tab 'Lịch' trong sidebar tên là 'Liên hệ'
+- và tạo 1 trang 'Liên hệ'
+- giải thích: trang này dùng cho manager/staff để xem list các contact của guest được gửi về cho hệ thống để manager/staff lấy để liên hệ với những guest này để gọi và tư vấn cho họ
+- đây là api (get method) (NHỚ TẠO 1 FILE 'contact-api.ts' VÀO FOLDER API NHÉ): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/contact
+- đây repsonse body: {
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 6,
+                "documents": [
+                    {
+                        "_id": "69245c867563cb7c5315c429",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "tienntse161099@fpt.edu.vn",
+                        "phone": "0356415082",
+                        "location": [
+                            106.8100745,
+                            10.8414168
+                        ],
+                        "message": "tiennt test",
+                        "name": "tiến đỗ",
+                        "created_at": "2025-11-24T20:24:22.000Z"
+                    },
+                    {
+                        "_id": "69033325a2512ec2d4694604",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "tienntse161099@fpt.edu.vn",
+                        "phone": "0356415082",
+                        "location": [
+                            106.7814788,
+                            10.8670257
+                        ],
+                        "message": "oke",
+                        "name": "tiến đỗ",
+                        "created_at": "2025-10-30T16:43:01.000Z"
+                    },
+                    {
+                        "_id": "69033312a2512ec2d4694603",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "tienntse161099@fpt.edu.vn",
+                        "phone": "0356415082",
+                        "location": [
+                            106.7814788,
+                            10.8670257
+                        ],
+                        "message": "hello",
+                        "name": "tiến đỗ",
+                        "created_at": "2025-10-30T16:42:42.000Z"
+                    },
+                    {
+                        "_id": "6903278ea2512ec2d4694602",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "tienntse161099@fpt.edu.vn",
+                        "phone": "0356415082",
+                        "location": [
+                            106.7716521,
+                            10.8464061
+                        ],
+                        "message": "hello",
+                        "name": "tiến đỗ",
+                        "created_at": "2025-10-30T15:53:34.000Z"
+                    },
+                    {
+                        "_id": "690121d6a2512ec2d46945f9",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "@body:email",
+                        "phone": "@body:phone",
+                        "location": "@body:location",
+                        "message": "@body:message",
+                        "name": "@body:name",
+                        "created_at": "@new_data:now"
+                    },
+                    {
+                        "_id": "69012217a2512ec2d46945fa",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "email": "tienntse161099@fpt.edu.vn",
+                        "phone": "0356415082",
+                        "location": [
+                            106.7716521,
+                            10.8464061
+                        ],
+                        "message": "hehe",
+                        "name": "tiến đỗ",
+                        "created_at": "@new_data:now"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- ĐỂ Ý FIELD 'location'. KIẾM XEM CÓ CÁCH NÀO ĐỂ HIỆN ĐƯỢC VỊ TRÍ CỦA NGƯỜI ĐÓ KHÔNG

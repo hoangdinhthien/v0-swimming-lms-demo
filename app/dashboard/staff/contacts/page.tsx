@@ -1,0 +1,339 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  RefreshCw,
+  Mail,
+  Phone,
+  MapPin,
+  MessageSquare,
+  ExternalLink,
+  Calendar,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getAuthToken } from "@/api/auth-utils";
+import {
+  fetchContacts,
+  formatContactDate,
+  getGoogleMapsUrl,
+  formatLocation,
+  type Contact,
+} from "@/api/manager/contact-api";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
+
+export default function StaffContactsPage() {
+  const { toast } = useToast();
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Check staff permissions
+  const {
+    hasPermission,
+    isManager,
+    loading: permissionsLoading,
+  } = useStaffPermissions();
+
+  // Load contacts
+  const loadContacts = async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) setRefreshing(true);
+      else setLoading(true);
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      const data = await fetchContacts(tenantId, token);
+      setContacts(data);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tải danh sách liên hệ",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadContacts();
+  }, []);
+
+  // Handle view contact details
+  const handleViewDetails = (contact: Contact) => {
+    if (!isManager && !hasPermission("contacts", "read")) {
+      toast({
+        title: "Không có quyền",
+        description: "Bạn không có quyền xem chi tiết liên hệ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedContact(contact);
+    setIsDetailModalOpen(true);
+  };
+
+  // Open location in Google Maps
+  const handleOpenMap = (location: [number, number]) => {
+    window.open(getGoogleMapsUrl(location), "_blank");
+  };
+
+  if (permissionsLoading) {
+    return (
+      <div className='flex items-center justify-center py-8'>
+        <RefreshCw className='h-8 w-8 animate-spin text-muted-foreground' />
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight'>Quản lý Liên hệ</h1>
+          <p className='text-muted-foreground'>
+            Danh sách các liên hệ từ khách hàng tiềm năng
+          </p>
+        </div>
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => loadContacts(true)}
+            disabled={refreshing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Danh sách Liên hệ
+            <Badge
+              variant='secondary'
+              className='ml-2'
+            >
+              {contacts.length} liên hệ
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className='flex items-center justify-center py-8'>
+              <RefreshCw className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className='text-center py-8 text-muted-foreground'>
+              Chưa có liên hệ nào
+            </div>
+          ) : (
+            <div className='overflow-x-auto'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Họ tên</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Số điện thoại</TableHead>
+                    <TableHead>Tin nhắn</TableHead>
+                    <TableHead>Ngày gửi</TableHead>
+                    <TableHead className='text-right'>Thao tác</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contacts.map((contact) => (
+                    <TableRow key={contact._id}>
+                      <TableCell className='font-medium'>
+                        {contact.name}
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <Mail className='h-3 w-3 text-muted-foreground' />
+                          <span className='text-sm'>{contact.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <Phone className='h-3 w-3 text-muted-foreground' />
+                          <span className='text-sm'>{contact.phone}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className='text-sm line-clamp-2 max-w-xs'>
+                          {contact.message}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1 text-sm text-muted-foreground'>
+                          <Calendar className='h-3 w-3' />
+                          {formatContactDate(contact.created_at)}
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <div className='flex justify-end gap-2'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => handleViewDetails(contact)}
+                          >
+                            Xem chi tiết
+                          </Button>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => handleOpenMap(contact.location)}
+                          >
+                            <MapPin className='h-4 w-4' />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Contact Detail Modal */}
+      <Dialog
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+      >
+        <DialogContent className='sm:max-w-[600px]'>
+          <DialogHeader>
+            <DialogTitle>Chi tiết Liên hệ</DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về khách hàng liên hệ
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedContact && (
+            <div className='space-y-4'>
+              <div className='grid gap-4'>
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <Mail className='h-5 w-5 text-blue-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      Họ tên
+                    </p>
+                    <p className='text-base font-semibold'>
+                      {selectedContact.name}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <Mail className='h-5 w-5 text-blue-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      Email
+                    </p>
+                    <a
+                      href={`mailto:${selectedContact.email}`}
+                      className='text-base text-blue-600 hover:underline'
+                    >
+                      {selectedContact.email}
+                    </a>
+                  </div>
+                </div>
+
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <Phone className='h-5 w-5 text-green-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      Số điện thoại
+                    </p>
+                    <a
+                      href={`tel:${selectedContact.phone}`}
+                      className='text-base text-green-600 hover:underline'
+                    >
+                      {selectedContact.phone}
+                    </a>
+                  </div>
+                </div>
+
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <MessageSquare className='h-5 w-5 text-purple-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      Tin nhắn
+                    </p>
+                    <p className='text-base whitespace-pre-wrap'>
+                      {selectedContact.message}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <Calendar className='h-5 w-5 text-orange-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground'>
+                      Ngày gửi
+                    </p>
+                    <p className='text-base'>
+                      {formatContactDate(selectedContact.created_at)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex items-start gap-3 p-3 rounded-lg bg-muted/50'>
+                  <MapPin className='h-5 w-5 text-red-500 mt-0.5' />
+                  <div className='flex-1'>
+                    <p className='text-sm font-medium text-muted-foreground mb-2'>
+                      Vị trí
+                    </p>
+                    <p className='text-sm text-muted-foreground mb-2'>
+                      {formatLocation(selectedContact.location)}
+                    </p>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => handleOpenMap(selectedContact.location)}
+                      className='w-full'
+                    >
+                      <ExternalLink className='h-4 w-4 mr-2' />
+                      Xem trên Google Maps
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
