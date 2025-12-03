@@ -221,3 +221,155 @@ export const fetchAllSlots = async (
     return timeA - timeB;
   });
 };
+
+// Define types for creating/updating slots
+export interface CreateSlotData {
+  title: string;
+  start_time: number;
+  end_time: number;
+  duration: string;
+  start_minute: number;
+  end_minute: number;
+}
+
+export interface UpdateSlotData extends CreateSlotData {}
+
+/**
+ * Create a new slot
+ * @param slotData - The slot data to create
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with the created slot information
+ */
+export const createSlot = async (
+  slotData: CreateSlotData,
+  tenantId?: string,
+  token?: string
+): Promise<SlotDetail> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/slot`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
+      },
+      body: JSON.stringify(slotData),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Failed to create slot: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data;
+};
+
+/**
+ * Update an existing slot
+ * @param slotId - The ID of the slot to update
+ * @param slotData - The updated slot data
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with the updated slot information
+ */
+export const updateSlot = async (
+  slotId: string,
+  slotData: UpdateSlotData,
+  tenantId?: string,
+  token?: string
+): Promise<SlotDetail> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!slotId) {
+    throw new Error("Slot ID is required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/slot?id=${slotId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
+      },
+      body: JSON.stringify(slotData),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Failed to update slot: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data;
+};
+
+/**
+ * Delete a slot
+ * @param slotId - The ID of the slot to delete
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with the deletion result
+ */
+export const deleteSlot = async (
+  slotId: string,
+  tenantId?: string,
+  token?: string
+): Promise<{ message: string }> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!slotId) {
+    throw new Error("Slot ID is required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/slot?id=${slotId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Failed to delete slot: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return { message: result.message || "Slot deleted successfully" };
+};

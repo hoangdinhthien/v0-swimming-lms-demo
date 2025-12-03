@@ -218,6 +218,11 @@ export default function DashboardLayout({
         icon: <Waves className='h-4 w-4' />,
       },
       {
+        name: "Slots",
+        href: "/dashboard/manager/slots",
+        icon: <Clock className='h-4 w-4' />,
+      },
+      {
         name: "Phê duyệt",
         href: "/dashboard/manager/data-review",
         icon: <FileCheck className='h-4 w-4' />,
@@ -701,6 +706,16 @@ export default function DashboardLayout({
                             name: "Hồ Bơi",
                             href: "/dashboard/manager/pools",
                             icon: <Waves className='h-4 w-4' />,
+                          },
+                        ]
+                      : []),
+                    // Data Review - only for managers
+                    ...(isManager
+                      ? [
+                          {
+                            name: "Slots",
+                            href: "/dashboard/manager/slots",
+                            icon: <Clock className='h-4 w-4' />,
                           },
                         ]
                       : []),

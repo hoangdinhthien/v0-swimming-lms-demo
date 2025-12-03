@@ -65,8 +65,27 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - thêm api slot còn thiếu
 
-TÔI CẦN BẠN CHECK VÀ LÀM NHỮNG VIỆC NÀY:
-- hiện tại trang data-review của manager đang nhìn quá chung chung, không được chi tiết
-- tôi muốn ở trang này manager có thể filter để xem được các data-review, PHẦN CHIA CÁC TAB cho mỗi module (gộp chung như vậy thì nhìn vào sẽ rất rối)
-- manager click vào tab nào thì sẽ show ra data-review của tab (module) đó thôi, nhưng vẫn sẽ có option là cho manager xem tất cả các data-review luôn
-- thiết kế UI sao cho hợp lý nhé, và đừng để icon vào quá nhiều
+TÔI LÀM NHỮNG VIỆC NÀY:
+- hiện tại đang chưa có trang để manager/staff quản lý các 'slots' trong hệ thống
+- tôi muốn tạo UI để quản lý slots giống với các trang quản lý khác của manager/staff
+- lưu ý: khi manager/staff click tạo slot nào đó thì chỉ cần mở lên 1 modal để điền thông tin để tạo slot, không cần phải qua 1 trang mới để tạo slot mới
+- lưu ý: không cần có trang slot detail nhé
+
+- ngoài 2 api về slot đã có trong file slot-api.ts, tôi cần bạn thêm các api slot mới
+-  dưới đây là các api của slot:
+    - tạo slot mới (post method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot
+    - đây là request body: {
+    "title": "Slot 12",
+    "start_time": 19,
+    "end_time": 19,
+    "duration": "45 phút",
+    "start_minute": 0,
+    "end_minute": 45
+        }
+
+    -  chỉnh sửa/cập nhật slot (put method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot?id=681f0f080e90714dae7a5ee3
+    - request body của api này sẽ giống với request body của tạo slot mới (post method)
+
+    - xóa slot (delete method): https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/slot?id=681f0f080e90714dae7a5ee3
+
+
