@@ -74,6 +74,13 @@ const courseFormSchema = z.object({
     })
     .int(" Giá khóa học phải là số nguyên")
     .nonnegative(" Giá khóa học không được là số âm"),
+  max_member: z.coerce
+    .number({
+      required_error: " Vui lòng nhập số học viên tối đa",
+      invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
+    })
+    .int(" Số học viên tối đa phải là số nguyên")
+    .positive(" Số học viên tối đa phải lớn hơn 0"),
   media: z.array(z.string()).optional(),
 });
 
@@ -106,6 +113,7 @@ export default function NewCoursePage() {
     category: [],
     is_active: false,
     price: 0,
+    max_member: 20,
     media: [],
   };
 
@@ -409,27 +417,57 @@ export default function NewCoursePage() {
                     )}
                   />
                 </div>
+                <div className='grid gap-4 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='price'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Giá khóa học (VNĐ){" "}
+                          <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type='text'
+                            placeholder='Nhập giá khóa học'
+                            value={
+                              field.value
+                                ? field.value.toLocaleString("vi-VN")
+                                : ""
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, "");
+                              field.onChange(value ? parseInt(value) : 0);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name='price'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Giá khóa học (VNĐ){" "}
-                        <span className='text-red-500'>*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type='number'
-                          placeholder='Nhập giá khóa học'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name='max_member'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Số học viên tối đa{" "}
+                          <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            placeholder='Nhập số học viên tối đa'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}

@@ -82,6 +82,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     detail: [{ title: "", description: "" }],
     category: [] as string[],
     price: 0,
+    max_member: 20,
     is_active: true,
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -263,6 +264,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           ? [course.category]
           : [],
         price: course.price || 0,
+        max_member: course.max_member || 20,
         is_active: course.is_active ?? true,
       });
       setUploadedMediaIds(
@@ -424,6 +426,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         media: remainingMediaIds,
         is_active: formData.is_active,
         price: formData.price,
+        max_member: formData.max_member,
       };
 
       // Update course using API function
@@ -939,6 +942,20 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     {course.session_number_duration || "-"}
                   </span>
                 </div>
+
+                <Separator />
+
+                <div className='flex items-center justify-between p-3 bg-orange-50 rounded-lg border dark:bg-orange-950/50 dark:border-orange-800'>
+                  <div className='flex items-center gap-2'>
+                    <Users className='h-4 w-4 text-orange-700 dark:text-orange-400' />
+                    <span className='font-medium text-orange-900 dark:text-orange-200'>
+                      Số học viên tối đa
+                    </span>
+                  </div>
+                  <span className='text-lg font-bold text-orange-700 dark:text-orange-400'>
+                    {course.max_member || 0} học viên
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
@@ -1052,7 +1069,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 rows={3}
               />
             </div>
-
             {/* Session Information */}
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div className='space-y-2'>
@@ -1081,6 +1097,23 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   placeholder='VD: 2 giờ, 90 phút'
                 />
               </div>
+            </div>
+
+            {/* Max Member */}
+            <div className='space-y-2'>
+              <Label htmlFor='max_member'>Số học viên tối đa *</Label>
+              <Input
+                id='max_member'
+                type='number'
+                value={formData.max_member}
+                onChange={(e) =>
+                  handleInputChange(
+                    "max_member",
+                    parseInt(e.target.value) || 20
+                  )
+                }
+                placeholder='20'
+              />
             </div>
 
             {/* Course Details */}

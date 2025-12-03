@@ -112,6 +112,7 @@ function getFieldConfig(moduleType: string): FieldConfig[] {
       { key: "slug", label: "Đường dẫn", type: "text" },
       { key: "price", label: "Giá", type: "currency" },
       { key: "session_number", label: "Số buổi học", type: "number" },
+      { key: "max_member", label: "Số học viên tối đa", type: "number" },
       { key: "detail", label: "Chi tiết nội dung", type: "course_detail" },
       { key: "category", label: "Danh mục", type: "array" },
       { key: "media", label: "Media", type: "array" },
