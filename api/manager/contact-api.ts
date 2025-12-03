@@ -53,7 +53,7 @@ export const fetchContacts = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
-        ...(getUserFrontendRole() === "staff" && { service: "Contact" }),
+        ...(getUserFrontendRole() === "staff" && { service: "ContactForm" }),
       },
     }
   );
