@@ -201,10 +201,14 @@ export default function TransactionsPage() {
         // Pre-populate course info for orders that already have course objects embedded
         const embeddedCourseInfo: Record<string, CourseInfo> = {};
         ordersData.orders.forEach((order) => {
-          if (typeof order.course === "object" && order.course._id) {
+          if (
+            order.course &&
+            typeof order.course === "object" &&
+            order.course._id
+          ) {
             embeddedCourseInfo[order.course._id] = {
-              title: order.course.title,
-              price: order.course.price,
+              title: order.course.title || "Không xác định",
+              price: order.course.price || 0,
             };
           }
         });

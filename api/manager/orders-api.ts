@@ -188,20 +188,26 @@ export async function fetchOrders({
  * Get the course ID from an order (handles both object and string formats)
  */
 export function getOrderCourseId(order: Order): string {
+  if (!order.course) {
+    return "";
+  }
   if (typeof order.course === "string") {
     return order.course;
   }
-  return order.course._id;
+  return order.course._id || "";
 }
 
 /**
  * Get the course title from an order (returns the title if course is an object, or the ID if string)
  */
 export function getOrderCourseTitle(order: Order): string {
+  if (!order.course) {
+    return "Thông tin khóa học không khả dụng";
+  }
   if (typeof order.course === "string") {
     return order.course; // Return the ID as fallback
   }
-  return order.course.title || order.course._id;
+  return order.course.title || order.course._id || "Không xác định";
 }
 
 /**
