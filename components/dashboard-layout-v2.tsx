@@ -212,11 +212,11 @@ export default function DashboardLayout({
         href: "/dashboard/manager/classes",
         icon: <Users className='h-4 w-4' />,
       },
-      {
-        name: "Hồ Bơi",
-        href: "/dashboard/manager/pools",
-        icon: <Waves className='h-4 w-4' />,
-      },
+      // {
+      //   name: "Hồ Bơi",
+      //   href: "/dashboard/manager/pools",
+      //   icon: <Waves className='h-4 w-4' />,
+      // },
       {
         name: "Slots",
         href: "/dashboard/manager/slots",
@@ -705,15 +705,15 @@ export default function DashboardLayout({
                         ]
                       : []),
                     // Pool module - only show if has Pool permission
-                    ...(isManager || allowedNavigationItems.includes("pools")
-                      ? [
-                          {
-                            name: "Hồ Bơi",
-                            href: "/dashboard/manager/pools",
-                            icon: <Waves className='h-4 w-4' />,
-                          },
-                        ]
-                      : []),
+                    // ...(isManager || allowedNavigationItems.includes("pools")
+                    //   ? [
+                    //       {
+                    //         name: "Hồ Bơi",
+                    //         href: "/dashboard/manager/pools",
+                    //         icon: <Waves className='h-4 w-4' />,
+                    //       },
+                    //     ]
+                    //   : []),
                     // Data Review - only for managers
                     ...(isManager || allowedNavigationItems.includes("slots")
                       ? [

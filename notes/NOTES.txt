@@ -58,7 +58,9 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - thêm dấu , trong các số tiền
 
-- thêm required trên UI
+- thêm required trên UIcourse
+
+- thêm logic cho drawer trong lịch khi tạo chỉnh sửa/thêm lớp học vào lịch
 
 
 

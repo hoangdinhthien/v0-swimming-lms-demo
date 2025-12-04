@@ -1,0 +1,176 @@
+================================================================================
+DATA MẪU TẠO LỚP HỌC (CLASSES)
+================================================================================
+
+LƯU Ý QUAN TRỌNG:
+- Trước khi tạo lớp, cần đảm bảo đã có:
+  + Khóa học (Course) đã được tạo
+  + Giảng viên (Instructor) đã được tạo
+  + Học viên (Students) đã được tạo và đã THANH TOÁN cho khóa học tương ứng
+- Chỉ có thể thêm học viên đã thanh toán (order) cho khóa học đó vào lớp
+
+--------------------------------------------------------------------------------
+LỚP HỌC #1
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Cơ Bản K01 - Buổi Sáng
+Khóa học: Khóa Học Bơi Cơ Bản Dành Cho Trẻ Em 6-10 Tuổi
+Giảng viên: Chọn từ danh sách (ví dụ: Nguyễn Văn Thành)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+  (ví dụ: Nguyễn Minh Anh, Trần Bảo Châu, Lê Hoàng Nam)
+
+Gợi ý:
+- Lớp dành cho trẻ em mới bắt đầu
+- Số học viên: 6-8 em
+- Thời gian: Sáng thứ 2, 4, 6 (7:00-7:45)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #2
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Sải Nâng Cao K02 - Buổi Chiều
+Khóa học: Khóa Học Bơi Sải Nâng Cao - Freestyle Swimming
+Giảng viên: Chọn từ danh sách (ví dụ: Trần Thị Hương)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+  (ví dụ: Phạm Thu Hà, Hoàng Văn Đức, Đặng Thị Mai)
+
+Gợi ý:
+- Lớp dành cho người lớn đã biết bơi
+- Số học viên: 5-7 người
+- Thời gian: Chiều thứ 3, 5, 7 (17:00-18:00)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #3
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Khắc Phục Sợ Nước K03 - Buổi Tối
+Khóa học: Khóa Học Khắc Phục Nỗi Sợ Nước Cho Người Lớn
+Giảng viên: Chọn từ danh sách (ví dụ: Lê Minh Tuấn)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp nhỏ, tập trung chăm sóc từng học viên
+- Số học viên: 4-5 người
+- Thời gian: Tối thứ 2, 4, 6 (19:00-19:45)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #4
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Ếch Nâng Cao K04 - Buổi Sáng
+Khóa học: Khóa Học Kỹ Thuật Bơi Ếch Nâng Cao - Breaststroke
+Giảng viên: Chọn từ danh sách (ví dụ: Phạm Quốc Huy)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp nâng cao kỹ thuật
+- Số học viên: 6-8 người
+- Thời gian: Sáng thứ 3, 5, 7 (8:00-9:00)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #5
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Thể Thao K05 - Buổi Chiều
+Khóa học: Khóa Học Bơi Lội Thể Thao Dành Cho Trẻ Em 10-15 Tuổi
+Giảng viên: Chọn từ danh sách (ví dụ: Hoàng Thị Lan)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp chuyên nghiệp, hướng tới thi đấu
+- Số học viên: 8-10 em
+- Thời gian: Chiều thứ 2, 4, 6 (16:00-17:30)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #6
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Ngửa Cơ Bản K06 - Buổi Sáng
+Khóa học: Khóa Học Bơi Ngửa Cơ Bản - Backstroke
+Giảng viên: Chọn từ danh sách (ví dụ: Vũ Đức Anh)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp dành cho người mới học bơi ngửa
+- Số học viên: 7-9 người
+- Thời gian: Sáng thứ 2, 4, 6 (9:00-9:45)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #7
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Cứu Hộ Và An Toàn K07 - Buổi Chiều
+Khóa học: Khóa Học Kỹ Năng Cứu Hộ Và An Toàn Khi Bơi
+Giảng viên: Chọn từ danh sách (ví dụ: Đặng Thị Thu)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp học kỹ năng sinh tồn
+- Số học viên: 8-12 người
+- Thời gian: Chiều thứ 3, 5 (15:00-16:00)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #8
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Rèn Luyện Thể Chất K08 - Buổi Tối
+Khóa học: Khóa Học Rèn Luyện Sức Khỏe Và Thể Chất Qua Bơi Lội
+Giảng viên: Chọn từ danh sách (ví dụ: Bùi Văn Nam)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp tập luyện sức khỏe
+- Số học viên: 10-15 người
+- Thời gian: Tối thứ 2, 4, 6 (18:00-19:00)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #9
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Bướm Cơ Bản K09 - Buổi Sáng
+Khóa học: Khóa Học Kỹ Thuật Bơi Bướm - Butterfly Stroke
+Giảng viên: Chọn từ danh sách (ví dụ: Ngô Thị Phương)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp học kỹ thuật khó
+- Số học viên: 4-6 người
+- Thời gian: Sáng thứ 3, 5, 7 (7:00-8:00)
+
+--------------------------------------------------------------------------------
+LỚP HỌC #10
+--------------------------------------------------------------------------------
+Tên lớp: Lớp Bơi Cho Bà Bầu K10 - Buổi Chiều
+Khóa học: Khóa Học Bơi Lội An Toàn Cho Phụ Nữ Mang Thai
+Giảng viên: Chọn từ danh sách (ví dụ: Lý Hoàng Long)
+Học viên: Chọn từ danh sách học viên đã thanh toán khóa học này
+
+Gợi ý:
+- Lớp đặc biệt cho bà bầu
+- Số học viên: 5-8 người
+- Thời gian: Chiều thứ 2, 5 (16:00-16:45)
+
+================================================================================
+QUY TRÌNH TẠO LỚP HỌC TRÊN UI:
+================================================================================
+
+1. Vào trang "Tạo lớp học mới" (/dashboard/manager/classes/create)
+
+2. Nhập thông tin:
+   - Tên lớp học: Nhập tên lớp (ví dụ: "Lớp Bơi Cơ Bản K01 - Buổi Sáng")
+   - Chọn khóa học: Chọn từ dropdown danh sách khóa học có sẵn
+   - Chọn giảng viên: Chọn từ dropdown danh sách giảng viên
+   - Chọn học viên: 
+     * Hệ thống sẽ tự động lọc và hiển thị ONLY các học viên đã thanh toán 
+       (có order) cho khóa học được chọn
+     * Chọn các học viên muốn thêm vào lớp
+     * Có thể search để tìm nhanh
+
+3. Submit form để tạo lớp
+
+4. Sau khi tạo lớp thành công:
+   - Có thể thêm lịch học (schedule) cho lớp
+   - Có thể quản lý danh sách học viên trong lớp
+   - Giảng viên có thể đánh giá học viên theo form judge của từng buổi học
+
+================================================================================
+LƯU Ý:
+================================================================================
+- Mỗi lớp chỉ có 1 khóa học và 1 giảng viên chính
+- Chỉ có thể thêm học viên đã THANH TOÁN (order) cho khóa học tương ứng
+- Số lượng học viên tối đa phụ thuộc vào max_member của khóa học
+- Sau khi tạo lớp, cần tạo lịch học (schedule) để lớp có thể hoạt động
+- UI sẽ tự động validate và chỉ cho phép chọn học viên hợp lệ
+
+================================================================================

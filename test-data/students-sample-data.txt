@@ -1,0 +1,123 @@
+================================================================================
+DATA MẪU TẠO HỌC VIÊN (STUDENTS)
+================================================================================
+Mật khẩu chung cho tất cả: 123456
+Format email: @student.com hoặc @member.com
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #1 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Nguyễn Minh Anh
+Email: nguyen.minh.anh@student.com
+Số điện thoại: 0901234567
+Ngày sinh: 2015-03-15
+Địa chỉ: 123 Nguyễn Huệ, Quận 1, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #2 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Trần Bảo Châu
+Email: tran.bao.chau@student.com
+Số điện thoại: 0902345678
+Ngày sinh: 2016-07-22
+Địa chỉ: 456 Lê Lợi, Quận 3, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #3 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Lê Hoàng Nam
+Email: le.hoang.nam@member.com
+Số điện thoại: 0903456789
+Ngày sinh: 2014-11-08
+Địa chỉ: 789 Trần Hưng Đạo, Quận 5, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #4 - Người lớn (không có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Phạm Thu Hà
+Email: pham.thu.ha@member.com
+Số điện thoại: 0904567890
+Ngày sinh: 1995-05-12
+Địa chỉ: 321 Pasteur, Quận 1, TP.HCM
+Parent ID: (để trống)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #5 - Người lớn (không có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Hoàng Văn Đức
+Email: hoang.van.duc@student.com
+Số điện thoại: 0905678901
+Ngày sinh: 1990-09-25
+Địa chỉ: 654 Võ Văn Tần, Quận 3, TP.HCM
+Parent ID: (để trống)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #6 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Vũ Khánh Linh
+Email: vu.khanh.linh@student.com
+Số điện thoại: 0906789012
+Ngày sinh: 2017-02-14
+Địa chỉ: 147 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #7 - Người lớn (không có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Đặng Thị Mai
+Email: dang.thi.mai@member.com
+Số điện thoại: 0907890123
+Ngày sinh: 1988-12-30
+Địa chỉ: 258 Cách Mạng Tháng 8, Quận 10, TP.HCM
+Parent ID: (để trống)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #8 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Bùi Minh Khoa
+Email: bui.minh.khoa@student.com
+Số điện thoại: 0908901234
+Ngày sinh: 2015-08-18
+Địa chỉ: 369 Hoàng Văn Thụ, Quận Tân Bình, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #9 - Người lớn (không có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Ngô Thanh Tùng
+Email: ngo.thanh.tung@member.com
+Số điện thoại: 0909012345
+Ngày sinh: 1992-04-07
+Địa chỉ: 741 Nguyễn Thị Minh Khai, Quận 3, TP.HCM
+Parent ID: (để trống)
+Trạng thái: Hoạt động
+
+--------------------------------------------------------------------------------
+HỌC VIÊN #10 - Trẻ em (có phụ huynh)
+--------------------------------------------------------------------------------
+Họ tên: Lý Phương Anh
+Email: ly.phuong.anh@student.com
+Số điện thoại: 0900123456
+Ngày sinh: 2016-06-20
+Địa chỉ: 852 Lý Thường Kiệt, Quận 11, TP.HCM
+Parent ID: (để trống - sẽ chọn từ danh sách phụ huynh có sẵn)
+Trạng thái: Hoạt động
+
+================================================================================
+GHI CHÚ:
+- Tất cả học viên đều sử dụng mật khẩu: 123456
+- Học viên trẻ em (6-12 tuổi) cần chọn phụ huynh từ danh sách có sẵn
+- Học viên người lớn không cần phụ huynh
+- Role mặc định: ["member"]
+================================================================================

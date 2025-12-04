@@ -1,0 +1,339 @@
+================================================================================
+DATA MẪU TẠO KHÓA HỌC (COURSES)
+================================================================================
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #1 - Bơi Cơ Bản Cho Trẻ Em
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Bơi Cơ Bản Dành Cho Trẻ Em 6-10 Tuổi
+Mô tả: Khóa học giúp trẻ làm quen với môi trường nước, học các kỹ thuật bơi cơ bản như chân bơi, tay bơi, và thở đúng cách. Phù hợp cho trẻ mới bắt đầu.
+Số buổi học: 12
+Thời lượng mỗi buổi: 45 phút
+Giá: 2500000 VNĐ
+Số học viên tối đa: 10
+Danh mục: Cơ bản, Trẻ em, Người mới bắt đầu
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1: Làm quen với nước
+    Mô tả: Giúp trẻ quen với môi trường nước, học cách nín thở và mở mắt dưới nước
+    
+  • Buổi 2: Học thả nổi
+    Mô tả: Hướng dẫn trẻ cách thả nổi trên mặt nước, giữ thăng bằng
+    
+  • Buổi 3: Kỹ thuật đạp chân
+    Mô tả: Học cách đạp chân đúng kỹ thuật khi bơi
+    Form đánh giá:
+      - Điểm kỹ thuật (1-10): Number
+      - Độ chính xác động tác: Select (Tốt/Trung bình/Cần cải thiện)
+      - Ghi chú của giảng viên: Text
+    
+  • Buổi 4: Kỹ thuật tay bơi cơ bản
+    Mô tả: Học cách vẩy tay đúng kỹ thuật
+    
+  • Buổi 5: Phối hợp chân và tay
+    Mô tả: Kết hợp động tác chân và tay để bơi
+    Form đánh giá:
+      - Điểm phối hợp (1-10): Number
+      - Đánh giá nhịp điệu: Select (Tốt/Trung bình/Cần cải thiện)
+      - Nhận xét: Text
+    
+  • Buổi 6-12: Luyện tập và hoàn thiện
+    Mô tả: Luyện tập các kỹ thuật đã học và hoàn thiện động tác
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #2 - Bơi Nâng Cao Kiểu Bơi Sải
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Bơi Sải Nâng Cao - Freestyle Swimming
+Mô tả: Khóa học chuyên sâu về kỹ thuật bơi sải (freestyle), phù hợp cho người đã biết bơi cơ bản và muốn cải thiện tốc độ, kỹ thuật.
+Số buổi học: 15
+Thời lượng mỗi buổi: 60 phút
+Giá: 3500000 VNĐ
+Số học viên tối đa: 8
+Danh mục: Nâng cao, Nâng cao kỹ thuật, Người lớn
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-2: Đánh giá kỹ thuật hiện tại
+    Mô tả: Phân tích kỹ thuật bơi hiện tại của học viên, xác định điểm cần cải thiện
+    
+  • Buổi 3-5: Kỹ thuật tay bơi sải
+    Mô tả: Hoàn thiện động tác tay, góc độ vào nước, độ sâu kéo tay
+    Form đánh giá:
+      - Góc độ vào nước: Select (Đạt/Chưa đạt)
+      - Độ sâu kéo tay: Select (Đạt/Chưa đạt)
+      - Điểm tổng thể (1-10): Number
+      - Ghi chú: Text
+    
+  • Buổi 6-8: Kỹ thuật chân và thở
+    Mô tả: Cải thiện kỹ thuật đạp chân và phối hợp thở đúng nhịp
+    
+  • Buổi 9-12: Tăng tốc độ và sức bền
+    Mô tả: Luyện tập tăng tốc độ bơi và rèn luyện sức bền
+    Form đánh giá:
+      - Thời gian bơi 50m: Number (giây)
+      - Đánh giá thể lực: Select (Tốt/Khá/Trung bình)
+      - Điểm tiến bộ: Number (1-10)
+    
+  • Buổi 13-15: Hoàn thiện và kiểm tra
+    Mô tả: Tổng hợp kỹ thuật, kiểm tra đánh giá cuối khóa
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #3 - Khắc Phục Sợ Nước
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Khắc Phục Nỗi Sợ Nước Cho Người Lớn
+Mô tả: Chương trình đặc biệt dành cho người lớn sợ nước, giúp vượt qua tâm lý sợ hãi và tự tin khi tiếp xúc với nước.
+Số buổi học: 10
+Thời lượng mỗi buổi: 45 phút
+Giá: 3000000 VNĐ
+Số học viên tối đa: 6
+Danh mục: Người sợ nước, Người mới bắt đầu, Người lớn
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-3: Làm quen dần với nước
+    Mô tả: Tiếp cận từ từ với môi trường nước, bắt đầu từ nước nông
+    
+  • Buổi 4-5: Học cách thở và nín thở
+    Mô tả: Rèn luyện kỹ thuật thở đúng cách trong nước
+    Form đánh giá:
+      - Mức độ tự tin: Select (Cao/Trung bình/Thấp)
+      - Thời gian nín thở: Number (giây)
+      - Cảm nhận của học viên: Text
+    
+  • Buổi 6-8: Thả nổi và di chuyển
+    Mô tả: Học cách thả nổi và di chuyển cơ bản trong nước
+    
+  • Buổi 9-10: Củng cố và đánh giá
+    Mô tả: Tổng hợp kỹ năng, đánh giá sự tiến bộ
+    Form đánh giá:
+      - Mức độ vượt qua sợ nước: Select (Hoàn toàn/Phần lớn/Một phần)
+      - Khả năng tự bơi: Select (Có/Chưa)
+      - Đánh giá chung: Text
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #4 - Bơi Ếch Nâng Cao
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Kỹ Thuật Bơi Ếch Nâng Cao - Breaststroke
+Mô tả: Khóa học chuyên sâu về kỹ thuật bơi ếch, phù hợp cho người đã biết bơi cơ bản và muốn nâng cao kỹ thuật.
+Số buổi học: 12
+Thời lượng mỗi buổi: 60 phút
+Giá: 3200000 VNĐ
+Số học viên tối đa: 8
+Danh mục: Nâng cao, Nâng cao kỹ thuật
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-3: Kỹ thuật chân bơi ếch
+    Mô tả: Hoàn thiện động tác chân, góc độ đạp và thu chân
+    Form đánh giá:
+      - Góc độ đạp chân: Select (Đạt/Chưa đạt)
+      - Lực đẩy: Select (Tốt/Trung bình/Yếu)
+      - Điểm kỹ thuật: Number (1-10)
+    
+  • Buổi 4-6: Kỹ thuật tay bơi ếch
+    Mô tả: Động tác tay chuẩn, kéo tay và thu tay đúng kỹ thuật
+    
+  • Buổi 7-9: Phối hợp chân tay và thở
+    Mô tả: Kết hợp nhịp điệu chân, tay và thở
+    Form đánh giá:
+      - Nhịp điệu phối hợp: Select (Tốt/Khá/Cần cải thiện)
+      - Điểm phối hợp: Number (1-10)
+    
+  • Buổi 10-12: Hoàn thiện và thi thử
+    Mô tả: Luyện tập tổng hợp, thi thử đánh giá
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #5 - Bơi Lội Thể Thao Cho Trẻ
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Bơi Lội Thể Thao Dành Cho Trẻ Em 10-15 Tuổi
+Mô tả: Chương trình đào tạo chuyên nghiệp cho trẻ có năng khiếu bơi lội, hướng đến thi đấu.
+Số buổi học: 20
+Thời lượng mỗi buổi: 90 phút
+Giá: 5000000 VNĐ
+Số học viên tối đa: 12
+Danh mục: Huấn luyện thi đấu, Trẻ em, Nâng cao
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-4: Đánh giá và phân loại trình độ
+    Mô tả: Kiểm tra kỹ năng hiện tại, phân nhóm theo trình độ
+    Form đánh giá:
+      - Điểm thể lực: Number (1-10)
+      - Điểm kỹ thuật: Number (1-10)
+      - Khả năng phát triển: Select (Cao/Trung bình/Thấp)
+    
+  • Buổi 5-10: Rèn luyện kỹ thuật 4 kiểu bơi
+    Mô tả: Luyện tập cải thiện 4 kiểu bơi: sải, ếch, ngửa, bướm
+    
+  • Buổi 11-15: Tăng cường thể lực và tốc độ
+    Mô tả: Luyện tập tăng sức mạnh, sức bền và tốc độ
+    Form đánh giá:
+      - Thời gian bơi 100m: Number (giây)
+      - Điểm sức bền: Number (1-10)
+      - Tiến bộ so với đầu khóa: Text
+    
+  • Buổi 16-20: Chiến thuật thi đấu
+    Mô tả: Học chiến thuật, kỹ năng xuất phát và về đích
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #6 - Bơi Ngửa Cơ Bản
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Bơi Ngửa Cơ Bản - Backstroke
+Mô tả: Học kỹ thuật bơi ngửa từ cơ bản đến thành thạo, phù hợp cho mọi lứa tuổi.
+Số buổi học: 10
+Thời lượng mỗi buổi: 45 phút
+Giá: 2800000 VNĐ
+Số học viên tối đa: 10
+Danh mục: Cơ bản, Người mới bắt đầu
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-2: Tư thế nằm ngửa
+    Mô tả: Học cách giữ thăng bằng khi nằm ngửa trên mặt nước
+    
+  • Buổi 3-5: Động tác tay bơi ngửa
+    Mô tả: Kỹ thuật vẩy tay khi bơi ngửa
+    Form đánh giá:
+      - Tư thế cơ thể: Select (Đạt/Chưa đạt)
+      - Động tác tay: Select (Đạt/Chưa đạt)
+      - Điểm kỹ thuật: Number (1-10)
+    
+  • Buổi 6-8: Động tác chân và phối hợp
+    Mô tả: Kỹ thuật đạp chân và phối hợp với tay
+    
+  • Buổi 9-10: Luyện tập tổng hợp
+    Mô tả: Bơi ngửa liên tục, hoàn thiện kỹ thuật
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #7 - Cứu Hộ Và An Toàn Bơi Lội
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Kỹ Năng Cứu Hộ Và An Toàn Khi Bơi
+Mô tả: Đào tạo kỹ năng tự cứu và cứu người khác khi gặp nguy hiểm trong nước.
+Số buổi học: 8
+Thời lượng mỗi buổi: 60 phút
+Giá: 2000000 VNĐ
+Số học viên tối đa: 12
+Danh mục: Cứu hộ & sinh tồn, Người lớn
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-2: Kiến thức an toàn
+    Mô tả: Các nguyên tắc an toàn khi bơi, nhận biết nguy hiểm
+    
+  • Buổi 3-4: Kỹ năng tự cứu
+    Mô tả: Cách xử lý khi bị chuột rút, mệt khi bơi
+    Form đánh giá:
+      - Nắm vững kiến thức: Select (Tốt/Khá/Trung bình)
+      - Thực hành tự cứu: Select (Đạt/Chưa đạt)
+    
+  • Buổi 5-6: Kỹ năng cứu người
+    Mô tả: Cách tiếp cận và đưa người gặp nạn vào bờ
+    Form đánh giá:
+      - Kỹ năng tiếp cận: Select (Đạt/Chưa đạt)
+      - Kỹ năng kéo người: Select (Đạt/Chưa đạt)
+      - Điểm thực hành: Number (1-10)
+    
+  • Buổi 7-8: Hồi sức cấp cứu
+    Mô tả: CPR cơ bản, xử lý khi người bị đuối nước
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #8 - Rèn Luyện Thể Chất Bằng Bơi
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Rèn Luyện Sức Khỏe Và Thể Chất Qua Bơi Lội
+Mô tả: Chương trình tập luyện bơi lội nhằm cải thiện sức khỏe, giảm cân và tăng cường thể lực.
+Số buổi học: 16
+Thời lượng mỗi buổi: 60 phút
+Giá: 3800000 VNĐ
+Số học viên tối đa: 15
+Danh mục: Rèn luyện thể chất, Người lớn
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-2: Đánh giá thể chất
+    Mô tả: Kiểm tra chỉ số sức khỏe, thiết lập mục tiêu
+    Form đánh giá:
+      - Cân nặng: Number (kg)
+      - BMI: Number
+      - Mục tiêu cá nhân: Text
+    
+  • Buổi 3-8: Tập luyện sức bền
+    Mô tả: Bơi liên tục với cường độ vừa phải, tăng dần thời gian
+    
+  • Buổi 9-12: Tập luyện tăng cường độ
+    Mô tả: Kết hợp bơi nhanh và bơi chậm, tăng cường đốt cháy
+    Form đánh giá:
+      - Tiến độ giảm cân: Number (kg)
+      - Mức độ cải thiện thể lực: Select (Rõ rệt/Khá/Ít)
+    
+  • Buổi 13-16: Duy trì và hoàn thiện
+    Mô tả: Xây dựng thói quen tập luyện lâu dài
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #9 - Bơi Bướm Cơ Bản
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Kỹ Thuật Bơi Bướm - Butterfly Stroke
+Mô tả: Học kỹ thuật bơi bướm từ cơ bản, phù hợp cho người đã thành thạo các kiểu bơi khác.
+Số buổi học: 14
+Thời lượng mỗi buổi: 60 phút
+Giá: 4000000 VNĐ
+Số học viên tối đa: 6
+Danh mục: Nâng cao, Nâng cao kỹ thuật
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-3: Động tác sóng cơ thể
+    Mô tả: Học cách tạo sóng từ đầu đến chân
+    Form đánh giá:
+      - Độ mượt mà: Select (Tốt/Khá/Cần cải thiện)
+      - Biên độ sóng: Select (Đạt/Chưa đạt)
+    
+  • Buổi 4-7: Động tác tay bơi bướm
+    Mô tả: Kỹ thuật vẩy tay đồng thời, góc độ và lực
+    Form đánh giá:
+      - Đồng bộ hai tay: Select (Đạt/Chưa đạt)
+      - Lực đẩy: Select (Tốt/Trung bình/Yếu)
+      - Điểm kỹ thuật: Number (1-10)
+    
+  • Buổi 8-11: Động tác chân và phối hợp
+    Mô tả: Kỹ thuật đạp chán và phối hợp với tay, thở
+    
+  • Buổi 12-14: Hoàn thiện và luyện tập
+    Mô tả: Bơi bướm liên tục, cải thiện tốc độ
+
+--------------------------------------------------------------------------------
+KHÓA HỌC #10 - Bơi Lội Cho Bà Bầu
+--------------------------------------------------------------------------------
+Tên khóa học: Khóa Học Bơi Lội An Toàn Cho Phụ Nữ Mang Thai
+Mô tả: Chương trình bơi lội nhẹ nhàng, an toàn cho bà bầu, giúp thư giãn và cải thiện sức khỏe.
+Số buổi học: 12
+Thời lượng mỗi buổi: 45 phút
+Giá: 3500000 VNĐ
+Số học viên tối đa: 8
+Danh mục: Rèn luyện thể chất, Người lớn
+Trạng thái: Hoạt động
+
+Nội dung chi tiết:
+  • Buổi 1-2: Hướng dẫn an toàn
+    Mô tả: Các nguyên tắc an toàn khi bơi cho bà bầu
+    
+  • Buổi 3-6: Bơi nhẹ nhàng và thư giãn
+    Mô tả: Luyện tập bơi với cường độ nhẹ, tập trung thư giãn
+    Form đánh giá:
+      - Cảm giác sau buổi tập: Select (Thoải mái/Khá/Mệt)
+      - Sức khỏe thai nhi: Text (ghi chú từ bác sĩ nếu có)
+    
+  • Buổi 7-10: Các bài tập trong nước
+    Mô tả: Động tác giãn cơ, massage trong nước
+    
+  • Buổi 11-12: Duy trì và tổng kết
+    Mô tả: Hướng dẫn tiếp tục tập sau sinh
+
+================================================================================
+GHI CHÚ:
+- Các khóa học có thể upload hình ảnh/video minh họa (media)
+- Form đánh giá (Form Judge) được thiết kế đơn giản, phù hợp cho instructor
+- Không phải buổi học nào cũng có form đánh giá
+- Giá khóa học có thể điều chỉnh tùy theo từng trung tâm
+- Danh mục được chọn từ danh sách có sẵn trong hệ thống
+================================================================================
