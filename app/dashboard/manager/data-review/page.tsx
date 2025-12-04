@@ -23,7 +23,7 @@ const MODULES = [
   { value: "User", label: "Người dùng", key: "User" },
   { value: "Class", label: "Lớp học", key: "Class" },
   { value: "Course", label: "Khóa học", key: "Course" },
-  { value: "Order", label: "Đơn hàng", key: "Order" },
+  { value: "Order", label: "Giao dịch", key: "Order" },
   { value: "Pool", label: "Hồ bơi", key: "Pool" },
   { value: "Schedule", label: "Lịch học", key: "Schedule" },
   { value: "News", label: "Tin tức", key: "News" },

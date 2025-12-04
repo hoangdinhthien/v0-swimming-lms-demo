@@ -776,7 +776,7 @@ export default function StaffDetailPage() {
                                         [key: string]: string;
                                       } = {
                                         Class: "Quản lý lớp học",
-                                        Order: "Quản lý đơn hàng",
+                                        Order: "Quản lý Giao dịch",
                                         Course: "Quản lý khóa học",
                                         Student: "Quản lý học viên",
                                         Instructor: "Quản lý giáo viên",

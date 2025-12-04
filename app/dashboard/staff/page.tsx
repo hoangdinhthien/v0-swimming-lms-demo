@@ -212,7 +212,7 @@ function getModuleDisplayName(module: string): string {
     transactions: "Giao Dịch",
     promotions: "Khuyến Mãi",
     settings: "Cài Đặt",
-    orders: "Đơn Hàng",
+    orders: "Giao Dịch",
   };
   return displayNames[module] || module;
 }

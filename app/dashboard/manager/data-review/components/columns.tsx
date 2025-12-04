@@ -11,7 +11,7 @@ const MODULE_LABELS: Record<string, string> = {
   User: "Người dùng",
   Class: "Lớp học",
   Course: "Khóa học",
-  Order: "Đơn hàng",
+  Order: "Giao dịch",
   Pool: "Hồ bơi",
   Schedule: "Lịch học",
   News: "Tin tức",

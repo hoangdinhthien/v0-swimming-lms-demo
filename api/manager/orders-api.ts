@@ -153,7 +153,7 @@ export async function fetchOrders({
     if (!res.ok) {
       const errorText = await res.text();
       console.error("[fetchOrders] API error:", res.status, errorText);
-      throw new Error("Không thể lấy danh sách đơn hàng: " + errorText);
+      throw new Error("Không thể lấy danh sách Giao dịch: " + errorText);
     }
 
     const data: OrdersResponse = await res.json();
@@ -370,7 +370,7 @@ export async function updateOrderWithUser({
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API error:", res.status, errorText);
-    throw new Error("Không thể cập nhật đơn hàng với thông tin người dùng");
+    throw new Error("Không thể cập nhật Giao dịch với thông tin người dùng");
   }
 
   const data = await res.json();
@@ -458,7 +458,7 @@ export async function fetchOrdersForCourse({
     if (!res.ok) {
       const errorText = await res.text();
       console.error("[fetchOrdersForCourse] API error:", res.status, errorText);
-      throw new Error("Không thể lấy danh sách đơn hàng: " + errorText);
+      throw new Error("Không thể lấy danh sách Giao dịch: " + errorText);
     }
 
     const data: OrdersResponse = await res.json();
@@ -518,7 +518,7 @@ export async function fetchOrderById({
       if (res.status === 404) {
         throw new Error("404");
       }
-      throw new Error("Không thể lấy thông tin đơn hàng: " + errorText);
+      throw new Error("Không thể lấy thông tin Giao dịch: " + errorText);
     }
 
     const data = await res.json();
@@ -550,7 +550,7 @@ export async function fetchOrderById({
     }
 
     if (!order) {
-      throw new Error("Không tìm thấy đơn hàng");
+      throw new Error("Không tìm thấy Giao dịch");
     }
 
     return order;

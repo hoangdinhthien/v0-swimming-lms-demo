@@ -558,7 +558,7 @@ export default function TransactionDetailPage() {
       // Show success notification
       toast({
         title: "Tài khoản đã được tạo thành công",
-        description: `Đã tạo tài khoản và cập nhật đơn hàng cho ${
+        description: `Đã tạo tài khoản và cập nhật Giao dịch cho ${
           order.guest?.username || "học viên"
         }.`,
       });
@@ -586,7 +586,7 @@ export default function TransactionDetailPage() {
         title: "Lỗi",
         description:
           error.message ||
-          "Không thể cập nhật đơn hàng với thông tin người dùng",
+          "Không thể cập nhật Giao dịch với thông tin người dùng",
       });
     }
   };
