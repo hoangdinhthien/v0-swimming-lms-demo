@@ -298,9 +298,7 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                     {field.type === "relation" && (
                       <p className='text-muted-foreground'>
                         Đính kèm{" "}
-                        {field.entity === "media"
-                          ? "ảnh/video"
-                          : field.entity}{" "}
+                        {field.entity === "media" ? "ảnh/video" : field.entity}{" "}
                         •{" "}
                         {field.relation_type === "1-1"
                           ? "Tối đa 1 tập tin"

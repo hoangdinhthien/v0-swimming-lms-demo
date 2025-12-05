@@ -98,7 +98,9 @@ export default function MultiSelect({
     >
       <div
         className={`min-h-[44px] w-full rounded-md border-2 bg-background px-3 py-2 flex items-center gap-2 flex-wrap transition-all duration-200 ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-text hover:border-primary/50"
+          disabled
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-text hover:border-primary/50"
         } ${open ? "border-primary ring-2 ring-primary/20" : "border-input"}`}
         onClick={() => {
           if (!disabled) {
@@ -146,7 +148,9 @@ export default function MultiSelect({
               <li
                 key={opt.id}
                 className={`px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors flex justify-between items-center ${
-                  idx === highlight ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                  idx === highlight
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent hover:text-accent-foreground"
                 }`}
                 onMouseEnter={() => setHighlight(idx)}
                 onMouseDown={(e) => e.preventDefault()}
