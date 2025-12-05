@@ -68,7 +68,7 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
     - chọn theo thứ tự, sau đó rồi mới cho chọn tiếp: chọn khung giờ + lớp học trước sau đó mới cho chọn các thứ còn lại (tính logic để show ra hồ bơi thích hợp này kia... sau khi cho chọn khung giờ + lớp học xong)
     - chỉ cho chọn giáo viên nếu lớp chưa có giáo viên, nếu lớp có giáo viên rồi thì hiện thẳng tên của giáo viên đó trong phần chọn luôn
 
-- course: xóa phần 'xem schema' trong create course & edit course
+- course: xóa phần 'xem schema' trong create course & edit course => done
 
 - course: form judge: làm UI cho na ná của gg form, hiện tại nhìn vào đang không hiểu gì hết (kể cả khi view course detail, create course, edit)
 

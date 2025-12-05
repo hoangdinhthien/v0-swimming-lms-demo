@@ -97,9 +97,9 @@ export default function MultiSelect({
       className={`relative ${className}`}
     >
       <div
-        className={`min-h-[44px] w-full rounded-md border bg-background px-2 py-1 flex items-center gap-2 flex-wrap ${
-          disabled ? "opacity-50 cursor-not-allowed" : ""
-        }`}
+        className={`min-h-[44px] w-full rounded-md border-2 bg-background px-3 py-2 flex items-center gap-2 flex-wrap transition-all duration-200 ${
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-text hover:border-primary/50"
+        } ${open ? "border-primary ring-2 ring-primary/20" : "border-input"}`}
         onClick={() => {
           if (!disabled) {
             setOpen(true);
@@ -110,14 +110,14 @@ export default function MultiSelect({
         {selectedOptions.map((opt) => (
           <span
             key={opt.id}
-            className='inline-flex items-center gap-2 bg-muted/30 text-sm px-2 py-1 rounded-full'
+            className='inline-flex items-center gap-1.5 bg-primary/10 border border-primary/30 text-sm px-3 py-1 rounded-md font-medium'
             onClick={(e) => e.stopPropagation()}
           >
             <span className='max-w-[10rem] truncate'>{opt.label}</span>
             <button
               type='button'
               onClick={() => remove(opt.id)}
-              className='inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted/60 text-xs'
+              className='inline-flex items-center justify-center h-4 w-4 rounded-full hover:bg-primary/20 text-xs transition-colors'
               aria-label={`Remove ${opt.label}`}
             >
               ×
@@ -134,19 +134,19 @@ export default function MultiSelect({
           }}
           onKeyDown={onKeyDown}
           placeholder={selectedOptions.length === 0 ? placeholder : ""}
-          className='min-w-[120px] flex-1 border-0 outline-none bg-transparent text-sm py-1'
+          className='min-w-[120px] flex-1 border-0 outline-none bg-transparent text-sm py-1 placeholder:text-muted-foreground'
           disabled={disabled}
         />
       </div>
 
       {open && filtered.length > 0 && (
-        <div className='absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md max-h-48 overflow-auto'>
-          <ul>
+        <div className='absolute z-50 mt-2 w-full rounded-md border-2 border-primary/30 bg-popover text-popover-foreground shadow-lg max-h-60 overflow-auto'>
+          <ul className='py-1'>
             {filtered.map((opt, idx) => (
               <li
                 key={opt.id}
-                className={`px-3 py-2 cursor-pointer text-sm hover:bg-accent hover:text-accent-foreground flex justify-between items-center ${
-                  idx === highlight ? "bg-accent/30" : ""
+                className={`px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors flex justify-between items-center ${
+                  idx === highlight ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
                 }`}
                 onMouseEnter={() => setHighlight(idx)}
                 onMouseDown={(e) => e.preventDefault()}

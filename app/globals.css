@@ -462,3 +462,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Enhanced focus states for form inputs */
+@layer components {
+  /* Input focus enhancement */
+  input[type="text"]:focus-visible,
+  input[type="number"]:focus-visible,
+  input[type="email"]:focus-visible,
+  input[type="url"]:focus-visible,
+  input[type="password"]:focus-visible,
+  input[type="search"]:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-primary/30 border-primary;
+  }
+
+  /* Ensure select elements have proper focus states */
+  button[role="combobox"]:focus-visible,
+  [data-radix-select-trigger]:focus-visible {
+    @apply outline-none ring-2 ring-primary/30 border-primary;
+  }
+
+  /* Form Judge Input wrapper focus */
+  .form-judge-input-wrapper:focus-within {
+    @apply ring-2 ring-primary/30 border-primary;
+  }
+}
