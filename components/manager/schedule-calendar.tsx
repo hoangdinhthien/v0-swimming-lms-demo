@@ -59,8 +59,23 @@ export function ScheduleCalendar({
   const getCalendarGrid = () => {
     const startOfMonth = currentDate.startOf("month");
     const endOfMonth = currentDate.endOf("month");
-    const startDate = startOfMonth.startOf("week"); // Start from Sunday
-    const endDate = endOfMonth.endOf("week"); // End on Saturday
+
+    // Start from Monday instead of Sunday
+    let startDate = startOfMonth.startOf("week");
+    // If startDate is Sunday, move to Monday
+    if (startDate.day() === 0) {
+      startDate = startDate.add(1, "day");
+    }
+
+    // Get the Monday of the week containing the start of month
+    const startDay = startOfMonth.day(); // 0=Sun, 1=Mon, 2=Tue, ...
+    const daysFromMonday = startDay === 0 ? 6 : startDay - 1; // Distance from Monday
+    startDate = startOfMonth.subtract(daysFromMonday, "day");
+
+    // End on Sunday (last day of the week containing end of month)
+    const endDay = endOfMonth.day();
+    const daysToSunday = endDay === 0 ? 0 : 7 - endDay;
+    const endDate = endOfMonth.add(daysToSunday, "day");
 
     const weeks: Dayjs[][] = [];
     let currentWeek: Dayjs[] = [];
@@ -134,8 +149,8 @@ export function ScheduleCalendar({
     "Tháng 12",
   ];
 
-  // Day names in Vietnamese
-  const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  // Day names in Vietnamese (start from Monday)
+  const dayNames = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
   const weeks = getCalendarGrid();
 

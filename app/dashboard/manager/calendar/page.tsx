@@ -947,22 +947,53 @@ export default function ImprovedAntdCalendarPage() {
   };
 
   // Helper function: Convert JavaScript day (0=Sunday, 1=Monday...) to backend array_number_in_week
+  // Uses leader's formula: diff = date - dayOfWeek; if (diff < 0) diff += 7;
   const convertJsDayToBackendDay = (jsDay: number): number => {
     const today = new Date();
     const todayDay = today.getDay();
-    return (jsDay - todayDay + 7) % 7;
+    let diff = jsDay - todayDay;
+    if (diff < 0) {
+      diff += 7;
+    }
+
+    // Log for debugging
+    console.log("🎯 convertJsDayToBackendDay:", {
+      jsDay,
+      todayDay,
+      diff,
+      today: today.toLocaleDateString("vi-VN", { weekday: "long" }),
+    });
+
+    return diff;
   };
 
   // Handle day selection for auto schedule
   const handleDayToggleForAutoSchedule = (jsDay: number) => {
     const backendDay = convertJsDayToBackendDay(jsDay);
 
-    setAutoScheduleData((prev) => ({
-      ...prev,
-      array_number_in_week: prev.array_number_in_week.includes(backendDay)
+    setAutoScheduleData((prev) => {
+      const newArrayNumberInWeek = prev.array_number_in_week.includes(
+        backendDay
+      )
         ? prev.array_number_in_week.filter((d) => d !== backendDay)
-        : [...prev.array_number_in_week, backendDay].sort((a, b) => a - b),
-    }));
+        : [...prev.array_number_in_week, backendDay].sort((a, b) => a - b);
+
+      // Automatically update session_in_week to match selected days count
+      const newSessionInWeek = newArrayNumberInWeek.length;
+
+      console.log("🎯 handleDayToggleForAutoSchedule:", {
+        jsDay,
+        backendDay,
+        newArrayNumberInWeek,
+        newSessionInWeek,
+      });
+
+      return {
+        ...prev,
+        array_number_in_week: newArrayNumberInWeek,
+        session_in_week: newSessionInWeek,
+      };
+    });
   };
 
   // Handle auto schedule form changes
@@ -1004,6 +1035,15 @@ export default function ImprovedAntdCalendarPage() {
         class_id: selectedClassForAutoSchedule,
         ...autoScheduleData,
       };
+
+      // Log request data for debugging
+      console.log("📤 Auto Schedule Request:", {
+        class_id: selectedClassForAutoSchedule,
+        min_time: autoScheduleData.min_time,
+        max_time: autoScheduleData.max_time,
+        session_in_week: autoScheduleData.session_in_week,
+        array_number_in_week: autoScheduleData.array_number_in_week,
+      });
 
       await autoScheduleClass(requestData, tenantId, token);
 
