@@ -56,12 +56,28 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 ==============================================================
 
-- thêm dấu , trong các số tiền
+- LÀM UI KHÔNG ĐƯỢC MÀU MÈ, BỚT MÀU MÈ LẠI, BỚT ICON, UI ĐƠN GIẢN VÀ HIỆN NHỮNG THÔNG TIN MANAGER/STAFF CẦN XEM, UI HIỆN TẠI NHÌN NHƯ DÀNH CHO TRẺ CON VẬY CHẢ GIỐNG VỚI HỆ THỐNG TRANG QUẢN LÝ!! (QUAN TRỌNG NHẤT LÀ CLASS & COURSE) (LÀM UI CHO TƯỜNG MINH)
 
-- thêm required trên UIcourse
+*COURSE & LỊCH (ƯU TIÊN)
 
-- thêm logic cho drawer trong lịch khi tạo chỉnh sửa/thêm lớp học vào lịch
+- lịch: tự động xếp lịch: làm UI rõ ràng hơn, cho chọn nhiều lớp hoặc một lớp khi tự động xếp lịch, nút 'Tiếp tục' trong modal chọn lớp khi tự động xếp lịch đang vô dụng
+
+- lịch: tạo nhiều khóa học và xếp lịch cho nhiều lớp cùng 1 lúc trong lịch
+
+- lịch: thêm logic cho drawer trong lịch khi tạo chỉnh sửa/thêm lớp học vào lịch
+    - chọn theo thứ tự, sau đó rồi mới cho chọn tiếp: chọn khung giờ + lớp học trước sau đó mới cho chọn các thứ còn lại (tính logic để show ra hồ bơi thích hợp này kia... sau khi cho chọn khung giờ + lớp học xong)
+    - chỉ cho chọn giáo viên nếu lớp chưa có giáo viên, nếu lớp có giáo viên rồi thì hiện thẳng tên của giáo viên đó trong phần chọn luôn
+
+- course: xóa phần 'xem schema' trong create course & edit course
+
+- course: form judge: làm UI cho na ná của gg form, hiện tại nhìn vào đang không hiểu gì hết (kể cả khi view course detail, create course, edit)
+
+- class: thông tin lớp học trong class detail: hiện tên thôi (làm UI tường minh)
 
 
+*ORDER
+- thêm logic refund: manager gọi api refund
 
-
+quy định độ tuổi: gắn vs hồ pơi để validate
+pool có type of age: check với tuổi của student để thao tác lịch
+khi tạo user mới sẽ required birthday

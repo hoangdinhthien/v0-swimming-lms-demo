@@ -878,16 +878,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                     )
                                   )}
                                 </div>
-
-                                {/* JSON Preview (collapsed by default) */}
-                                <details className='mt-3'>
-                                  <summary className='cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground'>
-                                    Xem JSON Schema
-                                  </summary>
-                                  <pre className='mt-2 p-3 bg-background rounded text-xs overflow-auto max-h-48 border'>
-                                    {JSON.stringify(item.form_judge, null, 2)}
-                                  </pre>
-                                </details>
                               </div>
                             </CardContent>
                           )}

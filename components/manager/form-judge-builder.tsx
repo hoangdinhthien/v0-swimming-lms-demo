@@ -310,18 +310,6 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
               })}
             </div>
           )}
-
-          {/* JSON Preview */}
-          {allFieldNames.length > 0 && (
-            <details className='mt-4'>
-              <summary className='cursor-pointer font-medium text-sm text-muted-foreground hover:text-foreground transition-colors'>
-                Xem JSON Schema (Dành cho kỹ thuật viên)
-              </summary>
-              <pre className='mt-2 p-4 bg-slate-950 text-green-400 rounded-md text-xs overflow-auto max-h-64 border'>
-                {JSON.stringify(schema, null, 2)}
-              </pre>
-            </details>
-          )}
         </CardContent>
       </Card>
     </div>
