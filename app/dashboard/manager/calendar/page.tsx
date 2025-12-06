@@ -240,7 +240,7 @@ export default function ImprovedAntdCalendarPage() {
   const [loadingClassesForAutoSchedule, setLoadingClassesForAutoSchedule] =
     useState(false);
   const [isAutoScheduling, setIsAutoScheduling] = useState(false);
-  
+
   // Each class has its own schedule configuration
   const [classScheduleConfigs, setClassScheduleConfigs] = useState<{
     [classId: string]: {
@@ -935,7 +935,7 @@ export default function ImprovedAntdCalendarPage() {
   const handleClassToggle = (classId: string) => {
     setSelectedClassIds((prev) => {
       const isSelected = prev.includes(classId);
-      
+
       if (isSelected) {
         // Remove class and its config
         setClassScheduleConfigs((configs) => {

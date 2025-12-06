@@ -588,7 +588,9 @@ export const autoScheduleClass = async (
     // Validate that session_in_week equals array_number_in_week length
     if (classData.session_in_week !== classData.array_number_in_week.length) {
       throw new Error(
-        `Lớp ${index + 1}: Số buổi học trong tuần phải bằng với số ngày được chọn`
+        `Lớp ${
+          index + 1
+        }: Số buổi học trong tuần phải bằng với số ngày được chọn`
       );
     }
 
