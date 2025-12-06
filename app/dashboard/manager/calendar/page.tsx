@@ -251,6 +251,16 @@ export default function ImprovedAntdCalendarPage() {
     };
   }>({});
 
+  // Tab 2: Create new classes states
+  const [availableCoursesForCreate, setAvailableCoursesForCreate] = useState<
+    Array<{ _id: string; title: string; session_number?: number }>
+  >([]);
+  const [availableInstructorsForCreate, setAvailableInstructorsForCreate] =
+    useState<Array<{ _id: string; username: string }>>([]);
+  const [loadingCoursesForCreate, setLoadingCoursesForCreate] = useState(false);
+  const [loadingInstructorsForCreate, setLoadingInstructorsForCreate] =
+    useState(false);
+
   // NOTE: defer loading slots/classrooms/pools until manager opens drawer to add/edit
   // This reduces initial page load time. Data will be fetched by `loadClassManagementData()`
   // which is triggered when user opens the Add/Edit UI.
@@ -928,7 +938,9 @@ export default function ImprovedAntdCalendarPage() {
     setIsCalendarAutoScheduleModalOpen(true);
     setSelectedClassIds([]);
     setClassScheduleConfigs({});
-    await loadClassesForAutoSchedule();
+    // Load data for both tabs
+    await loadClassesForAutoSchedule(); // Tab 1
+    await loadDataForCreateTab(); // Tab 2
   };
 
   // Handle class selection toggle (multiple selection)
@@ -1109,6 +1121,107 @@ export default function ImprovedAntdCalendarPage() {
       });
     } finally {
       setIsAutoScheduling(false);
+    }
+  };
+
+  // Load courses and instructors for Tab 2 (Create new classes)
+  const loadDataForCreateTab = async () => {
+    const tenantId = getSelectedTenant();
+    const token = getAuthToken();
+
+    if (!tenantId || !token) return;
+
+    try {
+      // Load courses
+      setLoadingCoursesForCreate(true);
+      const { fetchCourses } = await import("@/api/manager/courses-api");
+      const coursesResult = await fetchCourses({
+        tenantId,
+        token,
+        page: 1,
+        limit: 100,
+      });
+      setAvailableCoursesForCreate(coursesResult.data || []);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+    } finally {
+      setLoadingCoursesForCreate(false);
+    }
+
+    try {
+      // Load instructors
+      setLoadingInstructorsForCreate(true);
+      const instructors = await fetchInstructors({
+        tenantId,
+        token,
+        role: "instructor",
+      });
+      setAvailableInstructorsForCreate(instructors || []);
+    } catch (error) {
+      console.error("Error loading instructors:", error);
+    } finally {
+      setLoadingInstructorsForCreate(false);
+    }
+  };
+
+  // Handle create and auto-schedule submission
+  const handleCreateAndAutoSchedule = async (
+    newClasses: Array<{
+      id: string;
+      course: string;
+      name: string;
+      instructor: string;
+      show_on_regist_course: boolean;
+      min_time: number;
+      max_time: number;
+      session_in_week: number;
+      array_number_in_week: number[];
+    }>
+  ) => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) return;
+
+      // Import the new API function
+      const { createAndAutoScheduleClasses } = await import(
+        "@/api/manager/class-api"
+      );
+
+      // Remove temporary 'id' field and prepare request
+      const requestData = newClasses.map(({ id, ...rest }) => rest);
+
+      console.log("📤 Create & Auto Schedule Request:", requestData);
+
+      await createAndAutoScheduleClasses(requestData, tenantId, token);
+
+      toast({
+        title: "Thành công",
+        description: `Đã tạo và xếp lịch thành công cho ${newClasses.length} lớp học`,
+      });
+
+      // Reload schedule data
+      const { events, poolOverflowWarnings } = await fetchMonthSchedule(
+        currentDate.toDate(),
+        tenantId,
+        token
+      );
+      setScheduleEvents(events);
+      setPoolOverflowWarnings(poolOverflowWarnings);
+
+      // Close modal
+      setIsCalendarAutoScheduleModalOpen(false);
+    } catch (error: any) {
+      console.error("Create and auto-schedule error:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description:
+          error?.message ||
+          "Không thể tạo và xếp lịch. Vui lòng kiểm tra lại thông tin",
+      });
+      throw error; // Re-throw to let modal handle loading state
     }
   };
 
@@ -2349,10 +2462,11 @@ export default function ImprovedAntdCalendarPage() {
             setDeleteDialogOpen(true);
           }}
         />
-        {/* Auto Schedule Modal - NEW COMPONENT */}
+        {/* Auto Schedule Modal - NEW COMPONENT with 2 Tabs */}
         <AutoScheduleModal
           open={isCalendarAutoScheduleModalOpen}
           onOpenChange={setIsCalendarAutoScheduleModalOpen}
+          // Tab 1: Existing classes props
           availableClasses={availableClassesForAutoSchedule}
           selectedClassIds={selectedClassIds}
           classScheduleConfigs={classScheduleConfigs}
@@ -2362,6 +2476,12 @@ export default function ImprovedAntdCalendarPage() {
           onDayToggle={handleDayToggleForClass}
           onTimeChange={handleTimeChangeForClass}
           onSubmit={handleCalendarAutoSchedule}
+          // Tab 2: Create new classes props
+          availableCourses={availableCoursesForCreate}
+          availableInstructors={availableInstructorsForCreate}
+          loadingCourses={loadingCoursesForCreate}
+          loadingInstructors={loadingInstructorsForCreate}
+          onCreateAndSchedule={handleCreateAndAutoSchedule}
         />
       </div>
     </ConfigProvider>

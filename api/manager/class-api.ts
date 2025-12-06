@@ -991,3 +991,95 @@ export async function removeMemberFromClass(
 
   return response.json();
 }
+
+// ============================================================================
+// Create class and auto-schedule in one API call
+// ============================================================================
+
+// Interface for creating a new class with auto-schedule
+export interface CreateAndAutoScheduleRequest {
+  course: string; // course id
+  name: string; // class name
+  instructor: string; // instructor id
+  show_on_regist_course?: boolean; // optional, defaults to false
+  min_time: number; // minimum hour (0-23)
+  max_time: number; // maximum hour (0-23)
+  session_in_week: number; // number of sessions per week
+  array_number_in_week: number[]; // array of backend day numbers
+}
+
+/**
+ * Create new class(es) and auto-schedule them in one operation
+ * @param requestData - Single class or array of classes to create and auto-schedule
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with creation and auto-schedule result
+ */
+export const createAndAutoScheduleClasses = async (
+  requestData: CreateAndAutoScheduleRequest | CreateAndAutoScheduleRequest[],
+  tenantId?: string,
+  token?: string
+): Promise<{ message: string; statusCode: number; data?: any }> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing tenant ID or auth token");
+  }
+
+  // Always normalize to array format for API
+  const classesData = Array.isArray(requestData) ? requestData : [requestData];
+
+  // Validate each class
+  for (let i = 0; i < classesData.length; i++) {
+    const cls = classesData[i];
+    if (!cls.course || !cls.name || !cls.instructor) {
+      throw new Error(
+        `Class ${i + 1}: Missing required fields (course, name, instructor)`
+      );
+    }
+    if (
+      cls.array_number_in_week.length === 0 ||
+      cls.session_in_week !== cls.array_number_in_week.length
+    ) {
+      throw new Error(
+        `Class ${
+          i + 1
+        }: Invalid day selection. session_in_week must match array_number_in_week length`
+      );
+    }
+    if (cls.min_time >= cls.max_time) {
+      throw new Error(`Class ${i + 1}: min_time must be less than max_time`);
+    }
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/auto`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(classesData),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message ||
+        `Failed to create and auto-schedule classes: ${response.status}`
+    );
+  }
+
+  return await response.json();
+};
