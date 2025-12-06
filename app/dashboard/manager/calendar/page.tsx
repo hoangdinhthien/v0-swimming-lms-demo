@@ -91,6 +91,7 @@ import {
   ScheduleCalendar,
   type CalendarEvent as ScheduleCalendarEvent,
 } from "@/components/manager/schedule-calendar";
+import { AutoScheduleModal } from "@/components/manager/auto-schedule-modal";
 import {
   Dialog,
   DialogContent,
@@ -230,23 +231,25 @@ export default function ImprovedAntdCalendarPage() {
   // staff/manager permission helper
   const { isStaff } = useStaffPermissions();
 
-  // Auto schedule from calendar modal states
+  // Auto schedule from calendar modal states - REFACTORED for multiple classes
   const [isCalendarAutoScheduleModalOpen, setIsCalendarAutoScheduleModalOpen] =
     useState(false);
   const [availableClassesForAutoSchedule, setAvailableClassesForAutoSchedule] =
     useState<ClassItem[]>([]);
-  const [selectedClassForAutoSchedule, setSelectedClassForAutoSchedule] =
-    useState<string>("");
+  const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]); // Multiple selection
   const [loadingClassesForAutoSchedule, setLoadingClassesForAutoSchedule] =
     useState(false);
   const [isAutoScheduling, setIsAutoScheduling] = useState(false);
-  const [autoScheduleData, setAutoScheduleData] = useState({
-    min_time: 7,
-    max_time: 18,
-    session_in_week: 3,
-    array_number_in_week: [] as number[],
-  });
-  const [showAutoScheduleForm, setShowAutoScheduleForm] = useState(false);
+  
+  // Each class has its own schedule configuration
+  const [classScheduleConfigs, setClassScheduleConfigs] = useState<{
+    [classId: string]: {
+      min_time: number;
+      max_time: number;
+      session_in_week: number;
+      array_number_in_week: number[];
+    };
+  }>({});
 
   // NOTE: defer loading slots/classrooms/pools until manager opens drawer to add/edit
   // This reduces initial page load time. Data will be fetched by `loadClassManagementData()`
@@ -923,26 +926,37 @@ export default function ImprovedAntdCalendarPage() {
   // Handle opening calendar auto schedule modal
   const handleOpenCalendarAutoSchedule = async () => {
     setIsCalendarAutoScheduleModalOpen(true);
-    setSelectedClassForAutoSchedule("");
-    setShowAutoScheduleForm(false);
-    setAutoScheduleData({
-      min_time: 7,
-      max_time: 18,
-      session_in_week: 3,
-      array_number_in_week: [],
-    });
+    setSelectedClassIds([]);
+    setClassScheduleConfigs({});
     await loadClassesForAutoSchedule();
   };
 
-  // Handle class selection for auto schedule
-  const handleClassSelectionForAutoSchedule = (classId: string) => {
-    setSelectedClassForAutoSchedule(classId);
-    setShowAutoScheduleForm(true);
-    setAutoScheduleData({
-      min_time: 7,
-      max_time: 18,
-      session_in_week: 3,
-      array_number_in_week: [],
+  // Handle class selection toggle (multiple selection)
+  const handleClassToggle = (classId: string) => {
+    setSelectedClassIds((prev) => {
+      const isSelected = prev.includes(classId);
+      
+      if (isSelected) {
+        // Remove class and its config
+        setClassScheduleConfigs((configs) => {
+          const newConfigs = { ...configs };
+          delete newConfigs[classId];
+          return newConfigs;
+        });
+        return prev.filter((id) => id !== classId);
+      } else {
+        // Add class with default config
+        setClassScheduleConfigs((configs) => ({
+          ...configs,
+          [classId]: {
+            min_time: 7,
+            max_time: 18,
+            session_in_week: 0,
+            array_number_in_week: [],
+          },
+        }));
+        return [...prev, classId];
+      }
     });
   };
 
@@ -955,33 +969,30 @@ export default function ImprovedAntdCalendarPage() {
     if (diff < 0) {
       diff += 7;
     }
-
-    // Log for debugging
-    console.log("🎯 convertJsDayToBackendDay:", {
-      jsDay,
-      todayDay,
-      diff,
-      today: today.toLocaleDateString("vi-VN", { weekday: "long" }),
-    });
-
     return diff;
   };
 
-  // Handle day selection for auto schedule
-  const handleDayToggleForAutoSchedule = (jsDay: number) => {
+  // Handle day selection for specific class
+  const handleDayToggleForClass = (classId: string, jsDay: number) => {
     const backendDay = convertJsDayToBackendDay(jsDay);
 
-    setAutoScheduleData((prev) => {
-      const newArrayNumberInWeek = prev.array_number_in_week.includes(
+    setClassScheduleConfigs((prev) => {
+      const classConfig = prev[classId];
+      if (!classConfig) return prev;
+
+      const newArrayNumberInWeek = classConfig.array_number_in_week.includes(
         backendDay
       )
-        ? prev.array_number_in_week.filter((d) => d !== backendDay)
-        : [...prev.array_number_in_week, backendDay].sort((a, b) => a - b);
+        ? classConfig.array_number_in_week.filter((d) => d !== backendDay)
+        : [...classConfig.array_number_in_week, backendDay].sort(
+            (a, b) => a - b
+          );
 
       // Automatically update session_in_week to match selected days count
       const newSessionInWeek = newArrayNumberInWeek.length;
 
-      console.log("🎯 handleDayToggleForAutoSchedule:", {
+      console.log("🎯 handleDayToggleForClass:", {
+        classId,
         jsDay,
         backendDay,
         newArrayNumberInWeek,
@@ -990,38 +1001,61 @@ export default function ImprovedAntdCalendarPage() {
 
       return {
         ...prev,
-        array_number_in_week: newArrayNumberInWeek,
-        session_in_week: newSessionInWeek,
+        [classId]: {
+          ...classConfig,
+          array_number_in_week: newArrayNumberInWeek,
+          session_in_week: newSessionInWeek,
+        },
       };
     });
   };
 
-  // Handle auto schedule form changes
-  const handleAutoScheduleChange = (
-    field: keyof typeof autoScheduleData,
-    value: any
+  // Handle time change for specific class
+  const handleTimeChangeForClass = (
+    classId: string,
+    field: "min_time" | "max_time",
+    value: number
   ) => {
-    setAutoScheduleData((prev) => ({ ...prev, [field]: value }));
+    setClassScheduleConfigs((prev) => {
+      const classConfig = prev[classId];
+      if (!classConfig) return prev;
+
+      return {
+        ...prev,
+        [classId]: {
+          ...classConfig,
+          [field]: value,
+        },
+      };
+    });
   };
 
   // Handle auto schedule submission
   const handleCalendarAutoSchedule = async () => {
-    if (!selectedClassForAutoSchedule) {
+    // Validation
+    if (selectedClassIds.length === 0) {
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: "Vui lòng chọn lớp học",
+        description: "Vui lòng chọn ít nhất một lớp học",
       });
       return;
     }
 
-    if (autoScheduleData.array_number_in_week.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: "Vui lòng chọn ít nhất một ngày trong tuần",
-      });
-      return;
+    // Validate each selected class has configuration
+    for (const classId of selectedClassIds) {
+      const config = classScheduleConfigs[classId];
+      if (!config || config.array_number_in_week.length === 0) {
+        const className =
+          availableClassesForAutoSchedule.find((c) => c._id === classId)
+            ?.name || "Lớp không xác định";
+        toast({
+          variant: "destructive",
+          title: "Lỗi",
+          description: `${className}: Vui lòng chọn ít nhất một ngày trong tuần`,
+        });
+        return;
+      }
     }
 
     try {
@@ -1031,25 +1065,25 @@ export default function ImprovedAntdCalendarPage() {
 
       if (!tenantId || !token) return;
 
-      const requestData = {
-        class_id: selectedClassForAutoSchedule,
-        ...autoScheduleData,
-      };
-
-      // Log request data for debugging
-      console.log("📤 Auto Schedule Request:", {
-        class_id: selectedClassForAutoSchedule,
-        min_time: autoScheduleData.min_time,
-        max_time: autoScheduleData.max_time,
-        session_in_week: autoScheduleData.session_in_week,
-        array_number_in_week: autoScheduleData.array_number_in_week,
+      // Build request data array
+      const requestData = selectedClassIds.map((classId) => {
+        const config = classScheduleConfigs[classId];
+        return {
+          class_id: classId,
+          min_time: config.min_time,
+          max_time: config.max_time,
+          session_in_week: config.session_in_week,
+          array_number_in_week: config.array_number_in_week,
+        };
       });
+
+      console.log("📤 Auto Schedule Request (Multiple Classes):", requestData);
 
       await autoScheduleClass(requestData, tenantId, token);
 
       toast({
         title: "Thành công",
-        description: "Đã tự động xếp lịch học thành công",
+        description: `Đã tự động xếp lịch thành công cho ${selectedClassIds.length} lớp học`,
       });
 
       // Reload schedule data
@@ -1063,14 +1097,8 @@ export default function ImprovedAntdCalendarPage() {
 
       // Reset and close modal
       setIsCalendarAutoScheduleModalOpen(false);
-      setSelectedClassForAutoSchedule("");
-      setShowAutoScheduleForm(false);
-      setAutoScheduleData({
-        min_time: 7,
-        max_time: 18,
-        session_in_week: 3,
-        array_number_in_week: [],
-      });
+      setSelectedClassIds([]);
+      setClassScheduleConfigs({});
     } catch (error: any) {
       console.error("Auto schedule error:", error);
       toast({
@@ -2321,504 +2349,20 @@ export default function ImprovedAntdCalendarPage() {
             setDeleteDialogOpen(true);
           }}
         />
-        {/* Auto Schedule Modal */}
-        <Dialog
+        {/* Auto Schedule Modal - NEW COMPONENT */}
+        <AutoScheduleModal
           open={isCalendarAutoScheduleModalOpen}
-          onOpenChange={(open) => {
-            setIsCalendarAutoScheduleModalOpen(open);
-            if (!open) {
-              setSelectedClassForAutoSchedule("");
-              setShowAutoScheduleForm(false);
-            }
-          }}
-        >
-          <DialogContent className='max-w-3xl max-h-[90vh] overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle className='flex items-center gap-2 text-2xl'>
-                Tự động xếp lịch học
-              </DialogTitle>
-              <DialogDescription className='text-base'>
-                {!showAutoScheduleForm
-                  ? "Chọn lớp học cần xếp lịch tự động. Chỉ hiển thị các lớp còn buổi học chưa được xếp lịch."
-                  : "Hệ thống sẽ tự động sắp xếp lịch học dựa trên thời gian và ngày bạn chọn"}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className='space-y-6'>
-              {!showAutoScheduleForm ? (
-                <>
-                  {loadingClassesForAutoSchedule ? (
-                    <div className='flex flex-col items-center justify-center py-12'>
-                      <Loader2 className='h-8 w-8 animate-spin text-muted-foreground mb-4' />
-                      <p className='text-muted-foreground'>
-                        Đang tải danh sách lớp học...
-                      </p>
-                    </div>
-                  ) : availableClassesForAutoSchedule.length === 0 ? (
-                    <div className='text-center py-12'>
-                      <p className='text-muted-foreground'>
-                        Không có lớp học nào cần xếp lịch
-                      </p>
-                    </div>
-                  ) : (
-                    <div className='space-y-3 max-h-96 overflow-y-auto'>
-                      {availableClassesForAutoSchedule.map((classItem) => {
-                        const isFullyScheduled =
-                          isClassFullyScheduled(classItem);
-                        const remainingSessions =
-                          getRemainingSessionsCount(classItem);
-                        const schedulesCount = classItem.schedules?.length || 0;
-
-                        return (
-                          <div
-                            key={classItem._id}
-                            className={`p-4 border rounded-lg transition-all ${
-                              isFullyScheduled
-                                ? "opacity-50 cursor-not-allowed bg-muted/20"
-                                : "cursor-pointer hover:shadow-md"
-                            } ${
-                              selectedClassForAutoSchedule === classItem._id
-                                ? "border-primary bg-primary/5"
-                                : isFullyScheduled
-                                ? "border-muted"
-                                : "hover:border-primary/50"
-                            }`}
-                            onClick={() => {
-                              if (!isFullyScheduled) {
-                                handleClassSelectionForAutoSchedule(
-                                  classItem._id
-                                );
-                              }
-                            }}
-                          >
-                            <div className='flex items-center justify-between'>
-                              <div className='flex-1'>
-                                <div className='flex items-center gap-2'>
-                                  <h3 className='font-semibold text-lg'>
-                                    {classItem.name}
-                                  </h3>
-                                  {isFullyScheduled && (
-                                    <Tag color='green'>Đã đủ lịch</Tag>
-                                  )}
-                                </div>
-                                <p className='text-sm text-muted-foreground mt-1'>
-                                  {classItem.course?.title || "Không xác định"}
-                                </p>
-                                <div className='mt-2 flex items-center gap-4 text-sm'>
-                                  <span>
-                                    Tổng:{" "}
-                                    <span className='font-semibold'>
-                                      {classItem.course?.session_number || 0}
-                                    </span>{" "}
-                                    buổi
-                                  </span>
-                                  <span>
-                                    Đã xếp:{" "}
-                                    <span className='font-semibold'>
-                                      {schedulesCount}
-                                    </span>
-                                  </span>
-                                  {!isFullyScheduled && (
-                                    <span className='text-orange-600 font-semibold'>
-                                      Còn thiếu: {remainingSessions} buổi
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <Radio
-                                checked={
-                                  selectedClassForAutoSchedule === classItem._id
-                                }
-                                disabled={isFullyScheduled}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  {(() => {
-                    const selectedClass = availableClassesForAutoSchedule.find(
-                      (c) => c._id === selectedClassForAutoSchedule
-                    );
-                    return (
-                      <>
-                        {/* BEFORE/AFTER Comparison */}
-                        <div className='grid grid-cols-2 gap-4'>
-                          {/* HIỆN TẠI */}
-                          <div className='border rounded-lg p-4 bg-muted/30'>
-                            <div className='flex items-center gap-2 mb-3'>
-                              <Clock className='h-4 w-4 text-muted-foreground' />
-                              <h3 className='font-semibold text-base'>
-                                HIỆN TẠI
-                              </h3>
-                            </div>
-                            <div className='space-y-3'>
-                              <div>
-                                <p className='text-sm text-muted-foreground mb-1'>
-                                  Khóa học yêu cầu
-                                </p>
-                                <p className='text-2xl font-bold'>
-                                  {selectedClass?.course?.session_number || 0}
-                                  <span className='text-base text-muted-foreground ml-2'>
-                                    buổi học
-                                  </span>
-                                </p>
-                              </div>
-                              <div className='border-t pt-3'>
-                                <p className='text-sm text-muted-foreground mb-1'>
-                                  Đã xếp lịch
-                                </p>
-                                <p className='text-2xl font-bold'>
-                                  {selectedClass?.schedules?.length || 0}
-                                  <span className='text-base text-muted-foreground ml-2'>
-                                    buổi
-                                  </span>
-                                </p>
-                              </div>
-                              {selectedClass &&
-                                getRemainingSessionsCount(selectedClass) >
-                                  0 && (
-                                  <div className='bg-muted p-3 rounded-lg border'>
-                                    <p className='text-sm text-muted-foreground font-medium'>
-                                      Còn thiếu
-                                    </p>
-                                    <p className='text-xl font-bold'>
-                                      {getRemainingSessionsCount(selectedClass)}{" "}
-                                      buổi
-                                    </p>
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-
-                          {/* SAU KHI TỰ ĐỘNG XẾP LỊCH */}
-                          <div className='border rounded-lg p-4 bg-muted/30'>
-                            <div className='flex items-center gap-2 mb-3'>
-                              <CheckCircle2 className='h-4 w-4 text-muted-foreground' />
-                              <h3 className='font-semibold text-base'>
-                                SAU KHI TỰ ĐỘNG XẾP
-                              </h3>
-                            </div>
-                            <div className='space-y-3'>
-                              <div>
-                                <p className='text-sm text-muted-foreground mb-1'>
-                                  Khóa học yêu cầu
-                                </p>
-                                <p className='text-2xl font-bold'>
-                                  {selectedClass?.course?.session_number || 0}
-                                  <span className='text-base text-muted-foreground ml-2'>
-                                    buổi học
-                                  </span>
-                                </p>
-                              </div>
-                              <div className='border-t pt-3'>
-                                <p className='text-sm text-muted-foreground mb-1'>
-                                  Sẽ được xếp lịch
-                                </p>
-                                <p className='text-2xl font-bold'>
-                                  {selectedClass?.course?.session_number || 0}
-                                  <span className='text-base text-muted-foreground ml-2'>
-                                    buổi
-                                  </span>
-                                </p>
-                              </div>
-                              <div className='bg-muted p-3 rounded-lg border'>
-                                <p className='text-sm text-muted-foreground font-medium'>
-                                  Trạng thái
-                                </p>
-                                <p className='text-base font-semibold'>
-                                  Đủ lịch học
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Info Box */}
-                        <div className='bg-muted/50 border rounded-lg p-4'>
-                          <div className='flex gap-3'>
-                            <div className='flex-1'>
-                              <h4 className='font-semibold mb-2'>
-                                Hệ thống sẽ tự động:
-                              </h4>
-                              <ul className='space-y-1 text-sm text-muted-foreground'>
-                                <li>
-                                  • Tìm khung giờ phù hợp trong thời gian bạn
-                                  chọn
-                                </li>
-                                <li>
-                                  • Xếp lịch đều đặn theo các ngày trong tuần
-                                </li>
-                                <li>
-                                  • Đảm bảo không trùng lịch với các lớp khác
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Settings Section */}
-                        <div className='border rounded-lg p-4'>
-                          <h3 className='font-semibold text-base mb-4 flex items-center gap-2'>
-                            <Settings className='h-4 w-4' />
-                            Thiết lập thời gian học
-                          </h3>
-
-                          <div className='space-y-4'>
-                            {/* Time Range */}
-                            <div>
-                              <Label className='font-medium mb-2 block'>
-                                Khung giờ học trong ngày
-                              </Label>
-                              <p className='text-sm text-muted-foreground mb-3'>
-                                Chọn khoảng thời gian trong ngày mà lớp có thể
-                                học
-                              </p>
-                              <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='min_time'>
-                                    Bắt đầu sớm nhất
-                                  </Label>
-                                  <Select
-                                    value={autoScheduleData.min_time.toString()}
-                                    onValueChange={(value) =>
-                                      handleAutoScheduleChange(
-                                        "min_time",
-                                        parseInt(value)
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Array.from({ length: 24 }, (_, i) => (
-                                        <SelectItem
-                                          key={i}
-                                          value={i.toString()}
-                                        >
-                                          {i.toString().padStart(2, "0")}:00
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className='space-y-2'>
-                                  <Label htmlFor='max_time'>
-                                    Kết thúc muộn nhất
-                                  </Label>
-                                  <Select
-                                    value={autoScheduleData.max_time.toString()}
-                                    onValueChange={(value) =>
-                                      handleAutoScheduleChange(
-                                        "max_time",
-                                        parseInt(value)
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Array.from({ length: 24 }, (_, i) => (
-                                        <SelectItem
-                                          key={i}
-                                          value={i.toString()}
-                                        >
-                                          {i.toString().padStart(2, "0")}:00
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Days of Week Selection */}
-                            <div className='pt-4 border-t'>
-                              <Label className='font-medium mb-2 block'>
-                                Chọn các ngày trong tuần *
-                              </Label>
-                              <p className='text-sm text-muted-foreground mb-3'>
-                                Chọn những ngày nào trong tuần mà lớp sẽ học
-                              </p>
-                              <div className='grid grid-cols-7 gap-2'>
-                                {[
-                                  { label: "T2", value: 1 },
-                                  { label: "T3", value: 2 },
-                                  { label: "T4", value: 3 },
-                                  { label: "T5", value: 4 },
-                                  { label: "T6", value: 5 },
-                                  { label: "T7", value: 6 },
-                                  { label: "CN", value: 0 },
-                                ].map((day) => {
-                                  const backendDay = convertJsDayToBackendDay(
-                                    day.value
-                                  );
-                                  const isSelected =
-                                    autoScheduleData.array_number_in_week.includes(
-                                      backendDay
-                                    );
-
-                                  return (
-                                    <Button
-                                      key={day.value}
-                                      type='button'
-                                      variant={
-                                        isSelected ? "default" : "outline"
-                                      }
-                                      onClick={() =>
-                                        handleDayToggleForAutoSchedule(
-                                          day.value
-                                        )
-                                      }
-                                      className='w-full'
-                                    >
-                                      {day.label}
-                                    </Button>
-                                  );
-                                })}
-                              </div>
-                              <div className='text-xs text-muted-foreground mt-2'>
-                                Đã chọn:{" "}
-                                {autoScheduleData.array_number_in_week.length}{" "}
-                                ngày
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Preview/Summary Box */}
-                        {autoScheduleData.array_number_in_week.length > 0 && (
-                          <div className='bg-muted/50 border rounded-lg p-4'>
-                            <h4 className='font-semibold mb-3'>Tóm tắt:</h4>
-                            <div className='space-y-2 text-sm'>
-                              <p>
-                                • Lớp học:{" "}
-                                <span className='font-semibold'>
-                                  {selectedClass?.name}
-                                </span>
-                              </p>
-                              <p>
-                                • Thời gian:{" "}
-                                <span className='font-semibold'>
-                                  {autoScheduleData.min_time
-                                    .toString()
-                                    .padStart(2, "0")}
-                                  :00 -{" "}
-                                  {autoScheduleData.max_time
-                                    .toString()
-                                    .padStart(2, "0")}
-                                  :00
-                                </span>
-                              </p>
-                              <p>
-                                • Các ngày học:{" "}
-                                <span className='font-semibold'>
-                                  {autoScheduleData.array_number_in_week
-                                    .map((backendDay) => {
-                                      const today = new Date();
-                                      const todayDay = today.getDay();
-                                      const jsDay = (backendDay + todayDay) % 7;
-                                      const dayNames = [
-                                        "CN",
-                                        "T2",
-                                        "T3",
-                                        "T4",
-                                        "T5",
-                                        "T6",
-                                        "T7",
-                                      ];
-                                      return dayNames[jsDay];
-                                    })
-                                    .join(", ")}
-                                </span>
-                              </p>
-                              <p>
-                                • Số buổi sẽ xếp:{" "}
-                                <span className='font-semibold'>
-                                  {selectedClass
-                                    ? getRemainingSessionsCount(selectedClass)
-                                    : 0}{" "}
-                                  buổi
-                                </span>
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </>
-              )}
-            </div>
-
-            <DialogFooter>
-              {!showAutoScheduleForm ? (
-                <>
-                  <Button
-                    variant='outline'
-                    onClick={() => {
-                      setIsCalendarAutoScheduleModalOpen(false);
-                      setSelectedClassForAutoSchedule("");
-                    }}
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (selectedClassForAutoSchedule) {
-                        setShowAutoScheduleForm(true);
-                      }
-                    }}
-                    disabled={!selectedClassForAutoSchedule}
-                  >
-                    Tiếp tục
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant='outline'
-                    onClick={() => {
-                      setShowAutoScheduleForm(false);
-                      setSelectedClassForAutoSchedule("");
-                    }}
-                    disabled={isAutoScheduling}
-                  >
-                    Quay lại
-                  </Button>
-                  <Button
-                    onClick={handleCalendarAutoSchedule}
-                    disabled={
-                      isAutoScheduling ||
-                      autoScheduleData.array_number_in_week.length === 0 ||
-                      autoScheduleData.min_time >= autoScheduleData.max_time
-                    }
-                    className='bg-green-600 hover:bg-green-700'
-                  >
-                    {isAutoScheduling ? (
-                      <>
-                        <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                        Đang xếp lịch...
-                      </>
-                    ) : (
-                      <>
-                        <CalendarPlus className='h-4 w-4 mr-2' />
-                        Xếp lịch tự động
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          onOpenChange={setIsCalendarAutoScheduleModalOpen}
+          availableClasses={availableClassesForAutoSchedule}
+          selectedClassIds={selectedClassIds}
+          classScheduleConfigs={classScheduleConfigs}
+          loading={loadingClassesForAutoSchedule}
+          isScheduling={isAutoScheduling}
+          onClassToggle={handleClassToggle}
+          onDayToggle={handleDayToggleForClass}
+          onTimeChange={handleTimeChangeForClass}
+          onSubmit={handleCalendarAutoSchedule}
+        />
       </div>
     </ConfigProvider>
   );

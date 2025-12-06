@@ -551,24 +551,24 @@ export const deleteScheduleEvent = async (
   return result;
 };
 
-// Interface for auto schedule request
+// Interface for auto schedule request (single class)
 export interface AutoScheduleRequest {
   min_time: number; // Minimum hour (e.g., 7)
   max_time: number; // Maximum hour (e.g., 14)
   session_in_week: number; // Number of sessions per week
-  array_number_in_week: number[]; // Days of week: 0=Wed, 1=Thu, 2=Fri, 3=Sat, 4=Sun, 5=Mon, 6=Tue (Wednesday-start with modulo-7 support)
+  array_number_in_week: number[]; // Days of week: relative to today using modulo-7
   class_id: string; // Class ID
 }
 
 /**
- * Auto schedule classes
- * @param requestData - The auto schedule request data
+ * Auto schedule classes (supports single or multiple classes)
+ * @param requestData - Single class or array of classes to auto schedule
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
  * @returns Promise with auto schedule result
  */
 export const autoScheduleClass = async (
-  requestData: AutoScheduleRequest,
+  requestData: AutoScheduleRequest | AutoScheduleRequest[],
   tenantId?: string,
   token?: string
 ): Promise<{ message: string; statusCode: number; data?: any }> => {
@@ -580,23 +580,33 @@ export const autoScheduleClass = async (
     throw new Error("Missing authentication or tenant information");
   }
 
-  // Validate that session_in_week equals array_number_in_week length
-  if (requestData.session_in_week !== requestData.array_number_in_week.length) {
-    throw new Error("Số buổi học trong tuần phải bằng với số ngày được chọn");
-  }
+  // Normalize to array format
+  const classesData = Array.isArray(requestData) ? requestData : [requestData];
 
-  // Validate time range
-  if (requestData.min_time >= requestData.max_time) {
-    throw new Error("Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc");
-  }
+  // Validate each class
+  classesData.forEach((classData, index) => {
+    // Validate that session_in_week equals array_number_in_week length
+    if (classData.session_in_week !== classData.array_number_in_week.length) {
+      throw new Error(
+        `Lớp ${index + 1}: Số buổi học trong tuần phải bằng với số ngày được chọn`
+      );
+    }
 
-  // Validate days of week (0-7 range based on backend mapping)
-  const invalidDays = requestData.array_number_in_week.filter(
-    (day) => day < 0 || day > 7
-  );
-  if (invalidDays.length > 0) {
-    throw new Error("Ngày trong tuần không hợp lệ");
-  }
+    // Validate time range
+    if (classData.min_time >= classData.max_time) {
+      throw new Error(
+        `Lớp ${index + 1}: Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc`
+      );
+    }
+
+    // Validate days of week (0-7 range based on backend mapping)
+    const invalidDays = classData.array_number_in_week.filter(
+      (day) => day < 0 || day > 7
+    );
+    if (invalidDays.length > 0) {
+      throw new Error(`Lớp ${index + 1}: Ngày trong tuần không hợp lệ`);
+    }
+  });
 
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/schedule/auto`,
@@ -607,7 +617,7 @@ export const autoScheduleClass = async (
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
       },
-      body: JSON.stringify(requestData),
+      body: JSON.stringify(classesData), // Always send as array
     }
   );
 
