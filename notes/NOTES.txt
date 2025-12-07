@@ -87,9 +87,31 @@ khi tạo user mới sẽ required birthday
 - thêm search + filter khi xếp lịch
 - logic thứ tự cho auto xếp lịch + tạo lớp: course -> khung giờ -> get schedule của instructor đó ra và check để chọn instructor -> tên class (generate tên class dựa theo course và slot) (UI: sẽ cho chọn theo slot -> chọn từ slot nào đến slot nào để suy ra  được min_time và max_time)
 
+
+- đây là logic và các thứ tự: manager/staff sẽ chọn course và khung giờ học trước tiên -> sau đó là sẽ generate tên class dựa theo mã cho dễ xác định (generate theo tên class dựa theo course và slot) -> sau đó là sẽ chọn instructor và get schedule của instructor đó ra và check xem là các lịch hiện tại của instructor đó có phù hợp hay không (instructor có available trong khung giờ đó không) để chọn instructor cho phù hợp 
+
+- lưu ý ở phần logic 'manager/staff sẽ chọn course và khung giờ học trước tiên': ở phần chọn Khung giờ học, hiện tại trên UI đang để cho manager/staff tự chọn các field min_time và max_time. bây giờ sẽ không cho làm như vậy nữa mà sẽ phải dựa vào thông tin của slots mà manager/staff chọn để mà calculate ra được min_time và max_time cho đúng, ví dụ khi tạo lớp học và xếp lịch tự động manager/staff chọn slot từ slot 1 đến slot 5 (từ 7 giờ đến 11 giờ) thì mình phải dựa vào đó mà tính ra được min_time và max_time. Còn về phần chọn ngày học thì sẽ giữ như cũ.
+- CÓ THẮC MĂC GÌ THÌ CỨ HỎI TÔI
+
+(UI: sẽ cho chọn theo slot -> chọn từ slot nào đến slot nào để suy ra  được min_time và max_time)
+
 Manager:
 - Khi tạo một lớp học cần support user có thể lựa chọn được instructor phù hợp cho khóa học của lớp học đó
 - Khi xếp lớp cần thêm các validate, warning về các trường hợp:
 	1. Tránh việc một instructor được xếp lịch dạy cho hai lớp khác nhau tại một thời điểm
   	2. Tránh việc thiếu tài nguyên hồ bơi do xếp lịch vào các hồ bơi vượt quá sức đáp ứng của hồ và cùng một thời điểm
 	3. Thêm ràng buộc liên quan giữa course và pool thông qua độ tuổi ( hồ bơi dành cho trẻ em, người lớn, hỗn hợp)
+
+hover > tự động xêp lihcj hoặc tạo lớp thêm filter search
+
+- làm theo step (vd: antd step)
+
+preview lịch > xác nhận > tạo lớp hàng loạt
+preview > xác nhận > 
+
+LỊCH: 
+-case 1: xếp lịch hàng loạt cho lớp có sẵn (manager/schedule/auto/preview)
+auto xếp lịch (ko xài schedule/auto -> thay bằng api tạo lịch bình thường) -> preview lịch + warning (nếu có thông tin bị trùng: check schedule của instructor) -> xác nhận + chọn pool + validate pool (cho sửa trực tiếp) -> tạo lịch theo api tạo lịch bình thường -> done (làm theo steps)
+
+-case 2: tạo lớp hàng loạt + case 1
+tạo lớp hàng loạt (có validate các thông tin: instructor, age rule,..., course validate: hiện chi tiết instructor đó có và thiếu gì) -> chỉ hiện lên UI các lớp học vừa mới tạo (lấy các insertedId respone data khi tạo lớp học -> search[_id:equal] là được) -> case 1 -> (làm theo steps)

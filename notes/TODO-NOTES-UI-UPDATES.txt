@@ -1,0 +1,22 @@
+NHỮNG THỨ CẦN LÀM ĐỂ TIẾN HÀNH REFACTOR CODE/UI CHO TRANG LỊCH, MODEL 'Tự động xếp lịch học' TRONG TRANG LỊCH:
+
+LỊCH: 
+- button 'Tự động xếp lịch học' đổi thành 1 button khi hover vào sẽ hiện 2 option button (expand button on hover) để chọn là 'Tạo lớp học' và 'Tự động xếp lịch học'. hoặc là có thể để 1 collapsible button 
+
+CÁC CASE LOGIC THAO TÁC VIỆC TẠO LỚP VÀ XẾP LỊCH CHO LỚP HỌC TRONG TRANG LỊCH: 
+-case 1: xếp lịch hàng loạt cho lớp có sẵn (api: manager/schedule/auto/preview)
+    1 -> auto xếp lịch (ko xài autoScheduleClass -> thay bằng api tạo lịch bình thường ) 
+    2 -> preview lịch + warning (nếu có thông tin bị trùng: check schedule của instructor) 
+    3 -> xác nhận + chọn pool + validate pool (cho sửa trực tiếp) 
+    4 -> tạo lịch theo api tạo lịch bình thường 
+    5 -> done 
+    (thiết kế UI theo kiểu stepper/làm theo trình tự)
+
+-case 2: tạo lớp hàng loạt + case 1
+    1 -> tạo lớp hàng loạt
+        khi tạo lớp học
+        (phải validate các thông tin: instructor, age rule,..., course validate: hiện chi tiết instructor đó có và thiếu gì) 
+    2 -> chỉ hiện lên UI các lớp học vừa mới tạo (lấy các insertedId respone data khi tạo lớp học -> search[_id:equal] là được) 
+    3 -> case 1
+
+

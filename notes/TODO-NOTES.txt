@@ -397,8 +397,5 @@ AGE TYPES
     "message": "Success",
     "statusCode": 200
 }
-- hiện tại đây là api, nên hãy tạo 1 file tên 'age-types.ts' trong folder api của manager để lưu api này
 
-- đọc file TODO-NOTES.txt để hiểu về các api 'chuyên môn của giáo viên' (instructor specialist) và api age types
-- bây giờ tôi cần bạn thêm 2 api hiểu về  'chuyên môn của giáo viên' này vào file instructors-api.ts
-- sau đó sẽ cần phải chỉnh sửa lại UI
+

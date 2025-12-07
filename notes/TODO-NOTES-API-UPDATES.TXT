@@ -1,0 +1,330 @@
+ĐÂY LÀ FILE .TXT TỔNG HỢP NHỮNG API CẦN PHẢI CẬP NHẬT VÀ SỬA LẠI VÀ NHỮNG API CẦN MỚI CẦN PHẢI THÊM, VỀ PHẦN TÔI SẼ GIẢI THÍCH CỤ THỂ Ở FILE KHÁC:
+
+SCHEDULE API
+- api autoScheduleClass không cần nữa. tạm thời comment lại api này
+- api createAndAutoScheduleClasses không cần nữa. tạm thời comment lại api này
+
+====================
+
+AGE RULES API:
+- là get method api để get được các age rules: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/age-rules
+- đây là response body:
+{
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 2,
+                "documents": [
+                    {
+                        "_id": "693196f612fb3088bf2a0dfe",
+                        "title": "Người lớn",
+                        "age_range": [
+                            19,
+                            120
+                        ],
+                        "created_at": "2025-12-04T21:13:10.000Z",
+                        "created_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "updated_at": "2025-12-04T21:13:20.000Z",
+                        "updated_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    {
+                        "_id": "69319672068928286b329e4a",
+                        "title": "Trẻ em",
+                        "age_range": [
+                            3,
+                            18
+                        ],
+                        "created_at": "2025-12-04T21:10:58.000Z",
+                        "created_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "updated_at": "2025-12-04T21:12:26.000Z",
+                        "updated_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- hiện tại đây là api MỚI, nên hãy tạo 1 file tên 'age-types.ts' trong folder api của manager để lưu api này
+
+====================
+
+INSTRUCTOR API:
+- đây là get method api để get chuyên môn của (các) instructor: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/instructor/specialist
+- đây là response body: 
+{
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 1,
+                "documents": [
+                    {
+                        "_id": "69359dcb1bb45b499da13594",
+                        "user": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "instructor2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-07T11:57:01.552Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "category": [
+                            {
+                                "_id": "6904c36c9cfd48321e3c6089",
+                                "title": "Huấn luyện thi đấu",
+                                "is_active": true,
+                                "created_at": "2025-10-31T21:10:52.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-31T21:10:52.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "age_types": [
+                            {
+                                "_id": "69319672068928286b329e4a",
+                                "title": "Trẻ em",
+                                "age_range": [
+                                    3,
+                                    18
+                                ],
+                                "created_at": "2025-12-04T21:10:58.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-12-04T21:12:26.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "created_at": "2025-12-07T22:31:23.000Z",
+                        "created_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "updated_at": "2025-12-07T22:31:51.000Z",
+                        "updated_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- đây là api MỚI, lưu api này file instructors-api.ts
+- LƯU Ý: api này sử dụng findcommon để có thể search theo field (đọc search-query.document.md)
+
+CREATE/UPDATE INSTRUCTOR SPECIALIST
+- đây là put method api để create/update chuyên môn cho 1 instructor: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/instructor/specialist?user=69356b6e9ec79b818e25b2cb
+- đây là request body:
+{
+    "category": [
+        "6904c36c9cfd48321e3c6089"
+    ],
+    "age_types": [
+        "69319672068928286b329e4a" // sử dụng api get age rules để lấy id và pass vào đây
+    ]
+}
+- đây là api MỚI, lưu api này file instructors-api.ts
+
+====================
+
+CLASS API:
+- cần phải cập nhật request body lại api createClass
+- đây là request body của createClass NẾU NHƯ TẠO 1 LỚP HỌC:
+[
+    {
+        "course": "69079ef9c5d0d1fc7a75e5bb",
+        "name": "test 6",
+        "instructor": "683c810c0707d1bbac3063f0",
+        "show_on_regist_course": false
+    },
+    {
+        "course": "69079ef9c5d0d1fc7a75e5bb",
+        "name": "test 7",
+        "instructor": "683c810c0707d1bbac3063f0",
+        "show_on_regist_course": false
+    }
+]
+- đây là request body của createClass NẾU NHƯ TẠO NHIỀU LỚP HỌC CÙNG LÚC:
+{
+    "course": "69079ef9c5d0d1fc7a75e5bb",
+    "name": "test 6",
+    "instructor": "683c810c0707d1bbac3063f0",
+    "show_on_regist_course": false
+}
+- về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều lớp học cùng 1 lúc thì request body sẽ là 1 array objects
+
+- cần phải cập nhật request body lại api updateClass
+- đây là request body của updateClass:
+{
+    "course": "69079ef9c5d0d1fc7a75e5bb",
+    "name": "test 6",
+    "instructor": "683c810c0707d1bbac3063f0",
+    "show_on_regist_course": false
+}
+
+====================
