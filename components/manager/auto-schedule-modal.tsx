@@ -112,6 +112,9 @@ export function AutoScheduleModal({
   const [activeTab, setActiveTab] = useState<"existing" | "create">("existing");
   const [newClassForms, setNewClassForms] = useState<NewClassForm[]>([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [courseSearchQuery, setCourseSearchQuery] = useState<string>("");
+  const [instructorSearchQuery, setInstructorSearchQuery] =
+    useState<string>("");
 
   const dayNames = [
     { label: "T2", value: 1 },
@@ -221,11 +224,31 @@ export function AutoScheduleModal({
     }
   };
 
+  // Filter courses based on search query
+  const filteredCourses = React.useMemo(() => {
+    if (!courseSearchQuery.trim()) return availableCourses;
+    const query = courseSearchQuery.toLowerCase();
+    return availableCourses.filter((course) =>
+      course.title.toLowerCase().includes(query)
+    );
+  }, [availableCourses, courseSearchQuery]);
+
+  // Filter instructors based on search query
+  const filteredInstructors = React.useMemo(() => {
+    if (!instructorSearchQuery.trim()) return availableInstructors;
+    const query = instructorSearchQuery.toLowerCase();
+    return availableInstructors.filter((instructor) =>
+      instructor.username.toLowerCase().includes(query)
+    );
+  }, [availableInstructors, instructorSearchQuery]);
+
   // Reset on modal close
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setNewClassForms([]);
       setActiveTab("existing");
+      setCourseSearchQuery("");
+      setInstructorSearchQuery("");
     }
     onOpenChange(open);
   };
@@ -551,15 +574,36 @@ export function AutoScheduleModal({
                                 <SelectValue placeholder='Chọn khóa học' />
                               </SelectTrigger>
                               <SelectContent>
-                                {availableCourses.map((course) => (
-                                  <SelectItem
-                                    key={course._id}
-                                    value={course._id}
-                                  >
-                                    {course.title} ({course.session_number || 0}{" "}
-                                    buổi)
-                                  </SelectItem>
-                                ))}
+                                <div className='sticky top-0 bg-background p-2 border-b z-50'>
+                                  <Input
+                                    type='text'
+                                    placeholder='Tìm kiếm khóa học...'
+                                    value={courseSearchQuery}
+                                    onChange={(e) =>
+                                      setCourseSearchQuery(e.target.value)
+                                    }
+                                    className='h-8'
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                                <div className='max-h-[200px] overflow-y-auto'>
+                                  {filteredCourses.length === 0 ? (
+                                    <div className='px-2 py-4 text-center text-sm text-muted-foreground'>
+                                      Không tìm thấy khóa học
+                                    </div>
+                                  ) : (
+                                    filteredCourses.map((course) => (
+                                      <SelectItem
+                                        key={course._id}
+                                        value={course._id}
+                                      >
+                                        {course.title} (
+                                        {course.session_number || 0} buổi)
+                                      </SelectItem>
+                                    ))
+                                  )}
+                                </div>
                               </SelectContent>
                             </Select>
                           </div>
@@ -602,14 +646,35 @@ export function AutoScheduleModal({
                                 <SelectValue placeholder='Chọn giáo viên' />
                               </SelectTrigger>
                               <SelectContent>
-                                {availableInstructors.map((instructor) => (
-                                  <SelectItem
-                                    key={instructor._id}
-                                    value={instructor._id}
-                                  >
-                                    {instructor.username}
-                                  </SelectItem>
-                                ))}
+                                <div className='sticky top-0 bg-background p-2 border-b z-50'>
+                                  <Input
+                                    type='text'
+                                    placeholder='Tìm kiếm giáo viên...'
+                                    value={instructorSearchQuery}
+                                    onChange={(e) =>
+                                      setInstructorSearchQuery(e.target.value)
+                                    }
+                                    className='h-8'
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                                <div className='max-h-[200px] overflow-y-auto'>
+                                  {filteredInstructors.length === 0 ? (
+                                    <div className='px-2 py-4 text-center text-sm text-muted-foreground'>
+                                      Không tìm thấy giáo viên
+                                    </div>
+                                  ) : (
+                                    filteredInstructors.map((instructor) => (
+                                      <SelectItem
+                                        key={instructor._id}
+                                        value={instructor._id}
+                                      >
+                                        {instructor.username}
+                                      </SelectItem>
+                                    ))
+                                  )}
+                                </div>
                               </SelectContent>
                             </Select>
                           </div>

@@ -1,0 +1,404 @@
+GET INSTRUCTOR SPECIALIST
+- đây là get method api để get chuyên môn của (các) instructor: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/instructor/specialist
+- đây là response body: 
+{
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 2,
+                "documents": [
+                    {
+                        "_id": "69356e4f9ec79b818e25b2cd",
+                        "user": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "instructor2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-07T11:57:01.552Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "category": [
+                            {
+                                "_id": "6904c36c9cfd48321e3c6089",
+                                "title": "Huấn luyện thi đấu",
+                                "is_active": true,
+                                "created_at": "2025-10-31T21:10:52.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-31T21:10:52.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "age_types": [
+                            {
+                                "_id": "69319672068928286b329e4a",
+                                "title": "Trẻ em",
+                                "age_range": [
+                                    3,
+                                    18
+                                ],
+                                "created_at": "2025-12-04T21:10:58.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-12-04T21:12:26.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "skills": [
+                            "crawl_basic"
+                        ],
+                        "levels": [
+                            "basic"
+                        ],
+                        "created_at": "2025-12-07T19:08:47.000Z",
+                        "created_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "updated_at": "2025-12-07T19:08:47.000Z",
+                        "updated_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    {
+                        "_id": "69356aa99ec79b818e25b2ca",
+                        "user": {
+                            "_id": "683c810c0707d1bbac3063f0",
+                            "username": "Instructor 1",
+                            "featured_image": [
+                                "68e61450c5b03cd632357c5d"
+                            ],
+                            "email": "instructor1@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "created_at": "2025-06-01T16:34:19.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-23T09:33:30.141Z",
+                            "updated_by": "683c810c0707d1bbac3063f0",
+                            "is_active": true,
+                            "parent_id": null,
+                            "role": [],
+                            "address": "123 duong thong nhat p1 go vap",
+                            "birthday": "2000-02-16T00:00:00.000Z",
+                            "phone": "0656756586"
+                        },
+                        "category": [
+                            {
+                                "_id": "68f5eff0fa3a437f39fef45a",
+                                "title": "Cơ bản",
+                                "created_at": "2025-10-20T15:16:48.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-20T15:16:48.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "age_types": [
+                            {
+                                "_id": "69319672068928286b329e4a",
+                                "title": "Trẻ em",
+                                "age_range": [
+                                    3,
+                                    18
+                                ],
+                                "created_at": "2025-12-04T21:10:58.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-12-04T21:12:26.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "skills": [
+                            "crawl_basic"
+                        ],
+                        "levels": [
+                            "basic"
+                        ],
+                        "created_at": "2025-12-07T18:53:13.000Z",
+                        "created_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "updated_at": "2025-12-07T18:53:13.000Z",
+                        "updated_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- LƯU Ý: api này sử dụng findcommon để có thể search theo field (đọc search-query.document.md)
+
+CREATE/UPDATE INSTRUCTOR SPECIALIST
+- đây là put method api để create/update chuyên môn cho 1 instructor: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/instructor/specialist?user=69356b6e9ec79b818e25b2cb
+- đây là request body:
+{
+    "category": [
+        "6904c36c9cfd48321e3c6089" // sử dụng api fetchAllCourseCategories trong course-categories.ts để hiện lên các khóa học để select và chọn (có thể chọn 1 hoặc nhiều đều được)
+    ],
+    "age_types": [
+        "69319672068928286b329e4a" sử dụng api để get ra các age_type để có thể select và chọn (có thể chọn 1 hoặc nhiều đều được)
+    ],
+     // skills sẽ có data cứng để chọn, đây là các skills có thể chọn:   "crawl_basic" (Craw Cơ Bản), "crawl_advanced" (Craw Nâng Cao),"breaststroke_basic" (Ếch Cơ Bản),"breaststroke_advanced" (Ếch Nâng Cao),"backstroke_basic" (Ngửa Cơ Bản),"backstroke_advanced" (Ngửa Nâng Cao),"butterfly_basic" (Bướm Cơ Bản),"butterfly_advanced" (Bướm Nâng Cao),"freestyle_breathing" (Kỹ Thuật Thở Sải),"float_training" (Nổi & Thăng Bằng),"kick_technique" (Kỹ Thuật Đạp Chân),"turns_and_push" (Quay Trở & Đẩy Tường),"dive_entry","endurance_building" (Rèn Luyện Sức Bền),"water_safety" (An Toàn Nước & Cứu Hộ Cơ Bản),"infant_swim" (Dạy Bơi Trẻ Nhỏ),"adult_beginner" (Dạy Bơi Người Lớn Mới Bắt Đầu),"competitive_training" (Kỹ Thuật Thi Đấu),"stroke_correction" (Chỉnh Sửa Kỹ Thuật),"painic_management" (Xử lý Hoảng Loạn)
+    "skills": [ 
+        "crawl_basic" (có thể chọn 1 hoặc nhiều đều được)
+    ],
+    // levels sẽ có data cứng để chọn, đây là các levels có thể chọn: basic, intermediate, advance
+    "levels": [
+        "basic" (có thể chọn 1 hoặc nhiều đều được)
+    ]
+}
+
+AGE TYPES
+- đây là get method api để get các loại độ tuổi: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/age-rules
+- đây là response data: 
+{
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 2,
+                "documents": [
+                    {
+                        "_id": "693196f612fb3088bf2a0dfe",
+                        "title": "Người lớn",
+                        "age_range": [
+                            19,
+                            120
+                        ],
+                        "created_at": "2025-12-04T21:13:10.000Z",
+                        "created_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "updated_at": "2025-12-04T21:13:20.000Z",
+                        "updated_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    {
+                        "_id": "69319672068928286b329e4a",
+                        "title": "Trẻ em",
+                        "age_range": [
+                            3,
+                            18
+                        ],
+                        "created_at": "2025-12-04T21:10:58.000Z",
+                        "created_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "updated_at": "2025-12-04T21:12:26.000Z",
+                        "updated_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- hiện tại đây là api, nên hãy tạo 1 file tên 'age-types.ts' trong folder api của manager để lưu api này
+
+- đọc file TODO-NOTES.txt để hiểu về các api 'chuyên môn của giáo viên' (instructor specialist) và api age types
+- bây giờ tôi cần bạn thêm 2 api hiểu về  'chuyên môn của giáo viên' này vào file instructors-api.ts
+- sau đó sẽ cần phải chỉnh sửa lại UI
