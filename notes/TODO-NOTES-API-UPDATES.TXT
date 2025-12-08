@@ -3,6 +3,9 @@
 SCHEDULE API
 - api autoScheduleClass không cần nữa. tạm thời comment lại api này
 - api createAndAutoScheduleClasses không cần nữa. tạm thời comment lại api này
+- api addClassToSchedule này hiện tại đang để ở trong file class-api.ts. cần chuyển api này qua file schedule-api.ts
+- cần update lại request body cho api addClassToSchedule này:
+    - 
 
 ====================
 
@@ -316,10 +319,10 @@ CLASS API:
     "instructor": "683c810c0707d1bbac3063f0",
     "show_on_regist_course": false
 }
-- về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều lớp học cùng 1 lúc thì request body sẽ là 1 array objects
+- về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều lớp học cùng 1 lúc thì request body sẽ là array objects
 
-- cần phải cập nhật request body lại api updateClass
-- đây là request body của updateClass:
+- cần phải cập nhật lại request body cho api updateClass
+- đây là request body mới của updateClass:
 {
     "course": "69079ef9c5d0d1fc7a75e5bb",
     "name": "test 6",
