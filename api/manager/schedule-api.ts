@@ -1,5 +1,6 @@
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { getUserFrontendRole } from "../role-utils";
 import config from "../config.json";
 
 // Define types for the schedule API response
@@ -551,7 +552,7 @@ export const deleteScheduleEvent = async (
   return result;
 };
 
-// Interface for auto schedule request (single class)
+// Interface for auto schedule preview request (single class)
 export interface AutoScheduleRequest {
   min_time: number; // Minimum hour (e.g., 7)
   max_time: number; // Maximum hour (e.g., 14)
@@ -560,18 +561,28 @@ export interface AutoScheduleRequest {
   class_id: string; // Class ID
 }
 
+// Interface for schedule creation request
+export interface AddScheduleRequest {
+  date: string; // YYYY-MM-DD format
+  slot: string; // Slot ID
+  classroom: string; // Class ID
+  pool: string; // Pool ID
+  instructor: string; // Instructor ID
+}
+
 /**
- * Auto schedule classes (supports single or multiple classes)
+ * Auto schedule classes PREVIEW (supports single or multiple classes)
+ * This API generates preview schedules without saving to database
  * @param requestData - Single class or array of classes to auto schedule
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
- * @returns Promise with auto schedule result
+ * @returns Promise with preview schedule data: { data: [[class1_schedules], [class2_schedules]], message, statusCode }
  */
-export const autoScheduleClass = async (
+export const autoScheduleClassPreview = async (
   requestData: AutoScheduleRequest | AutoScheduleRequest[],
   tenantId?: string,
   token?: string
-): Promise<{ message: string; statusCode: number; data?: any }> => {
+): Promise<{ message: string; statusCode: number; data?: any[][] }> => {
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
   const finalToken = token || getAuthToken();
@@ -611,7 +622,7 @@ export const autoScheduleClass = async (
   });
 
   const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/schedule/auto`,
+    `${config.API}/v1/workflow-process/manager/schedule/auto/preview`,
     {
       method: "POST",
       headers: {
@@ -626,7 +637,63 @@ export const autoScheduleClass = async (
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
     throw new Error(
-      errorData?.message || `Failed to auto schedule: ${response.status}`
+      errorData?.message ||
+        `Failed to generate schedule preview: ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};
+
+/**
+ * Add schedule(s) to class(es)
+ * @param scheduleData - Single schedule or array of schedules to create
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with created schedule data
+ */
+export const addClassToSchedule = async (
+  scheduleData: AddScheduleRequest | AddScheduleRequest[],
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Schedule";
+  }
+
+  // Always send as array for consistency
+  const requestBody = Array.isArray(scheduleData)
+    ? scheduleData
+    : [scheduleData];
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/schedule`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(
+      errorData?.message || `Failed to add schedule: ${response.status}`
     );
   }
 

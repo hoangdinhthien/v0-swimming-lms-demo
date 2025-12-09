@@ -65,7 +65,6 @@ import {
   type Classroom,
   type ClassItem,
 } from "@/api/manager/class-api";
-import { autoScheduleClass } from "@/api/manager/schedule-api";
 import { fetchPools, type Pool } from "@/api/manager/pools-api";
 import { fetchInstructors } from "@/api/manager/instructors-api";
 import { getMediaDetails } from "@/api/media-api";
@@ -92,6 +91,8 @@ import {
   type CalendarEvent as ScheduleCalendarEvent,
 } from "@/components/manager/schedule-calendar";
 import { AutoScheduleModal } from "@/components/manager/auto-schedule-modal";
+import { SchedulePreviewModal } from "@/components/manager/schedule-preview-modal";
+import { CreateClassesBatchModal } from "@/components/manager/create-classes-batch-modal";
 import {
   Dialog,
   DialogContent,
@@ -127,7 +128,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Clock, CheckCircle2, Settings, CalendarPlus } from "lucide-react";
+import {
+  Clock,
+  CheckCircle2,
+  Settings,
+  CalendarPlus,
+  ChevronDown,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const { Option } = AntdSelect;
 const { Text } = Typography;
@@ -234,12 +247,23 @@ export default function ImprovedAntdCalendarPage() {
   // Auto schedule from calendar modal states - REFACTORED for multiple classes
   const [isCalendarAutoScheduleModalOpen, setIsCalendarAutoScheduleModalOpen] =
     useState(false);
+
+  // New schedule preview modal with stepper (CASE 1)
+  const [isSchedulePreviewModalOpen, setIsSchedulePreviewModalOpen] =
+    useState(false);
   const [availableClassesForAutoSchedule, setAvailableClassesForAutoSchedule] =
     useState<ClassItem[]>([]);
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]); // Multiple selection
   const [loadingClassesForAutoSchedule, setLoadingClassesForAutoSchedule] =
     useState(false);
   const [isAutoScheduling, setIsAutoScheduling] = useState(false);
+
+  // Create classes modal (CASE 2)
+  const [isCreateClassesModalOpen, setIsCreateClassesModalOpen] =
+    useState(false);
+  const [newlyCreatedClassIds, setNewlyCreatedClassIds] = useState<string[]>(
+    []
+  );
 
   // Each class has its own schedule configuration
   const [classScheduleConfigs, setClassScheduleConfigs] = useState<{
@@ -249,6 +273,11 @@ export default function ImprovedAntdCalendarPage() {
       session_in_week: number;
       array_number_in_week: number[];
     };
+  }>({});
+
+  // Each class has its own selected slots (for pre-filling from CASE 2)
+  const [classSelectedSlots, setClassSelectedSlots] = useState<{
+    [classId: string]: string[];
   }>({});
 
   // Tab 2: Create new classes states
@@ -933,7 +962,7 @@ export default function ImprovedAntdCalendarPage() {
     return Math.max(0, sessionNumber - schedulesCount);
   };
 
-  // Handle opening calendar auto schedule modal
+  // Handle opening calendar auto schedule modal (old modal)
   const handleOpenCalendarAutoSchedule = async () => {
     setIsCalendarAutoScheduleModalOpen(true);
     setSelectedClassIds([]);
@@ -941,6 +970,84 @@ export default function ImprovedAntdCalendarPage() {
     // Load data for both tabs
     await loadClassesForAutoSchedule(); // Tab 1
     await loadDataForCreateTab(); // Tab 2
+  };
+
+  // Handle opening new schedule preview modal (CASE 1 with stepper)
+  const handleOpenSchedulePreviewModal = async () => {
+    setIsSchedulePreviewModalOpen(true);
+    // Load classes for selection
+    await loadClassesForAutoSchedule();
+  };
+
+  // Handle opening create classes modal (CASE 2)
+  const handleOpenCreateClassesModal = async () => {
+    setIsCreateClassesModalOpen(true);
+    // Load courses and instructors
+    await loadDataForCreateTab();
+  };
+
+  // Handle create classes complete - optionally proceed to CASE 1
+  const handleCreateClassesComplete = async (
+    insertedIds: string[],
+    scheduleConfig?: any
+  ) => {
+    if (insertedIds.length === 0) return;
+
+    setNewlyCreatedClassIds(insertedIds);
+
+    // If scheduleConfig is provided, user chose to continue to CASE 1
+    if (scheduleConfig) {
+      // Fetch newly created classes
+      const { fetchClassesByIds } = await import("@/api/manager/class-api");
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) return;
+
+      try {
+        const newClasses = await fetchClassesByIds(
+          insertedIds,
+          tenantId,
+          token
+        );
+
+        // Pre-select all newly created classes
+        setSelectedClassIds(insertedIds);
+
+        // Pre-fill schedule config for all classes
+        const configs: Record<string, any> = {};
+        insertedIds.forEach((id) => {
+          configs[id] = scheduleConfig;
+        });
+        setClassScheduleConfigs(configs);
+
+        // Pre-fill selected slots for all classes (if available in scheduleConfig)
+        if (
+          scheduleConfig.selectedSlotIds &&
+          Array.isArray(scheduleConfig.selectedSlotIds)
+        ) {
+          const slots: Record<string, string[]> = {};
+          insertedIds.forEach((id) => {
+            slots[id] = scheduleConfig.selectedSlotIds;
+          });
+          setClassSelectedSlots(slots);
+        }
+
+        // Open CASE 1 modal with pre-filled data
+        setAvailableClassesForAutoSchedule(newClasses);
+        setIsSchedulePreviewModalOpen(true);
+      } catch (error) {
+        console.error("Failed to fetch newly created classes:", error);
+        toast({
+          variant: "destructive",
+          title: "Lỗi",
+          description: "Không thể tải thông tin các lớp vừa tạo",
+        });
+      }
+    } else {
+      // User chose to finish - just refresh calendar
+      handleRefresh();
+    }
   };
 
   // Handle class selection toggle (multiple selection)
@@ -1308,13 +1415,36 @@ export default function ImprovedAntdCalendarPage() {
               />
               Làm mới
             </AntdButton>
-            <AntdButton
-              type='primary'
-              size='large'
-              onClick={handleOpenCalendarAutoSchedule}
-            >
-              Tự động xếp lịch học
-            </AntdButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size='lg'
+                  className='gap-2'
+                >
+                  Quản lý lớp học
+                  <ChevronDown className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='end'
+                className='w-56'
+              >
+                <DropdownMenuItem
+                  onClick={handleOpenCreateClassesModal}
+                  className='cursor-pointer'
+                >
+                  <CalendarPlus className='mr-2 h-4 w-4' />
+                  <span>Tạo lớp học</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleOpenSchedulePreviewModal}
+                  className='cursor-pointer'
+                >
+                  <Clock className='mr-2 h-4 w-4' />
+                  <span>Xếp lịch cho lớp có sẵn</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {/* Pool Overflow Warning Alert */}
@@ -2482,6 +2612,30 @@ export default function ImprovedAntdCalendarPage() {
           loadingCourses={loadingCoursesForCreate}
           loadingInstructors={loadingInstructorsForCreate}
           onCreateAndSchedule={handleCreateAndAutoSchedule}
+        />
+        {/* New Schedule Preview Modal with Stepper (CASE 1) */}
+        <SchedulePreviewModal
+          open={isSchedulePreviewModalOpen}
+          onOpenChange={setIsSchedulePreviewModalOpen}
+          availableClasses={availableClassesForAutoSchedule}
+          loading={loadingClassesForAutoSchedule}
+          preSelectedClassIds={selectedClassIds}
+          preSelectedSlots={classSelectedSlots}
+          preScheduleConfigs={classScheduleConfigs}
+          onScheduleComplete={() => {
+            setIsSchedulePreviewModalOpen(false);
+            handleRefresh();
+          }}
+        />
+        {/* Create Classes Modal (CASE 2) */}
+        <CreateClassesBatchModal
+          open={isCreateClassesModalOpen}
+          onOpenChange={setIsCreateClassesModalOpen}
+          availableCourses={availableCoursesForCreate}
+          availableInstructors={availableInstructorsForCreate}
+          loadingCourses={loadingCoursesForCreate}
+          loadingInstructors={loadingInstructorsForCreate}
+          onCreateComplete={handleCreateClassesComplete}
         />
       </div>
     </ConfigProvider>

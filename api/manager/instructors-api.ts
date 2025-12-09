@@ -12,6 +12,27 @@ export interface CreateInstructorData {
   is_active?: boolean;
 }
 
+export interface InstructorSpecialist {
+  _id: string;
+  user: string | { _id: string; username: string };
+  category: Array<{ _id: string; title: string }> | string[];
+  age_types: Array<{ _id: string; title: string }> | string[];
+  created_at?: string;
+  updated_at?: string;
+  tenant_id?: string;
+}
+
+interface InstructorSpecialistApiResponse {
+  data: InstructorSpecialist[];
+  message: string;
+  statusCode: number;
+}
+
+export interface UpdateInstructorSpecialistData {
+  category: string[];
+  age_types: string[];
+}
+
 export async function createInstructor({
   data,
   tenantId,
@@ -258,4 +279,133 @@ export async function updateInstructor({
 
   const responseData = await res.json();
   return responseData;
+}
+
+/**
+ * Fetch instructor specialist information
+ * @param searchParams - Optional search parameters using find-common format
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with instructor specialist data
+ */
+export async function fetchInstructorSpecialist({
+  searchParams,
+  tenantId,
+  token,
+}: {
+  searchParams?: Record<string, string>;
+  tenantId?: string;
+  token?: string;
+}): Promise<InstructorSpecialist[]> {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing tenant ID or authentication token");
+  }
+
+  let url = `${config.API}/v1/workflow-process/manager/instructor/specialist`;
+  const queryParams = new URLSearchParams();
+
+  // Add find-common search parameters
+  if (searchParams) {
+    Object.entries(searchParams).forEach(([key, value]) => {
+      queryParams.append(key, value);
+    });
+  }
+
+  if (queryParams.toString()) {
+    url += `?${queryParams.toString()}`;
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch instructor specialist: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+
+  // Parse nested response structure: data[0][0].documents
+  const documents = result.data?.[0]?.[0]?.documents || [];
+
+  return documents;
+}
+
+/**
+ * Create or update instructor specialist information
+ * @param userId - The instructor's user ID
+ * @param data - The specialist data to create/update
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with updated specialist data
+ */
+export async function updateInstructorSpecialist({
+  userId,
+  data,
+  tenantId,
+  token,
+}: {
+  userId: string;
+  data: UpdateInstructorSpecialistData;
+  tenantId?: string;
+  token?: string;
+}): Promise<InstructorSpecialist> {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing tenant ID or authentication token");
+  }
+
+  if (!userId) {
+    throw new Error("Missing user ID");
+  }
+
+  const url = `${config.API}/v1/workflow-process/manager/instructor/specialist?user=${userId}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "User";
+  }
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message ||
+        `Failed to update instructor specialist: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+
+  return result.data;
 }

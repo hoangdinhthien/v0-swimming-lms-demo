@@ -3,20 +3,62 @@ NHỮNG THỨ CẦN LÀM ĐỂ TIẾN HÀNH REFACTOR LẠI CODE UI CHO TRANG L�
 LỊCH: 
 - button 'Tự động xếp lịch học' đổi thành 1 button khi hover vào sẽ hiện 2 option button (expand button on hover) để chọn là 'Tạo lớp học' và 'Tự động xếp lịch học'. hoặc là có thể để 1 collapsible button 
 
-CÁC CASE LOGIC THAO TÁC VIỆC TẠO LỚP VÀ XẾP LỊCH CHO LỚP HỌC TRONG TRANG LỊCH (lưu ý: thiết kế UI theo kiểu stepper/làm theo trình tự): 
-- case 1: xếp lịch hàng loạt cho lớp có sẵn (api: manager/schedule/auto/preview)
-    1 -> auto xếp lịch (ko xài autoScheduleClass -> thay bằng api tạo lịch bình thường ) 
-    2 -> preview lịch + warning (nếu có thông tin bị trùng: check schedule của instructor) 
-    3 -> xác nhận + chọn pool + validate pool (cho sửa trực tiếp) 
-    4 -> tạo lịch theo api tạo lịch bình thường 
-    5 -> done 
+CÁC CASE LOGIC VÀ NGHIỆP VỤ ĐỂ THAO TÁC VIỆC TẠO LỚP VÀ XẾP LỊCH CHO LỚP HỌC TRONG TRANG LỊCH (lưu ý: thiết kế UI theo kiểu stepper/làm theo trình tự): 
+
+- CASE 1: XẾP LỊCH HÀNG LOẠT CHO LỚP HỌC CÓ SẴN (ko xài autoScheduleClass -> thay thế bằng api tạo lịch bình thường) 
+    1 -> chọn các lớp (hoặc một lớp) để xếp lịch hàng hoạt, sau đó manager/staff sẽ preview được lịch sau khi setup
+    (cách hoạt động: sử dụng api manager/schedule/auto/preview để setup lịch cho 1 lớp học hoặc các lớp học có sẵn, sau khi setup và gọi api xong, ta cần phải show lên trên UI response data của api manager/schedule/auto/preview vừa mới gọi này)
+
+    2 -> manager/staff sẽ preview lịch sau khi setup, sẽ hiện UI để show các hồ bơi đang available cho cái lịch preview đó để manager/staff sẽ chọn hồ bơi cho các schedule preview đó
+    (cách hoạt động: so sánh với data của lịch có sẵn từ api fetchMonthSchedule với response data preview để check xem có bị trùng thông tin CAPACITY của hồ bơi hay không? nếu có thông tin  hoặc capacity không đủ thì hiện warning lên cho từng mục mà bị trùng/đủ/thiếu
+    lưu ý: tôi nghĩ là phải tạo hàm so sánh thông tin data preview với thông tin data schedule
+    đây là hàm để tính ví dụ (đừng nên lấy y chang hàm này để sử dụng):
+        const list_schedule_review = []
+        const list_pool_with_scheduled = [] (start_date, end_date) // data get form request db
+        async function getListPoolWithDataCapacityAvaiable(slot, date) {
+        // get slot and date of schedule review to calculate capacity avaiable with each pool
+        const list_pool_with_data_capacity_avaiable = [];
+        for (const pool of list_pool_with_scheduled) {
+            let _pool = { ...pool};
+            // calculate capacity remain with other scheduled review and schedule in db (already mapped in pool.schedules)
+            let capacity_remain = pool.data_capacity;
+            for (const schedule of pool.schedules) {
+                if (schedule.date === date && schedule.slot === slot) {
+                    capacity_remain -= schedule.class.capacity
+                }
+        }
+        // for each scheduled review in memory
+        for (const schedule of list_schedule_review) {
+            if (schedule.pool_id === pool.id && schedule.date === date && schedule.slot === slot) {
+                capacity_remain -= schedule.class.capacity
+            }
+        }
+            _pool.list_schdule_used = pool.schedules.filter(s => s.date === date && s.slot === slot);
+            _pool.capacity_remain = capacity_remain;
+            list_pool_with_data_capacity_avaiable.push(_pool);
+        }
+        return list_pool_with_data_capacity_avaiable;
+        }
+    )
+
+    3 -> sau khi hiện lên các thông tin preview lên UI và chọn hồ pơi rồi, manager/staff sẽ check xác thông tin preview đó, nếu có thông tin cần thay đổi thì sẽ có thể thay đổi được trực tiếp ngay trên UI preview luôn (validate trực tiếp trên UI xem hồ bơi đó có thể sử dụng được không?), sau đó là xác nhận
+    (cách hoạt động: sau khi đã xác nhận trên UI các data cần để xếp lịch rồi, thì sẽ phải lấy các data đó và chỉnh lại để làm thành request body cho api addClassToSchedule, và run api)
+
+    4 -> sau khi manager/staff xác nhận thông tin đã xong thì sẽ click nút tạo lịch theo api tạo lịch bình thường 
+    5 -> done
     
 
-- case 2: tạo lớp hàng loạt + case 1
+- CASE 2: TẠO LỚP HÀNG LOẠT + CASE 1
     1 -> tạo lớp hàng loạt
         khi tạo lớp học
-        (phải validate các thông tin: instructor, age rule,..., course validate: hiện chi tiết instructor đó có và thiếu gì) 
-    2 -> chỉ hiện lên UI các lớp học vừa mới tạo (lấy các insertedId respone data khi tạo lớp học -> search[_id:equal] là được) 
-    3 -> case 1
+        (PHẢI validate các thông tin của instructor: age rule,..., course validate: hiện chi tiết instructor đó có và thiếu gì) 
+
+        
+        
+        (cách hoạt động: sử dụng api để lấy specialist của instructor đó để lấy thông tin để check với thông tin của course khi tạo khóa học đó xem có hợp lệ hay không bằng cách check xem các THÔNG TIN CỦA GIÁO VIÊN CÓ KHỚP ÍT NHẤT VỚI COURSE ĐÓ KHÔNG (AGE VÀ CATEGORY ÍT PHẢI KHỚP ÍT NHẤT LÀ 1 CÁI) ĐỂ THỎA MÃN)
+
+    2 -> chỉ hiện lên UI các lớp học vừa mới tạo (bằng cách lấy các insertedId respone data khi tạo lớp học -> sử dụng api param search[_id:in] là được) 
+
+    3 -> quay về case 1 để tiếp tục (hoặc không)
 
 

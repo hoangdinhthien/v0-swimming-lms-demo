@@ -1,11 +1,256 @@
 ĐÂY LÀ FILE .TXT TỔNG HỢP NHỮNG API CẦN PHẢI CẬP NHẬT VÀ SỬA LẠI VÀ NHỮNG API CẦN MỚI CẦN PHẢI THÊM, VỀ PHẦN TÔI SẼ GIẢI THÍCH CỤ THỂ Ở FILE KHÁC:
 
 SCHEDULE API
-- api autoScheduleClass không cần nữa. tạm thời comment lại api này
-- api createAndAutoScheduleClasses không cần nữa. tạm thời comment lại api này
+- api autoScheduleClass đã thay đổi logic, cần đổi tên thành autoScheduleClassPreview.
+    - request body vẫn sẽ như cũ.
+    - và các hàm để lấy ngày hiện tại để tính ra được ngày của backend để chọn cho đúng vẫn như cũ
+    - giải thích logic mới:  khi run api này, nó sẽ vẫn sẽ tạo ra các thông tin cho việc auto xếp lịch, NHƯNG CÁC DATA SẼ CHỈ LÀ Ở DẠNG PREVIEW CHỨ KHÔNG LƯU TRỰC TIẾP XUỐNG DATABASE sau khi gọi api này
+    - đây là url mới: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedule/auto/preview (POST METHOD)
+    - đây là response body cho api manager/schedule/auto/preview này:
+    {
+    "data": [
+        // array này là data schedule preview của 1 lớp học
+        [
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-09T19:55:39.000Z",
+                "slot": "681f0d110e90714dae7a5dc5",
+                "tenant_id": "67cabc98c87dc080914265d4", // không được add field này vào body của addClassToSchedule
+                "created_by": "6831d35a95ac46cc9b686001", // không được add field này vào body của addClassToSchedule
+                "updated_by": "6831d35a95ac46cc9b686001", // không được add field này vào body của addClassToSchedule
+                "created_at": "2025-12-08T19:55:39.000Z" // không được add field này vào body của addClassToSchedule
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-10T19:55:39.000Z",
+                "slot": "681f0d450e90714dae7a5dda",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-11T19:55:39.000Z",
+                "slot": "681f0d110e90714dae7a5dc5",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-16T19:55:39.000Z",
+                "slot": "681f0d450e90714dae7a5dda",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-17T19:55:39.000Z",
+                "slot": "681f0d110e90714dae7a5dc5",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-18T19:55:39.000Z",
+                "slot": "681f0d450e90714dae7a5dda",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-23T19:55:39.000Z",
+                "slot": "681f0d110e90714dae7a5dc5",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-24T19:55:39.000Z",
+                "slot": "681f0d450e90714dae7a5dda",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-25T19:55:39.000Z",
+                "slot": "681f0d110e90714dae7a5dc5",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e8f14048f4ec3bf8e54",
+                "instructor": "683c810c0707d1bbac3063f0",
+                "date": "2025-12-30T19:55:39.000Z",
+                "slot": "681f0d450e90714dae7a5dda",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            }
+        ],
+        // array này là data schedule preview của 1 lớp học khác
+        [
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-08T19:55:39.000Z",
+                "slot": "681f0d7c0e90714dae7a5e1e",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-13T19:55:39.000Z",
+                "slot": "681f0de10e90714dae7a5e7c",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-14T19:55:39.000Z",
+                "slot": "681f0dfb0e90714dae7a5e91",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-15T19:55:39.000Z",
+                "slot": "681f0d7c0e90714dae7a5e1e",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-20T19:55:39.000Z",
+                "slot": "681f0de10e90714dae7a5e7c",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-21T19:55:39.000Z",
+                "slot": "681f0dfb0e90714dae7a5e91",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-22T19:55:39.000Z",
+                "slot": "681f0d7c0e90714dae7a5e1e",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-27T19:55:39.000Z",
+                "slot": "681f0de10e90714dae7a5e7c",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-28T19:55:39.000Z",
+                "slot": "681f0dfb0e90714dae7a5e91",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            },
+            {
+                "classroom": "69330e7114048f4ec3bf8e53",
+                "instructor": "6711e8a47b45b2974bd6133c",
+                "date": "2025-12-29T19:55:39.000Z",
+                "slot": "681f0d7c0e90714dae7a5e1e",
+                "tenant_id": "67cabc98c87dc080914265d4",
+                "created_by": "6831d35a95ac46cc9b686001",
+                "updated_by": "6831d35a95ac46cc9b686001",
+                "created_at": "2025-12-08T19:55:39.000Z"
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 201
+    }
+    - LƯU Ý NHỮNG FIELD KHÔNG ĐƯỢC THÊM VÀO REQUEST BODY CỦA addClassToSchedule: created_at, updated_by, created_by, tenant_id.
+
+- api createAndAutoScheduleClasses không cần nữa. xóa api này đi
 - api addClassToSchedule này hiện tại đang để ở trong file class-api.ts. cần chuyển api này qua file schedule-api.ts
 - cần update lại request body cho api addClassToSchedule này:
-    - 
+    - đây là request body khi tạo 1 schedule:
+    {
+    "date": "2025-12-09",
+    "slot": "681f0b6f0e90714dae7a5d42", // sử dụng api fetchAllSlots để có thể chọn được slot
+    "classroom": "69330e7114048f4ec3bf8e53", // sử dụng api fetchClasses để có thể chọn được lớp học 
+    "pool": "690886bcb4e8cbef8e57f02b", // sử dụng api fetchPools để có thể chọn được hồ bơi
+    "instructor": "683c810c0707d1bbac3063f0" 
+    } // sử dụng api fetchInstructors để có thể chọn được giáo viên
+    - đây là request body khi TẠO NHIỀU schedule cho 1 lớp hoặc tạo nhiều schedule cho nhiều lớp:
+    [
+    {
+        "date": "2025-12-09",
+        "slot": "681f0b6f0e90714dae7a5d42",
+        "classroom": "69330e7114048f4ec3bf8e53",
+        "pool": "690886bcb4e8cbef8e57f02b",
+        "instructor": "683c810c0707d1bbac3063f0"
+    },
+    {
+        "date": "2025-12-11",
+        "slot": "681f0cfb0e90714dae7a5db0",
+        "classroom": "69330e8f14048f4ec3bf8e54",
+        "pool": "690886eab4e8cbef8e57f02c",
+        "instructor": "69356b6e9ec79b818e25b2cb"
+    }
+    ]
+    - về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều cùng 1 lúc thì request body sẽ là array objects thôi. nhưng để cho chắc chắn thì bạn có thể bọc lại các object trong 1 array là được
+    - nếu như khi tạo lịch mà date đó bị trùng lịch hay gì đó thì đã có backend validate và response lỗi
 
 ====================
 
@@ -154,6 +399,7 @@ AGE RULES API:
     "statusCode": 200
 }
 - hiện tại đây là api MỚI, nên hãy tạo 1 file tên 'age-types.ts' trong folder api của manager để lưu api này
+- LƯU Ý:
 
 ====================
 
@@ -280,15 +526,15 @@ INSTRUCTOR API:
 - đây là api MỚI, lưu api này file instructors-api.ts
 - LƯU Ý: api này sử dụng findcommon để có thể search theo field (đọc search-query.document.md)
 
-CREATE/UPDATE INSTRUCTOR SPECIALIST
+CREATE/UPDATE INSTRUCTOR SPECIALIST - GIẢI THÍCH: backend sẽ check nếu như instructor đó đã có specialist rồi thì sẽ là cập nhật, còn nếu chưa có specialist thì sẽ tạo specialist cho instructor đó
 - đây là put method api để create/update chuyên môn cho 1 instructor: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/instructor/specialist?user=69356b6e9ec79b818e25b2cb
 - đây là request body:
 {
-    "category": [
-        "6904c36c9cfd48321e3c6089"
+    "category": [ 
+        "6904c36c9cfd48321e3c6089" // sử dụng api fetchAllCourseCategories để hiện cho manager/staff select và pass vào đây
     ],
     "age_types": [
-        "69319672068928286b329e4a" // sử dụng api get age rules để lấy id và pass vào đây
+        "69319672068928286b329e4a" // sử dụng api get age rules để lấy _id của age type đó và pass vào đây
     ]
 }
 - đây là api MỚI, lưu api này file instructors-api.ts
@@ -312,6 +558,20 @@ CLASS API:
         "show_on_regist_course": false
     }
 ]
+- đây là response sau khi tạo mới 1 lớp học:
+{
+    "data": [
+        [
+            {
+                "acknowledged": true,
+                "insertedId": "69370b2e88007e659f232012"
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 201
+}
+
 - đây là request body của createClass NẾU NHƯ TẠO NHIỀU LỚP HỌC CÙNG LÚC:
 {
     "course": "69079ef9c5d0d1fc7a75e5bb",
@@ -319,7 +579,30 @@ CLASS API:
     "instructor": "683c810c0707d1bbac3063f0",
     "show_on_regist_course": false
 }
-- về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều lớp học cùng 1 lúc thì request body sẽ là array objects
+- đây là response sau khi tạo mới nhiều lớp cùng 1 lúc:
+{
+    "data": [
+        [
+            [
+                {
+                    "acknowledged": true,
+                    "insertedId": "6936e92b9a7abae2e1eb01ea"
+                }
+            ]
+        ],
+        [
+            [
+                {
+                    "acknowledged": true,
+                    "insertedId": "6936e92b9a7abae2e1eb01eb"
+                }
+            ]
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 201
+}
+- về cơ bản 2 request body này chỉ khác nhau ở việc khi tạo nhiều lớp học cùng 1 lúc thì request body sẽ là array objects. khi tạo 1 lớp thì gửi object, tạo nhiều lớp thì gửi array.
 
 - cần phải cập nhật lại request body cho api updateClass
 - đây là request body mới của updateClass:
@@ -329,5 +612,327 @@ CLASS API:
     "instructor": "683c810c0707d1bbac3063f0",
     "show_on_regist_course": false
 }
+
+- add thêm api này vào class-api.ts
+    - get method: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/classes/find-common?search[_id:in]=6935ce40fd06e8058b231fb0,2C69330e7114048f4ec3bf8e53
+    - đây là response body:
+    {
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 2,
+                "documents": [
+                    {
+                        "_id": "6935ce40fd06e8058b231fb0",
+                        "name": "test 6",
+                        "course": {
+                            "_id": "69079ef9c5d0d1fc7a75e5bb",
+                            "title": "Bơi Nâng Cao Tổng Hợp",
+                            "slug": "bi-nng-cao-tng-hp",
+                            "description": "Học viên đã qua cơ bản, tổng hợp 4 kiểu bơi chuẩn.",
+                            "price": 99998,
+                            "category": [
+                                "68f5eff0fa3a437f39fef45a",
+                                "681ef0540e90714dae7a5901",
+                                "681ef03f0e90714dae7a58ec"
+                            ],
+                            "session_number": 16,
+                            "session_number_duration": "75 phút",
+                            "detail": [
+                                {
+                                    "title": "Ôn kỹ thuật cơ bản",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {
+                                            "okela": {
+                                                "type": "string",
+                                                "required": false,
+                                                "is_filter": false,
+                                                "text_type": "short_text"
+                                            }
+                                        }
+                                    }
+                                }
+                            ],
+                            "media": [
+                                "691589fc0d7b87cc47afb464"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-11-03T01:12:09.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-04T22:06:34.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "max_member": 25,
+                            "type": [
+                                "global"
+                            ],
+                            "type_of_age": [
+                                "69319672068928286b329e4a"
+                            ]
+                        },
+                        "instructor": {
+                            "_id": "683c810c0707d1bbac3063f0",
+                            "username": "Instructor 1",
+                            "featured_image": [
+                                "68e61450c5b03cd632357c5d"
+                            ],
+                            "email": "instructor1@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "created_at": "2025-06-01T16:34:19.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-11-23T09:33:30.141Z",
+                            "updated_by": "683c810c0707d1bbac3063f0",
+                            "is_active": true,
+                            "parent_id": null,
+                            "role": [],
+                            "address": "123 duong thong nhat p1 go vap",
+                            "birthday": "2000-02-16T00:00:00.000Z",
+                            "phone": "0656756586"
+                        },
+                        "show_on_regist_course": false,
+                        "created_at": "2025-12-08T01:58:08.000Z",
+                        "created_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "updated_at": "2025-12-08T01:58:08.000Z",
+                        "updated_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    {
+                        "_id": "69330e7114048f4ec3bf8e53",
+                        "name": "test 1",
+                        "course": {
+                            "_id": "6904cc92f2b4e2ea577cdc95",
+                            "title": "Bơi Sải Cơ Bản Cho Người Lớn",
+                            "slug": "bi-si-c-bn-cho-ngi-ln",
+                            "description": "Rèn kỹ thuật bơi sải và hơi thở đúng chuẩn.",
+                            "price": 199997,
+                            "category": [
+                                "68f5eff0fa3a437f39fef45a",
+                                "681ef0540e90714dae7a5901"
+                            ],
+                            "session_number": 10,
+                            "session_number_duration": "75 phút",
+                            "detail": [
+                                {
+                                    "title": "Tư thế thân",
+                                    "form_judge": {
+                                        "type": "object",
+                                        "items": {}
+                                    }
+                                }
+                            ],
+                            "media": [
+                                "691589fc0d7b87cc47afb464"
+                            ],
+                            "is_active": true,
+                            "created_at": "2025-10-31T21:49:54.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-04T21:27:29.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "max_member": 15,
+                            "type": [
+                                "global"
+                            ],
+                            "type_of_age": [
+                                "693196f612fb3088bf2a0dfe"
+                            ]
+                        },
+                        "instructor": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "created_at": "2025-12-05T23:55:13.000Z",
+                        "created_by": {
+                            "_id": "6831d35a95ac46cc9b686001",
+                            "email": "manager1@gmail.com",
+                            "username": "manager1",
+                            "role_system": "user",
+                            "role": [
+                                "6839b77759d14fb7e138fc41",
+                                "688a45b60f003061e30fba9f"
+                            ],
+                            "role_front": [
+                                "manager"
+                            ],
+                            "parent_id": null,
+                            "is_active": true,
+                            "created_at": "2025-05-24T14:10:34.481Z",
+                            "updated_at": "2025-11-25T06:43:34.334Z",
+                            "featured_image": [
+                                "688cdb52e576134f7a636a5f"
+                            ],
+                            "tenant_id": null,
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "address": "123 quang trung",
+                            "phone": "0708797722"
+                        },
+                        "updated_at": "2025-12-07T22:59:05.000Z",
+                        "updated_by": {
+                            "_id": "6711e8a47b45b2974bd6133c",
+                            "email": "admin2024@gmail.com",
+                            "username": "tiennt",
+                            "phone": "+84559330072",
+                            "is_active": true,
+                            "role_system": "admin",
+                            "created_at": "2024-09-12T06:45:23.353Z",
+                            "updated_at": "2025-10-08T07:05:22.473Z",
+                            "role": [
+                                "67cc84d1e7897d5c9467035b"
+                            ],
+                            "featured_image": [
+                                "686e7d74fd8e111ce0b08216"
+                            ],
+                            "birthday": "2003-04-12T00:00:00.000Z",
+                            "cover": [
+                                "67cdc5143fdc2c15ebc9ee7f"
+                            ],
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "parent_id": null,
+                            "address": "",
+                            "updated_by": "6831d35a95ac46cc9b686001"
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "member": [
+                            {
+                                "_id": "67cd20759d0aaee8d9cd88ad",
+                                "email": "member1@gmail.com",
+                                "username": "Member",
+                                "role_system": "user",
+                                "role": [],
+                                "is_active": true,
+                                "created_at": "2025-03-09T05:00:37.736Z",
+                                "updated_at": "2025-11-24T02:46:52.067Z",
+                                "role_front": [
+                                    "member"
+                                ],
+                                "parent_id": null,
+                                "featured_image": [
+                                    "68f3cd5716ab899b487feb9f"
+                                ],
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "phone": "0934102678",
+                                "birthday": "2000-01-01T00:00:00.000Z"
+                            }
+                        ],
+                        "order": [
+                            {
+                                "_id": "6935a46da03991febd9b5a06",
+                                "title": "Order for course Bơi Nâng Cao Tổng Hợp - class 69330e7114048f4ec3bf8e53 - user 67cd20759d0aaee8d9cd88ad",
+                                "type": [
+                                    "member"
+                                ],
+                                "course": "69079ef9c5d0d1fc7a75e5bb",
+                                "class_choosed": "69330e7114048f4ec3bf8e53",
+                                "price": 99998,
+                                "guest": null,
+                                "user": "67cd20759d0aaee8d9cd88ad",
+                                "created_at": "2025-12-07T22:59:41.000Z",
+                                "created_by": "67cd20759d0aaee8d9cd88ad",
+                                "tenant_id": "68e953c51854b716fba8a108",
+                                "status": [
+                                    "refunded"
+                                ],
+                                "payment": {
+                                    "url": "https://qcgateway.zalopay.vn/openinapp?order=eyJ6cHRyYW5zdG9rZW4iOiJBQzVrX1VOWWtpZDJaMGhGWG1SWFQyUnciLCJhcHBpZCI6MjU1NH0=",
+                                    "app_trans_id": "251207_950810",
+                                    "zp_trans_id": 251207000006045,
+                                    "refund_id": "251207_2554_1765123379770653",
+                                    "refund_response": {
+                                        "response": {
+                                            "return_code": 3,
+                                            "return_message": "Giao dịch đang refund!",
+                                            "sub_return_code": 2,
+                                            "sub_return_message": "Giao dịch đang refund!",
+                                            "refund_id": 251207000006236
+                                        },
+                                        "data": "{\"app_id\":2554,\"m_refund_id\":\"251207_2554_1765123379770653\",\"zp_trans_id\":\"251207000006045\",\"amount\":99998,\"timestamp\":1765123379770,\"description\":\"tiennt test\",\"mac\":\"7da3d9463a7f69601699b596ab1e9d21394c95317d60c0a534983f9645757951\"}"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+    }
+- giải thích: api này dùng để khi manager/staff TẠO LỚP HÀNG LOẠT VÀ XẾP LỊCH cho các lớp học vừa mới tạo, sau đó sẽ dùng api này để get những lớp học vừa mới tạo đó bằng insertedId response ra khi tạo lớp học bằng param ?search[_id:in]=6935ce40fd06e8058b231fb0,2C69330e7114048f4ec3bf8e53  
 
 ====================

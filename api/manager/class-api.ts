@@ -164,7 +164,8 @@ export interface CreateClassData {
   course: string; // course id
   name: string; // class name
   instructor: string; // instructor id
-  member: string[]; // array of member ids
+  member?: string[]; // array of member ids (optional)
+  show_on_regist_course?: boolean; // show on registration course (optional)
 }
 
 // Interface for updating a class
@@ -325,14 +326,78 @@ export const fetchClasses = async (
 };
 
 /**
+ * Fetch classes by their IDs using search[_id:in] parameter
+ * @param classIds - Array of class IDs to fetch
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with classes data
+ */
+export const fetchClassesByIds = async (
+  classIds: string[],
+  tenantId?: string,
+  token?: string
+): Promise<ClassItem[]> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing tenant ID or authentication token");
+  }
+
+  if (!classIds || classIds.length === 0) {
+    return [];
+  }
+
+  // Build URL with search[_id:in] parameter
+  const idsParam = classIds.join(",");
+  const url = `${config.API}/v1/workflow-process/manager/classes/find-common?search[_id:in]=${idsParam}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Classroom";
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch classes: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+
+  // Extract classes from nested structure: data[0][0].documents
+  if (
+    result.data &&
+    Array.isArray(result.data) &&
+    result.data[0] &&
+    result.data[0][0] &&
+    result.data[0][0].documents
+  ) {
+    return result.data[0][0].documents;
+  }
+
+  return [];
+};
+
+/**
  * Create a new class
- * @param data - The class data to create
+ * @param data - The class data to create (single object or array for batch creation)
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
  * @returns Promise with created class data
  */
 export const createClass = async (
-  data: CreateClassData,
+  data: CreateClassData | CreateClassData[],
   tenantId?: string,
   token?: string
 ): Promise<any> => {
@@ -635,7 +700,8 @@ export async function fetchClassroomsByCourseAndSchedule(
 }
 
 /**
- * Add a class to schedule
+ * @deprecated This function has been moved to schedule-api.ts as addClassToSchedule
+ * Please import from schedule-api.ts instead
  */
 export async function addClassToSchedule(
   request: ScheduleRequest,
@@ -993,10 +1059,13 @@ export async function removeMemberFromClass(
 }
 
 // ============================================================================
-// Create class and auto-schedule in one API call
+// DEPRECATED: Create class and auto-schedule in one API call
+// This functionality has been replaced by separate create + schedule preview workflow
 // ============================================================================
 
-// Interface for creating a new class with auto-schedule
+/**
+ * @deprecated This interface is no longer used. Use CreateClassData + AutoScheduleRequest instead
+ */
 export interface CreateAndAutoScheduleRequest {
   course: string; // course id
   name: string; // class name
@@ -1009,77 +1078,16 @@ export interface CreateAndAutoScheduleRequest {
 }
 
 /**
- * Create new class(es) and auto-schedule them in one operation
- * @param requestData - Single class or array of classes to create and auto-schedule
- * @param tenantId - Optional tenant ID
- * @param token - Optional auth token
- * @returns Promise with creation and auto-schedule result
+ * @deprecated This API has been removed from backend. Use createClass + autoScheduleClassPreview instead
+ * @see createClass for creating classes
+ * @see autoScheduleClassPreview in schedule-api.ts for preview schedules
  */
 export const createAndAutoScheduleClasses = async (
   requestData: CreateAndAutoScheduleRequest | CreateAndAutoScheduleRequest[],
   tenantId?: string,
   token?: string
 ): Promise<{ message: string; statusCode: number; data?: any }> => {
-  const finalTenantId = tenantId || getSelectedTenant();
-  const finalToken = token || getAuthToken();
-
-  if (!finalTenantId || !finalToken) {
-    throw new Error("Missing tenant ID or auth token");
-  }
-
-  // Always normalize to array format for API
-  const classesData = Array.isArray(requestData) ? requestData : [requestData];
-
-  // Validate each class
-  for (let i = 0; i < classesData.length; i++) {
-    const cls = classesData[i];
-    if (!cls.course || !cls.name || !cls.instructor) {
-      throw new Error(
-        `Class ${i + 1}: Missing required fields (course, name, instructor)`
-      );
-    }
-    if (
-      cls.array_number_in_week.length === 0 ||
-      cls.session_in_week !== cls.array_number_in_week.length
-    ) {
-      throw new Error(
-        `Class ${
-          i + 1
-        }: Invalid day selection. session_in_week must match array_number_in_week length`
-      );
-    }
-    if (cls.min_time >= cls.max_time) {
-      throw new Error(`Class ${i + 1}: min_time must be less than max_time`);
-    }
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "x-tenant-id": finalTenantId,
-    Authorization: `Bearer ${finalToken}`,
-  };
-
-  // Add service header for staff users
-  if (getUserFrontendRole() === "staff") {
-    headers["service"] = "Class";
-  }
-
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/class/auto`,
-    {
-      method: "POST",
-      headers,
-      body: JSON.stringify(classesData),
-    }
+  throw new Error(
+    "createAndAutoScheduleClasses has been deprecated. Please use createClass() followed by autoScheduleClassPreview() from schedule-api.ts instead."
   );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      errorData.message ||
-        `Failed to create and auto-schedule classes: ${response.status}`
-    );
-  }
-
-  return await response.json();
 };
