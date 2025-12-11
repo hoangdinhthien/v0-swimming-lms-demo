@@ -37,7 +37,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, AlertCircle, CheckCircle2, Edit2 } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  Edit2,
+  Calendar as CalendarLucide,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClassItem } from "@/api/manager/class-api";
 import type { SlotDetail } from "@/api/manager/slot-api";
@@ -52,6 +58,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   Calendar as BigCalendar,
   momentLocalizer,
@@ -827,32 +837,68 @@ export function SchedulePreviewModal({
             );
 
             const capacityRemain = (pool.capacity || 0) - capacityUsed;
-            const isAvailable = capacityRemain >= classCapacity;
+            // Changed: isAvailable now only checks if pool has any remaining capacity (> 0)
+            const isAvailable = capacityRemain > 0;
 
             // Validation 1: Check age type matching (type_of_age)
             const courseTypeOfAge = (classItem?.course as any)?.type_of_age;
             const poolTypeOfAge = (pool as any).type_of_age;
 
-            // Extract IDs if they are objects
-            const courseTypeId =
-              typeof courseTypeOfAge === "object"
-                ? courseTypeOfAge?._id
-                : courseTypeOfAge;
-            const poolTypeId =
-              typeof poolTypeOfAge === "object"
-                ? poolTypeOfAge?._id
-                : poolTypeOfAge;
-            const poolTypeTitle =
-              typeof poolTypeOfAge === "object"
-                ? poolTypeOfAge?.title?.toLowerCase()
-                : poolTypeOfAge?.toLowerCase();
+            // Handle array of type_of_age (pool can have multiple age types)
+            let poolTypeIds: string[] = [];
+            let poolTypeTitles: string[] = [];
 
+            if (Array.isArray(poolTypeOfAge)) {
+              poolTypeOfAge.forEach((t: any) => {
+                if (typeof t === "object" && t?._id) {
+                  poolTypeIds.push(t._id);
+                  poolTypeTitles.push(t?.title?.toLowerCase() || "");
+                } else if (typeof t === "string") {
+                  poolTypeIds.push(t);
+                }
+              });
+            } else if (poolTypeOfAge) {
+              const poolTypeId =
+                typeof poolTypeOfAge === "object"
+                  ? poolTypeOfAge?._id
+                  : poolTypeOfAge;
+              const poolTypeTitle =
+                typeof poolTypeOfAge === "object"
+                  ? poolTypeOfAge?.title?.toLowerCase()
+                  : poolTypeOfAge?.toLowerCase();
+              if (poolTypeId) poolTypeIds.push(poolTypeId);
+              if (poolTypeTitle) poolTypeTitles.push(poolTypeTitle);
+            }
+
+            // Handle course type_of_age (can also be array)
+            let courseTypeIds: string[] = [];
+            if (Array.isArray(courseTypeOfAge)) {
+              courseTypeOfAge.forEach((t: any) => {
+                if (typeof t === "object" && t?._id) {
+                  courseTypeIds.push(t._id);
+                } else if (typeof t === "string") {
+                  courseTypeIds.push(t);
+                }
+              });
+            } else if (courseTypeOfAge) {
+              const courseTypeId =
+                typeof courseTypeOfAge === "object"
+                  ? courseTypeOfAge?._id
+                  : courseTypeOfAge;
+              if (courseTypeId) courseTypeIds.push(courseTypeId);
+            }
+
+            // Check if pool is "mixed" type (accepts any age)
+            const isMixedPool = poolTypeTitles.some(
+              (t) => t === "mixed" || t === "hỗn hợp"
+            );
+
+            // Has warning if course has type_of_age but pool doesn't match any
             const hasAgeWarning =
-              courseTypeId &&
-              poolTypeId &&
-              courseTypeId !== poolTypeId &&
-              poolTypeTitle !== "mixed" && // Assume 'mixed' pools can accept any age
-              poolTypeTitle !== "hỗn hợp"; // Vietnamese for mixed
+              courseTypeIds.length > 0 &&
+              poolTypeIds.length > 0 &&
+              !isMixedPool &&
+              !courseTypeIds.some((cId) => poolTypeIds.includes(cId));
 
             // Validation 2: Check instructor conflict
             const instructorId = schedule.instructor._id;
@@ -871,7 +917,7 @@ export function SchedulePreviewModal({
               title: pool.title,
               capacity: pool.capacity || 0,
               capacity_remain: capacityRemain,
-              isAvailable,
+              isAvailable, // Now true if capacity_remain > 0
               schedulesUsed: [],
               type_of_age: poolTypeOfAge,
               hasAgeWarning,
@@ -885,17 +931,24 @@ export function SchedulePreviewModal({
 
       setPoolCapacities(capacityMap);
 
-      // Step 5: Auto-select best pool for each schedule using scoring algorithm
+      // Step 5: Auto-select best pool for each schedule using NEW scoring algorithm
       const autoSelectedPools: { [scheduleKey: string]: string } = {};
 
       Object.entries(capacityMap).forEach(([scheduleKey, pools]) => {
-        // Score each pool
+        // Score each pool - NEW LOGIC: Always select a pool if any available
         const scoredPools = pools.map((pool) => {
           let score = 0;
+
+          // Base score: Pool must have remaining capacity
+          if (pool.capacity_remain > 0) {
+            score += 50; // Base points for having capacity
+          }
 
           // Priority 1: Age type match (highest priority) - +100 points
           if (!pool.hasAgeWarning) {
             score += 100;
+          } else {
+            score += 20; // Still give some points even with warning (allow selection)
           }
 
           // Priority 2: No instructor conflict - +50 points
@@ -903,15 +956,15 @@ export function SchedulePreviewModal({
             score += 50;
           }
 
-          // Priority 3: Capacity availability - proportional score (0-50 points)
-          if (pool.capacity > 0) {
+          // Priority 3: Higher remaining capacity is better - proportional score (0-30 points)
+          if (pool.capacity > 0 && pool.capacity_remain > 0) {
             const capacityRatio = pool.capacity_remain / pool.capacity;
-            score += capacityRatio * 50;
+            score += capacityRatio * 30;
           }
 
-          // Penalty: If capacity is not available, heavily penalize
-          if (!pool.isAvailable) {
-            score -= 200; // Heavy penalty
+          // Small penalty if capacity is 0, but don't make it impossible to select
+          if (pool.capacity_remain <= 0) {
+            score -= 50;
           }
 
           return {
@@ -923,10 +976,21 @@ export function SchedulePreviewModal({
         // Sort by score descending
         scoredPools.sort((a, b) => b.score - a.score);
 
-        // Select the pool with highest score (if score > 0, meaning some criteria met)
+        // NEW: Always select best pool if it has any positive score (even with warnings)
         const bestPool = scoredPools[0];
         if (bestPool && bestPool.score > 0) {
           autoSelectedPools[scheduleKey] = bestPool._id;
+        } else if (bestPool && pools.some((p) => p.capacity_remain > 0)) {
+          // Fallback: if no pool with positive score, pick the one with most capacity
+          const poolWithMostCapacity = [...pools].sort(
+            (a, b) => b.capacity_remain - a.capacity_remain
+          )[0];
+          if (
+            poolWithMostCapacity &&
+            poolWithMostCapacity.capacity_remain > 0
+          ) {
+            autoSelectedPools[scheduleKey] = poolWithMostCapacity._id;
+          }
         }
       });
 
@@ -1117,39 +1181,69 @@ export function SchedulePreviewModal({
                                 <div className='space-y-3 pt-3 border-t'>
                                   <div className='space-y-2'>
                                     <Label>Ngày bắt đầu xếp lịch *</Label>
-                                    <input
-                                      type='date'
-                                      value={config.start_date || ""}
-                                      min={
-                                        new Date(
-                                          new Date().setDate(
-                                            new Date().getDate() + 1
-                                          )
-                                        )
-                                          .toISOString()
-                                          .split("T")[0]
-                                      }
-                                      onChange={(e) =>
-                                        handleStartDateChange(
-                                          classItem._id,
-                                          e.target.value
-                                        )
-                                      }
-                                      className='w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary'
-                                    />
-                                    {config.start_date && (
-                                      <p className='text-xs text-muted-foreground'>
-                                        Ngày bắt đầu:{" "}
-                                        {new Date(
-                                          config.start_date
-                                        ).toLocaleDateString("vi-VN", {
-                                          weekday: "long",
-                                          year: "numeric",
-                                          month: "long",
-                                          day: "numeric",
-                                        })}
-                                      </p>
-                                    )}
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant='outline'
+                                          className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !config.start_date &&
+                                              "text-muted-foreground"
+                                          )}
+                                        >
+                                          <CalendarLucide className='mr-2 h-4 w-4' />
+                                          {config.start_date ? (
+                                            format(
+                                              new Date(
+                                                config.start_date + "T00:00:00"
+                                              ),
+                                              "EEEE, dd/MM/yyyy",
+                                              { locale: vi }
+                                            )
+                                          ) : (
+                                            <span>Chọn ngày bắt đầu</span>
+                                          )}
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent
+                                        className='w-auto p-0'
+                                        align='start'
+                                      >
+                                        <Calendar
+                                          mode='single'
+                                          selected={
+                                            config.start_date
+                                              ? new Date(
+                                                  config.start_date +
+                                                    "T00:00:00"
+                                                )
+                                              : undefined
+                                          }
+                                          onSelect={(date) => {
+                                            if (date) {
+                                              const dateStr = format(
+                                                date,
+                                                "yyyy-MM-dd"
+                                              );
+                                              handleStartDateChange(
+                                                classItem._id,
+                                                dateStr
+                                              );
+                                            }
+                                          }}
+                                          disabled={(date) => {
+                                            const tomorrow = new Date();
+                                            tomorrow.setDate(
+                                              tomorrow.getDate() + 1
+                                            );
+                                            tomorrow.setHours(0, 0, 0, 0);
+                                            return date < tomorrow;
+                                          }}
+                                          initialFocus
+                                          locale={vi}
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
                                   </div>
 
                                   <div className='space-y-2'>
@@ -1270,14 +1364,14 @@ export function SchedulePreviewModal({
               </div>
             </StepperStep>
 
-            {/* Step 2: Preview Schedules */}
+            {/* Step 2: Preview Schedules - Summary View */}
             <StepperStep step={1}>
               <div className='space-y-4'>
                 <Alert>
                   <AlertCircle className='h-4 w-4' />
                   <AlertDescription>
-                    Đây là lịch học được tạo tự động. Hồ bơi sẽ được chọn ở bước
-                    tiếp theo.
+                    Đây là tổng quan lịch học được tạo tự động. Hồ bơi sẽ được
+                    chọn ở bước tiếp theo.
                   </AlertDescription>
                 </Alert>
 
@@ -1286,11 +1380,7 @@ export function SchedulePreviewModal({
                     Không có dữ liệu xem trước
                   </div>
                 ) : (
-                  <Accordion
-                    type='multiple'
-                    defaultValue={Object.keys(previewSchedules)}
-                    className='space-y-2'
-                  >
+                  <div className='space-y-4'>
                     {Object.entries(previewSchedules).map(
                       ([classId, schedules]) => {
                         const classItem = availableClasses.find(
@@ -1299,42 +1389,78 @@ export function SchedulePreviewModal({
 
                         if (!schedules || schedules.length === 0) {
                           return (
-                            <AccordionItem
+                            <div
                               key={classId}
-                              value={classId}
-                              className='border rounded-lg'
+                              className='border rounded-lg p-4'
                             >
-                              <AccordionTrigger className='px-4 hover:no-underline'>
-                                <div className='flex items-center justify-between w-full pr-4'>
-                                  <div className='text-left'>
-                                    <h4 className='font-medium'>
-                                      {classItem?.name}
-                                    </h4>
-                                    <p className='text-sm text-muted-foreground'>
-                                      Không thể tạo lịch
-                                    </p>
-                                  </div>
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className='px-4 pb-4'>
-                                <p className='text-sm text-muted-foreground'>
-                                  Không thể tạo lịch cho lớp này. Vui lòng thử
-                                  lại với cấu hình khác.
-                                </p>
-                              </AccordionContent>
-                            </AccordionItem>
+                              <h4 className='font-medium'>{classItem?.name}</h4>
+                              <p className='text-sm text-muted-foreground'>
+                                Không thể tạo lịch cho lớp này.
+                              </p>
+                            </div>
                           );
                         }
 
+                        // Generate summary: group by day of week and slot
+                        const daySlotMap: { [dayName: string]: Set<string> } =
+                          {};
+                        const scheduledDates: Date[] = [];
+
+                        schedules.forEach((schedule) => {
+                          const date = new Date(schedule.date);
+                          scheduledDates.push(date);
+                          const dayName = date.toLocaleDateString("vi-VN", {
+                            weekday: "long",
+                          });
+                          const capitalizedDay =
+                            dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                          if (!daySlotMap[capitalizedDay]) {
+                            daySlotMap[capitalizedDay] = new Set();
+                          }
+                          daySlotMap[capitalizedDay].add(
+                            schedule.slot?.title || ""
+                          );
+                        });
+
+                        // Sort days in week order
+                        const dayOrder = [
+                          "Thứ hai",
+                          "Thứ ba",
+                          "Thứ tư",
+                          "Thứ năm",
+                          "Thứ sáu",
+                          "Thứ bảy",
+                          "Chủ nhật",
+                        ];
+                        const sortedDays = Object.keys(daySlotMap).sort(
+                          (a, b) => {
+                            const aIdx = dayOrder.findIndex((d) =>
+                              a.toLowerCase().includes(d.toLowerCase())
+                            );
+                            const bIdx = dayOrder.findIndex((d) =>
+                              b.toLowerCase().includes(d.toLowerCase())
+                            );
+                            return aIdx - bIdx;
+                          }
+                        );
+
+                        // Find date range
+                        const minDate = new Date(
+                          Math.min(...scheduledDates.map((d) => d.getTime()))
+                        );
+                        const maxDate = new Date(
+                          Math.max(...scheduledDates.map((d) => d.getTime()))
+                        );
+
                         return (
-                          <AccordionItem
+                          <div
                             key={classId}
-                            value={classId}
-                            className='border rounded-lg'
+                            className='border rounded-lg overflow-hidden'
                           >
-                            <AccordionTrigger className='px-4 hover:no-underline'>
-                              <div className='flex items-center justify-between w-full pr-4'>
-                                <div className='text-left'>
+                            {/* Header */}
+                            <div className='bg-muted/50 px-4 py-3 border-b'>
+                              <div className='flex items-center justify-between'>
+                                <div>
                                   <h4 className='font-medium'>
                                     {classItem?.name}
                                   </h4>
@@ -1342,94 +1468,89 @@ export function SchedulePreviewModal({
                                     Khóa học: {classItem?.course?.title}
                                   </p>
                                 </div>
-                                <Badge variant='secondary'>
-                                  {schedules.length} buổi học
-                                </Badge>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className='px-4 pb-4'>
-                              <div
-                                className='calendar-compact overflow-x-auto'
-                                style={{ height: "500px", maxWidth: "100%" }}
-                              >
-                                <div
-                                  style={{ minWidth: "600px", height: "100%" }}
-                                >
-                                  <BigCalendar
-                                    localizer={localizer}
-                                    events={convertToCalendarEvents(
-                                      classId,
-                                      schedules,
-                                      classItem?.name || ""
-                                    )}
-                                    startAccessor='start'
-                                    endAccessor='end'
-                                    style={{ height: "100%" }}
-                                    views={["month"]}
-                                    defaultView='month'
-                                    messages={{
-                                      next: "Sau",
-                                      previous: "Trước",
-                                      today: "Hôm nay",
-                                      month: "Tháng",
-                                      week: "Tuần",
-                                      day: "Ngày",
-                                      agenda: "Lịch trình",
-                                      date: "Ngày",
-                                      time: "Thời gian",
-                                      event: "Sự kiện",
-                                      noEventsInRange:
-                                        "Không có buổi học nào trong khoảng thời gian này",
-                                      showMore: (total) => `+${total} buổi học`,
-                                    }}
-                                    eventPropGetter={(event) => {
-                                      // Color code events by class
-                                      const colors = [
-                                        "#3b82f6", // blue
-                                        "#10b981", // green
-                                        "#f59e0b", // amber
-                                        "#ef4444", // red
-                                        "#8b5cf6", // violet
-                                        "#ec4899", // pink
-                                      ];
-                                      const classIndex = Object.keys(
-                                        previewSchedules
-                                      ).indexOf(event.resource.classId);
-                                      const color =
-                                        colors[classIndex % colors.length];
-
-                                      return {
-                                        style: {
-                                          backgroundColor: color,
-                                          borderColor: color,
-                                          color: "white",
-                                        },
-                                      };
-                                    }}
-                                    tooltipAccessor={(event) =>
-                                      `${event.resource.className}\nCa: ${event.resource.slotTitle}\nGiáo viên: ${event.resource.instructorName}`
-                                    }
-                                  />
+                                <div className='flex items-center gap-2'>
+                                  <Badge variant='secondary'>
+                                    {schedules.length} buổi học
+                                  </Badge>
                                 </div>
                               </div>
-                            </AccordionContent>
-                          </AccordionItem>
+                            </div>
+
+                            {/* Summary Content */}
+                            <div className='p-4 space-y-4'>
+                              {/* Text Summary */}
+                              <div className='space-y-2'>
+                                <div className='text-sm font-medium text-muted-foreground'>
+                                  Lịch học hàng tuần:
+                                </div>
+                                <div className='flex flex-wrap gap-2'>
+                                  {sortedDays.map((day) => (
+                                    <div
+                                      key={day}
+                                      className='bg-primary/10 rounded-md px-3 py-1.5'
+                                    >
+                                      <span className='font-medium text-sm'>
+                                        {day}
+                                      </span>
+                                      <span className='text-xs text-muted-foreground ml-2'>
+                                        (
+                                        {Array.from(daySlotMap[day]).join(", ")}
+                                        )
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Date Range */}
+                              <div className='text-sm text-muted-foreground'>
+                                <span className='font-medium'>Thời gian:</span>{" "}
+                                {format(minDate, "dd/MM/yyyy", { locale: vi })}{" "}
+                                -{" "}
+                                {format(maxDate, "dd/MM/yyyy", { locale: vi })}
+                              </div>
+
+                              {/* Simple Calendar Preview - highlight scheduled dates */}
+                              <div className='border rounded-md p-3 bg-muted/20'>
+                                <div className='text-xs font-medium text-muted-foreground mb-2'>
+                                  Các ngày có lịch học:
+                                </div>
+                                <div className='flex flex-wrap gap-1.5'>
+                                  {scheduledDates
+                                    .sort((a, b) => a.getTime() - b.getTime())
+                                    .map((date, idx) => (
+                                      <div
+                                        key={idx}
+                                        className='bg-primary text-primary-foreground text-xs px-2 py-1 rounded'
+                                        title={format(
+                                          date,
+                                          "EEEE, dd/MM/yyyy",
+                                          { locale: vi }
+                                        )}
+                                      >
+                                        {format(date, "dd/MM")}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         );
                       }
                     )}
-                  </Accordion>
+                  </div>
                 )}
               </div>
             </StepperStep>
 
-            {/* Step 3: Select Pools */}
+            {/* Step 3: Select Pools - Summary Style */}
             <StepperStep step={2}>
               <div className='space-y-4'>
                 <div className='space-y-2'>
                   <Alert>
                     <AlertCircle className='h-4 w-4' />
                     <AlertDescription>
-                      Click vào từng buổi học trên lịch để chọn hồ bơi phù hợp.
+                      Click vào nút "Chọn hồ" để chọn hồ bơi cho từng buổi học.
                     </AlertDescription>
                   </Alert>
 
@@ -1441,9 +1562,10 @@ export function SchedulePreviewModal({
                     <AlertDescription className='text-amber-800 dark:text-amber-200'>
                       <div className='font-medium mb-1'>Chú thích màu sắc:</div>
                       <ul className='text-xs space-y-0.5 ml-4 list-disc'>
-                        <li>🔴 Màu đỏ: Có cảnh báo (độ tuổi/trùng lịch)</li>
-                        <li>⚫ Màu xám: Chưa chọn hồ bơi</li>
-                        <li>🔵 Màu xanh: Đã chọn hồ bơi</li>
+                        <li>🟢 Xanh lá: Đã chọn hồ bơi</li>
+                        <li>🟡 Vàng: Có cảnh báo (độ tuổi không khớp)</li>
+                        <li>🔴 Đỏ: Có xung đột (giáo viên trùng lịch)</li>
+                        <li>⚫ Xám: Chưa chọn hồ bơi</li>
                       </ul>
                     </AlertDescription>
                   </Alert>
@@ -1454,83 +1576,85 @@ export function SchedulePreviewModal({
                     Không có dữ liệu lịch học
                   </div>
                 ) : (
-                  <Accordion
-                    type='multiple'
-                    defaultValue={Object.keys(previewSchedules)}
-                    className='space-y-2'
-                  >
+                  <div className='space-y-4'>
                     {Object.entries(previewSchedules).map(
                       ([classId, schedules]) => {
                         const classItem = availableClasses.find(
                           (c) => c._id === classId
                         );
 
-                        // Count unassigned pools
-                        const unassignedCount = schedules.filter(
-                          (_, idx) => !selectedPools[`${classId}-${idx}`]
+                        // Count stats
+                        const assignedCount = schedules.filter(
+                          (_, idx) => selectedPools[`${classId}-${idx}`]
                         ).length;
+                        const unassignedCount =
+                          schedules.length - assignedCount;
+                        const warningCount = schedules.filter((_, idx) => {
+                          const scheduleKey = `${classId}-${idx}`;
+                          const selectedPoolId = selectedPools[scheduleKey];
+                          const selectedPool = poolCapacities[
+                            scheduleKey
+                          ]?.find((p) => p._id === selectedPoolId);
+                          return (
+                            selectedPool?.hasAgeWarning ||
+                            selectedPool?.hasInstructorConflict
+                          );
+                        }).length;
 
-                        // Create calendar events with pool info
-                        const calendarEventsWithPool = schedules.map(
-                          (schedule, idx) => {
-                            const scheduleKey = `${classId}-${idx}`;
-                            const selectedPoolId = selectedPools[scheduleKey];
-                            const selectedPool = poolCapacities[
-                              scheduleKey
-                            ]?.find((p) => p._id === selectedPoolId);
-                            const hasWarning =
-                              selectedPool?.hasAgeWarning ||
-                              selectedPool?.hasInstructorConflict;
+                        // Generate summary: group by day of week and slot
+                        const daySlotMap: { [dayName: string]: Set<string> } =
+                          {};
+                        schedules.forEach((schedule) => {
+                          const date = new Date(schedule.date);
+                          const dayName = date.toLocaleDateString("vi-VN", {
+                            weekday: "long",
+                          });
+                          const capitalizedDay =
+                            dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                          if (!daySlotMap[capitalizedDay]) {
+                            daySlotMap[capitalizedDay] = new Set();
+                          }
+                          daySlotMap[capitalizedDay].add(
+                            schedule.slot?.title || ""
+                          );
+                        });
 
-                            const scheduleDate = new Date(schedule.date);
-                            const startHour = schedule.slot?.start_time || 0;
-                            const startMinute =
-                              schedule.slot?.start_minute || 0;
-                            const endHour = schedule.slot?.end_time || 0;
-                            const endMinute = schedule.slot?.end_minute || 0;
-
-                            const start = new Date(scheduleDate);
-                            start.setHours(startHour, startMinute, 0, 0);
-
-                            const end = new Date(scheduleDate);
-                            end.setHours(endHour, endMinute, 0, 0);
-
-                            return {
-                              id: scheduleKey,
-                              title: `${schedule.slot?.title || ""}`,
-                              start,
-                              end,
-                              resource: {
-                                classId,
-                                className: classItem?.name || "",
-                                slotTitle: schedule.slot?.title || "",
-                                instructorName:
-                                  schedule.instructor?.username || "",
-                                scheduleIndex: idx,
-                                scheduleKey,
-                                poolId: selectedPoolId,
-                                poolName: selectedPool?.title,
-                                hasWarning,
-                                schedule,
-                              },
-                            };
+                        // Sort days in week order
+                        const dayOrder = [
+                          "Thứ hai",
+                          "Thứ ba",
+                          "Thứ tư",
+                          "Thứ năm",
+                          "Thứ sáu",
+                          "Thứ bảy",
+                          "Chủ nhật",
+                        ];
+                        const sortedDays = Object.keys(daySlotMap).sort(
+                          (a, b) => {
+                            const aIdx = dayOrder.findIndex((d) =>
+                              a.toLowerCase().includes(d.toLowerCase())
+                            );
+                            const bIdx = dayOrder.findIndex((d) =>
+                              b.toLowerCase().includes(d.toLowerCase())
+                            );
+                            return aIdx - bIdx;
                           }
                         );
 
                         return (
-                          <AccordionItem
+                          <div
                             key={classId}
-                            value={classId}
-                            className='border rounded-lg'
+                            className='border rounded-lg overflow-hidden'
                           >
-                            <AccordionTrigger className='px-4 hover:no-underline'>
-                              <div className='flex items-center justify-between w-full pr-4'>
-                                <div className='text-left'>
+                            {/* Header */}
+                            <div className='bg-muted/50 px-4 py-3 border-b'>
+                              <div className='flex items-center justify-between'>
+                                <div>
                                   <h4 className='font-medium'>
                                     {classItem?.name}
                                   </h4>
                                   <p className='text-sm text-muted-foreground'>
-                                    {classItem?.course?.title}
+                                    Khóa học: {classItem?.course?.title}
                                   </p>
                                 </div>
                                 <div className='flex items-center gap-2'>
@@ -1542,247 +1666,306 @@ export function SchedulePreviewModal({
                                       {unassignedCount} chưa chọn hồ
                                     </Badge>
                                   )}
+                                  {warningCount > 0 && (
+                                    <Badge
+                                      variant='outline'
+                                      className='border-amber-500 text-amber-600'
+                                    >
+                                      {warningCount} cảnh báo
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
-                            </AccordionTrigger>
-                            <AccordionContent className='px-4 pb-4'>
-                              <div
-                                className='calendar-compact overflow-x-auto'
-                                style={{ height: "500px", maxWidth: "100%" }}
-                              >
-                                <div
-                                  style={{ minWidth: "600px", height: "100%" }}
-                                >
-                                  <BigCalendar
-                                    localizer={localizer}
-                                    events={calendarEventsWithPool}
-                                    startAccessor='start'
-                                    endAccessor='end'
-                                    style={{ height: "100%" }}
-                                    views={["month"]}
-                                    defaultView='month'
-                                    selectable={false}
-                                    onSelectEvent={(event) => {
-                                      setOpenPoolPopover(
-                                        openPoolPopover ===
-                                          event.resource.scheduleKey
-                                          ? null
-                                          : event.resource.scheduleKey
-                                      );
-                                      setSelectedScheduleKey(
-                                        event.resource.scheduleKey
-                                      );
-                                    }}
-                                    messages={{
-                                      next: "Sau",
-                                      previous: "Trước",
-                                      today: "Hôm nay",
-                                      month: "Tháng",
-                                      noEventsInRange: "Không có buổi học nào",
-                                      showMore: (total) => `+${total} buổi học`,
-                                    }}
-                                    eventPropGetter={(event) => {
-                                      const hasWarning =
-                                        event.resource.hasWarning;
-                                      const hasPool = !!event.resource.poolId;
-                                      let color = "#3b82f6"; // default blue
+                            </div>
 
-                                      if (hasWarning) {
-                                        color = "#ef4444"; // red for warnings
-                                      } else if (!hasPool) {
-                                        color = "#6b7280"; // gray for unassigned
-                                      } else {
-                                        color = "#10b981"; // green for assigned
-                                      }
+                            {/* Summary */}
+                            <div className='px-4 py-3 bg-muted/20 border-b'>
+                              <div className='text-sm font-medium text-muted-foreground mb-2'>
+                                Lịch học hàng tuần:
+                              </div>
+                              <div className='flex flex-wrap gap-2'>
+                                {sortedDays.map((day) => (
+                                  <div
+                                    key={day}
+                                    className='bg-primary/10 rounded-md px-3 py-1.5'
+                                  >
+                                    <span className='font-medium text-sm'>
+                                      {day}
+                                    </span>
+                                    <span className='text-xs text-muted-foreground ml-2'>
+                                      ({Array.from(daySlotMap[day]).join(", ")})
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
 
-                                      return {
-                                        style: {
-                                          backgroundColor: color,
-                                          borderColor: color,
-                                          color: "white",
-                                          cursor: "pointer",
-                                          opacity: hasPool ? 1 : 0.7,
-                                        },
-                                      };
-                                    }}
-                                    components={{
-                                      event: ({ event }) => {
-                                        const isOpen =
-                                          openPoolPopover ===
-                                          event.resource.scheduleKey;
-                                        const availablePools =
-                                          poolCapacities[
-                                            event.resource.scheduleKey
-                                          ] || [];
+                            {/* Schedule List */}
+                            <div className='p-4'>
+                              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                                {schedules.map((schedule, idx) => {
+                                  const scheduleKey = `${classId}-${idx}`;
+                                  const selectedPoolId =
+                                    selectedPools[scheduleKey];
+                                  const selectedPool = poolCapacities[
+                                    scheduleKey
+                                  ]?.find((p) => p._id === selectedPoolId);
+                                  const availablePools =
+                                    poolCapacities[scheduleKey] || [];
+                                  const hasWarning =
+                                    selectedPool?.hasAgeWarning;
+                                  const hasConflict =
+                                    selectedPool?.hasInstructorConflict;
+                                  const isOpen =
+                                    openPoolPopover === scheduleKey;
 
-                                        return (
-                                          <Popover
-                                            open={isOpen}
-                                            onOpenChange={(open) => {
-                                              if (!open)
-                                                setOpenPoolPopover(null);
-                                            }}
+                                  // Determine card color
+                                  let cardBorderColor = "border-border";
+                                  let cardBgColor = "bg-muted/30";
+                                  if (selectedPoolId) {
+                                    if (hasConflict) {
+                                      cardBorderColor = "border-red-400";
+                                      cardBgColor =
+                                        "bg-red-50 dark:bg-red-950/20";
+                                    } else if (hasWarning) {
+                                      cardBorderColor = "border-amber-400";
+                                      cardBgColor =
+                                        "bg-amber-50 dark:bg-amber-950/20";
+                                    } else {
+                                      cardBorderColor = "border-green-400";
+                                      cardBgColor =
+                                        "bg-green-50 dark:bg-green-950/20";
+                                    }
+                                  }
+
+                                  return (
+                                    <div
+                                      key={scheduleKey}
+                                      className={cn(
+                                        "rounded-lg border-2 p-3 transition-all",
+                                        cardBorderColor,
+                                        cardBgColor
+                                      )}
+                                    >
+                                      {/* Date & Slot */}
+                                      <div className='flex items-center justify-between mb-2'>
+                                        <div>
+                                          <div className='font-medium text-sm'>
+                                            {format(
+                                              new Date(schedule.date),
+                                              "EEEE",
+                                              { locale: vi }
+                                            )}
+                                          </div>
+                                          <div className='text-xs text-muted-foreground'>
+                                            {format(
+                                              new Date(schedule.date),
+                                              "dd/MM/yyyy",
+                                              { locale: vi }
+                                            )}
+                                          </div>
+                                        </div>
+                                        <Badge
+                                          variant='outline'
+                                          className='text-xs'
+                                        >
+                                          {schedule.slot?.title}
+                                        </Badge>
+                                      </div>
+
+                                      {/* Instructor */}
+                                      <div className='text-xs text-muted-foreground mb-2'>
+                                        GV:{" "}
+                                        {schedule.instructor?.username || "N/A"}
+                                      </div>
+
+                                      {/* Pool Selection */}
+                                      <Popover
+                                        open={isOpen}
+                                        onOpenChange={(open) => {
+                                          if (open) {
+                                            setOpenPoolPopover(scheduleKey);
+                                          } else {
+                                            setOpenPoolPopover(null);
+                                          }
+                                        }}
+                                      >
+                                        <PopoverTrigger asChild>
+                                          <Button
+                                            variant={
+                                              selectedPoolId
+                                                ? "outline"
+                                                : "secondary"
+                                            }
+                                            size='sm'
+                                            className={cn(
+                                              "w-full justify-between text-xs h-8",
+                                              !selectedPoolId &&
+                                                "text-muted-foreground"
+                                            )}
                                           >
-                                            <PopoverTrigger asChild>
-                                              <div className='h-full px-1 text-xs cursor-pointer'>
-                                                <div className='truncate font-medium'>
-                                                  {event.title}
-                                                </div>
-                                                {event.resource.poolName && (
-                                                  <div className='truncate text-[10px] opacity-90'>
-                                                    🏊 {event.resource.poolName}
-                                                  </div>
-                                                )}
+                                            <span className='truncate'>
+                                              {selectedPool
+                                                ? `🏊 ${selectedPool.title}`
+                                                : "Chọn hồ bơi..."}
+                                            </span>
+                                            <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
+                                          </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent
+                                          className='w-72 p-0'
+                                          align='start'
+                                        >
+                                          <div className='border-b p-3 bg-muted/50'>
+                                            <h4 className='font-medium text-sm'>
+                                              Chọn hồ bơi
+                                            </h4>
+                                            <p className='text-xs text-muted-foreground mt-1'>
+                                              {format(
+                                                new Date(schedule.date),
+                                                "EEEE, dd/MM/yyyy",
+                                                { locale: vi }
+                                              )}{" "}
+                                              • {schedule.slot?.title}
+                                            </p>
+                                          </div>
+                                          <div className='max-h-[250px] overflow-y-auto p-2'>
+                                            {availablePools.length === 0 ? (
+                                              <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                Không có hồ bơi khả dụng
                                               </div>
-                                            </PopoverTrigger>
-                                            <PopoverContent
-                                              className='w-72 p-0'
-                                              align='start'
-                                              side='right'
-                                            >
-                                              <div className='border-b p-3 bg-muted/50'>
-                                                <h4 className='font-medium text-sm'>
-                                                  {event.resource.className}
-                                                </h4>
-                                                <p className='text-xs text-muted-foreground mt-1'>
-                                                  Ca: {event.resource.slotTitle}{" "}
-                                                  • GV:{" "}
-                                                  {
-                                                    event.resource
-                                                      .instructorName
-                                                  }
-                                                </p>
-                                              </div>
-                                              <div className='max-h-[250px] overflow-y-auto p-2'>
-                                                {availablePools.length === 0 ? (
-                                                  <div className='text-center py-4 text-sm text-muted-foreground'>
-                                                    Không có hồ bơi khả dụng
-                                                  </div>
-                                                ) : (
-                                                  <div className='space-y-1.5'>
-                                                    {availablePools.map(
-                                                      (pool) => {
-                                                        const isSelected =
-                                                          event.resource
-                                                            .poolId ===
-                                                          pool._id;
-                                                        return (
-                                                          <button
-                                                            key={pool._id}
-                                                            type='button'
-                                                            onClick={() => {
-                                                              setSelectedPools(
-                                                                (prev) => ({
-                                                                  ...prev,
-                                                                  [event
-                                                                    .resource
-                                                                    .scheduleKey]:
-                                                                    pool._id,
-                                                                })
-                                                              );
-                                                              setOpenPoolPopover(
-                                                                null
-                                                              );
-                                                            }}
-                                                            disabled={
-                                                              !pool.isAvailable
-                                                            }
+                                            ) : (
+                                              <div className='space-y-1.5'>
+                                                {availablePools.map((pool) => {
+                                                  const isPoolSelected =
+                                                    selectedPoolId === pool._id;
+                                                  const poolHasWarnings =
+                                                    pool.hasAgeWarning ||
+                                                    pool.hasInstructorConflict;
+                                                  const noCapacity =
+                                                    pool.capacity_remain <= 0;
+
+                                                  return (
+                                                    <button
+                                                      key={pool._id}
+                                                      type='button'
+                                                      onClick={() => {
+                                                        setSelectedPools(
+                                                          (prev) => ({
+                                                            ...prev,
+                                                            [scheduleKey]:
+                                                              pool._id,
+                                                          })
+                                                        );
+                                                        setOpenPoolPopover(
+                                                          null
+                                                        );
+                                                      }}
+                                                      disabled={noCapacity}
+                                                      className={cn(
+                                                        "w-full p-2 rounded border text-left text-xs transition-all",
+                                                        isPoolSelected
+                                                          ? "border-primary bg-primary/10"
+                                                          : "border-border hover:border-primary/50",
+                                                        poolHasWarnings &&
+                                                          !isPoolSelected &&
+                                                          "border-amber-300 bg-amber-50/50",
+                                                        noCapacity &&
+                                                          "opacity-50 cursor-not-allowed"
+                                                      )}
+                                                    >
+                                                      <div className='flex justify-between items-start'>
+                                                        <div className='flex-1'>
+                                                          <div className='font-medium flex items-center gap-1'>
+                                                            {pool.title}
+                                                            {isPoolSelected && (
+                                                              <CheckCircle2 className='h-3 w-3 text-primary' />
+                                                            )}
+                                                          </div>
+                                                          <div className='text-muted-foreground mt-0.5'>
+                                                            Sức chứa:{" "}
+                                                            {pool.capacity}
+                                                          </div>
+                                                        </div>
+                                                        <div className='text-right'>
+                                                          <div
                                                             className={cn(
-                                                              "w-full p-2 rounded border text-left text-xs transition-all",
-                                                              isSelected
-                                                                ? "border-primary bg-primary/10"
-                                                                : "border-border hover:border-primary/50",
-                                                              !pool.isAvailable &&
-                                                                "opacity-50 cursor-not-allowed"
+                                                              "font-semibold",
+                                                              pool.capacity_remain >
+                                                                0
+                                                                ? "text-green-600"
+                                                                : "text-red-600"
                                                             )}
                                                           >
-                                                            <div className='flex justify-between items-start'>
-                                                              <div className='flex-1'>
-                                                                <div className='font-medium flex items-center gap-1'>
-                                                                  {pool.title}
-                                                                  {isSelected && (
-                                                                    <CheckCircle2 className='h-3 w-3 text-primary' />
-                                                                  )}
-                                                                </div>
-                                                                <div className='text-muted-foreground mt-0.5'>
-                                                                  Sức chứa:{" "}
-                                                                  {
-                                                                    pool.capacity
-                                                                  }
-                                                                </div>
-                                                              </div>
-                                                              <div className='text-right'>
-                                                                <div
-                                                                  className={cn(
-                                                                    "font-semibold",
-                                                                    pool.isAvailable
-                                                                      ? "text-green-600"
-                                                                      : "text-red-600"
-                                                                  )}
-                                                                >
-                                                                  {
-                                                                    pool.capacity_remain
-                                                                  }
-                                                                </div>
-                                                                <div className='text-muted-foreground'>
-                                                                  còn
-                                                                </div>
-                                                              </div>
+                                                            {
+                                                              pool.capacity_remain
+                                                            }
+                                                          </div>
+                                                          <div className='text-muted-foreground'>
+                                                            còn
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                      {(pool.hasAgeWarning ||
+                                                        pool.hasInstructorConflict) && (
+                                                        <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
+                                                          {pool.hasAgeWarning && (
+                                                            <div className='text-amber-600 flex items-center gap-1'>
+                                                              <AlertCircle className='h-3 w-3' />
+                                                              Độ tuổi không khớp
                                                             </div>
-                                                            {(pool.hasAgeWarning ||
-                                                              pool.hasInstructorConflict) && (
-                                                              <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
-                                                                {pool.hasAgeWarning && (
-                                                                  <div className='text-amber-600 flex items-center gap-1'>
-                                                                    <AlertCircle className='h-3 w-3' />
-                                                                    Độ tuổi
-                                                                    không khớp
-                                                                  </div>
-                                                                )}
-                                                                {pool.hasInstructorConflict && (
-                                                                  <div className='text-red-600 flex items-center gap-1'>
-                                                                    <AlertCircle className='h-3 w-3' />
-                                                                    Giáo viên
-                                                                    trùng lịch
-                                                                  </div>
-                                                                )}
-                                                              </div>
-                                                            )}
-                                                          </button>
-                                                        );
-                                                      }
-                                                    )}
-                                                  </div>
-                                                )}
+                                                          )}
+                                                          {pool.hasInstructorConflict && (
+                                                            <div className='text-red-600 flex items-center gap-1'>
+                                                              <AlertCircle className='h-3 w-3' />
+                                                              Giáo viên trùng
+                                                              lịch
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      )}
+                                                    </button>
+                                                  );
+                                                })}
                                               </div>
-                                            </PopoverContent>
-                                          </Popover>
-                                        );
-                                      },
-                                    }}
-                                    tooltipAccessor={(event) =>
-                                      `${event.resource.className}\nCa: ${
-                                        event.resource.slotTitle
-                                      }\nGV: ${event.resource.instructorName}${
-                                        event.resource.poolName
-                                          ? `\nHồ: ${event.resource.poolName}`
-                                          : ""
-                                      }`
-                                    }
-                                  />
-                                </div>
+                                            )}
+                                          </div>
+                                        </PopoverContent>
+                                      </Popover>
+
+                                      {/* Warnings */}
+                                      {selectedPoolId &&
+                                        (hasWarning || hasConflict) && (
+                                          <div className='mt-2 text-xs space-y-0.5'>
+                                            {hasWarning && (
+                                              <div className='text-amber-600 flex items-center gap-1'>
+                                                <AlertCircle className='h-3 w-3' />
+                                                Độ tuổi không khớp
+                                              </div>
+                                            )}
+                                            {hasConflict && (
+                                              <div className='text-red-600 flex items-center gap-1'>
+                                                <AlertCircle className='h-3 w-3' />
+                                                GV trùng lịch
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            </AccordionContent>
-                          </AccordionItem>
+                            </div>
+                          </div>
                         );
                       }
                     )}
-                  </Accordion>
+                  </div>
                 )}
               </div>
             </StepperStep>
 
-            {/* Step 4: Confirm */}
+            {/* Step 4: Confirm - Table View */}
             <StepperStep step={3}>
               <div className='space-y-4'>
                 {error && (
@@ -1805,11 +1988,7 @@ export function SchedulePreviewModal({
                     Không có dữ liệu lịch học
                   </div>
                 ) : (
-                  <Accordion
-                    type='multiple'
-                    defaultValue={Object.keys(previewSchedules)}
-                    className='space-y-2'
-                  >
+                  <div className='space-y-4'>
                     {Object.entries(previewSchedules).map(
                       ([classId, schedules]) => {
                         const classItem = availableClasses.find(
@@ -1831,60 +2010,15 @@ export function SchedulePreviewModal({
                           }
                         ).length;
 
-                        // Create calendar events for read-only view
-                        const calendarEventsReadOnly = schedules.map(
-                          (schedule, idx) => {
-                            const scheduleKey = `${classId}-${idx}`;
-                            const selectedPoolId = selectedPools[scheduleKey];
-                            const selectedPool = poolCapacities[
-                              scheduleKey
-                            ]?.find((p) => p._id === selectedPoolId);
-                            const hasWarning =
-                              selectedPool?.hasAgeWarning ||
-                              selectedPool?.hasInstructorConflict;
-
-                            const scheduleDate = new Date(schedule.date);
-                            const startHour = schedule.slot?.start_time || 0;
-                            const startMinute =
-                              schedule.slot?.start_minute || 0;
-                            const endHour = schedule.slot?.end_time || 0;
-                            const endMinute = schedule.slot?.end_minute || 0;
-
-                            const start = new Date(scheduleDate);
-                            start.setHours(startHour, startMinute, 0, 0);
-
-                            const end = new Date(scheduleDate);
-                            end.setHours(endHour, endMinute, 0, 0);
-
-                            return {
-                              id: scheduleKey,
-                              title: `${schedule.slot?.title || ""} • ${
-                                selectedPool?.title || "N/A"
-                              }`,
-                              start,
-                              end,
-                              resource: {
-                                classId,
-                                className: classItem?.name || "",
-                                slotTitle: schedule.slot?.title || "",
-                                instructorName:
-                                  schedule.instructor?.username || "",
-                                poolName: selectedPool?.title || "N/A",
-                                hasWarning,
-                              },
-                            };
-                          }
-                        );
-
                         return (
-                          <AccordionItem
+                          <div
                             key={classId}
-                            value={classId}
-                            className='border rounded-lg'
+                            className='border rounded-lg overflow-hidden'
                           >
-                            <AccordionTrigger className='px-4 hover:no-underline'>
-                              <div className='flex items-start justify-between w-full pr-4'>
-                                <div className='text-left'>
+                            {/* Header */}
+                            <div className='bg-muted/50 px-4 py-3 border-b'>
+                              <div className='flex items-center justify-between'>
+                                <div>
                                   <h4 className='font-medium'>
                                     {classItem?.name}
                                   </h4>
@@ -1892,14 +2026,14 @@ export function SchedulePreviewModal({
                                     Khóa học: {classItem?.course?.title}
                                   </p>
                                 </div>
-                                <div className='text-right flex items-center gap-2'>
+                                <div className='flex items-center gap-2'>
                                   <Badge variant='secondary'>
                                     {schedules.length} buổi học
                                   </Badge>
                                   {schedulesWithWarnings > 0 && (
                                     <Badge
                                       variant='destructive'
-                                      className='ml-2 bg-amber-500'
+                                      className='bg-amber-500'
                                     >
                                       <AlertCircle className='h-3 w-3 mr-1' />
                                       {schedulesWithWarnings} cảnh báo
@@ -1907,75 +2041,144 @@ export function SchedulePreviewModal({
                                   )}
                                 </div>
                               </div>
-                            </AccordionTrigger>
-                            <AccordionContent className='px-4 pb-4 space-y-3'>
-                              <div
-                                className='calendar-compact overflow-x-auto'
-                                style={{ height: "450px", maxWidth: "100%" }}
-                              >
-                                <div
-                                  style={{ minWidth: "600px", height: "100%" }}
-                                >
-                                  <BigCalendar
-                                    localizer={localizer}
-                                    events={calendarEventsReadOnly}
-                                    startAccessor='start'
-                                    endAccessor='end'
-                                    style={{ height: "100%" }}
-                                    views={["month"]}
-                                    defaultView='month'
-                                    selectable={false}
-                                    messages={{
-                                      next: "Sau",
-                                      previous: "Trước",
-                                      today: "Hôm nay",
-                                      month: "Tháng",
-                                      noEventsInRange: "Không có buổi học nào",
-                                      showMore: (total) => `+${total} buổi học`,
-                                    }}
-                                    eventPropGetter={(event) => {
-                                      const hasWarning =
-                                        event.resource.hasWarning;
-                                      let color = "#10b981"; // green
+                            </div>
 
-                                      if (hasWarning) {
-                                        color = "#ef4444"; // red
-                                      }
+                            {/* Table */}
+                            <div className='max-h-[400px] overflow-y-auto'>
+                              <Table>
+                                <TableHeader className='sticky top-0 bg-background'>
+                                  <TableRow>
+                                    <TableHead className='w-12 text-center'>
+                                      STT
+                                    </TableHead>
+                                    <TableHead className='min-w-[150px]'>
+                                      Ngày
+                                    </TableHead>
+                                    <TableHead className='min-w-[80px]'>
+                                      Ca học
+                                    </TableHead>
+                                    <TableHead className='min-w-[120px]'>
+                                      Giáo viên
+                                    </TableHead>
+                                    <TableHead className='min-w-[120px]'>
+                                      Hồ bơi
+                                    </TableHead>
+                                    <TableHead className='w-24 text-center'>
+                                      Trạng thái
+                                    </TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {schedules.map((schedule, idx) => {
+                                    const scheduleKey = `${classId}-${idx}`;
+                                    const selectedPoolId =
+                                      selectedPools[scheduleKey];
+                                    const selectedPool = poolCapacities[
+                                      scheduleKey
+                                    ]?.find((p) => p._id === selectedPoolId);
+                                    const hasAgeWarning =
+                                      selectedPool?.hasAgeWarning;
+                                    const hasConflict =
+                                      selectedPool?.hasInstructorConflict;
+                                    const hasAnyWarning =
+                                      hasAgeWarning || hasConflict;
 
-                                      return {
-                                        style: {
-                                          backgroundColor: color,
-                                          borderColor: color,
-                                          color: "white",
-                                        },
-                                      };
-                                    }}
-                                    tooltipAccessor={(event) =>
-                                      `${event.resource.className}\nCa: ${event.resource.slotTitle}\nGV: ${event.resource.instructorName}\nHồ: ${event.resource.poolName}`
-                                    }
-                                  />
-                                </div>
-                              </div>
+                                    return (
+                                      <TableRow
+                                        key={scheduleKey}
+                                        className={cn(
+                                          hasConflict &&
+                                            "bg-red-50 dark:bg-red-950/20",
+                                          hasAgeWarning &&
+                                            !hasConflict &&
+                                            "bg-amber-50 dark:bg-amber-950/20"
+                                        )}
+                                      >
+                                        <TableCell className='text-center font-medium'>
+                                          {idx + 1}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className='font-medium'>
+                                            {format(
+                                              new Date(schedule.date),
+                                              "EEEE",
+                                              { locale: vi }
+                                            )}
+                                          </div>
+                                          <div className='text-xs text-muted-foreground'>
+                                            {format(
+                                              new Date(schedule.date),
+                                              "dd/MM/yyyy",
+                                              { locale: vi }
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Badge variant='outline'>
+                                            {schedule.slot?.title}
+                                          </Badge>
+                                        </TableCell>
+                                        <TableCell className='text-sm'>
+                                          {schedule.instructor?.username ||
+                                            "N/A"}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className='flex items-center gap-1'>
+                                            <span className='text-sm'>🏊</span>
+                                            <span className='text-sm font-medium'>
+                                              {selectedPool?.title || "N/A"}
+                                            </span>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className='text-center'>
+                                          {hasAnyWarning ? (
+                                            <div className='flex flex-col items-center gap-0.5'>
+                                              {hasConflict && (
+                                                <Badge
+                                                  variant='destructive'
+                                                  className='text-xs px-1.5 py-0'
+                                                >
+                                                  Trùng lịch
+                                                </Badge>
+                                              )}
+                                              {hasAgeWarning && (
+                                                <Badge
+                                                  variant='outline'
+                                                  className='text-xs px-1.5 py-0 border-amber-400 text-amber-600'
+                                                >
+                                                  Độ tuổi
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <CheckCircle2 className='h-5 w-5 text-green-500 mx-auto' />
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
 
-                              {schedulesWithWarnings > 0 && (
-                                <Alert
-                                  variant='destructive'
-                                  className='bg-amber-50 dark:bg-amber-950/20 border-amber-200'
-                                >
-                                  <AlertCircle className='h-4 w-4 text-amber-600' />
-                                  <AlertDescription className='text-xs text-amber-800 dark:text-amber-200'>
+                            {/* Warning Alert */}
+                            {schedulesWithWarnings > 0 && (
+                              <div className='px-4 py-3 border-t bg-amber-50 dark:bg-amber-950/20'>
+                                <div className='flex items-start gap-2 text-xs text-amber-800 dark:text-amber-200'>
+                                  <AlertCircle className='h-4 w-4 flex-shrink-0 mt-0.5' />
+                                  <span>
                                     Lớp này có {schedulesWithWarnings} buổi học
                                     có cảnh báo. Vui lòng kiểm tra lại ở bước
-                                    trước.
-                                  </AlertDescription>
-                                </Alert>
-                              )}
-                            </AccordionContent>
-                          </AccordionItem>
+                                    trước nếu cần sửa đổi.
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         );
                       }
                     )}
-                  </Accordion>
+                  </div>
                 )}
               </div>
             </StepperStep>
