@@ -22,12 +22,14 @@ interface AgeRulesApiResponse {
 }
 
 /**
- * Fetch all age rules
+ * Fetch all age rules with optional search parameters
+ * @param searchParams - Optional search parameters using find-common format (e.g., {"search[_id:equal]": "someId"})
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
  * @returns Promise with age rules data
  */
 export async function fetchAgeRules(
+  searchParams?: Record<string, string>,
   tenantId?: string,
   token?: string
 ): Promise<AgeRule[]> {
@@ -37,6 +39,13 @@ export async function fetchAgeRules(
 
   if (!finalTenantId || !finalToken) {
     throw new Error("Missing tenant ID or authentication token");
+  }
+
+  // Build URL with search parameters
+  let url = `${config.API}/v1/workflow-process/manager/age-rules`;
+  if (searchParams && Object.keys(searchParams).length > 0) {
+    const queryParams = new URLSearchParams(searchParams);
+    url += `?${queryParams.toString()}`;
   }
 
   const headers: Record<string, string> = {
@@ -50,14 +59,11 @@ export async function fetchAgeRules(
     headers["service"] = "User";
   }
 
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/age-rules`,
-    {
-      method: "GET",
-      headers,
-      cache: "no-store",
-    }
-  );
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch age rules: ${response.statusText}`);

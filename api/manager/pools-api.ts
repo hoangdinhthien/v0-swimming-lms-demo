@@ -12,6 +12,11 @@ export interface Pool {
   capacity?: number;
   usageCount?: number;
   is_active: boolean;
+  type_of_age?: Array<{
+    _id: string;
+    title: string;
+    age_range?: [number, number];
+  }>;
   created_at?: string;
   created_by?: string;
   updated_at?: string;

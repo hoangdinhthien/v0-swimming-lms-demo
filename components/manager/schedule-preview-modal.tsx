@@ -47,6 +47,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Calendar as BigCalendar,
+  momentLocalizer,
+  View,
+} from "react-big-calendar";
+import moment from "moment";
+import "moment/locale/vi";
+import "@/styles/react-big-calendar.css";
+
+// Setup moment localizer for Vietnamese
+moment.locale("vi");
+const localizer = momentLocalizer(moment);
 
 interface ClassScheduleConfig {
   min_time: number;
@@ -89,6 +101,20 @@ interface PoolCapacityInfo {
   type_of_age?: string;
   hasAgeWarning?: boolean;
   hasInstructorConflict?: boolean;
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  resource: {
+    classId: string;
+    className: string;
+    slotTitle: string;
+    instructorName: string;
+    scheduleIndex: number;
+  };
 }
 
 interface SchedulePreviewModalProps {
@@ -184,6 +210,9 @@ export function SchedulePreviewModal({
   const [selectedPools, setSelectedPools] = React.useState<{
     [scheduleKey: string]: string;
   }>({});
+  const [autoSelectedPools, setAutoSelectedPools] = React.useState<{
+    [scheduleKey: string]: string;
+  }>({}); // Track initial auto-selections
   const [selectedScheduleKey, setSelectedScheduleKey] = React.useState<
     string | null
   >(null);
@@ -500,6 +529,41 @@ export function SchedulePreviewModal({
     return Math.max(0, sessionNumber - schedulesCount);
   };
 
+  // Convert preview schedules to calendar events for a specific class
+  const convertToCalendarEvents = (
+    classId: string,
+    schedules: PreviewSchedule[],
+    className: string
+  ): CalendarEvent[] => {
+    return schedules.map((schedule, idx) => {
+      const scheduleDate = new Date(schedule.date);
+      const startHour = schedule.slot?.start_time || 0;
+      const startMinute = schedule.slot?.start_minute || 0;
+      const endHour = schedule.slot?.end_time || 0;
+      const endMinute = schedule.slot?.end_minute || 0;
+
+      const start = new Date(scheduleDate);
+      start.setHours(startHour, startMinute, 0, 0);
+
+      const end = new Date(scheduleDate);
+      end.setHours(endHour, endMinute, 0, 0);
+
+      return {
+        id: `${classId}-${idx}`,
+        title: `${className} - ${schedule.slot?.title || ""}`,
+        start,
+        end,
+        resource: {
+          classId,
+          className,
+          slotTitle: schedule.slot?.title || "",
+          instructorName: schedule.instructor?.username || "N/A",
+          scheduleIndex: idx,
+        },
+      };
+    });
+  };
+
   const handleCalculatePoolCapacity = async () => {
     setIsCalculatingCapacity(true);
     setError(null);
@@ -653,6 +717,56 @@ export function SchedulePreviewModal({
       });
 
       setPoolCapacities(capacityMap);
+
+      // Step 5: Auto-select best pool for each schedule using scoring algorithm
+      const autoSelectedPools: { [scheduleKey: string]: string } = {};
+
+      Object.entries(capacityMap).forEach(([scheduleKey, pools]) => {
+        // Score each pool
+        const scoredPools = pools.map((pool) => {
+          let score = 0;
+
+          // Priority 1: Age type match (highest priority) - +100 points
+          if (!pool.hasAgeWarning) {
+            score += 100;
+          }
+
+          // Priority 2: No instructor conflict - +50 points
+          if (!pool.hasInstructorConflict) {
+            score += 50;
+          }
+
+          // Priority 3: Capacity availability - proportional score (0-50 points)
+          if (pool.capacity > 0) {
+            const capacityRatio = pool.capacity_remain / pool.capacity;
+            score += capacityRatio * 50;
+          }
+
+          // Penalty: If capacity is not available, heavily penalize
+          if (!pool.isAvailable) {
+            score -= 200; // Heavy penalty
+          }
+
+          return {
+            ...pool,
+            score,
+          };
+        });
+
+        // Sort by score descending
+        scoredPools.sort((a, b) => b.score - a.score);
+
+        // Select the pool with highest score (if score > 0, meaning some criteria met)
+        const bestPool = scoredPools[0];
+        if (bestPool && bestPool.score > 0) {
+          autoSelectedPools[scheduleKey] = bestPool._id;
+        }
+      });
+
+      // Apply auto-selected pools
+      setSelectedPools(autoSelectedPools);
+      setAutoSelectedPools(autoSelectedPools); // Save initial auto-selections
+
       setCurrentStep(2);
     } catch (err: any) {
       console.error("Pool capacity calculation error:", err);
@@ -742,7 +856,7 @@ export function SchedulePreviewModal({
       open={open}
       onOpenChange={onOpenChange}
     >
-      <DialogContent className='max-w-5xl max-h-[90vh] overflow-y-auto'>
+      <DialogContent className='max-w-6xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Xếp lịch cho lớp có sẵn</DialogTitle>
           <DialogDescription>
@@ -1030,77 +1144,65 @@ export function SchedulePreviewModal({
                               </div>
                             </AccordionTrigger>
                             <AccordionContent className='px-4 pb-4'>
-                              <div className='border rounded-md overflow-hidden'>
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead className='w-[120px]'>
-                                        Ngày
-                                      </TableHead>
-                                      <TableHead>Ca học</TableHead>
-                                      <TableHead>Thời gian</TableHead>
-                                      <TableHead>Giáo viên</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {schedules.map((schedule, idx) => {
-                                      const formatDate = (dateStr: string) => {
-                                        try {
-                                          // Parse date string properly (handles both ISO and YYYY-MM-DD formats)
-                                          const date = new Date(dateStr);
-                                          // Use UTC methods to avoid timezone issues
-                                          const day = date
-                                            .getUTCDate()
-                                            .toString()
-                                            .padStart(2, "0");
-                                          const month = (date.getUTCMonth() + 1)
-                                            .toString()
-                                            .padStart(2, "0");
-                                          const year = date.getUTCFullYear();
-                                          return `${day}/${month}/${year}`;
-                                        } catch {
-                                          return dateStr;
-                                        }
-                                      };
+                              <div
+                                className='calendar-compact'
+                                style={{ height: "500px" }}
+                              >
+                                <BigCalendar
+                                  localizer={localizer}
+                                  events={convertToCalendarEvents(
+                                    classId,
+                                    schedules,
+                                    classItem?.name || ""
+                                  )}
+                                  startAccessor='start'
+                                  endAccessor='end'
+                                  style={{ height: "100%" }}
+                                  views={["month"]}
+                                  defaultView='month'
+                                  messages={{
+                                    next: "Sau",
+                                    previous: "Trước",
+                                    today: "Hôm nay",
+                                    month: "Tháng",
+                                    week: "Tuần",
+                                    day: "Ngày",
+                                    agenda: "Lịch trình",
+                                    date: "Ngày",
+                                    time: "Thời gian",
+                                    event: "Sự kiện",
+                                    noEventsInRange:
+                                      "Không có buổi học nào trong khoảng thời gian này",
+                                    showMore: (total) => `+${total} buổi học`,
+                                  }}
+                                  eventPropGetter={(event) => {
+                                    // Color code events by class
+                                    const colors = [
+                                      "#3b82f6", // blue
+                                      "#10b981", // green
+                                      "#f59e0b", // amber
+                                      "#ef4444", // red
+                                      "#8b5cf6", // violet
+                                      "#ec4899", // pink
+                                    ];
+                                    const classIndex = Object.keys(
+                                      previewSchedules
+                                    ).indexOf(event.resource.classId);
+                                    const color =
+                                      colors[classIndex % colors.length];
 
-                                      const formatTime = (slot: any) => {
-                                        if (!slot) return "";
-                                        const startHour = slot.start_time || 0;
-                                        const startMinute =
-                                          slot.start_minute || 0;
-                                        const endHour = slot.end_time || 0;
-                                        const endMinute = slot.end_minute || 0;
-                                        return `${startHour
-                                          .toString()
-                                          .padStart(2, "0")}:${startMinute
-                                          .toString()
-                                          .padStart(2, "0")} - ${endHour
-                                          .toString()
-                                          .padStart(2, "0")}:${endMinute
-                                          .toString()
-                                          .padStart(2, "0")}`;
-                                      };
-
-                                      return (
-                                        <TableRow key={idx}>
-                                          <TableCell className='font-medium'>
-                                            {formatDate(schedule.date)}
-                                          </TableCell>
-                                          <TableCell>
-                                            {schedule.slot?.title || "N/A"}
-                                          </TableCell>
-                                          <TableCell className='text-sm text-muted-foreground'>
-                                            {formatTime(schedule.slot)}
-                                          </TableCell>
-                                          <TableCell>
-                                            {schedule.instructor?.username ||
-                                              "N/A"}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
-                                  </TableBody>
-                                </Table>
+                                    return {
+                                      style: {
+                                        backgroundColor: color,
+                                        borderColor: color,
+                                        color: "white",
+                                      },
+                                    };
+                                  }}
+                                  tooltipAccessor={(event) =>
+                                    `${event.resource.className}\nCa: ${event.resource.slotTitle}\nGiáo viên: ${event.resource.instructorName}`
+                                  }
+                                />
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -1332,8 +1434,21 @@ export function SchedulePreviewModal({
                                                 <div className='space-y-2'>
                                                   <div className='flex items-start justify-between pr-6'>
                                                     <div>
-                                                      <div className='font-medium text-sm mb-1'>
-                                                        {pool.title}
+                                                      <div className='flex items-center gap-2 mb-1'>
+                                                        <div className='font-medium text-sm'>
+                                                          {pool.title}
+                                                        </div>
+                                                        {isSelected &&
+                                                          autoSelectedPools[
+                                                            selectedScheduleKey!
+                                                          ] === pool._id && (
+                                                            <Badge
+                                                              variant='secondary'
+                                                              className='text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                            >
+                                                              Auto
+                                                            </Badge>
+                                                          )}
                                                       </div>
                                                       <div className='text-xs text-muted-foreground'>
                                                         Sức chứa:{" "}

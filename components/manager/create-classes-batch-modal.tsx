@@ -16,6 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +49,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Info,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -51,11 +66,12 @@ interface Course {
   _id: string;
   title: string;
   session_number?: number;
-  capacity?: number;
+  max_member?: number;
   category?: Array<{
     _id: string;
     title: string;
   }>;
+  type?: string[];
   type_of_age?: string[];
 }
 
@@ -66,9 +82,9 @@ interface Instructor {
 
 interface InstructorSpecialist {
   _id: string;
-  user: string;
-  category: string[];
-  age_types: string[];
+  user: string | { _id: string; username: string };
+  category: Array<{ _id: string; title: string }> | string[];
+  age_types: Array<{ _id: string; title: string }> | string[];
 }
 
 interface AgeRule {
@@ -119,19 +135,9 @@ const STEPS = [
     description: "Chọn khóa học và cấu hình thời gian",
   },
   {
-    id: "generate-classes",
-    title: "Tạo lớp học",
-    description: "Tạo và chọn giáo viên",
-  },
-  {
-    id: "preview",
-    title: "Xem trước",
-    description: "Kiểm tra validation",
-  },
-  {
-    id: "create",
-    title: "Tạo lớp",
-    description: "Tạo các lớp học",
+    id: "generate-validate",
+    title: "Tạo & Kiểm tra",
+    description: "Tạo lớp và validate giáo viên",
   },
   {
     id: "complete",
@@ -179,6 +185,7 @@ export function CreateClassesBatchModal({
 
   // Step 1: Course & Config
   const [selectedCourseId, setSelectedCourseId] = React.useState("");
+  const [courseSearchKey, setCourseSearchKey] = React.useState("");
   const [selectedSlotIds, setSelectedSlotIds] = React.useState<string[]>([]);
   const [selectedDays, setSelectedDays] = React.useState<number[]>([]);
   const [classCount, setClassCount] = React.useState(1);
@@ -188,7 +195,7 @@ export function CreateClassesBatchModal({
   // Step 2: Generated Classes
   const [newClasses, setNewClasses] = React.useState<NewClassItem[]>([]);
 
-  // Step 3: Validation
+  // Step 2 (merged): Validation
   const [validationWarnings, setValidationWarnings] = React.useState<
     ValidationWarning[]
   >([]);
@@ -196,6 +203,9 @@ export function CreateClassesBatchModal({
     Map<string, InstructorSpecialist>
   >(new Map());
   const [ageRules, setAgeRules] = React.useState<AgeRule[]>([]);
+  const [ageRulesTitles, setAgeRulesTitles] = React.useState<
+    Map<string, string>
+  >(new Map());
   const [isValidating, setIsValidating] = React.useState(false);
 
   // Step 4: Creating
@@ -265,8 +275,12 @@ export function CreateClassesBatchModal({
   const loadAgeRules = async () => {
     try {
       const { fetchAgeRules } = await import("@/api/manager/age-types");
-      const rules = await fetchAgeRules();
+      const rules = await fetchAgeRules(undefined); // Pass undefined for searchParams to get all rules
       setAgeRules(rules);
+
+      // Create mapping from ID to title for easy lookup
+      const titlesMap = new Map(rules.map((rule) => [rule._id, rule.title]));
+      setAgeRulesTitles(titlesMap);
     } catch (error: any) {
       console.error("Failed to load age rules:", error);
     }
@@ -342,6 +356,142 @@ export function CreateClassesBatchModal({
     setNewClasses((prev) =>
       prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
+
+    // Auto-validate when instructor changes
+    if (field === "instructor" && value) {
+      validateSingleClass(id, value);
+    } else if (field === "instructor" && !value) {
+      // Clear warnings for this class when instructor is removed
+      setValidationWarnings((prev) => prev.filter((w) => w.classId !== id));
+    }
+  };
+
+  const validateSingleClass = async (classId: string, instructorId: string) => {
+    try {
+      const { fetchInstructorSpecialist } = await import(
+        "@/api/manager/instructors-api"
+      );
+      const { getSelectedTenant } = await import("@/utils/tenant-utils");
+      const { getAuthToken } = await import("@/api/auth-utils");
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) return;
+
+      const course = availableCourses.find((c) => c._id === selectedCourseId);
+      if (!course) return;
+
+      // Fetch specialist info for this instructor
+      const specialistsResponse = await fetchInstructorSpecialist({
+        searchParams: {
+          "search[user._id:in]": instructorId,
+        },
+        tenantId,
+        token,
+      });
+
+      const specialist = specialistsResponse[0];
+      if (specialist) {
+        setInstructorSpecialists((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(instructorId, specialist);
+          return newMap;
+        });
+      }
+
+      // Clear previous warnings for this class
+      setValidationWarnings((prev) =>
+        prev.filter((w) => w.classId !== classId)
+      );
+
+      const warnings: ValidationWarning[] = [];
+
+      // Missing specialist
+      if (!specialist) {
+        warnings.push({
+          classId,
+          type: "missing_specialist",
+          severity: "warning",
+          message: "Giáo viên chưa có thông tin chuyên môn",
+          details: "Cần cập nhật category và age_types cho giáo viên này",
+        });
+        setValidationWarnings((prev) => [...prev, ...warnings]);
+        return;
+      }
+
+      // Parse specialist data
+      const specialistCategories = Array.isArray(specialist.category)
+        ? specialist.category.map((cat: any) =>
+            typeof cat === "object" ? cat._id : cat
+          )
+        : [];
+      const specialistAgeTypes = Array.isArray(specialist.age_types)
+        ? specialist.age_types.map((age: any) =>
+            typeof age === "object" ? age._id : age
+          )
+        : [];
+
+      const courseCategories = course.category?.map((cat) => cat._id) || [];
+      const courseAgeTypes = course.type_of_age || [];
+
+      // Validate category match
+      const categoryMatch = courseCategories.some((catId) =>
+        specialistCategories.includes(catId)
+      );
+
+      if (
+        !categoryMatch &&
+        courseCategories.length > 0 &&
+        specialistCategories.length > 0
+      ) {
+        const courseCategoryTitles =
+          course.category?.map((cat) => cat.title).join(", ") || "";
+        const specialistCategoryTitles = specialist.category
+          .map((cat: any) => (typeof cat === "object" ? cat.title : ""))
+          .filter(Boolean)
+          .join(", ");
+
+        warnings.push({
+          classId,
+          type: "category",
+          severity: "warning",
+          message: "Category không khớp",
+          details: `Khóa học: [${courseCategoryTitles}] ≠ Giáo viên: [${specialistCategoryTitles}]`,
+        });
+      }
+
+      // Validate age_type match
+      const ageTypeMatch = courseAgeTypes.some((ageId) =>
+        specialistAgeTypes.includes(ageId)
+      );
+
+      if (
+        !ageTypeMatch &&
+        courseAgeTypes.length > 0 &&
+        specialistAgeTypes.length > 0
+      ) {
+        const courseAgeTypeTitles = courseAgeTypes
+          .map((id) => ageRulesTitles.get(id) || id)
+          .join(", ");
+        const specialistAgeTypeTitles = specialist.age_types
+          .map((age: any) => (typeof age === "object" ? age.title : ""))
+          .filter(Boolean)
+          .join(", ");
+
+        warnings.push({
+          classId,
+          type: "age_type",
+          severity: "warning",
+          message: "Độ tuổi không khớp",
+          details: `Khóa học: [${courseAgeTypeTitles}] ≠ Giáo viên: [${specialistAgeTypeTitles}]`,
+        });
+      }
+
+      setValidationWarnings((prev) => [...prev, ...warnings]);
+    } catch (error) {
+      console.error("Failed to validate instructor:", error);
+    }
   };
 
   const handleRemoveClass = (id: string) => {
@@ -629,8 +779,8 @@ export function CreateClassesBatchModal({
         description: `Đã tạo ${insertedIds.length} lớp học thành công`,
       });
 
-      // Move to Step 5 (Complete) to fetch and display created classes
-      setCurrentStep(4);
+      // Move to Step 3 (Complete) to show created classes and options
+      setCurrentStep(2);
     } catch (error: any) {
       console.error("Create classes error:", error);
       toast({
@@ -675,16 +825,17 @@ export function CreateClassesBatchModal({
     }
   };
 
-  // Fetch classes when entering Step 5
+  // Fetch classes when entering Step 3 (Complete) - step index is 2 (3 steps total: 0,1,2)
   React.useEffect(() => {
     if (
-      currentStep === 4 &&
+      currentStep === 2 &&
       createdClassIds.length > 0 &&
-      fetchedClasses.length === 0
+      fetchedClasses.length === 0 &&
+      !isCreating
     ) {
       fetchCreatedClasses();
     }
-  }, [currentStep, createdClassIds]);
+  }, [currentStep, createdClassIds, isCreating]);
 
   const handleContinueToSchedule = () => {
     const { min_time, max_time } = calculateMinMaxTime();
@@ -736,42 +887,114 @@ export function CreateClassesBatchModal({
             {/* Step 1: Course & Config */}
             <StepperStep step={0}>
               <div className='space-y-6'>
-                {/* Course Selection */}
+                {/* Course Selection with Search */}
                 <div className='space-y-2'>
                   <Label>Chọn khóa học *</Label>
-                  <Select
-                    value={selectedCourseId}
-                    onValueChange={setSelectedCourseId}
-                    disabled={loadingCourses}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn khóa học...' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingCourses ? (
-                        <div className='p-2 text-sm text-muted-foreground'>
-                          Đang tải...
-                        </div>
-                      ) : (
-                        availableCourses.map((course) => (
-                          <SelectItem
-                            key={course._id}
-                            value={course._id}
-                          >
-                            {course.title}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant='outline'
+                        role='combobox'
+                        disabled={loadingCourses}
+                        className={cn(
+                          "w-full justify-between",
+                          !selectedCourseId && "text-muted-foreground"
+                        )}
+                      >
+                        {selectedCourseId
+                          ? availableCourses.find(
+                              (course) => course._id === selectedCourseId
+                            )?.title
+                          : "Chọn khóa học..."}
+                        <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className='w-[--radix-popover-trigger-width] p-0'
+                      align='start'
+                    >
+                      <Command>
+                        <CommandInput
+                          placeholder='Tìm kiếm khóa học...'
+                          value={courseSearchKey}
+                          onValueChange={setCourseSearchKey}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Không tìm thấy khóa học.</CommandEmpty>
+                          <CommandGroup>
+                            {loadingCourses ? (
+                              <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
+                                <Loader2 className='h-4 w-4 animate-spin' />
+                                Đang tải...
+                              </div>
+                            ) : (
+                              availableCourses
+                                .filter((course) =>
+                                  course.title
+                                    .toLowerCase()
+                                    .includes(courseSearchKey.toLowerCase())
+                                )
+                                .map((course) => (
+                                  <CommandItem
+                                    key={course._id}
+                                    value={course._id}
+                                    onSelect={() => {
+                                      setSelectedCourseId(course._id);
+                                      setCourseSearchKey("");
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedCourseId === course._id
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {course.title}
+                                  </CommandItem>
+                                ))
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   {selectedCourse && (
                     <div className='text-sm text-muted-foreground space-y-1 mt-2'>
                       <div>
                         Số buổi học: {selectedCourse.session_number || "N/A"}
                       </div>
                       <div>
-                        Sức chứa: {selectedCourse.capacity || "N/A"} học viên
+                        Sức chứa tối đa: {selectedCourse.max_member || "N/A"}{" "}
+                        học viên
                       </div>
+                      {selectedCourse.type_of_age &&
+                        selectedCourse.type_of_age.length > 0 && (
+                          <div className='flex items-start gap-2'>
+                            <span>Độ tuổi:</span>
+                            <div className='flex flex-wrap gap-1'>
+                              {ageRulesTitles.size === 0 ? (
+                                <span className='text-xs text-muted-foreground'>
+                                  Đang tải...
+                                </span>
+                              ) : (
+                                selectedCourse.type_of_age.map((ageId) => {
+                                  const title = ageRulesTitles.get(ageId);
+                                  return (
+                                    <Badge
+                                      key={ageId}
+                                      variant='secondary'
+                                      className='text-xs'
+                                    >
+                                      {title || "N/A"}
+                                    </Badge>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>
@@ -877,14 +1100,14 @@ export function CreateClassesBatchModal({
               </div>
             </StepperStep>
 
-            {/* Step 2: Generate Classes & Select Instructors */}
+            {/* Step 1: Generate Classes & Validate (MERGED STEP 2 & 3) */}
             <StepperStep step={1}>
               <div className='space-y-4'>
                 <div className='flex justify-between items-center'>
                   <div>
                     <h3 className='font-medium'>Danh sách lớp học</h3>
                     <p className='text-sm text-muted-foreground'>
-                      Chọn giáo viên cho từng lớp học
+                      Chọn giáo viên và kiểm tra validation tự động
                     </p>
                   </div>
                   <Button
@@ -897,6 +1120,26 @@ export function CreateClassesBatchModal({
                     Thêm lớp
                   </Button>
                 </div>
+
+                {/* Warning summary */}
+                {validationWarnings.length > 0 && (
+                  <Alert
+                    variant='destructive'
+                    className='bg-amber-50 dark:bg-amber-950/20 border-amber-200'
+                  >
+                    <AlertTriangle className='h-4 w-4 text-amber-600' />
+                    <AlertDescription className='text-amber-800 dark:text-amber-200'>
+                      <div className='font-medium'>
+                        ⚠️ LƯU Ý: Có {validationWarnings.length} cảnh báo về
+                        giáo viên
+                      </div>
+                      <div className='text-xs mt-1'>
+                        Các cảnh báo không chặn việc tạo lớp, nhưng nên xem xét
+                        lại để đảm bảo giáo viên phù hợp.
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {newClasses.length === 0 ? (
                   <Alert>
@@ -912,7 +1155,7 @@ export function CreateClassesBatchModal({
                         <TableRow>
                           <TableHead className='w-[50px]'>#</TableHead>
                           <TableHead>Tên lớp</TableHead>
-                          <TableHead>Giáo viên</TableHead>
+                          <TableHead>Giáo viên & Chuyên môn</TableHead>
                           <TableHead className='w-[180px]'>
                             Hiển thị đăng ký
                           </TableHead>
@@ -920,88 +1163,211 @@ export function CreateClassesBatchModal({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {newClasses.map((classItem, index) => (
-                          <TableRow key={classItem.id}>
-                            <TableCell className='font-medium'>
-                              {index + 1}
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={classItem.name}
-                                onChange={(e) =>
-                                  handleUpdateClass(
-                                    classItem.id,
-                                    "name",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder='Tên lớp học...'
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={classItem.instructor}
-                                onValueChange={(value) =>
-                                  handleUpdateClass(
-                                    classItem.id,
-                                    "instructor",
-                                    value
-                                  )
-                                }
-                                disabled={loadingInstructors}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn giáo viên...' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {loadingInstructors ? (
-                                    <div className='p-2 text-sm text-muted-foreground'>
-                                      Đang tải...
+                        {newClasses.map((classItem, index) => {
+                          const warnings = getClassWarnings(classItem.id);
+                          const specialist = instructorSpecialists.get(
+                            classItem.instructor
+                          );
+
+                          return (
+                            <TableRow
+                              key={classItem.id}
+                              className={cn(
+                                warnings.length > 0 &&
+                                  "bg-amber-50/50 dark:bg-amber-950/10"
+                              )}
+                            >
+                              <TableCell className='font-medium align-top pt-4'>
+                                {index + 1}
+                              </TableCell>
+                              <TableCell className='align-top pt-4'>
+                                <Input
+                                  value={classItem.name}
+                                  onChange={(e) =>
+                                    handleUpdateClass(
+                                      classItem.id,
+                                      "name",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder='Tên lớp học...'
+                                />
+                              </TableCell>
+                              <TableCell className='align-top pt-4'>
+                                <div className='space-y-2'>
+                                  <Select
+                                    value={classItem.instructor}
+                                    onValueChange={(value) =>
+                                      handleUpdateClass(
+                                        classItem.id,
+                                        "instructor",
+                                        value
+                                      )
+                                    }
+                                    disabled={loadingInstructors}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder='Chọn giáo viên...' />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {loadingInstructors ? (
+                                        <div className='p-2 text-sm text-muted-foreground'>
+                                          Đang tải...
+                                        </div>
+                                      ) : (
+                                        availableInstructors.map(
+                                          (instructor) => (
+                                            <SelectItem
+                                              key={instructor._id}
+                                              value={instructor._id}
+                                            >
+                                              {instructor.username}
+                                            </SelectItem>
+                                          )
+                                        )
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+
+                                  {/* Specialist info - Badge pills */}
+                                  {specialist && classItem.instructor && (
+                                    <div className='text-xs space-y-1.5'>
+                                      <div className='flex flex-wrap gap-1 items-center'>
+                                        <span className='text-muted-foreground'>
+                                          Chuyên môn:
+                                        </span>
+                                        {(() => {
+                                          const categories = Array.isArray(
+                                            specialist.category
+                                          )
+                                            ? specialist.category
+                                            : [];
+                                          return categories.length > 0 ? (
+                                            categories.map(
+                                              (cat: any, idx: number) => {
+                                                const title =
+                                                  typeof cat === "object"
+                                                    ? cat.title
+                                                    : ageRulesTitles.get(cat) ||
+                                                      cat;
+                                                return (
+                                                  <Badge
+                                                    key={idx}
+                                                    variant='secondary'
+                                                    className='text-xs'
+                                                  >
+                                                    {title}
+                                                  </Badge>
+                                                );
+                                              }
+                                            )
+                                          ) : (
+                                            <span className='text-muted-foreground'>
+                                              Chưa có
+                                            </span>
+                                          );
+                                        })()}
+                                      </div>
+                                      <div className='flex flex-wrap gap-1 items-center'>
+                                        <span className='text-muted-foreground'>
+                                          Độ tuổi:
+                                        </span>
+                                        {(() => {
+                                          const ageTypes = Array.isArray(
+                                            specialist.age_types
+                                          )
+                                            ? specialist.age_types
+                                            : [];
+                                          return ageTypes.length > 0 ? (
+                                            ageTypes.map(
+                                              (age: any, idx: number) => {
+                                                const title =
+                                                  typeof age === "object"
+                                                    ? age.title
+                                                    : ageRulesTitles.get(age) ||
+                                                      age;
+                                                return (
+                                                  <Badge
+                                                    key={idx}
+                                                    variant='secondary'
+                                                    className='text-xs'
+                                                  >
+                                                    {title}
+                                                  </Badge>
+                                                );
+                                              }
+                                            )
+                                          ) : (
+                                            <span className='text-muted-foreground'>
+                                              Chưa có
+                                            </span>
+                                          );
+                                        })()}
+                                      </div>
                                     </div>
-                                  ) : (
-                                    availableInstructors.map((instructor) => (
-                                      <SelectItem
-                                        key={instructor._id}
-                                        value={instructor._id}
-                                      >
-                                        {instructor.username}
-                                      </SelectItem>
-                                    ))
                                   )}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={classItem.show_on_regist_course.toString()}
-                                onValueChange={(value) =>
-                                  handleUpdateClass(
-                                    classItem.id,
-                                    "show_on_regist_course",
-                                    value === "true"
-                                  )
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value='true'>Hiển thị</SelectItem>
-                                  <SelectItem value='false'>Ẩn</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => handleRemoveClass(classItem.id)}
-                              >
-                                <Trash2 className='h-4 w-4 text-red-500' />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+
+                                  {/* Validation warnings */}
+                                  {warnings.length > 0 && (
+                                    <div className='space-y-1'>
+                                      {warnings.map((warning, idx) => (
+                                        <div
+                                          key={idx}
+                                          className='flex items-start gap-1.5 text-xs p-2 rounded-md bg-amber-100 dark:bg-amber-900/30 border border-amber-200'
+                                        >
+                                          <AlertCircle className='h-3 w-3 text-amber-600 mt-0.5 flex-shrink-0' />
+                                          <div>
+                                            <div className='font-medium text-amber-900 dark:text-amber-100'>
+                                              {warning.message}
+                                            </div>
+                                            {warning.details && (
+                                              <div className='text-amber-700 dark:text-amber-300 mt-0.5'>
+                                                {warning.details}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className='align-top pt-4'>
+                                <Select
+                                  value={classItem.show_on_regist_course.toString()}
+                                  onValueChange={(value) =>
+                                    handleUpdateClass(
+                                      classItem.id,
+                                      "show_on_regist_course",
+                                      value === "true"
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value='true'>
+                                      Hiển thị
+                                    </SelectItem>
+                                    <SelectItem value='false'>Ẩn</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className='align-top pt-4'>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() =>
+                                    handleRemoveClass(classItem.id)
+                                  }
+                                >
+                                  <Trash2 className='h-4 w-4 text-red-500' />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
@@ -1009,182 +1375,8 @@ export function CreateClassesBatchModal({
               </div>
             </StepperStep>
 
-            {/* Step 3: Preview & Validation */}
+            {/* Step 2: Complete */}
             <StepperStep step={2}>
-              <div className='space-y-4'>
-                <Alert>
-                  <Info className='h-4 w-4' />
-                  <AlertDescription>
-                    Kiểm tra thông tin giáo viên và validation. Các cảnh báo
-                    không chặn việc tạo lớp.
-                  </AlertDescription>
-                </Alert>
-
-                {validationWarnings.length > 0 && (
-                  <Alert
-                    variant='destructive'
-                    className='bg-amber-50 dark:bg-amber-950/20 border-amber-200'
-                  >
-                    <AlertTriangle className='h-4 w-4 text-amber-600' />
-                    <AlertDescription className='text-amber-800 dark:text-amber-200'>
-                      <div className='font-medium mb-1'>
-                        Có {validationWarnings.length} cảnh báo
-                      </div>
-                      <div className='text-xs'>
-                        Vui lòng xem lại thông tin bên dưới. Bạn vẫn có thể tiếp
-                        tục tạo lớp.
-                      </div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className='space-y-3'>
-                  {newClasses.map((classItem, index) => {
-                    const warnings = getClassWarnings(classItem.id);
-                    const instructor = availableInstructors.find(
-                      (i) => i._id === classItem.instructor
-                    );
-                    const specialist = instructorSpecialists.get(
-                      classItem.instructor
-                    );
-
-                    return (
-                      <div
-                        key={classItem.id}
-                        className={cn(
-                          "border rounded-lg p-4",
-                          warnings.length > 0 &&
-                            "border-amber-300 bg-amber-50/50 dark:bg-amber-950/10"
-                        )}
-                      >
-                        <div className='flex items-start justify-between mb-3'>
-                          <div>
-                            <h4 className='font-medium'>
-                              {index + 1}. {classItem.name}
-                            </h4>
-                            <p className='text-sm text-muted-foreground'>
-                              Giáo viên: {instructor?.username || "N/A"}
-                            </p>
-                          </div>
-                          {warnings.length > 0 && (
-                            <Badge
-                              variant='destructive'
-                              className='bg-amber-500'
-                            >
-                              <AlertTriangle className='h-3 w-3 mr-1' />
-                              {warnings.length} cảnh báo
-                            </Badge>
-                          )}
-                        </div>
-
-                        {specialist && (
-                          <div className='bg-muted/50 rounded-md p-3 mb-3 text-sm'>
-                            <div className='font-medium mb-2'>
-                              Thông tin chuyên môn:
-                            </div>
-                            <div className='space-y-1 text-xs'>
-                              <div>
-                                <span className='text-muted-foreground'>
-                                  Category:
-                                </span>{" "}
-                                {(() => {
-                                  const categories = Array.isArray(
-                                    specialist.category
-                                  )
-                                    ? specialist.category
-                                    : [];
-                                  const titles = categories
-                                    .map((cat: any) =>
-                                      typeof cat === "object" ? cat.title : null
-                                    )
-                                    .filter(Boolean);
-                                  return titles.length > 0
-                                    ? titles.join(", ")
-                                    : "Chưa có";
-                                })()}
-                              </div>
-                              <div>
-                                <span className='text-muted-foreground'>
-                                  Age types:
-                                </span>{" "}
-                                {(() => {
-                                  const ageTypes = Array.isArray(
-                                    specialist.age_types
-                                  )
-                                    ? specialist.age_types
-                                    : [];
-                                  const titles = ageTypes
-                                    .map((age: any) =>
-                                      typeof age === "object" ? age.title : null
-                                    )
-                                    .filter(Boolean);
-                                  return titles.length > 0
-                                    ? titles.join(", ")
-                                    : "Chưa có";
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {warnings.length > 0 && (
-                          <div className='space-y-2'>
-                            {warnings.map((warning, idx) => (
-                              <div
-                                key={idx}
-                                className='flex items-start gap-2 text-xs p-2 rounded-md bg-amber-100/50 dark:bg-amber-900/20'
-                              >
-                                <AlertCircle className='h-3 w-3 text-amber-600 mt-0.5 flex-shrink-0' />
-                                <div>
-                                  <div className='font-medium text-amber-900 dark:text-amber-100'>
-                                    {warning.message}
-                                  </div>
-                                  {warning.details && (
-                                    <div className='text-amber-700 dark:text-amber-300 mt-0.5'>
-                                      {warning.details}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </StepperStep>
-
-            {/* Step 4: Creating */}
-            <StepperStep step={3}>
-              <div className='space-y-4'>
-                {isCreating ? (
-                  <div className='flex flex-col items-center justify-center py-12'>
-                    <Loader2 className='h-12 w-12 animate-spin text-primary mb-4' />
-                    <p className='text-lg font-medium'>Đang tạo lớp học...</p>
-                    <p className='text-sm text-muted-foreground'>
-                      Vui lòng đợi trong giây lát
-                    </p>
-                  </div>
-                ) : createdClassIds.length > 0 ? (
-                  <div className='text-center py-8'>
-                    <div className='mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-4'>
-                      <CheckCircle2 className='h-8 w-8 text-green-600' />
-                    </div>
-                    <h3 className='text-lg font-medium mb-2'>
-                      Tạo lớp học thành công!
-                    </h3>
-                    <p className='text-sm text-muted-foreground'>
-                      Đã tạo {createdClassIds.length} lớp học mới
-                    </p>
-                  </div>
-                ) : null}
-              </div>
-            </StepperStep>
-
-            {/* Step 5: Complete */}
-            <StepperStep step={4}>
               <div className='space-y-4'>
                 <Alert>
                   <CheckCircle2 className='h-4 w-4' />
@@ -1302,58 +1494,54 @@ export function CreateClassesBatchModal({
               onClick={() => {
                 if (currentStep === 0) {
                   onOpenChange(false);
-                } else if (currentStep === 4) {
-                  // At final step, back button acts as finish
+                } else if (currentStep === 2) {
+                  // At final step (Complete), back button acts as finish
                   handleFinish();
                 } else {
                   setCurrentStep((prev) => prev - 1);
                 }
               }}
-              disabled={isValidating || isCreating}
+              disabled={isCreating}
             >
               {currentStep === 0
                 ? "Hủy"
-                : currentStep === 4
+                : currentStep === 2
                 ? "Đóng"
                 : "Quay lại"}
             </Button>
-            {currentStep < 4 && (
+            {currentStep < 2 && (
               <Button
                 onClick={() => {
                   if (currentStep === 0) {
                     handleGenerateClasses();
-                  } else if (currentStep === 1) {
-                    validateClasses();
-                  } else if (currentStep === 2) {
-                    handleCreateClasses();
                   }
                 }}
                 disabled={
-                  (currentStep === 0 &&
-                    (!selectedCourseId ||
-                      selectedSlotIds.length === 0 ||
-                      selectedDays.length === 0)) ||
-                  (currentStep === 1 &&
-                    (newClasses.length === 0 ||
-                      newClasses.some((c) => !c.name || !c.instructor))) ||
-                  isValidating ||
+                  currentStep === 0 &&
+                  (!selectedCourseId ||
+                    selectedSlotIds.length === 0 ||
+                    selectedDays.length === 0)
+                }
+              >
+                {currentStep === 0 ? "Tạo lớp học" : "Tiếp tục"}
+              </Button>
+            )}
+            {currentStep === 1 && (
+              <Button
+                onClick={handleCreateClasses}
+                disabled={
+                  newClasses.length === 0 ||
+                  newClasses.some((c) => !c.name || !c.instructor) ||
                   isCreating
                 }
               >
-                {isValidating || isCreating ? (
+                {isCreating ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    {isValidating && "Đang kiểm tra..."}
-                    {isCreating && "Đang tạo..."}
+                    Đang tạo...
                   </>
-                ) : currentStep === 0 ? (
-                  "Tạo lớp học"
-                ) : currentStep === 1 ? (
-                  "Kiểm tra validation"
-                ) : currentStep === 2 ? (
-                  `Tạo ${newClasses.length} lớp học`
                 ) : (
-                  "Tiếp tục"
+                  `Tạo ${newClasses.length} lớp học`
                 )}
               </Button>
             )}

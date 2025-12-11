@@ -936,3 +936,294 @@ CLASS API:
 - giải thích: api này dùng để khi manager/staff TẠO LỚP HÀNG LOẠT VÀ XẾP LỊCH cho các lớp học vừa mới tạo, sau đó sẽ dùng api này để get những lớp học vừa mới tạo đó bằng insertedId response ra khi tạo lớp học bằng param ?search[_id:in]=6935ce40fd06e8058b231fb0,2C69330e7114048f4ec3bf8e53  
 
 ====================
+
+====================
+
+COURSE APIs:
+
+- response body của api fetchCourses sẽ cần thêm 1 vài field mới
+- đây là response body của api fetchCourses:
+{
+    "data": [
+        [
+            {
+                "data": [
+                    {
+                        "_id": "6904cc92f2b4e2ea577cdc95",
+                        "title": "Bơi Sải Cơ Bản Cho Người Lớn",
+                        "slug": "bi-si-c-bn-cho-ngi-ln",
+                        "description": "Rèn kỹ thuật bơi sải và hơi thở đúng chuẩn.",
+                        "price": 199997,
+                        "category": [
+                            {
+                                "_id": "681ef0540e90714dae7a5901",
+                                "title": "Người mới bắt đầu",
+                                "created_at": "2025-05-10T13:21:08.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-05-25T14:41:01.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "is_active": true
+                            },
+                            {
+                                "_id": "68f5eff0fa3a437f39fef45a",
+                                "title": "Cơ bản",
+                                "created_at": "2025-10-20T15:16:48.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-20T15:16:48.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "session_number": 10,
+                        "session_number_duration": "75 phút",
+                        "detail": [
+                            {
+                                "title": "Tư thế thân",
+                                "form_judge": {
+                                    "type": "object",
+                                    "items": {}
+                                }
+                            }
+                        ],
+                        "media": [
+                            {
+                                "_id": "691589fc0d7b87cc47afb464",
+                                "filename": "8d2f2da4-4caf-432b-a47f-d9aaad7c1271",
+                                "disk": "uploads",
+                                "mime": "image/jpeg",
+                                "size": 472412,
+                                "title": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "alt": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "created_at": "2025-11-13T14:34:20.000Z",
+                                "updated_at": "2025-11-13T14:34:20.000Z",
+                                "is_draft": false,
+                                "__v": 0,
+                                "path": "https://pub-faf2d56f350a464f917b1de058fed3ef.r2.dev/uploads/8d2f2da4-4caf-432b-a47f-d9aaad7c1271"
+                            }
+                        ],
+                        "is_active": true,
+                        "created_at": "2025-10-31T21:49:54.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-12-04T21:27:29.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "max_member": 15,
+                        "type": [ // đây là field mới, field này sẽ lưu 1 trong 2 string: global hoặc custom
+                            "global"
+                        ],
+                        "type_of_age": [ // đây là field mới, cần phải gọi api fetchAgeRules để có thể lấy (các) _id và pass vào đây
+                            "693196f612fb3088bf2a0dfe"
+                        ],
+                        "orders": []
+                    },
+                    {
+                        "_id": "6904e29b40c9e1c1a13ddd33",
+                        "title": "Huấn Luyện Thi Đấu Bơi Sải",
+                        "slug": "hun-luyn-thi-u-bi-si",
+                        "description": "Chuẩn bị kỹ thuật thi đấu phong trào, rèn tốc độ và chiến thuật.",
+                        "price": 99999,
+                        "category": [
+                            {
+                                "_id": "6904c3589cfd48321e3c6088",
+                                "title": "Nâng cao kỹ thuật",
+                                "is_active": true,
+                                "created_at": "2025-10-31T21:10:32.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-31T21:10:32.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            },
+                            {
+                                "_id": "6904c36c9cfd48321e3c6089",
+                                "title": "Huấn luyện thi đấu",
+                                "is_active": true,
+                                "created_at": "2025-10-31T21:10:52.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-31T21:10:52.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "session_number": 20,
+                        "session_number_duration": "90 phút",
+                        "detail": [
+                            {
+                                "title": "Xuất phát",
+                                "form_judge": {
+                                    "type": "object",
+                                    "items": {}
+                                }
+                            }
+                        ],
+                        "media": [
+                            {
+                                "_id": "691589fc0d7b87cc47afb464",
+                                "filename": "8d2f2da4-4caf-432b-a47f-d9aaad7c1271",
+                                "disk": "uploads",
+                                "mime": "image/jpeg",
+                                "size": 472412,
+                                "title": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "alt": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "created_at": "2025-11-13T14:34:20.000Z",
+                                "updated_at": "2025-11-13T14:34:20.000Z",
+                                "is_draft": false,
+                                "__v": 0,
+                                "path": "https://pub-faf2d56f350a464f917b1de058fed3ef.r2.dev/uploads/8d2f2da4-4caf-432b-a47f-d9aaad7c1271"
+                            }
+                        ],
+                        "is_active": true,
+                        "created_at": "2025-10-31T23:23:55.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-12-04T21:26:52.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "max_member": 15,
+                        "type": [
+                            "global"
+                        ],
+                        "type_of_age": [
+                            "693196f612fb3088bf2a0dfe"
+                        ],
+                        "orders": []
+                    },
+                    {
+                        "_id": "69079ef9c5d0d1fc7a75e5bb",
+                        "title": "Bơi Nâng Cao Tổng Hợp",
+                        "slug": "bi-nng-cao-tng-hp",
+                        "description": "Học viên đã qua cơ bản, tổng hợp 4 kiểu bơi chuẩn.",
+                        "price": 99998,
+                        "category": [
+                            {
+                                "_id": "681ef03f0e90714dae7a58ec",
+                                "title": "Trẻ em",
+                                "created_at": "2025-05-10T13:20:47.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-05-25T14:41:05.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "is_active": true
+                            },
+                            {
+                                "_id": "681ef0540e90714dae7a5901",
+                                "title": "Người mới bắt đầu",
+                                "created_at": "2025-05-10T13:21:08.000Z",
+                                "created_by": "6711e8a47b45b2974bd6133c",
+                                "updated_at": "2025-05-25T14:41:01.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "is_active": true
+                            },
+                            {
+                                "_id": "68f5eff0fa3a437f39fef45a",
+                                "title": "Cơ bản",
+                                "created_at": "2025-10-20T15:16:48.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-10-20T15:16:48.000Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "tenant_id": "67cabc98c87dc080914265d4"
+                            }
+                        ],
+                        "session_number": 16,
+                        "session_number_duration": "75 phút",
+                        "detail": [
+                            {
+                                "title": "Ôn kỹ thuật cơ bản",
+                                "form_judge": {
+                                    "type": "object",
+                                    "items": {
+                                        "okela": {
+                                            "type": "string",
+                                            "required": false,
+                                            "is_filter": false,
+                                            "text_type": "short_text"
+                                        }
+                                    }
+                                }
+                            }
+                        ],
+                        "media": [
+                            {
+                                "_id": "691589fc0d7b87cc47afb464",
+                                "filename": "8d2f2da4-4caf-432b-a47f-d9aaad7c1271",
+                                "disk": "uploads",
+                                "mime": "image/jpeg",
+                                "size": 472412,
+                                "title": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "alt": "Tổ chức giải thi bơi giao lưu dành cho học viên",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "created_at": "2025-11-13T14:34:20.000Z",
+                                "updated_at": "2025-11-13T14:34:20.000Z",
+                                "is_draft": false,
+                                "__v": 0,
+                                "path": "https://pub-faf2d56f350a464f917b1de058fed3ef.r2.dev/uploads/8d2f2da4-4caf-432b-a47f-d9aaad7c1271"
+                            }
+                        ],
+                        "is_active": true,
+                        "created_at": "2025-11-03T01:12:09.000Z",
+                        "created_by": "6831d35a95ac46cc9b686001",
+                        "updated_at": "2025-12-10T15:57:55.000Z",
+                        "updated_by": "6711e8a47b45b2974bd6133c",
+                        "tenant_id": "67cabc98c87dc080914265d4",
+                        "max_member": 25,
+                        "type": [
+                            "global"
+                        ],
+                        "type_of_age": [
+                            "69319672068928286b329e4a"
+                        ],
+                        "orders": []
+                    }
+                ],
+                "meta_data": {
+                    "count": 3,
+                    "page": 1,
+                    "limit": 10
+                }
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- tương tự với api fetchCourseById
+
+- ngoài ra cũng cần phải cập nhật lại request body của 2 api updateCourse và createCourse
+- đây là request body:
+{
+    "title": "Test Course 1",
+    "description": "Test Course 1",
+    "session_number": 10,
+    "session_number_duration": "1 Ngày",
+    "detail": [
+        {
+            "title": "test 1"
+        },
+        {
+            "title": "test 2"
+        }
+    ],
+    "category": [
+        "681ef03f0e90714dae7a58ec",
+        "681ef0390e90714dae7a58d7"
+    ],
+    "media": [
+        "683e82989f35e086bdbda2f7"
+    ],
+    "type": [ // đây là field mới, field này sẽ lưu 1 trong 2 string: global hoặc custom
+        "global"
+        // "custom"
+    ],
+    "is_active": false,
+    "type_of_age": [ // đây là field mới, cần phải gọi api fetchAgeRules để có thể lấy (các) _id và pass vào đây
+        "693196f612fb3088bf2a0dfe"
+    ],
+    "max_member": 10,
+    "price": 3000
+}
+- LƯU Ý: MỌI LOGIC LIÊN QUAN TỚI 'DETAILS' VÀ 'FORM_JUDGE' VẪN GIỮ NGUYÊN, KHÔNG THAY ĐỔI, BẠN CHỈ CẦN UPDATE CÁC FIELD MỚI VÀO

@@ -116,5 +116,6 @@ auto xếp lịch (ko xài schedule/auto -> thay bằng api tạo lịch bình t
 -case 2: tạo lớp hàng loạt + case 1
 tạo lớp hàng loạt (có validate các thông tin: instructor, age rule,..., course validate: hiện chi tiết instructor đó có và thiếu gì) -> chỉ hiện lên UI các lớp học vừa mới tạo (lấy các insertedId respone data khi tạo lớp học -> search[_id:equal] là được) -> case 1 -> (làm theo steps)
 
-- preview theo lịch 
-- sửa lại date schedule
+
+
+
