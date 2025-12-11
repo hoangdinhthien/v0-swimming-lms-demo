@@ -2624,7 +2624,15 @@ export default function ImprovedAntdCalendarPage() {
         {/* New Schedule Preview Modal with Stepper (CASE 1) */}
         <SchedulePreviewModal
           open={isSchedulePreviewModalOpen}
-          onOpenChange={setIsSchedulePreviewModalOpen}
+          onOpenChange={(open) => {
+            setIsSchedulePreviewModalOpen(open);
+            // Clear pre-selected data when modal closes
+            if (!open) {
+              setSelectedClassIds([]);
+              setClassSelectedSlots({});
+              setClassScheduleConfigs({});
+            }
+          }}
           availableClasses={availableClassesForAutoSchedule}
           loading={loadingClassesForAutoSchedule}
           preSelectedClassIds={selectedClassIds}
@@ -2632,6 +2640,10 @@ export default function ImprovedAntdCalendarPage() {
           preScheduleConfigs={classScheduleConfigs}
           onScheduleComplete={() => {
             setIsSchedulePreviewModalOpen(false);
+            // Clear pre-selected data after completion
+            setSelectedClassIds([]);
+            setClassSelectedSlots({});
+            setClassScheduleConfigs({});
             handleRefresh();
           }}
         />

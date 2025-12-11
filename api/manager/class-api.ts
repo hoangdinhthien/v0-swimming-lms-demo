@@ -21,6 +21,11 @@ export interface Course {
   is_active?: boolean;
   category?: string[];
   detail?: { title: string }[];
+  capacity?: number;
+  max_member?: number;
+  type_of_age?:
+    | string[]
+    | Array<{ _id: string; title: string; age_range?: number[] }>;
 }
 
 export interface Instructor {

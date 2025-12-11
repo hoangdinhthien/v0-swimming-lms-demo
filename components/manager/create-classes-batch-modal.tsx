@@ -72,7 +72,11 @@ interface Course {
     title: string;
   }>;
   type?: string[];
-  type_of_age?: string[];
+  type_of_age?: Array<{
+    _id: string;
+    title: string;
+    age_range?: number[];
+  }>;
 }
 
 interface Instructor {
@@ -186,6 +190,7 @@ export function CreateClassesBatchModal({
   // Step 1: Course & Config
   const [selectedCourseId, setSelectedCourseId] = React.useState("");
   const [courseSearchKey, setCourseSearchKey] = React.useState("");
+  const [openCoursePopover, setOpenCoursePopover] = React.useState(false);
   const [selectedSlotIds, setSelectedSlotIds] = React.useState<string[]>([]);
   const [selectedDays, setSelectedDays] = React.useState<number[]>([]);
   const [classCount, setClassCount] = React.useState(1);
@@ -272,17 +277,23 @@ export function CreateClassesBatchModal({
     }
   };
 
-  const loadAgeRules = async () => {
+  const loadAgeRules = async (searchParams?: Record<string, string>) => {
     try {
       const { fetchAgeRules } = await import("@/api/manager/age-types");
-      const rules = await fetchAgeRules(undefined); // Pass undefined for searchParams to get all rules
-      setAgeRules(rules);
+      const rules = await fetchAgeRules(searchParams); // Pass searchParams for filtering
 
-      // Create mapping from ID to title for easy lookup
-      const titlesMap = new Map(rules.map((rule) => [rule._id, rule.title]));
-      setAgeRulesTitles(titlesMap);
+      if (!searchParams) {
+        // Only set state when loading all rules initially
+        setAgeRules(rules);
+        // Create mapping from ID to title for easy lookup
+        const titlesMap = new Map(rules.map((rule) => [rule._id, rule.title]));
+        setAgeRulesTitles(titlesMap);
+      }
+
+      return rules;
     } catch (error: any) {
       console.error("Failed to load age rules:", error);
+      return [];
     }
   };
 
@@ -433,7 +444,7 @@ export function CreateClassesBatchModal({
         : [];
 
       const courseCategories = course.category?.map((cat) => cat._id) || [];
-      const courseAgeTypes = course.type_of_age || [];
+      const courseAgeTypes = course.type_of_age?.map((age) => age._id) || [];
 
       // Validate category match
       const categoryMatch = courseCategories.some((catId) =>
@@ -471,9 +482,9 @@ export function CreateClassesBatchModal({
         courseAgeTypes.length > 0 &&
         specialistAgeTypes.length > 0
       ) {
-        const courseAgeTypeTitles = courseAgeTypes
-          .map((id) => ageRulesTitles.get(id) || id)
-          .join(", ");
+        // Use populated course.type_of_age objects for titles
+        const courseAgeTypeTitles =
+          course.type_of_age?.map((age) => age.title).join(", ") || "";
         const specialistAgeTypeTitles = specialist.age_types
           .map((age: any) => (typeof age === "object" ? age.title : ""))
           .filter(Boolean)
@@ -645,13 +656,9 @@ export function CreateClassesBatchModal({
         }
 
         // Validation 3: Age type matching
-        const courseAgeTypes = course.type_of_age || [];
-        const courseAgeNames = courseAgeTypes
-          .map((ageId) => {
-            const ageRule = ageRules.find((rule) => rule._id === ageId);
-            return ageRule?.title || null;
-          })
-          .filter(Boolean);
+        const courseAgeTypes = course.type_of_age?.map((age) => age._id) || [];
+        const courseAgeNames =
+          course.type_of_age?.map((age) => age.title) || [];
 
         const hasMatchingAge =
           courseAgeTypes.length === 0 ||
@@ -890,7 +897,10 @@ export function CreateClassesBatchModal({
                 {/* Course Selection with Search */}
                 <div className='space-y-2'>
                   <Label>Chọn khóa học *</Label>
-                  <Popover>
+                  <Popover
+                    open={openCoursePopover}
+                    onOpenChange={setOpenCoursePopover}
+                  >
                     <PopoverTrigger asChild>
                       <Button
                         variant='outline'
@@ -941,6 +951,7 @@ export function CreateClassesBatchModal({
                                     onSelect={() => {
                                       setSelectedCourseId(course._id);
                                       setCourseSearchKey("");
+                                      setOpenCoursePopover(false);
                                     }}
                                   >
                                     <Check
@@ -974,24 +985,15 @@ export function CreateClassesBatchModal({
                           <div className='flex items-start gap-2'>
                             <span>Độ tuổi:</span>
                             <div className='flex flex-wrap gap-1'>
-                              {ageRulesTitles.size === 0 ? (
-                                <span className='text-xs text-muted-foreground'>
-                                  Đang tải...
-                                </span>
-                              ) : (
-                                selectedCourse.type_of_age.map((ageId) => {
-                                  const title = ageRulesTitles.get(ageId);
-                                  return (
-                                    <Badge
-                                      key={ageId}
-                                      variant='secondary'
-                                      className='text-xs'
-                                    >
-                                      {title || "N/A"}
-                                    </Badge>
-                                  );
-                                })
-                              )}
+                              {selectedCourse.type_of_age.map((age) => (
+                                <Badge
+                                  key={age._id}
+                                  variant='secondary'
+                                  className='text-xs'
+                                >
+                                  {age.title}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -1509,21 +1511,16 @@ export function CreateClassesBatchModal({
                 ? "Đóng"
                 : "Quay lại"}
             </Button>
-            {currentStep < 2 && (
+            {currentStep === 0 && (
               <Button
-                onClick={() => {
-                  if (currentStep === 0) {
-                    handleGenerateClasses();
-                  }
-                }}
+                onClick={handleGenerateClasses}
                 disabled={
-                  currentStep === 0 &&
-                  (!selectedCourseId ||
-                    selectedSlotIds.length === 0 ||
-                    selectedDays.length === 0)
+                  !selectedCourseId ||
+                  selectedSlotIds.length === 0 ||
+                  selectedDays.length === 0
                 }
               >
-                {currentStep === 0 ? "Tạo lớp học" : "Tiếp tục"}
+                Tạo lớp học
               </Button>
             )}
             {currentStep === 1 && (
