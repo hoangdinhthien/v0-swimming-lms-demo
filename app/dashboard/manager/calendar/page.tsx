@@ -1198,7 +1198,11 @@ export default function ImprovedAntdCalendarPage() {
 
       console.log("📤 Auto Schedule Request (Multiple Classes):", requestData);
 
-      await autoScheduleClass(requestData, tenantId, token);
+      // TODO: API autoScheduleClass đã deprecated, cần update sang flow mới
+      // await autoScheduleClass(requestData, tenantId, token);
+      throw new Error(
+        "autoScheduleClass API đã bị deprecated. Vui lòng sử dụng 'Tạo lớp hàng loạt' để xếp lịch."
+      );
 
       toast({
         title: "Thành công",
@@ -1291,17 +1295,21 @@ export default function ImprovedAntdCalendarPage() {
 
       if (!tenantId || !token) return;
 
-      // Import the new API function
-      const { createAndAutoScheduleClasses } = await import(
-        "@/api/manager/class-api"
-      );
+      // Import the new API function (DEPRECATED)
+      // const { createAndAutoScheduleClasses } = await import(
+      //   "@/api/manager/class-api"
+      // );
 
       // Remove temporary 'id' field and prepare request
       const requestData = newClasses.map(({ id, ...rest }) => rest);
 
       console.log("📤 Create & Auto Schedule Request:", requestData);
 
-      await createAndAutoScheduleClasses(requestData, tenantId, token);
+      // TODO: API createAndAutoScheduleClasses đã deprecated
+      // await createAndAutoScheduleClasses(requestData, tenantId, token);
+      throw new Error(
+        "createAndAutoScheduleClasses API đã bị deprecated. Vui lòng sử dụng modal 'Tạo lớp hàng loạt'."
+      );
 
       toast({
         title: "Thành công",

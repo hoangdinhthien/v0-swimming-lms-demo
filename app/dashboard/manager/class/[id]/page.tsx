@@ -60,10 +60,10 @@ import { fetchInstructors } from "@/api/manager/instructors-api";
 import { fetchOrdersForCourse, type Order } from "@/api/manager/orders-api";
 import { fetchStudentsByCourseOrder } from "@/api/manager/students-api";
 import { getMediaDetails } from "@/api/media-api";
-import {
-  autoScheduleClass,
-  type AutoScheduleRequest,
-} from "@/api/manager/schedule-api";
+// import {
+//   autoScheduleClass,
+//   type AutoScheduleRequest,
+// } from "@/api/manager/schedule-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getVietnameseDayFromDate } from "@/utils/date-utils";
@@ -543,7 +543,11 @@ export default function ClassDetailPage() {
         class_id: classroomId,
       };
 
-      const result = await autoScheduleClass(requestData);
+      // TODO: Update to use autoScheduleClassPreview + addClassToSchedule
+      // const result = await autoScheduleClass(requestData);
+      throw new Error(
+        "autoScheduleClass API đã bị deprecated. Vui lòng sử dụng flow mới: Tạo lớp hàng loạt > Xếp lịch"
+      );
 
       toast({
         title: "Thành công",
