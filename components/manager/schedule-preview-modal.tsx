@@ -1573,7 +1573,9 @@ export function SchedulePreviewModal({
                         </li>
                         <li className='flex items-center gap-2'>
                           <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
-                          <span>Đỏ: Có xung đột (Huấn luyện viên trùng lịch)</span>
+                          <span>
+                            Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
+                          </span>
                         </li>
                         <li className='flex items-center gap-2'>
                           <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
