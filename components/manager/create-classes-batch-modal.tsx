@@ -197,6 +197,10 @@ export function CreateClassesBatchModal({
   const [allSlots, setAllSlots] = React.useState<SlotDetail[]>([]);
   const [loadingSlots, setLoadingSlots] = React.useState(false);
 
+  // API-based course search
+  const [searchedCourses, setSearchedCourses] = React.useState<Course[]>([]);
+  const [isSearchingCourses, setIsSearchingCourses] = React.useState(false);
+
   // Step 2: Generated Classes
   const [newClasses, setNewClasses] = React.useState<NewClassItem[]>([]);
 
@@ -248,6 +252,52 @@ export function CreateClassesBatchModal({
       loadAgeRules();
     }
   }, [open]);
+
+  // Search courses by API when courseSearchKey changes
+  React.useEffect(() => {
+    const searchCourses = async () => {
+      if (!courseSearchKey.trim()) {
+        setSearchedCourses([]);
+        return;
+      }
+
+      setIsSearchingCourses(true);
+      try {
+        const { fetchCourses } = await import("@/api/manager/courses-api");
+        const { getSelectedTenant } = await import("@/utils/tenant-utils");
+        const { getAuthToken } = await import("@/api/auth-utils");
+
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+
+        if (!tenantId || !token) {
+          throw new Error("Vui lòng đăng nhập lại");
+        }
+
+        const result = await fetchCourses({
+          tenantId,
+          token,
+          searchKey: courseSearchKey,
+          limit: 50, // Show more results when searching
+        });
+
+        setSearchedCourses(result.data);
+      } catch (error: any) {
+        console.error("Failed to search courses:", error);
+        toast({
+          variant: "destructive",
+          title: "Lỗi",
+          description: "Không thể tìm kiếm khóa học",
+        });
+      } finally {
+        setIsSearchingCourses(false);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(searchCourses, 300);
+    return () => clearTimeout(timeoutId);
+  }, [courseSearchKey, toast]);
 
   const loadSlots = async () => {
     setLoadingSlots(true);
@@ -872,6 +922,11 @@ export function CreateClassesBatchModal({
     (c) => c._id === selectedCourseId
   );
 
+  // Use searched courses if searching, otherwise use availableCourses
+  const displayedCourses = courseSearchKey.trim()
+    ? searchedCourses
+    : availableCourses;
+
   return (
     <Dialog
       open={open}
@@ -923,48 +978,48 @@ export function CreateClassesBatchModal({
                       className='w-[--radix-popover-trigger-width] p-0'
                       align='start'
                     >
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput
                           placeholder='Tìm kiếm khóa học...'
                           value={courseSearchKey}
                           onValueChange={setCourseSearchKey}
                         />
                         <CommandList>
-                          <CommandEmpty>Không tìm thấy khóa học.</CommandEmpty>
+                          <CommandEmpty>
+                            {isSearchingCourses
+                              ? "Đang tìm kiếm..."
+                              : "Không tìm thấy khóa học."}
+                          </CommandEmpty>
                           <CommandGroup>
-                            {loadingCourses ? (
+                            {loadingCourses || isSearchingCourses ? (
                               <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
                                 <Loader2 className='h-4 w-4 animate-spin' />
-                                Đang tải...
+                                {isSearchingCourses
+                                  ? "Đang tìm kiếm..."
+                                  : "Đang tải..."}
                               </div>
                             ) : (
-                              availableCourses
-                                .filter((course) =>
-                                  course.title
-                                    .toLowerCase()
-                                    .includes(courseSearchKey.toLowerCase())
-                                )
-                                .map((course) => (
-                                  <CommandItem
-                                    key={course._id}
-                                    value={course._id}
-                                    onSelect={() => {
-                                      setSelectedCourseId(course._id);
-                                      setCourseSearchKey("");
-                                      setOpenCoursePopover(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedCourseId === course._id
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                    {course.title}
-                                  </CommandItem>
-                                ))
+                              displayedCourses.map((course) => (
+                                <CommandItem
+                                  key={course._id}
+                                  value={course.title}
+                                  onSelect={() => {
+                                    setSelectedCourseId(course._id);
+                                    setCourseSearchKey("");
+                                    setOpenCoursePopover(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedCourseId === course._id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {course.title}
+                                </CommandItem>
+                              ))
                             )}
                           </CommandGroup>
                         </CommandList>

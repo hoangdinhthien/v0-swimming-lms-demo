@@ -37,3 +37,16 @@ Bạn có thể cho tôi biết class capacity (số học viên trong lớp) l�
 
 
 ĐÓ LÀ NHỮNG THỨ TÔI CÓ THỂ NGHĨ RA ĐƯỢC, BẠN CÓ Ý KIẾN HAY THẮC MẮC GÌ THÌ CỨ HỎI TÔI!
+
+===============================
+
+BẮT ĐẦU TỪ LINE, TA SẼ TIẾN HÀNH SỬA CHỮA + CẢI TIẾN + THÊM VALIDATE TRANG LỊCH (dashboard/manager/calender)
+
+- DRAWER UI: 
+    . UI của phần drawer hiện ở trong trang lịch (pasted image), nếu tôi nhớ không lầm thì vẫn còn đang sử dụng của antd (về mặt UI thì nó không hợp với shadcn), ta cần phải bàn lại ĐỂ REFACTOR LẠI UI VÀ THÊM LOGIC VALIDATION cho phần UI này 
+    . tiếp theo là về phần UX ở của phần drawer này, tôi chưa check lại code, ví dụ trong một tình huống: khi tôi click vào một cell trống (nghĩa là ngày hôm đó không có lớp nào học hết) trên lịch để hiện drawer lên rồi sau đó click vào nút 'Thêm lớp học mới' (ở tab 'Xem lịch học) để qua tab 'Thêm lớp học', tôi KHÔNG THỂ CHỌN ĐƯỢC BẤT KỲ CÁI GÌ CẢ Ở CÁC PHẦN SELECT BẰNG CHUỘT(Khung giờ, Lớp học, Hồ bơi, Giáo viên) nhưng lại có thể chọn được bằng cách dùng phím mũi tên lên xuống và phím enter để chọn, RẤT LÀ KHÔNG ỔN. (pasted image 2)
+    . tiếp theo là về phần logic validation: hiện tại trong drawer này đang chưa có. và tôi muốn UI/UX có những logic validate này:
+        . chọn theo thứ tự, sau đó rồi mới cho chọn tiếp: chọn khung giờ + lớp học trước sau đó mới cho chọn các thứ còn lại (tính logic để show ra hồ bơi thích hợp này kia... sau khi cho chọn khung giờ + lớp học xong)
+        . chỉ cho chọn giáo viên nếu lớp chưa có giáo viên, nếu lớp có giáo viên rồi thì hiện thẳng tên của giáo viên đó trong phần chọn luôn cho đỡ rối 
+
+có gì thắc mắc thì cứ hỏi tôi
