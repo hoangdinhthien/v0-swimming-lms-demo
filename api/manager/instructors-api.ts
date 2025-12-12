@@ -184,7 +184,7 @@ export async function fetchInstructorDetail({
       tenantId,
       token,
     });
-    throw new Error("Thiếu thông tin xác thực hoặc ID giáo viên");
+    throw new Error("Thiếu thông tin xác thực hoặc ID huấn luyện viên");
   }
   const url = `${config.API}/v1/workflow-process/manager/user?id=${instructorId}`;
   const headers: Record<string, string> = {
@@ -204,7 +204,7 @@ export async function fetchInstructorDetail({
   if (!res.ok) {
     const errorText = await res.text();
     console.error("API error:", res.status, errorText);
-    throw new Error("Không thể lấy thông tin giáo viên");
+    throw new Error("Không thể lấy thông tin huấn luyện viên");
   }
   const data = await res.json();
   // Unwrap the nested structure: data.data[0][0][0]
@@ -241,7 +241,7 @@ export async function updateInstructor({
       tenantId,
       token,
     });
-    throw new Error("Thiếu thông tin xác thực hoặc ID giáo viên");
+    throw new Error("Thiếu thông tin xác thực hoặc ID huấn luyện viên");
   }
 
   const url = `${config.API}/v1/workflow-process/manager/user?id=${instructorId}`;

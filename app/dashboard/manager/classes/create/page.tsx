@@ -196,7 +196,7 @@ export default function CreateClassPage() {
         console.error("Error fetching instructors:", err);
         toast({
           title: "Lỗi",
-          description: "Không thể tải danh sách giáo viên",
+          description: "Không thể tải danh sách huấn luyện viên",
           variant: "destructive",
         });
       } finally {
@@ -312,7 +312,7 @@ export default function CreateClassPage() {
     if (!selectedInstructor) {
       toast({
         title: "Lỗi",
-        description: "Vui lòng chọn giáo viên",
+        description: "Vui lòng chọn huấn luyện viên",
         variant: "destructive",
       });
       return;
@@ -469,24 +469,24 @@ export default function CreateClassPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <User className='h-5 w-5' />
-                Chọn giáo viên *
+                Chọn huấn luyện viên *
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
               {loadingInstructors ? (
                 <div className='flex items-center justify-center py-8'>
                   <Loader2 className='h-6 w-6 animate-spin' />
-                  <span className='ml-2'>Đang tải giáo viên...</span>
+                  <span className='ml-2'>Đang tải huấn luyện viên...</span>
                 </div>
               ) : (
                 <div className='space-y-2'>
-                  <Label>Giáo viên có sẵn</Label>
+                  <Label>Huấn luyện viên có sẵn</Label>
                   <Select
                     value={selectedInstructor}
                     onValueChange={setSelectedInstructor}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Chọn giáo viên cho lớp học' />
+                      <SelectValue placeholder='Chọn huấn luyện viên cho lớp học' />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredInstructors.length > 0 ? (
@@ -499,7 +499,9 @@ export default function CreateClassPage() {
                               <Avatar className='h-8 w-8'>
                                 <AvatarImage
                                   src={instructor.avatarUrl}
-                                  alt={instructor?.username || "Giáo viên"}
+                                  alt={
+                                    instructor?.username || "Huấn luyện viên"
+                                  }
                                 />
                                 <AvatarFallback>
                                   {instructor?.username
@@ -523,7 +525,7 @@ export default function CreateClassPage() {
                           value='no-instructors'
                           disabled
                         >
-                          Không tìm thấy giáo viên nào
+                          Không tìm thấy huấn luyện viên nào
                         </SelectItem>
                       )}
                     </SelectContent>

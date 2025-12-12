@@ -68,7 +68,7 @@ CN (0)  | 1-0=1      | 6-0=6      | 0-0=0         | [0, 1, 6]
 
 - lịch: thêm logic cho drawer trong lịch khi tạo chỉnh sửa/thêm lớp học vào lịch
     - chọn theo thứ tự, sau đó rồi mới cho chọn tiếp: chọn khung giờ + lớp học trước sau đó mới cho chọn các thứ còn lại (tính logic để show ra hồ bơi thích hợp này kia... sau khi cho chọn khung giờ + lớp học xong)
-    - chỉ cho chọn giáo viên nếu lớp chưa có giáo viên, nếu lớp có giáo viên rồi thì hiện thẳng tên của giáo viên đó trong phần chọn luôn
+    - chỉ cho chọn Huấn luyện viên nếu lớp chưa có Huấn luyện viên, nếu lớp có Huấn luyện viên rồi thì hiện thẳng tên của Huấn luyện viên đó trong phần chọn luôn
 
 - course: xóa phần 'xem schema' trong create course & edit course => done
 
@@ -118,4 +118,15 @@ tạo lớp hàng loạt (có validate các thông tin: instructor, age rule,...
 
 
 
+tạo lớp
+sửa Huấn luyện viên => huấn luyện viên
+step 2: cho hiện chuyên môn luôn, api lấy instructor phù hợp vs lớp (profile + level matching)
 
+step 2: cho chặn luôn, 
+làm api get instructor phù hợp cho khoá học, sort theo mức độ phù hợp 
+
+step 2: check lịch trùng (cái gì thông tin gì) 
+
+xếp lịch : gộp step 2 và 3 
+
+thêm sort hồ bơi + hiện chi tiết schedule hồ bơi + hover vào sẽ hiện thông tin chi tiết của hồ bơi + thêm dấu tick hoặc cross 

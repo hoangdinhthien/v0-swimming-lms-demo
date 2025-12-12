@@ -801,7 +801,7 @@ export default function ImprovedAntdCalendarPage() {
       !drawerDate
     ) {
       message.error(
-        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, giáo viên)"
+        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, huấn luyện viên)"
       );
       return;
     }
@@ -879,7 +879,7 @@ export default function ImprovedAntdCalendarPage() {
       !instructorToUse
     ) {
       message.error(
-        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, giáo viên)"
+        "Vui lòng chọn đầy đủ thông tin (khung giờ, lớp học, hồ bơi, huấn luyện viên)"
       );
       return;
     }
@@ -1382,7 +1382,7 @@ export default function ImprovedAntdCalendarPage() {
     } catch (err) {
       console.error("Error refreshing calendar:", err);
       toast({
-        title: "❌ Lỗi",
+        title: "Lỗi",
         description: "Không thể làm mới lịch học",
         variant: "destructive",
       });
@@ -1856,7 +1856,7 @@ export default function ImprovedAntdCalendarPage() {
                               <div className='mb-4 relative'>
                                 <SearchOutlined className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' />
                                 <Input
-                                  placeholder='Tìm kiếm theo lớp học, hồ bơi, giáo viên, khóa học...'
+                                  placeholder='Tìm kiếm theo lớp học, hồ bơi, huấn luyện viên, khóa học...'
                                   value={searchQuery}
                                   onChange={(e) =>
                                     setSearchQuery(e.target.value)

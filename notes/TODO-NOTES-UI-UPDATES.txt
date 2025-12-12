@@ -55,7 +55,7 @@ CÁC CASE LOGIC VÀ NGHIỆP VỤ ĐỂ THAO TÁC VIỆC TẠO LỚP VÀ XẾP L
 
         
         
-        (cách hoạt động: sử dụng api để lấy specialist của instructor đó để lấy thông tin để check với thông tin của course khi tạo khóa học đó xem có hợp lệ hay không bằng cách check xem các THÔNG TIN CỦA GIÁO VIÊN CÓ KHỚP ÍT NHẤT VỚI COURSE ĐÓ KHÔNG (AGE VÀ CATEGORY ÍT PHẢI KHỚP ÍT NHẤT LÀ 1 CÁI) ĐỂ THỎA MÃN)
+        (cách hoạt động: sử dụng api để lấy specialist của instructor đó để lấy thông tin để check với thông tin của course khi tạo khóa học đó xem có hợp lệ hay không bằng cách check xem các THÔNG TIN CỦA Huấn luyện viên CÓ KHỚP ÍT NHẤT VỚI COURSE ĐÓ KHÔNG (AGE VÀ CATEGORY ÍT PHẢI KHỚP ÍT NHẤT LÀ 1 CÁI) ĐỂ THỎA MÃN)
 
     2 -> chỉ hiện lên UI các lớp học vừa mới tạo (bằng cách lấy các insertedId respone data khi tạo lớp học -> sử dụng api param search[_id:in] là được) 
 

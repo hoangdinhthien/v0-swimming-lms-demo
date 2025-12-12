@@ -108,7 +108,7 @@ function InstructorDetailModal({
         const avatarUrl = extractAvatarUrl(detailData.user?.featured_image);
         setAvatarUrl(avatarUrl);
       } catch (e: any) {
-        setError(e.message || "Lỗi khi lấy thông tin giáo viên");
+        setError(e.message || "Lỗi khi lấy thông tin huấn luyện viên");
       }
       setLoading(false);
     }
@@ -139,9 +139,11 @@ function InstructorDetailModal({
     >
       <DialogContent className='sm:max-w-md md:max-w-lg'>
         <DialogHeader>
-          <DialogTitle className='text-xl'>Chi tiết giáo viên</DialogTitle>
+          <DialogTitle className='text-xl'>
+            Chi tiết huấn luyện viên
+          </DialogTitle>
           <DialogDescription>
-            Thông tin chi tiết về giáo viên trong hệ thống
+            Thông tin chi tiết về huấn luyện viên trong hệ thống
           </DialogDescription>
         </DialogHeader>
 
@@ -235,7 +237,7 @@ function InstructorDetailModal({
 
               <div className='flex items-center gap-2'>
                 <Key className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Mã giáo viên:</span>
+                <span className='font-medium'>Mã huấn luyện viên:</span>
                 <span className='text-muted-foreground font-mono text-xs'>
                   {detail.user?._id || "N/A"}
                 </span>
@@ -310,7 +312,7 @@ export default function InstructorsPage() {
       setRawInstructors([]);
       toast({
         title: "Lỗi",
-        description: err.message || "Không thể tải danh sách giáo viên",
+        description: err.message || "Không thể tải danh sách huấn luyện viên",
         variant: "destructive",
       });
     } finally {
@@ -407,7 +409,7 @@ export default function InstructorsPage() {
         <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
           <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
           <p className='text-lg font-medium text-foreground'>
-            Đang tải danh sách giáo viên...
+            Đang tải danh sách huấn luyện viên...
           </p>
           <p className='text-sm text-muted-foreground mt-2'>
             Vui lòng chờ trong giây lát
@@ -450,9 +452,9 @@ export default function InstructorsPage() {
 
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
-          <h1 className='text-3xl font-bold'>Quản lý Giáo viên</h1>
+          <h1 className='text-3xl font-bold'>Quản lý Huấn luyện viên</h1>
           <p className='text-muted-foreground'>
-            Quản lý tất cả giáo viên tại trung tâm bơi lội của bạn
+            Quản lý tất cả huấn luyện viên tại trung tâm bơi lội của bạn
           </p>
         </div>
         <div className='flex gap-2'>
@@ -469,7 +471,7 @@ export default function InstructorsPage() {
           <Link href='/dashboard/manager/instructors/new'>
             <Button>
               <Plus className='mr-2 h-4 w-4' />
-              Thêm Giáo viên
+              Thêm Huấn luyện viên
             </Button>
           </Link>
         </div>
@@ -480,7 +482,7 @@ export default function InstructorsPage() {
           <CardHeader className='pb-2'>
             <CardTitle className='text-sm font-medium flex items-center gap-2'>
               <Users className='h-4 w-4 text-primary' />
-              Tổng số giáo viên
+              Tổng số huấn luyện viên
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -546,7 +548,7 @@ export default function InstructorsPage() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Users className='h-5 w-5 text-primary' />
-            Danh sách Giáo viên
+            Danh sách Huấn luyện viên
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -574,7 +576,7 @@ export default function InstructorsPage() {
                 ],
               },
             ]}
-            emptyMessage='Không tìm thấy giáo viên phù hợp.'
+            emptyMessage='Không tìm thấy huấn luyện viên phù hợp.'
           />
         </CardContent>
       </Card>

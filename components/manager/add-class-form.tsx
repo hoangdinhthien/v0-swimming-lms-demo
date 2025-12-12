@@ -9,13 +9,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   Loader2,
   Save,
@@ -29,8 +44,11 @@ import { Classroom } from "@/api/manager/class-api";
 import { Pool } from "@/api/manager/pools-api";
 import { SlotDetail } from "@/api/manager/slot-api";
 import { fetchDateRangeSchedule } from "@/api/manager/schedule-api";
+import { fetchClasses } from "@/api/manager/class-api";
+import { fetchInstructors } from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { cn } from "@/lib/utils";
 import {
   validatePools,
   getBestPool,
@@ -113,6 +131,20 @@ export function AddClassForm({
     initialValues.instructor || ""
   );
 
+  // Search states for Classroom
+  const [classroomSearchKey, setClassroomSearchKey] = useState("");
+  const [searchedClassrooms, setSearchedClassrooms] = useState<Classroom[]>([]);
+  const [isSearchingClassrooms, setIsSearchingClassrooms] = useState(false);
+  const [openClassroomPopover, setOpenClassroomPopover] = useState(false);
+
+  // Search states for Instructor
+  const [instructorSearchKey, setInstructorSearchKey] = useState("");
+  const [searchedInstructors, setSearchedInstructors] = useState<Instructor[]>(
+    []
+  );
+  const [isSearchingInstructors, setIsSearchingInstructors] = useState(false);
+  const [openInstructorPopover, setOpenInstructorPopover] = useState(false);
+
   // Get selected classroom details
   const selectedClassDetails = availableClassrooms.find(
     (c) => c._id === selectedClassroom
@@ -132,6 +164,79 @@ export function AddClassForm({
       setSelectedInstructor(classInstructor._id);
     }
   }, [hasClassInstructor, classInstructor]);
+
+  // Search classrooms by API
+  useEffect(() => {
+    const searchClassrooms = async () => {
+      if (!classroomSearchKey.trim()) {
+        setSearchedClassrooms([]);
+        return;
+      }
+
+      setIsSearchingClassrooms(true);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+
+        if (!tenantId || !token) {
+          throw new Error("Vui lòng đăng nhập lại");
+        }
+
+        const result = await fetchClasses(
+          tenantId,
+          token,
+          1,
+          50,
+          classroomSearchKey
+        );
+
+        setSearchedClassrooms(result.data as Classroom[]);
+      } catch (error: any) {
+        console.error("Failed to search classrooms:", error);
+      } finally {
+        setIsSearchingClassrooms(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchClassrooms, 300);
+    return () => clearTimeout(timeoutId);
+  }, [classroomSearchKey]);
+
+  // Search instructors by API
+  useEffect(() => {
+    const searchInstructors = async () => {
+      if (!instructorSearchKey.trim()) {
+        setSearchedInstructors([]);
+        return;
+      }
+
+      setIsSearchingInstructors(true);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+
+        if (!tenantId || !token) {
+          throw new Error("Vui lòng đăng nhập lại");
+        }
+
+        const result = await fetchInstructors({
+          tenantId,
+          token,
+          role: "instructor",
+          searchKey: instructorSearchKey,
+        });
+
+        setSearchedInstructors(result);
+      } catch (error: any) {
+        console.error("Failed to search instructors:", error);
+      } finally {
+        setIsSearchingInstructors(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchInstructors, 300);
+    return () => clearTimeout(timeoutId);
+  }, [instructorSearchKey]);
 
   // Validate pools when Slot + Classroom are selected
   useEffect(() => {
@@ -243,8 +348,8 @@ export function AddClassForm({
         <Alert variant='destructive'>
           <AlertCircle className='h-4 w-4' />
           <AlertDescription>
-            Không có giáo viên nào. Vui lòng thêm giáo viên vào hệ thống trước
-            khi tạo lớp học.
+            Không có Huấn luyện viên nào. Vui lòng thêm Huấn luyện viên vào hệ
+            thống trước khi tạo lớp học.
           </AlertDescription>
         </Alert>
       )}
@@ -293,26 +398,83 @@ export function AddClassForm({
             <Users className='h-4 w-4' />
             Lớp học <span className='text-red-500'>*</span>
           </Label>
-          <Select
-            value={selectedClassroom}
-            onValueChange={setSelectedClassroom}
-            disabled={loading}
+          <Popover
+            open={openClassroomPopover}
+            onOpenChange={setOpenClassroomPopover}
           >
-            <SelectTrigger id='classroom-select'>
-              <SelectValue placeholder='Chọn lớp học' />
-            </SelectTrigger>
-            <SelectContent>
-              {availableClassrooms.map((classroom) => (
-                <SelectItem
-                  key={classroom._id}
-                  value={classroom._id}
-                >
-                  {classroom.name} -{" "}
-                  {(classroom.course as any)?.title || "Không có khóa học"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <PopoverTrigger asChild>
+              <Button
+                variant='outline'
+                role='combobox'
+                disabled={loading}
+                className={cn(
+                  "w-full justify-between",
+                  !selectedClassroom && "text-muted-foreground"
+                )}
+              >
+                {selectedClassroom
+                  ? availableClassrooms.find(
+                      (classroom) => classroom._id === selectedClassroom
+                    )?.name
+                  : "Chọn lớp học..."}
+                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className='w-[--radix-popover-trigger-width] p-0'
+              align='start'
+            >
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder='Tìm kiếm lớp học...'
+                  value={classroomSearchKey}
+                  onValueChange={setClassroomSearchKey}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {isSearchingClassrooms
+                      ? "Đang tìm kiếm..."
+                      : "Không tìm thấy lớp học."}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {isSearchingClassrooms ? (
+                      <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                        Đang tìm kiếm...
+                      </div>
+                    ) : (
+                      (classroomSearchKey.trim()
+                        ? searchedClassrooms
+                        : availableClassrooms
+                      ).map((classroom) => (
+                        <CommandItem
+                          key={classroom._id}
+                          value={classroom.name}
+                          onSelect={() => {
+                            setSelectedClassroom(classroom._id);
+                            setClassroomSearchKey("");
+                            setOpenClassroomPopover(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedClassroom === classroom._id
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          {classroom.name} -{" "}
+                          {(classroom.course as any)?.title ||
+                            "Không có khóa học"}
+                        </CommandItem>
+                      ))
+                    )}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Separator className='my-4' />
@@ -386,7 +548,7 @@ export function AddClassForm({
                                   variant='destructive'
                                   className='text-[10px] px-1.5 py-0 h-5'
                                 >
-                                  GV trùng
+                                  HLV trùng
                                 </Badge>
                               )}
                               {pool.hasAgeWarning &&
@@ -426,7 +588,7 @@ export function AddClassForm({
                 className='flex items-center gap-2'
               >
                 <User className='h-4 w-4' />
-                Giáo viên <span className='text-red-500'>*</span>
+                Huấn luyện viên <span className='text-red-500'>*</span>
               </Label>
 
               {hasClassInstructor ? (
@@ -445,48 +607,121 @@ export function AddClassForm({
                       {classInstructor.email || ""}
                     </div>
                   </div>
-                  <Badge variant='secondary'>Giáo viên lớp</Badge>
+                  <Badge variant='secondary'>Huấn luyện viên lớp</Badge>
                 </div>
               ) : (
-                <Select
-                  value={selectedInstructor}
-                  onValueChange={setSelectedInstructor}
-                  disabled={loading}
+                <Popover
+                  open={openInstructorPopover}
+                  onOpenChange={setOpenInstructorPopover}
                 >
-                  <SelectTrigger id='instructor-select'>
-                    <SelectValue placeholder='Chọn giáo viên' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableInstructors.map((instructor) => (
-                      <SelectItem
-                        key={instructor._id}
-                        value={instructor._id}
-                        disabled={instructor.is_active === false}
-                      >
-                        <div className='flex items-center gap-2'>
-                          <Avatar className='h-6 w-6'>
-                            <AvatarImage
-                              src={instructorAvatars[instructor._id]}
-                            />
-                            <AvatarFallback>
-                              <User className='h-3 w-3' />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className='flex flex-col'>
-                            <span>
-                              {instructor.username} ({instructor.email})
-                            </span>
-                            {instructor.is_active === false && (
-                              <span className='text-xs text-red-500'>
-                                Không hoạt động
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant='outline'
+                      role='combobox'
+                      disabled={loading}
+                      className={cn(
+                        "w-full justify-between",
+                        !selectedInstructor && "text-muted-foreground"
+                      )}
+                    >
+                      {selectedInstructor
+                        ? (() => {
+                            const instructor = availableInstructors.find(
+                              (i) => i._id === selectedInstructor
+                            );
+                            return instructor ? (
+                              <div className='flex items-center gap-2'>
+                                <Avatar className='h-6 w-6'>
+                                  <AvatarImage
+                                    src={instructorAvatars[instructor._id]}
+                                  />
+                                  <AvatarFallback>
+                                    <User className='h-3 w-3' />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{instructor.username}</span>
+                              </div>
+                            ) : (
+                              "Chọn Huấn luyện viên..."
+                            );
+                          })()
+                        : "Chọn Huấn luyện viên..."}
+                      <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className='w-[--radix-popover-trigger-width] p-0'
+                    align='start'
+                  >
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder='Tìm kiếm Huấn luyện viên...'
+                        value={instructorSearchKey}
+                        onValueChange={setInstructorSearchKey}
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {isSearchingInstructors
+                            ? "Đang tìm kiếm..."
+                            : "Không tìm thấy Huấn luyện viên."}
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {isSearchingInstructors ? (
+                            <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
+                              <Loader2 className='h-4 w-4 animate-spin' />
+                              Đang tìm kiếm...
+                            </div>
+                          ) : (
+                            (instructorSearchKey.trim()
+                              ? searchedInstructors
+                              : availableInstructors
+                            ).map((instructor) => (
+                              <CommandItem
+                                key={instructor._id}
+                                value={instructor.username}
+                                disabled={instructor.is_active === false}
+                                onSelect={() => {
+                                  setSelectedInstructor(instructor._id);
+                                  setInstructorSearchKey("");
+                                  setOpenInstructorPopover(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedInstructor === instructor._id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                <div className='flex items-center gap-2'>
+                                  <Avatar className='h-6 w-6'>
+                                    <AvatarImage
+                                      src={instructorAvatars[instructor._id]}
+                                    />
+                                    <AvatarFallback>
+                                      <User className='h-3 w-3' />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className='flex flex-col'>
+                                    <span>
+                                      {instructor.username} ({instructor.email})
+                                    </span>
+                                    {instructor.is_active === false && (
+                                      <span className='text-xs text-red-500'>
+                                        Không hoạt động
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </CommandItem>
+                            ))
+                          )}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </>

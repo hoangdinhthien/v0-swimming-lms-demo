@@ -151,7 +151,7 @@ export default function NewInstructorPage() {
       // Show success message
       toast({
         title: "Thành công",
-        description: "Đã thêm giáo viên mới",
+        description: "Đã thêm Huấn luyện viên mới",
       });
 
       // Redirect to instructors list
@@ -190,13 +190,14 @@ export default function NewInstructorPage() {
           href='/dashboard/manager/instructors'
           className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
-          <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách giáo viên
+          <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách Huấn luyện
+          viên
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className='text-2xl'>Thêm giáo viên mới</CardTitle>
+          <CardTitle className='text-2xl'>Thêm Huấn luyện viên mới</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -343,7 +344,7 @@ export default function NewInstructorPage() {
                     <div className='space-y-1 leading-none'>
                       <FormLabel>Trạng thái hoạt động</FormLabel>
                       <FormDescription>
-                        Chọn để đặt giáo viên ở trạng thái hoạt động
+                        Chọn để đặt Huấn luyện viên ở trạng thái hoạt động
                       </FormDescription>
                     </div>
                     <FormMessage />
@@ -362,7 +363,7 @@ export default function NewInstructorPage() {
                       Đang tạo...
                     </>
                   ) : (
-                    "Thêm giáo viên"
+                    "Thêm Huấn luyện viên"
                   )}
                 </Button>
               </div>

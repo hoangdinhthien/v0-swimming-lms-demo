@@ -779,7 +779,7 @@ export default function StaffDetailPage() {
                                         Order: "Quản lý Giao dịch",
                                         Course: "Quản lý khóa học",
                                         Student: "Quản lý học viên",
-                                        Instructor: "Quản lý giáo viên",
+                                        Instructor: "Quản lý Huấn luyện viên",
                                         Schedule: "Quản lý lịch học",
                                         Pool: "Quản lý hồ bơi",
                                         News: "Quản lý tin tức",

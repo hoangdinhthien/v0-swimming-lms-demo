@@ -193,7 +193,7 @@ export default function DashboardLayout({
         icon: <GraduationCap className='h-4 w-4' />,
       },
       {
-        name: "Giáo Viên",
+        name: "Huấn luyện viên",
         href: "/dashboard/manager/instructors",
         icon: <UserCheck className='h-4 w-4' />,
       },
@@ -281,7 +281,7 @@ export default function DashboardLayout({
         icon: <Users className='h-4 w-4 mr-2' />,
       },
       {
-        name: "Giáo Viên",
+        name: "Huấn luyện viên",
         href: "/dashboard/admin/instructors",
         icon: <Users className='h-4 w-4 mr-2' />,
       },
@@ -668,7 +668,7 @@ export default function DashboardLayout({
                     ...(isManager || allowedNavigationItems.includes("students")
                       ? [
                           {
-                            name: "Giáo Viên",
+                            name: "Huấn luyện viên",
                             href: "/dashboard/manager/instructors",
                             icon: <UserCheck className='h-4 w-4' />,
                           },

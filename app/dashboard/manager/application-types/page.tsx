@@ -51,7 +51,7 @@ const AVAILABLE_ROLES = ["member", "instructor", "staff", "manager"];
 const getRoleDisplayName = (role: string) => {
   const roleMap: Record<string, string> = {
     member: "Học viên",
-    instructor: "Giáo viên",
+    instructor: "Huấn luyện viên",
     staff: "Nhân viên",
     manager: "Quản lý",
   };

@@ -89,7 +89,7 @@ export default function ManagerNotFound() {
                 href='/dashboard/manager/instructors'
                 className='text-primary hover:underline'
               >
-                Giáo viên
+                Huấn luyện viên
               </Link>
               <span className='text-muted-foreground'>•</span>
               <Link

@@ -630,7 +630,7 @@ export function AutoScheduleModal({
                           {/* Instructor Selection */}
                           <div>
                             <Label className='text-sm font-medium'>
-                              Giáo viên *
+                              Huấn luyện viên *
                             </Label>
                             <Select
                               value={form.instructor}
@@ -643,13 +643,13 @@ export function AutoScheduleModal({
                               }
                             >
                               <SelectTrigger className='mt-2'>
-                                <SelectValue placeholder='Chọn giáo viên' />
+                                <SelectValue placeholder='Chọn Huấn luyện viên' />
                               </SelectTrigger>
                               <SelectContent>
                                 <div className='sticky top-0 bg-background p-2 border-b z-50'>
                                   <Input
                                     type='text'
-                                    placeholder='Tìm kiếm giáo viên...'
+                                    placeholder='Tìm kiếm Huấn luyện viên...'
                                     value={instructorSearchQuery}
                                     onChange={(e) =>
                                       setInstructorSearchQuery(e.target.value)
@@ -662,7 +662,7 @@ export function AutoScheduleModal({
                                 <div className='max-h-[200px] overflow-y-auto'>
                                   {filteredInstructors.length === 0 ? (
                                     <div className='px-2 py-4 text-center text-sm text-muted-foreground'>
-                                      Không tìm thấy giáo viên
+                                      Không tìm thấy Huấn luyện viên
                                     </div>
                                   ) : (
                                     filteredInstructors.map((instructor) => (

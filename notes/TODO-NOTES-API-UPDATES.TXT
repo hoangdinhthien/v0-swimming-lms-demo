@@ -231,7 +231,7 @@ SCHEDULE API
     "classroom": "69330e7114048f4ec3bf8e53", // sử dụng api fetchClasses để có thể chọn được lớp học 
     "pool": "690886bcb4e8cbef8e57f02b", // sử dụng api fetchPools để có thể chọn được hồ bơi
     "instructor": "683c810c0707d1bbac3063f0" 
-    } // sử dụng api fetchInstructors để có thể chọn được giáo viên
+    } // sử dụng api fetchInstructors để có thể chọn được Huấn luyện viên
     - đây là request body khi TẠO NHIỀU schedule cho 1 lớp hoặc tạo nhiều schedule cho nhiều lớp:
     [
     {

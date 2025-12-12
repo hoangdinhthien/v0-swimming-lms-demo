@@ -44,10 +44,10 @@ export default function StaffDashboard() {
         requiredPermission: "applications",
       },
       {
-        title: "Giáo Viên",
+        title: "Huấn luyện viên",
         icon: <Award className='h-4 w-4' />,
         value: "---",
-        description: "Tổng số giáo viên",
+        description: "Tổng số Huấn luyện viên",
         requiredPermission: "instructors",
       },
       {
@@ -203,7 +203,7 @@ export default function StaffDashboard() {
 function getModuleDisplayName(module: string): string {
   const displayNames: Record<string, string> = {
     students: "Học Viên",
-    instructors: "Giáo Viên",
+    instructors: "Huấn luyện viên",
     courses: "Khóa Học",
     classes: "Lớp Học",
     applications: "Đơn Từ",

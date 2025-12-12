@@ -201,7 +201,7 @@ export default function OptimizedCreateClassPage() {
       if (!selectedInstructor) {
         toast({
           title: "Lỗi",
-          description: "Vui lòng chọn giáo viên",
+          description: "Vui lòng chọn Huấn luyện viên",
           variant: "destructive",
         });
         return;
@@ -369,18 +369,18 @@ export default function OptimizedCreateClassPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <User className='h-5 w-5' />
-                Chọn giáo viên *
+                Chọn Huấn luyện viên *
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-2'>
-                <Label>Giáo viên có sẵn</Label>
+                <Label>Huấn luyện viên có sẵn</Label>
                 <Select
                   value={selectedInstructor}
                   onValueChange={setSelectedInstructor}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='Chọn giáo viên cho lớp học' />
+                    <SelectValue placeholder='Chọn Huấn luyện viên cho lớp học' />
                   </SelectTrigger>
                   <SelectContent>
                     {instructorsWithAvatars.length > 0 ? (
@@ -393,7 +393,7 @@ export default function OptimizedCreateClassPage() {
                             <Avatar className='h-8 w-8'>
                               <AvatarImage
                                 src={instructor.avatarUrl}
-                                alt={instructor?.username || "Giáo viên"}
+                                alt={instructor?.username || "Huấn luyện viên"}
                               />
                               <AvatarFallback>
                                 {instructor?.username
@@ -417,7 +417,7 @@ export default function OptimizedCreateClassPage() {
                         value='no-instructors'
                         disabled
                       >
-                        Không tìm thấy giáo viên nào
+                        Không tìm thấy Huấn luyện viên nào
                       </SelectItem>
                     )}
                   </SelectContent>

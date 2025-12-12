@@ -311,8 +311,8 @@ export function FormJudgeFieldConfig({
       {field.type === "boolean" && (
         <div className='p-4 bg-muted/50 rounded-lg border'>
           <p className='text-sm text-muted-foreground'>
-            Giáo viên sẽ đánh dấu checkbox để đánh giá Đúng/Sai hoặc Đạt/Không
-            đạt. Phù hợp cho các tiêu chí đơn giản.
+            Huấn luyện viên sẽ đánh dấu checkbox để đánh giá Đúng/Sai hoặc
+            Đạt/Không đạt. Phù hợp cho các tiêu chí đơn giản.
           </p>
         </div>
       )}

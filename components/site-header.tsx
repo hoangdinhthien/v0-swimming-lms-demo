@@ -145,7 +145,7 @@ export default function SiteHeader() {
             href='/dashboard/manager/instructors'
             className='text-sm font-medium'
           >
-            Giáo Viên
+            Huấn luyện viên
           </Link>
           <Link
             href='/about'

@@ -39,7 +39,7 @@ export const columns: ColumnDef<Instructor>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title='Giáo viên'
+        title='Huấn luyện viên'
       />
     ),
     cell: ({ row }) => {

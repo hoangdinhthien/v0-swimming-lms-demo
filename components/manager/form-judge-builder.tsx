@@ -147,8 +147,9 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
               Biểu mẫu đánh giá học viên
             </h3>
             <p className='text-sm text-muted-foreground mt-1'>
-              Tạo các tiêu chí để giáo viên đánh giá học viên trong nội dung
-              này. Mỗi tiêu chí sẽ hiển thị khi giáo viên thực hiện đánh giá.
+              Tạo các tiêu chí để Huấn luyện viên đánh giá học viên trong nội
+              dung này. Mỗi tiêu chí sẽ hiển thị khi Huấn luyện viên thực hiện
+              đánh giá.
             </p>
           </div>
         </div>
@@ -275,7 +276,7 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                     )}
                     {field.type === "boolean" && (
                       <p className='text-muted-foreground'>
-                        Giáo viên chọn Đúng hoặc Sai (checkbox)
+                        Huấn luyện viên chọn Đúng hoặc Sai (checkbox)
                       </p>
                     )}
                     {field.type === "select" && field.select_values && (

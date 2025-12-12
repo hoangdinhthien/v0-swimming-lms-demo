@@ -1320,7 +1320,7 @@ export default function TransactionDetailPage() {
                               </div>
                               <div className='mt-1 ml-6 space-y-1'>
                                 <div className='text-sm text-muted-foreground'>
-                                  Giáo viên:{" "}
+                                  Huấn luyện viên:{" "}
                                   {(() => {
                                     if (
                                       typeof classroom.instructor ===

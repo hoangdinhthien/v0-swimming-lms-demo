@@ -258,7 +258,7 @@ export default function InstructorDetailPage() {
         ) {
           setError("404");
         } else {
-          setError(e.message || "Lỗi khi lấy thông tin giáo viên");
+          setError(e.message || "Lỗi khi lấy thông tin Huấn luyện viên");
         }
       }
       setLoading(false);
@@ -310,7 +310,7 @@ export default function InstructorDetailPage() {
 
       toast({
         title: "Cập nhật thành công",
-        description: "Thông tin giáo viên đã được cập nhật",
+        description: "Thông tin Huấn luyện viên đã được cập nhật",
         variant: "default",
         className:
           "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800",
@@ -389,7 +389,7 @@ export default function InstructorDetailPage() {
         // Clear the uploaded avatar ID after successful update
         setUploadedAvatarId(null);
       } catch (e: any) {
-        setError(e.message || "Lỗi khi lấy thông tin giáo viên");
+        setError(e.message || "Lỗi khi lấy thông tin Huấn luyện viên");
       }
       setLoading(false);
     } catch (error) {
@@ -498,7 +498,7 @@ export default function InstructorDetailPage() {
         <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
           <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
           <p className='text-lg font-medium text-foreground'>
-            Đang tải chi tiết giáo viên...
+            Đang tải chi tiết Huấn luyện viên...
           </p>
           <p className='text-sm text-muted-foreground mt-2'>
             Vui lòng chờ trong giây lát
@@ -528,9 +528,9 @@ export default function InstructorDetailPage() {
       </div>
 
       <div className='mb-6'>
-        <h1 className='text-3xl font-bold'>Hồ sơ giáo viên</h1>
+        <h1 className='text-3xl font-bold'>Hồ sơ Huấn luyện viên</h1>
         <p className='text-muted-foreground mt-1'>
-          Thông tin chi tiết và lịch dạy của giáo viên
+          Thông tin chi tiết và lịch dạy của Huấn luyện viên
         </p>
       </div>
 
@@ -609,7 +609,7 @@ export default function InstructorDetailPage() {
           <CardHeader className='bg-gradient-to-r from-muted/50 to-muted border-b'>
             <CardTitle className='text-xl flex items-center gap-2'>
               <User className='h-5 w-5 text-indigo-600 dark:text-indigo-400' />{" "}
-              Chi tiết giáo viên
+              Chi tiết Huấn luyện viên
             </CardTitle>
           </CardHeader>
           <CardContent className='space-y-8 pt-6'>
@@ -772,7 +772,7 @@ export default function InstructorDetailPage() {
                             className='bg-green-50 border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300'
                           >
                             <GraduationCap className='h-3 w-3 mr-1' />
-                            Giáo viên
+                            Huấn luyện viên
                           </Badge>
                         </div>
 
@@ -871,7 +871,7 @@ export default function InstructorDetailPage() {
                     Chưa có lớp học nào được phân công
                   </p>
                   <p className='text-indigo-700/70 dark:text-indigo-300/70 text-sm mb-4'>
-                    Giáo viên chưa được phân công giảng dạy lớp học nào
+                    Huấn luyện viên chưa được phân công giảng dạy lớp học nào
                   </p>
                   <Button
                     size='sm'
@@ -897,10 +897,10 @@ export default function InstructorDetailPage() {
         <DialogContent className='sm:max-w-[500px]'>
           <DialogHeader>
             <DialogTitle className='text-lg font-semibold'>
-              Chỉnh sửa thông tin giáo viên
+              Chỉnh sửa thông tin Huấn luyện viên
             </DialogTitle>
             <DialogDescription>
-              Cập nhật thông tin cá nhân và công việc của giáo viên
+              Cập nhật thông tin cá nhân và công việc của Huấn luyện viên
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -1001,8 +1001,8 @@ export default function InstructorDetailPage() {
                         </FormLabel>
                         <FormDescription>
                           {field.value
-                            ? "Giáo viên đang ở trạng thái hoạt động và có thể được phân công lớp học"
-                            : "Giáo viên đang ở trạng thái ngừng hoạt động và không thể được phân công lớp học mới"}
+                            ? "Huấn luyện viên đang ở trạng thái hoạt động và có thể được phân công lớp học"
+                            : "Huấn luyện viên đang ở trạng thái ngừng hoạt động và không thể được phân công lớp học mới"}
                         </FormDescription>
                       </div>
                       <FormControl>

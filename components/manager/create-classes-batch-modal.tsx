@@ -136,12 +136,12 @@ const STEPS = [
   {
     id: "course-config",
     title: "Chọn khóa học",
-    description: "Chọn khóa học và cấu hình thời gian",
+    description: "Chọn khóa học và cấu hình thời gian học",
   },
   {
     id: "generate-validate",
     title: "Tạo & Kiểm tra",
-    description: "Tạo lớp và validate giáo viên",
+    description: "Tạo lớp và kiểm tra hợp lệ huấn luyện viên",
   },
   {
     id: "complete",
@@ -474,8 +474,8 @@ export function CreateClassesBatchModal({
           classId,
           type: "missing_specialist",
           severity: "warning",
-          message: "Giáo viên chưa có thông tin chuyên môn",
-          details: "Cần cập nhật category và age_types cho giáo viên này",
+          message: "Huấn luyện viên chưa có thông tin chuyên môn",
+          details: "Cần cập nhật category và age_types cho Huấn luyện viên này",
         });
         setValidationWarnings((prev) => [...prev, ...warnings]);
         return;
@@ -518,7 +518,7 @@ export function CreateClassesBatchModal({
           type: "category",
           severity: "warning",
           message: "Category không khớp",
-          details: `Khóa học: [${courseCategoryTitles}] ≠ Giáo viên: [${specialistCategoryTitles}]`,
+          details: `Khóa học: [${courseCategoryTitles}] ≠ Huấn luyện viên: [${specialistCategoryTitles}]`,
         });
       }
 
@@ -545,7 +545,7 @@ export function CreateClassesBatchModal({
           type: "age_type",
           severity: "warning",
           message: "Độ tuổi không khớp",
-          details: `Khóa học: [${courseAgeTypeTitles}] ≠ Giáo viên: [${specialistAgeTypeTitles}]`,
+          details: `Khóa học: [${courseAgeTypeTitles}] ≠ Huấn luyện viên: [${specialistAgeTypeTitles}]`,
         });
       }
 
@@ -648,8 +648,9 @@ export function CreateClassesBatchModal({
             classId: classItem.id,
             type: "missing_specialist",
             severity: "warning",
-            message: "Giáo viên chưa có thông tin chuyên môn",
-            details: "Cần cập nhật category và age_types cho giáo viên này",
+            message: "Huấn luyện viên chưa có thông tin chuyên môn",
+            details:
+              "Cần cập nhật category và age_types cho Huấn luyện viên này",
           });
           return;
         }
@@ -701,7 +702,7 @@ export function CreateClassesBatchModal({
             type: "category",
             severity: "warning",
             message: "Category không khớp",
-            details: `Khóa học: [${courseNames}] ≠ Giáo viên: [${instructorNames}]`,
+            details: `Khóa học: [${courseNames}] ≠ Huấn luyện viên: [${instructorNames}]`,
           });
         }
 
@@ -726,7 +727,7 @@ export function CreateClassesBatchModal({
             type: "age_type",
             severity: "warning",
             message: "Độ tuổi không khớp",
-            details: `Khóa học: [${courseAgeDisplay}] ≠ Giáo viên: [${instructorAgeDisplay}]`,
+            details: `Khóa học: [${courseAgeDisplay}] ≠ Huấn luyện viên: [${instructorAgeDisplay}]`,
           });
         }
 
@@ -754,8 +755,8 @@ export function CreateClassesBatchModal({
                 classId: classItem.id,
                 type: "schedule_conflict",
                 severity: "warning",
-                message: "Giáo viên có lịch trùng",
-                details: `${dayName} - ${slot.title}: Giáo viên đã có lịch dạy vào thời gian này`,
+                message: "Huấn luyện viên có lịch trùng",
+                details: `${dayName} - ${slot.title}: Huấn luyện viên đã có lịch dạy vào thời gian này`,
               });
             }
           });
@@ -769,7 +770,7 @@ export function CreateClassesBatchModal({
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: "Không thể kiểm tra thông tin giáo viên",
+        description: "Không thể kiểm tra thông tin Huấn luyện viên",
       });
     } finally {
       setIsValidating(false);
@@ -934,9 +935,9 @@ export function CreateClassesBatchModal({
     >
       <DialogContent className='max-w-6xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Tạo lớp học hàng loạt</DialogTitle>
+          <DialogTitle>Tạo lớp học</DialogTitle>
           <DialogDescription>
-            Tạo nhiều lớp học cùng lúc với validation tự động
+            Tạo nhiều lớp học cùng lúc với kiểm tra hợp lệ tự động
           </DialogDescription>
         </DialogHeader>
 
@@ -1058,7 +1059,7 @@ export function CreateClassesBatchModal({
 
                 {/* Slot Selection */}
                 <div className='space-y-2'>
-                  <Label>Chọn ca học *</Label>
+                  <Label>Chọn thời gian học *</Label>
                   {loadingSlots ? (
                     <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                       <Loader2 className='h-4 w-4 animate-spin' />
@@ -1164,7 +1165,7 @@ export function CreateClassesBatchModal({
                   <div>
                     <h3 className='font-medium'>Danh sách lớp học</h3>
                     <p className='text-sm text-muted-foreground'>
-                      Chọn giáo viên và kiểm tra validation tự động
+                      Chọn Huấn luyện viên và kiểm tra validation tự động
                     </p>
                   </div>
                   <Button
@@ -1188,11 +1189,11 @@ export function CreateClassesBatchModal({
                     <AlertDescription className='text-amber-800 dark:text-amber-200'>
                       <div className='font-medium'>
                         ⚠️ LƯU Ý: Có {validationWarnings.length} cảnh báo về
-                        giáo viên
+                        Huấn luyện viên
                       </div>
                       <div className='text-xs mt-1'>
                         Các cảnh báo không chặn việc tạo lớp, nhưng nên xem xét
-                        lại để đảm bảo giáo viên phù hợp.
+                        lại để đảm bảo Huấn luyện viên phù hợp.
                       </div>
                     </AlertDescription>
                   </Alert>
@@ -1212,7 +1213,7 @@ export function CreateClassesBatchModal({
                         <TableRow>
                           <TableHead className='w-[50px]'>#</TableHead>
                           <TableHead>Tên lớp</TableHead>
-                          <TableHead>Giáo viên & Chuyên môn</TableHead>
+                          <TableHead>Huấn luyện viên & Chuyên môn</TableHead>
                           <TableHead className='w-[180px]'>
                             Hiển thị đăng ký
                           </TableHead>
@@ -1264,7 +1265,7 @@ export function CreateClassesBatchModal({
                                     disabled={loadingInstructors}
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder='Chọn giáo viên...' />
+                                      <SelectValue placeholder='Chọn Huấn luyện viên...' />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {loadingInstructors ? (
@@ -1479,7 +1480,7 @@ export function CreateClassesBatchModal({
                                 </div>
                                 <div className='flex items-center gap-2'>
                                   <span className='font-medium'>
-                                    Giáo viên:
+                                    Huấn luyện viên:
                                   </span>
                                   <span>
                                     {typeof classItem.instructor === "object"

@@ -1,14 +1,17 @@
 # CASE 2 Implementation: Tạo lớp hàng loạt
 
 ## Overview
+
 CASE 2 allows users to create multiple classes at once with validation, and optionally proceed to CASE 1 for scheduling.
 
 ## Files Modified
 
 ### 1. New Component: `components/manager/create-classes-modal.tsx`
+
 Main modal for batch class creation with validation.
 
 **Features:**
+
 - Create multiple classes in a single operation
 - Real-time validation of instructor qualifications
 - Visual warnings for mismatches (category, age_types, missing specialist data)
@@ -16,11 +19,13 @@ Main modal for batch class creation with validation.
 - Proceed to CASE 1 after successful creation
 
 **Validation Rules:**
+
 1. **Missing Specialist Data**: Warn if instructor has no specialist.category or specialist.age_types
 2. **Category Mismatch**: Warn if instructor's specialist.category doesn't include any of course.category
 3. **Age Type Mismatch**: Warn if instructor's specialist.age_types doesn't include course.type_of_age
 
 **UI Components:**
+
 - Table with editable rows
 - Course dropdown (Select)
 - Class name input (Input)
@@ -32,16 +37,19 @@ Main modal for batch class creation with validation.
 ### 2. Updated: `app/dashboard/manager/calendar/page.tsx`
 
 **Added States:**
+
 ```typescript
 const [isCreateClassesModalOpen, setIsCreateClassesModalOpen] = useState(false);
 const [newlyCreatedClassIds, setNewlyCreatedClassIds] = useState<string[]>([]);
 ```
 
 **New Functions:**
+
 - `handleOpenCreateClassesModal()`: Opens CASE 2 modal, loads courses and instructors
 - `handleCreateClassesComplete(insertedIds)`: Handles successful creation, optionally proceeds to CASE 1
 
 **Workflow:**
+
 1. User clicks "Tạo lớp học" from dropdown
 2. Modal opens with courses and instructors loaded
 3. User adds multiple classes with validation feedback
@@ -54,6 +62,7 @@ const [newlyCreatedClassIds, setNewlyCreatedClassIds] = useState<string[]>([]);
 ### 3. Updated: `api/manager/class-api.ts`
 
 **Modified Interface:**
+
 ```typescript
 export interface CreateClassData {
   course: string;
@@ -65,18 +74,21 @@ export interface CreateClassData {
 ```
 
 **Existing APIs Used:**
+
 - `createClass(data: CreateClassData | CreateClassData[])`: Already supports array input
 - `fetchClassesByIds(classIds: string[])`: Uses `search[_id:in]` parameter
 
 ### 4. Updated: `components/manager/schedule-preview-modal.tsx`
 
 **Type Fix:**
+
 - Replaced local `ClassItem` interface with import from `@/api/manager/class-api`
 - Ensures type compatibility across components
 
 ## User Flow
 
 ### Creating Classes (CASE 2)
+
 ```
 1. Click "Quản lý lớp học" dropdown button
 2. Select "Tạo lớp học"
@@ -95,6 +107,7 @@ export interface CreateClassData {
 ```
 
 ### Proceeding to CASE 1 (Optional)
+
 ```
 9. Confirmation dialog appears
 10. Click "OK" to proceed to scheduling
@@ -103,16 +116,19 @@ export interface CreateClassData {
 ```
 
 ### Validation Warnings
+
 User sees warnings for:
-- **Missing Specialist**: "Giáo viên chưa có thông tin chuyên môn (category, age_types)"
-- **Category Mismatch**: "Chuyên môn giáo viên không khớp với danh mục khóa học"
-- **Age Type Mismatch**: "Độ tuổi giảng dạy của giáo viên không khớp với khóa học"
+
+- **Missing Specialist**: "Huấn luyện viên chưa có thông tin chuyên môn (category, age_types)"
+- **Category Mismatch**: "Chuyên môn Huấn luyện viên không khớp với danh mục khóa học"
+- **Age Type Mismatch**: "Độ tuổi giảng dạy của Huấn luyện viên không khớp với khóa học"
 
 Warnings are **informative only** - users can still create classes despite warnings.
 
 ## API Integration
 
 ### Create Classes Request
+
 ```javascript
 POST /v1/workflow-process/manager/class
 Headers:
@@ -138,6 +154,7 @@ Body:
 ```
 
 ### Response
+
 ```javascript
 {
   "data": {
@@ -149,6 +166,7 @@ Body:
 ```
 
 ### Fetch Newly Created Classes
+
 ```javascript
 GET /v1/workflow-process/manager/classes/find-common?search[_id:in]=class_id_1,class_id_2
 Headers:
@@ -168,12 +186,14 @@ Response:
 ## Key Features
 
 ### Real-time Validation
+
 - Validates on instructor or course change
 - Shows warnings immediately in UI
 - Non-blocking: warnings don't prevent creation
 - Summary alert shows total warning count
 
 ### Clean UX
+
 - Table layout with clear columns
 - Status column with icons (✅/⚠️)
 - Expandable warning rows below each class
@@ -181,6 +201,7 @@ Response:
 - Disabled state during creation
 
 ### Integration with CASE 1
+
 - Seamless transition after creation
 - Newly created classes pre-loaded
 - User can skip scheduling if desired

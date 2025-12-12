@@ -41,6 +41,7 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Circle,
   Edit2,
   Calendar as CalendarLucide,
 } from "lucide-react";
@@ -712,7 +713,7 @@ export function SchedulePreviewModal({
         id: scheduleKey,
         title:
           withPoolInfo && selectedPool
-            ? `${className}\\n${schedule.slot?.title || ""}\\n🏊 ${
+            ? `${className}\\n${schedule.slot?.title || ""}\\n ${
                 selectedPool.title
               }`
             : `${className}\\n${schedule.slot?.title || ""}`,
@@ -1247,7 +1248,7 @@ export function SchedulePreviewModal({
                                   </div>
 
                                   <div className='space-y-2'>
-                                    <Label>Chọn ca học *</Label>
+                                    <Label>Chọn thời gian học *</Label>
                                     {loadingSlots ? (
                                       <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                                         <Loader2 className='h-4 w-4 animate-spin' />
@@ -1561,11 +1562,23 @@ export function SchedulePreviewModal({
                     <AlertCircle className='h-4 w-4 text-amber-600' />
                     <AlertDescription className='text-amber-800 dark:text-amber-200'>
                       <div className='font-medium mb-1'>Chú thích màu sắc:</div>
-                      <ul className='text-xs space-y-0.5 ml-4 list-disc'>
-                        <li>🟢 Xanh lá: Đã chọn hồ bơi</li>
-                        <li>🟡 Vàng: Có cảnh báo (độ tuổi không khớp)</li>
-                        <li>🔴 Đỏ: Có xung đột (giáo viên trùng lịch)</li>
-                        <li>⚫ Xám: Chưa chọn hồ bơi</li>
+                      <ul className='text-xs space-y-1 ml-0'>
+                        <li className='flex items-center gap-2'>
+                          <Circle className='h-3 w-3 text-green-600 flex-shrink-0' />
+                          <span>Xanh lá: Đã chọn hồ bơi</span>
+                        </li>
+                        <li className='flex items-center gap-2'>
+                          <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
+                          <span>Vàng: Có cảnh báo (độ tuổi không khớp)</span>
+                        </li>
+                        <li className='flex items-center gap-2'>
+                          <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
+                          <span>Đỏ: Có xung đột (Huấn luyện viên trùng lịch)</span>
+                        </li>
+                        <li className='flex items-center gap-2'>
+                          <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
+                          <span>Xám: Chưa chọn hồ bơi</span>
+                        </li>
                       </ul>
                     </AlertDescription>
                   </Alert>
@@ -1775,7 +1788,7 @@ export function SchedulePreviewModal({
 
                                       {/* Instructor */}
                                       <div className='text-xs text-muted-foreground mb-2'>
-                                        GV:{" "}
+                                        HLV:{" "}
                                         {schedule.instructor?.username || "N/A"}
                                       </div>
 
@@ -1806,7 +1819,7 @@ export function SchedulePreviewModal({
                                           >
                                             <span className='truncate'>
                                               {selectedPool
-                                                ? `🏊 ${selectedPool.title}`
+                                                ? `${selectedPool.title}`
                                                 : "Chọn hồ bơi..."}
                                             </span>
                                             <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
@@ -1918,8 +1931,8 @@ export function SchedulePreviewModal({
                                                           {pool.hasInstructorConflict && (
                                                             <div className='text-red-600 flex items-center gap-1'>
                                                               <AlertCircle className='h-3 w-3' />
-                                                              Giáo viên trùng
-                                                              lịch
+                                                              Huấn luyện viên
+                                                              trùng lịch
                                                             </div>
                                                           )}
                                                         </div>
@@ -1946,7 +1959,7 @@ export function SchedulePreviewModal({
                                             {hasConflict && (
                                               <div className='text-red-600 flex items-center gap-1'>
                                                 <AlertCircle className='h-3 w-3' />
-                                                GV trùng lịch
+                                                HLV trùng lịch
                                               </div>
                                             )}
                                           </div>
@@ -2058,7 +2071,7 @@ export function SchedulePreviewModal({
                                       Ca học
                                     </TableHead>
                                     <TableHead className='min-w-[120px]'>
-                                      Giáo viên
+                                      Huấn luyện viên
                                     </TableHead>
                                     <TableHead className='min-w-[120px]'>
                                       Hồ bơi
@@ -2124,7 +2137,6 @@ export function SchedulePreviewModal({
                                         </TableCell>
                                         <TableCell>
                                           <div className='flex items-center gap-1'>
-                                            <span className='text-sm'>🏊</span>
                                             <span className='text-sm font-medium'>
                                               {selectedPool?.title || "N/A"}
                                             </span>

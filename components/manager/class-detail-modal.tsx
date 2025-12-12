@@ -80,7 +80,7 @@ interface ActualClassroom {
   name: string;
   course: string;
   member?: string[];
-  instructor?: string; // Giáo viên cố định của lớp
+  instructor?: string; // Huấn luyện viên cố định của lớp
 }
 
 interface ActualPool {
@@ -97,7 +97,7 @@ interface ActualSchedule {
   _id: string;
   classroom: ActualClassroom;
   pool: ActualPool; // Từ response data thì pool là single object, không phải array
-  instructor?: string; // Giáo viên được phân công cho slot
+  instructor?: string; // Huấn luyện viên được phân công cho slot
   date: string;
 }
 
@@ -117,10 +117,10 @@ export default function ClassDetailModal({
   // Students and instructors details
   const [studentsDetails, setStudentsDetails] = useState<StudentDetail[]>([]);
   const [classInstructor, setClassInstructor] =
-    useState<InstructorDetail | null>(null); // Giáo viên cố định
+    useState<InstructorDetail | null>(null); // Huấn luyện viên cố định
   const [slotInstructor, setSlotInstructor] = useState<InstructorDetail | null>(
     null
-  ); // Giáo viên slot
+  ); // Huấn luyện viên slot
   const [classInstructorAvatar, setClassInstructorAvatar] =
     useState<string>("");
   const [slotInstructorAvatar, setSlotInstructorAvatar] = useState<string>("");
@@ -324,7 +324,7 @@ export default function ClassDetailModal({
               }
             }
 
-            // Fetch class instructor (giáo viên cố định của lớp)
+            // Fetch class instructor (Huấn luyện viên cố định của lớp)
             if (actualSchedule.classroom?.instructor) {
               try {
                 const instructorResponse = await fetchInstructorDetail({
@@ -400,7 +400,7 @@ export default function ClassDetailModal({
               }
             }
 
-            // Fetch slot instructor (giáo viên được phân công cho slot)
+            // Fetch slot instructor (Huấn luyện viên được phân công cho slot)
             if (
               actualSchedule.instructor &&
               actualSchedule.instructor !== actualSchedule.classroom?.instructor
@@ -678,20 +678,20 @@ export default function ClassDetailModal({
                   </div>
                 </div>
 
-                {/* Giáo viên */}
+                {/* Huấn luyện viên */}
                 <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
                   <UserOutlined className='text-lg text-blue-500 mt-0.5' />
                   <div className='flex-1'>
                     <div className='text-sm text-muted-foreground mb-2'>
-                      Giáo viên
+                      Huấn luyện viên
                     </div>
                     <div className='space-y-3'>
-                      {/* Giáo viên cố định của lớp */}
+                      {/* Huấn luyện viên cố định của lớp */}
                       {classInstructor && (
                         <div>
                           <div className='text-xs text-muted-foreground mb-2 flex items-center gap-1'>
                             <BookOutlined />
-                            Giáo viên phụ trách lớp học:
+                            Huấn luyện viên phụ trách lớp học:
                           </div>
                           <div className='flex items-center gap-3'>
                             <Avatar>
@@ -719,14 +719,14 @@ export default function ClassDetailModal({
                         </div>
                       )}
 
-                      {/* Giáo viên được phân công cho slot */}
+                      {/* Huấn luyện viên được phân công cho slot */}
                       {slotInstructor &&
                         slotInstructor._id !== classInstructor?._id && (
                           <div>
                             <Separator className='my-2' />
                             <div className='text-xs text-muted-foreground mb-2 flex items-center gap-1'>
                               <ClockCircleOutlined />
-                              Giáo viên phân công cho slot này:
+                              Huấn luyện viên phân công cho slot này:
                             </div>
                             <div className='flex items-center gap-3'>
                               <Avatar>
@@ -754,10 +754,10 @@ export default function ClassDetailModal({
                           </div>
                         )}
 
-                      {/* Không có giáo viên nào */}
+                      {/* Không có Huấn luyện viên nào */}
                       {!classInstructor && !slotInstructor && (
                         <div className='text-sm text-muted-foreground'>
-                          Chưa có giáo viên được phân công
+                          Chưa có Huấn luyện viên được phân công
                         </div>
                       )}
                     </div>

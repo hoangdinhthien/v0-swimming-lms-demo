@@ -128,7 +128,7 @@ export function ScheduleModal({
             Danh sách tất cả các buổi học{" "}
             {userType === "student"
               ? "của học viên"
-              : "của giáo viên phụ trách"}
+              : "của Huấn luyện viên phụ trách"}
           </DialogDescription>
         </DialogHeader>
 
@@ -151,7 +151,7 @@ export function ScheduleModal({
               <p className='text-sm text-muted-foreground mt-2'>
                 {userType === "student"
                   ? "Học viên chưa có buổi học nào được xếp lịch"
-                  : "Giáo viên chưa có buổi dạy nào được xếp lịch"}
+                  : "Huấn luyện viên chưa có buổi dạy nào được xếp lịch"}
               </p>
             </div>
           ) : (
@@ -297,7 +297,7 @@ export function ScheduleModal({
                                             <div className='flex items-center gap-2'>
                                               <User className='h-4 w-4 text-muted-foreground' />
                                               <span>
-                                                GV:{" "}
+                                                HLV:{" "}
                                                 {schedule.instructor.username ||
                                                   "N/A"}
                                               </span>
