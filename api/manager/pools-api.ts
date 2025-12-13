@@ -24,6 +24,36 @@ export interface Pool {
   tenant_id?: string;
 }
 
+// Interface for available pool from /pool/available endpoint
+export interface AvailablePool {
+  _id: string;
+  title: string;
+  type?: string;
+  dimensions?: string;
+  depth?: string;
+  capacity: number;
+  is_active: boolean;
+  type_of_age?: Array<{
+    _id: string;
+    title: string;
+    age_range?: [number, number];
+  }>;
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
+  tenant_id?: string;
+  current_usage: number; // Number of classes currently using this pool
+  current_classes: any[]; // Array of classes currently using this pool
+  remaining_capacity: number; // Pre-calculated remaining capacity
+}
+
+interface AvailablePoolsApiResponse {
+  data: AvailablePool[][]; // Array of arrays - each inner array is pools for one schedule
+  message: string;
+  statusCode: number;
+}
+
 interface PoolsApiResponse {
   data: [
     [
@@ -334,4 +364,61 @@ export async function deletePool(
       errorData.message || `Failed to delete pool: ${response.status}`
     );
   }
+}
+
+/**
+ * Fetch available pools for given schedules (date + slot combinations)
+ * @param schedules - Array of objects with date and slot._id
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with available pools data (array of arrays)
+ */
+export async function fetchAvailablePools(
+  schedules: Array<{ date: string; slot: { _id: string } }>,
+  tenantId?: string,
+  token?: string
+): Promise<AvailablePool[][]> {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  // Build request body: extract date and slot from schedules
+  const requestBody = schedules.map((schedule) => ({
+    date: schedule.date,
+    slot: schedule.slot._id,
+  }));
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers.service = "Pool";
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/pool/available`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch available pools: ${response.status}`);
+  }
+
+  const result: AvailablePoolsApiResponse = await response.json();
+
+  // Return the data array (array of arrays of pools)
+  return result.data || [];
 }

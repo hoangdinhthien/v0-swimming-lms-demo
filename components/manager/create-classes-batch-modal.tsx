@@ -211,6 +211,8 @@ export function CreateClassesBatchModal({
   const [instructorSpecialists, setInstructorSpecialists] = React.useState<
     Map<string, InstructorSpecialist>
   >(new Map());
+  const [allInstructorSpecialists, setAllInstructorSpecialists] =
+    React.useState<InstructorSpecialist[]>([]);
   const [ageRules, setAgeRules] = React.useState<AgeRule[]>([]);
   const [ageRulesTitles, setAgeRulesTitles] = React.useState<
     Map<string, string>
@@ -252,6 +254,28 @@ export function CreateClassesBatchModal({
       loadAgeRules();
     }
   }, [open]);
+
+  // Load all instructor specialists when modal opens
+  React.useEffect(() => {
+    if (
+      open &&
+      availableInstructors.length > 0 &&
+      allInstructorSpecialists.length === 0
+    ) {
+      loadAllInstructorSpecialists();
+    }
+  }, [open, availableInstructors]);
+
+  // Load all instructor specialists when modal opens
+  React.useEffect(() => {
+    if (
+      open &&
+      availableInstructors.length > 0 &&
+      allInstructorSpecialists.length === 0
+    ) {
+      loadAllInstructorSpecialists();
+    }
+  }, [open, availableInstructors]);
 
   // Search courses by API when courseSearchKey changes
   React.useEffect(() => {
@@ -347,12 +371,57 @@ export function CreateClassesBatchModal({
     }
   };
 
+  const loadAllInstructorSpecialists = async () => {
+    try {
+      const { fetchInstructorSpecialist } = await import(
+        "@/api/manager/instructors-api"
+      );
+      const { getSelectedTenant } = await import("@/utils/tenant-utils");
+      const { getAuthToken } = await import("@/api/auth-utils");
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) return;
+
+      const specialists = await fetchInstructorSpecialist({
+        tenantId,
+        token,
+      });
+
+      setAllInstructorSpecialists(specialists);
+
+      // Build a map for quick lookup
+      const newMap = new Map<string, InstructorSpecialist>();
+      specialists.forEach((spec) => {
+        const userId =
+          typeof spec.user === "object" ? spec.user._id : spec.user;
+        newMap.set(userId, spec);
+      });
+      setInstructorSpecialists(newMap);
+    } catch (error: any) {
+      console.error("Failed to load instructor specialists:", error);
+    }
+  };
+
   const handleSlotToggle = (slotId: string) => {
-    setSelectedSlotIds((prev) =>
-      prev.includes(slotId)
-        ? prev.filter((id) => id !== slotId)
-        : [...prev, slotId]
-    );
+    setSelectedSlotIds((prev) => {
+      if (prev.includes(slotId)) {
+        // Removing slot
+        return prev.filter((id) => id !== slotId);
+      } else {
+        // Adding slot - check limit
+        if (prev.length >= 2) {
+          toast({
+            variant: "destructive",
+            title: "Đã đạt giới hạn",
+            description: "Chỉ được chọn tối đa 2 ca học",
+          });
+          return prev;
+        }
+        return [...prev, slotId];
+      }
+    });
   };
 
   const handleDayToggle = (day: number) => {
@@ -369,12 +438,21 @@ export function CreateClassesBatchModal({
     );
 
     const minTime = Math.min(...selectedSlots.map((s) => s.start_time));
-    const maxTime = Math.max(...selectedSlots.map((s) => s.end_time));
+
+    // Fix: max_time = end_time + (end_minute / 100), NOT / 60!
+    // Example: 7h45 = 7 + (45/100) = 7.45
+    const maxSlot = selectedSlots.reduce((max, slot) =>
+      slot.end_time > max.end_time ||
+      (slot.end_time === max.end_time && slot.end_minute > max.end_minute)
+        ? slot
+        : max
+    );
+    const maxTime = maxSlot.end_time + maxSlot.end_minute / 100;
 
     return { min_time: minTime, max_time: maxTime };
   };
 
-  const generateClassName = (course: Course, index: number): string => {
+  const generateClassName = (course: Course, classNumber: number): string => {
     const slotTitles = allSlots
       .filter((slot) => selectedSlotIds.includes(slot._id))
       .map((slot) => {
@@ -388,25 +466,69 @@ export function CreateClassesBatchModal({
       .map((day) => DAY_NAMES.find((d) => d.value === day)?.label)
       .join(",");
 
-    return `${course.title} - ${slotTitles} - ${dayLabels} - Lớp ${index + 1}`;
+    return `${course.title} - ${slotTitles} - ${dayLabels} - Lớp ${classNumber}`;
   };
 
-  const handleGenerateClasses = () => {
+  const handleGenerateClasses = async () => {
     const course = availableCourses.find((c) => c._id === selectedCourseId);
     if (!course) return;
 
-    const classes: NewClassItem[] = [];
-    for (let i = 0; i < classCount; i++) {
-      classes.push({
-        id: `temp-${Date.now()}-${i}`,
-        name: generateClassName(course, i),
+    // Fetch all existing classes to check for name conflicts
+    try {
+      const { fetchClasses } = await import("@/api/manager/class-api");
+      const { getSelectedTenant } = await import("@/utils/tenant-utils");
+      const { getAuthToken } = await import("@/api/auth-utils");
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        toast({
+          variant: "destructive",
+          title: "Lỗi",
+          description: "Thiếu thông tin xác thực",
+        });
+        return;
+      }
+
+      // Fetch all classes (with high limit to get all)
+      const { data: existingClasses } = await fetchClasses(
+        tenantId,
+        token,
+        1,
+        1000
+      );
+
+      // Extract existing class names
+      const existingNames = new Set(existingClasses.map((c: any) => c.name));
+
+      // Find a unique class number
+      let classNumber = 1;
+      let className = generateClassName(course, classNumber);
+
+      while (existingNames.has(className)) {
+        classNumber++;
+        className = generateClassName(course, classNumber);
+      }
+
+      // Create only 1 class
+      const newClass: NewClassItem = {
+        id: `temp-${Date.now()}`,
+        name: className,
         instructor: "",
         show_on_regist_course: false,
+      };
+
+      setNewClasses([newClass]);
+      setCurrentStep(1);
+    } catch (error: any) {
+      console.error("Failed to validate class names:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kiểm tra tên lớp học",
       });
     }
-
-    setNewClasses(classes);
-    setCurrentStep(1);
   };
 
   const handleUpdateClass = (
@@ -475,7 +597,8 @@ export function CreateClassesBatchModal({
           type: "missing_specialist",
           severity: "warning",
           message: "Huấn luyện viên chưa có thông tin chuyên môn",
-          details: "Cần cập nhật category và age_types cho Huấn luyện viên này",
+          details:
+            "Cần cập nhật Danh mục và Loại độ tuổi cho Huấn luyện viên này",
         });
         setValidationWarnings((prev) => [...prev, ...warnings]);
         return;
@@ -517,7 +640,7 @@ export function CreateClassesBatchModal({
           classId,
           type: "category",
           severity: "warning",
-          message: "Category không khớp",
+          message: "Danh mục không phù hợp",
           details: `Khóa học: [${courseCategoryTitles}] ≠ Huấn luyện viên: [${specialistCategoryTitles}]`,
         });
       }
@@ -544,7 +667,7 @@ export function CreateClassesBatchModal({
           classId,
           type: "age_type",
           severity: "warning",
-          message: "Độ tuổi không khớp",
+          message: "Độ tuổi không phù hợp",
           details: `Khóa học: [${courseAgeTypeTitles}] ≠ Huấn luyện viên: [${specialistAgeTypeTitles}]`,
         });
       }
@@ -726,7 +849,7 @@ export function CreateClassesBatchModal({
             classId: classItem.id,
             type: "age_type",
             severity: "warning",
-            message: "Độ tuổi không khớp",
+            message: "Độ tuổi không phù hợp",
             details: `Khóa học: [${courseAgeDisplay}] ≠ Huấn luyện viên: [${instructorAgeDisplay}]`,
           });
         }
@@ -919,6 +1042,65 @@ export function CreateClassesBatchModal({
     return validationWarnings.filter((w) => w.classId === classId);
   };
 
+  // Sort instructors by match score with course
+  const getSortedInstructors = (): Instructor[] => {
+    if (!selectedCourseId) return availableInstructors;
+
+    const course = availableCourses.find((c) => c._id === selectedCourseId);
+    if (!course) return availableInstructors;
+
+    const courseCategories = course.category?.map((cat) => cat._id) || [];
+    const courseAgeTypes = course.type_of_age?.map((age) => age._id) || [];
+
+    return [...availableInstructors].sort((a, b) => {
+      const specA = instructorSpecialists.get(a._id);
+      const specB = instructorSpecialists.get(b._id);
+
+      // Calculate match score for instructor A
+      let scoreA = 0;
+      if (specA) {
+        const categoriesA = Array.isArray(specA.category)
+          ? specA.category.map((cat: any) =>
+              typeof cat === "object" ? cat._id : cat
+            )
+          : [];
+        const ageTypesA = Array.isArray(specA.age_types)
+          ? specA.age_types.map((age: any) =>
+              typeof age === "object" ? age._id : age
+            )
+          : [];
+
+        // +2 for each matching category
+        scoreA +=
+          courseCategories.filter((c) => categoriesA.includes(c)).length * 2;
+        // +1 for each matching age type
+        scoreA += courseAgeTypes.filter((a) => ageTypesA.includes(a)).length;
+      }
+
+      // Calculate match score for instructor B
+      let scoreB = 0;
+      if (specB) {
+        const categoriesB = Array.isArray(specB.category)
+          ? specB.category.map((cat: any) =>
+              typeof cat === "object" ? cat._id : cat
+            )
+          : [];
+        const ageTypesB = Array.isArray(specB.age_types)
+          ? specB.age_types.map((age: any) =>
+              typeof age === "object" ? age._id : age
+            )
+          : [];
+
+        scoreB +=
+          courseCategories.filter((c) => categoriesB.includes(c)).length * 2;
+        scoreB += courseAgeTypes.filter((a) => ageTypesB.includes(a)).length;
+      }
+
+      // Sort by score descending (higher score first)
+      return scoreB - scoreA;
+    });
+  };
+
   const selectedCourse = availableCourses.find(
     (c) => c._id === selectedCourseId
   );
@@ -937,7 +1119,7 @@ export function CreateClassesBatchModal({
         <DialogHeader>
           <DialogTitle>Tạo lớp học</DialogTitle>
           <DialogDescription>
-            Tạo nhiều lớp học cùng lúc với kiểm tra hợp lệ tự động
+            Tạo lớp học và kiểm tra hợp lệ tự động
           </DialogDescription>
         </DialogHeader>
 
@@ -1141,20 +1323,6 @@ export function CreateClassesBatchModal({
                     ))}
                   </div>
                 </div>
-
-                {/* Class Count */}
-                <div className='space-y-2'>
-                  <Label>Số lượng lớp *</Label>
-                  <Input
-                    type='number'
-                    min={1}
-                    max={10}
-                    value={classCount}
-                    onChange={(e) =>
-                      setClassCount(parseInt(e.target.value) || 1)
-                    }
-                  />
-                </div>
               </div>
             </StepperStep>
 
@@ -1188,8 +1356,8 @@ export function CreateClassesBatchModal({
                     <AlertTriangle className='h-4 w-4 text-amber-600' />
                     <AlertDescription className='text-amber-800 dark:text-amber-200'>
                       <div className='font-medium'>
-                        ⚠️ LƯU Ý: Có {validationWarnings.length} cảnh báo về
-                        Huấn luyện viên
+                        LƯU Ý: Có {validationWarnings.length} cảnh báo về Huấn
+                        luyện viên
                       </div>
                       <div className='text-xs mt-1'>
                         Các cảnh báo không chặn việc tạo lớp, nhưng nên xem xét
@@ -1239,17 +1407,70 @@ export function CreateClassesBatchModal({
                                 {index + 1}
                               </TableCell>
                               <TableCell className='align-top pt-4'>
-                                <Input
-                                  value={classItem.name}
-                                  onChange={(e) =>
-                                    handleUpdateClass(
-                                      classItem.id,
-                                      "name",
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder='Tên lớp học...'
-                                />
+                                <div className='space-y-2'>
+                                  {/* Course Info Display (Task 4) */}
+                                  {selectedCourse && (
+                                    <div className='p-2 border rounded-md bg-blue-50 dark:bg-blue-950/20 space-y-1.5 text-xs'>
+                                      <div className='font-medium text-blue-900 dark:text-blue-100'>
+                                        Thông tin khóa học
+                                      </div>
+                                      {selectedCourse.category &&
+                                        selectedCourse.category.length > 0 && (
+                                          <div className='flex flex-wrap gap-1 items-center'>
+                                            <span className='text-muted-foreground'>
+                                              Danh mục:
+                                            </span>
+                                            {selectedCourse.category.map(
+                                              (cat, idx) => (
+                                                <Badge
+                                                  key={idx}
+                                                  variant='secondary'
+                                                  className='bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 border-blue-200'
+                                                >
+                                                  {typeof cat === "object" &&
+                                                  "title" in cat
+                                                    ? cat.title
+                                                    : cat}
+                                                </Badge>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+                                      {selectedCourse.type_of_age &&
+                                        selectedCourse.type_of_age.length >
+                                          0 && (
+                                          <div className='flex flex-wrap gap-1 items-center'>
+                                            <span className='text-muted-foreground'>
+                                              Độ tuổi:
+                                            </span>
+                                            {selectedCourse.type_of_age.map(
+                                              (age, idx) => (
+                                                <Badge
+                                                  key={idx}
+                                                  variant='secondary'
+                                                  className='bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100 border-yellow-200'
+                                                >
+                                                  {age.title}
+                                                </Badge>
+                                              )
+                                            )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  )}
+
+                                  <Input
+                                    value={classItem.name}
+                                    onChange={(e) =>
+                                      handleUpdateClass(
+                                        classItem.id,
+                                        "name",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder='Tên lớp học...'
+                                  />
+                                </div>
                               </TableCell>
                               <TableCell className='align-top pt-4'>
                                 <div className='space-y-2'>
@@ -1273,15 +1494,87 @@ export function CreateClassesBatchModal({
                                           Đang tải...
                                         </div>
                                       ) : (
-                                        availableInstructors.map(
-                                          (instructor) => (
-                                            <SelectItem
-                                              key={instructor._id}
-                                              value={instructor._id}
-                                            >
-                                              {instructor.username}
-                                            </SelectItem>
-                                          )
+                                        getSortedInstructors().map(
+                                          (instructor) => {
+                                            const spec =
+                                              instructorSpecialists.get(
+                                                instructor._id
+                                              );
+                                            return (
+                                              <SelectItem
+                                                key={instructor._id}
+                                                value={instructor._id}
+                                              >
+                                                <div className='flex items-center gap-2 py-1'>
+                                                  <span className='font-medium'>
+                                                    {instructor.username}
+                                                  </span>
+                                                  {spec && (
+                                                    <div className='flex items-center gap-1 flex-wrap'>
+                                                      {/* Category badges (blue) */}
+                                                      {Array.isArray(
+                                                        spec.category
+                                                      ) &&
+                                                        spec.category
+                                                          .slice(0, 2)
+                                                          .map(
+                                                            (
+                                                              cat: any,
+                                                              idx: number
+                                                            ) => {
+                                                              const title =
+                                                                typeof cat ===
+                                                                "object"
+                                                                  ? cat.title
+                                                                  : ageRulesTitles.get(
+                                                                      cat
+                                                                    ) || cat;
+                                                              return (
+                                                                <Badge
+                                                                  key={`cat-${idx}`}
+                                                                  variant='secondary'
+                                                                  className='text-[10px] px-1 py-0 h-4 bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+                                                                >
+                                                                  {title}
+                                                                </Badge>
+                                                              );
+                                                            }
+                                                          )}
+                                                      {/* Age type badges (yellow) */}
+                                                      {Array.isArray(
+                                                        spec.age_types
+                                                      ) &&
+                                                        spec.age_types
+                                                          .slice(0, 2)
+                                                          .map(
+                                                            (
+                                                              age: any,
+                                                              idx: number
+                                                            ) => {
+                                                              const title =
+                                                                typeof age ===
+                                                                "object"
+                                                                  ? age.title
+                                                                  : ageRulesTitles.get(
+                                                                      age
+                                                                    ) || age;
+                                                              return (
+                                                                <Badge
+                                                                  key={`age-${idx}`}
+                                                                  variant='secondary'
+                                                                  className='text-[10px] px-1 py-0 h-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-900 dark:text-yellow-100'
+                                                                >
+                                                                  {title}
+                                                                </Badge>
+                                                              );
+                                                            }
+                                                          )}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            );
+                                          }
                                         )
                                       )}
                                     </SelectContent>
@@ -1576,7 +1869,7 @@ export function CreateClassesBatchModal({
                   selectedDays.length === 0
                 }
               >
-                Tạo lớp học
+                Tiếp tục
               </Button>
             )}
             {currentStep === 1 && (

@@ -1,52 +1,13 @@
-BÂY GIỜ TA SẼ TIẾN HÀNH CHECK VÀ SỬA LẠI CÁC LOGIC TRÊN UI:
+ta cần phải sửa lại logic & thao các của drawer trong trang lịch (manager/calendar) 
+- case: thêm thủ công lớp học vào LỊCH (ở tab 'Thêm lớp học' trong drawer)
+    . ví dụ 1: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh trong cái slot detail đó) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu chưa có huấn luyện viên thì cho chọn hlv mà đang availale
+    . ví dụ 2: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh trong cái slot detail đó) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu có huấn luyện viên rồi thì vẫn cho người dùng option thay đổi huấn luyện viên bằng cách chọn hlv mà đang availale
 
-'XẾP LỊCH CHO LỚP CÓ SẮN':
-
-- STEP 1: 
-    . ở phần để chọn 'Ngày bắt đầu xếp lịch *'. UI của cái lịch hiện lên để chọn ngày nó đang không hợp với SHADCN, cần sửa lại cái lịch này. (pasted image)
-
-
-- STEP 2:
-    . sau khi chọn lớp và setup các thông tin để xếp lịch ở step 1 đến step 2
-    . ở step 2 bạn chỉ cần hiện cái lịch chung chung tổng quan thôi để manager/staff biết là các schedule đó đang được xếp cho các ngày nào trong tuần, không cần phải hiện tất cả cả schedule của (các) lớp học được chọn để xếp lịch
-
-- STEP 3:    
-    . vì ở step 3 này nó đang sử dụng chung cái lịch giống ở step 2 nên tôi không thấy được TẤT CẢ các lịch được xếp như thế nào. NHƯNG KHÁC VỚI STEP 2, Ở STEP 3 NÀY TÔI LẠI MUỐN XEM ĐƯỢC TẤT CẢ CÁC LỊCH LUÔN! TA CẦN PHẢI BÀN BẠC LẠI VỀ PHẦN NÀY (pasted image 2)
-    . cần check lại logic validate auto xếp hồ bơi cho các lịch. và giải thích cho tôi hiện tại cái logic đó đang như thế nào
-    . vì hiện tại, khi qua tới step 3, tôi không thấy nó tự động xếp hồ bơi vào các lịch học gì cả! và tôi cũng không tự chọn các hồ bơi để tự sắp xếp luôn (tôi thấy các hồ bơi không thể chọn được vì bị disable trên UI)! vì vậy nên không thể tới được step 4! (pasted image 3)
-
-có thắc mắc gì thì cứ hỏi tôi!
-
-===============================
-
-Về Step 1: Bạn muốn calendar dùng component Calendar của ShadCN/UI đúng không? (component từ @/components/ui/calendar) --> tôi không chắc nhưng mà cứ thử làm như vậy thử xem như thế nào
-
-Về Step 2: "Lịch tổng quan" nghĩa là bạn chỉ muốn hiện một dạng summary như:
-"Thứ 2, Thứ 4, Thứ 6: Slot 1, Slot 2"
-Hay vẫn hiện calendar nhưng chỉ đánh dấu các ngày có lịch mà không hiện chi tiết?
----> tôi muốn hiện UI một lịch dạng summary tổng quan, nghĩa là vừa có summary vừa hiện cái summary đó ở dạng 1 cái lịch đơn giản
-
-Bạn có thể cho tôi biết class capacity (số học viên trong lớp) là bao nhiêu? --> trong response data của cả class và course KHÔNG CÓ field capacity, chỉ có response data của pool là có field capacity 
-
-3. STEP 3 - Các vấn đề về pool selection 
---> tôi nghĩ ta nên điều chỉnh lại cái logic validate tự động xếp hồ bơi cho các lịch
-    - TÔI CÓ TỔNG HỢP NHỮNG ĐIỂM CHUNG NÀY CÓ THỂ LẤY ĐỂ LÀM PHẦN VALIDATE TỰ ĐỘNG XẾP HỒ BƠI CHO CÁC LỊCH:
-    . trong repsonse data của pool có các field 'capacity' và 'type_of_age' và 'dimensions' và 'depth' là tôi thấy là quan trọng
-    . trong repsonse data của class có các field 'course' (trong field course nằm trong response data của khoá học lại có các field 'category' và type_of_age') và 'instructor' (field này đang không có lưu thông specialist của instructor đó, để xem được specialist của instructor đó phải gọi api fetchInstructorSpecialist ra, thì có thể xem được field 'category' và 'age_types')
-    . để xem được lịch của instructor đó thì sử dụng api fetchUserSchedule này để có thể đem đi so sánh xem có trùng lịch/conflict lịch hay là không 
+ta cần phải sửa lại logic 'Chọn thời gian học *' (ở step 1 schedule-preview-modal.tsx & ở step 1 của create-classes-batch-modal.tsx): 
+- TRÊN UI SẼ CHO CHỌN ÍT NHẤT LÀ 1 SLOT VÀ TỐI ĐA LÀ 2 SLOT
+    . ví dụ 1: chọn slot 1 (7:00 -> 7:45) ==> min_time: 7, max_time: 7.45 ==> Khung giờ tự động: 7h - 7h45
+    . ví dụ 2: chọn slot 1 (7:00 -> 7:45) và slot 2 (8:00 -> 8:45) ==> min_time: 7, max_time: 8.45 ==> Khung giờ tự động: 7h - 8h45
+    . ví dụ 3: chọn slot 5 (11:00 -> 11:45) và slot 8 (15:00 -> 15:45) ==> min_time: 11, max_time: 15.45 ==> Khung giờ tự động: 11h - 15h45
 
 
-ĐÓ LÀ NHỮNG THỨ TÔI CÓ THỂ NGHĨ RA ĐƯỢC, BẠN CÓ Ý KIẾN HAY THẮC MẮC GÌ THÌ CỨ HỎI TÔI!
-
-===============================
-
-BẮT ĐẦU TỪ LINE, TA SẼ TIẾN HÀNH SỬA CHỮA + CẢI TIẾN + THÊM VALIDATE TRANG LỊCH (dashboard/manager/calender)
-
-- DRAWER UI: 
-    . UI của phần drawer hiện ở trong trang lịch (pasted image), nếu tôi nhớ không lầm thì vẫn còn đang sử dụng của antd (về mặt UI thì nó không hợp với shadcn), ta cần phải bàn lại ĐỂ REFACTOR LẠI UI VÀ THÊM LOGIC VALIDATION cho phần UI này 
-    . tiếp theo là về phần UX ở của phần drawer này, tôi chưa check lại code, ví dụ trong một tình huống: khi tôi click vào một cell trống (nghĩa là ngày hôm đó không có lớp nào học hết) trên lịch để hiện drawer lên rồi sau đó click vào nút 'Thêm lớp học mới' (ở tab 'Xem lịch học) để qua tab 'Thêm lớp học', tôi KHÔNG THỂ CHỌN ĐƯỢC BẤT KỲ CÁI GÌ CẢ Ở CÁC PHẦN SELECT BẰNG CHUỘT(Khung giờ, Lớp học, Hồ bơi, Huấn luyện viên) nhưng lại có thể chọn được bằng cách dùng phím mũi tên lên xuống và phím enter để chọn, RẤT LÀ KHÔNG ỔN. (pasted image 2)
-    . tiếp theo là về phần logic validation: hiện tại trong drawer này đang chưa có. và tôi muốn UI/UX có những logic validate này:
-        . chọn theo thứ tự, sau đó rồi mới cho chọn tiếp: chọn khung giờ + lớp học trước sau đó mới cho chọn các thứ còn lại (tính logic để show ra hồ bơi thích hợp này kia... sau khi cho chọn khung giờ + lớp học xong)
-        . chỉ cho chọn Huấn luyện viên nếu lớp chưa có Huấn luyện viên, nếu lớp có Huấn luyện viên rồi thì hiện thẳng tên của Huấn luyện viên đó trong phần chọn luôn cho đỡ rối 
-
-có gì thắc mắc thì cứ hỏi tôi
+logic tính instructor trống/không trống, chưa có check validate (có thể tái sử dụng step 2 trong modal tạo lớp) 

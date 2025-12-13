@@ -145,6 +145,10 @@ export function AddClassForm({
   const [isSearchingInstructors, setIsSearchingInstructors] = useState(false);
   const [openInstructorPopover, setOpenInstructorPopover] = useState(false);
 
+  // Slot detail for instructor busy status
+  const [slotDetail, setSlotDetail] = useState<any>(null);
+  const [busyInstructorIds, setBusyInstructorIds] = useState<string[]>([]);
+
   // Get selected classroom details
   const selectedClassDetails = availableClassrooms.find(
     (c) => c._id === selectedClassroom
@@ -238,6 +242,48 @@ export function AddClassForm({
     return () => clearTimeout(timeoutId);
   }, [instructorSearchKey]);
 
+  // Fetch slot detail when slot is selected (to get busy instructors)
+  useEffect(() => {
+    const fetchSlotDetailData = async () => {
+      if (!selectedSlot || !selectedDate) {
+        setSlotDetail(null);
+        setBusyInstructorIds([]);
+        return;
+      }
+
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+
+        if (!tenantId || !token) {
+          throw new Error("Vui lòng đăng nhập lại");
+        }
+
+        const { fetchSlotDetail } = await import("@/api/manager/slot-api");
+        const result = await fetchSlotDetail(
+          selectedSlot,
+          selectedDate,
+          tenantId,
+          token
+        );
+
+        setSlotDetail(result);
+
+        // Extract busy instructor IDs from schedules
+        const busyIds = (result.schedules || [])
+          .map((schedule: any) => schedule.instructor?._id)
+          .filter(Boolean);
+        setBusyInstructorIds(busyIds);
+      } catch (error: any) {
+        console.error("Failed to fetch slot detail:", error);
+        setSlotDetail(null);
+        setBusyInstructorIds([]);
+      }
+    };
+
+    fetchSlotDetailData();
+  }, [selectedSlot, selectedDate]);
+
   // Validate pools when Slot + Classroom are selected
   useEffect(() => {
     if (selectedSlot && selectedClassroom && selectedClassDetails) {
@@ -260,36 +306,45 @@ export function AddClassForm({
         throw new Error("Vui lòng đăng nhập lại");
       }
 
-      // Fetch existing schedules for the selected date
-      const dateObj = new Date(selectedDate);
-      const existingSchedules = await fetchDateRangeSchedule(
-        dateObj,
-        dateObj,
+      // Use fetchAvailablePools API
+      const { fetchAvailablePools } = await import("@/api/manager/pools-api");
+      const availablePoolsResult = await fetchAvailablePools(
+        [
+          {
+            date: selectedDate,
+            slot: { _id: selectedSlot },
+          },
+        ],
         tenantId,
         token
       );
 
-      // Get instructor ID (from class or selected)
-      const instructorId = hasClassInstructor
-        ? classInstructor._id
-        : selectedInstructor || "";
+      // availablePoolsResult is AvailablePool[][]
+      // We only sent 1 date+slot combo, so we get availablePoolsResult[0]
+      const poolsForSelectedSlot = availablePoolsResult[0] || [];
 
-      // Validate all pools
-      const validatedPoolsData = validatePools({
-        allPools: availablePools,
-        selectedClass: selectedClassDetails as any,
-        selectedDate,
-        selectedSlotId: selectedSlot,
-        instructorId,
-        existingSchedules: existingSchedules.events,
-      });
+      // Map to PoolValidationInfo format
+      const validatedPoolsData: PoolValidationInfo[] = poolsForSelectedSlot.map(
+        (pool: any) => ({
+          ...pool,
+          isAvailable: pool.remaining_capacity > 0,
+          hasCapacityWarning:
+            pool.remaining_capacity <= 2 && pool.remaining_capacity > 0,
+          hasAgeWarning: false, // Age validation is handled by API
+          hasInstructorConflict: false, // Instructor conflict is handled by slot detail
+          capacity_remain: pool.remaining_capacity,
+        })
+      );
 
       setValidatedPools(validatedPoolsData);
 
-      // Auto-select best pool
-      const bestPool = getBestPool(validatedPoolsData);
+      // Auto-select first available pool
+      const bestPool = validatedPoolsData.find((p) => p.isAvailable);
       if (bestPool) {
         setSelectedPool(bestPool._id);
+      } else if (validatedPoolsData.length > 0) {
+        // If no available pool, select the first one anyway
+        setSelectedPool(validatedPoolsData[0]._id);
       }
     } catch (error) {
       console.error("Pool validation error:", error);
@@ -355,40 +410,6 @@ export function AddClassForm({
       )}
 
       <div className='space-y-4'>
-        {/* Step 1: Slot Selection */}
-        <div className='space-y-2'>
-          <Label
-            htmlFor='slot-select'
-            className='flex items-center gap-2'
-          >
-            <Clock className='h-4 w-4' />
-            Khung giờ <span className='text-red-500'>*</span>
-          </Label>
-          <Select
-            value={selectedSlot}
-            onValueChange={setSelectedSlot}
-            disabled={loading}
-          >
-            <SelectTrigger id='slot-select'>
-              <SelectValue placeholder='Chọn khung giờ' />
-            </SelectTrigger>
-            <SelectContent>
-              {availableSlots.map((slot) => (
-                <SelectItem
-                  key={slot._id}
-                  value={slot._id}
-                >
-                  {slot.title} (
-                  {Math.floor(slot.start_time).toString().padStart(2, "0")}:
-                  {slot.start_minute.toString().padStart(2, "0")} -{" "}
-                  {Math.floor(slot.end_time).toString().padStart(2, "0")}:
-                  {slot.end_minute.toString().padStart(2, "0")})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Step 1: Classroom Selection */}
         <div className='space-y-2'>
           <Label
@@ -475,6 +496,40 @@ export function AddClassForm({
               </Command>
             </PopoverContent>
           </Popover>
+        </div>
+
+        {/* Step 2: Slot Selection */}
+        <div className='space-y-2'>
+          <Label
+            htmlFor='slot-select'
+            className='flex items-center gap-2'
+          >
+            <Clock className='h-4 w-4' />
+            Khung giờ <span className='text-red-500'>*</span>
+          </Label>
+          <Select
+            value={selectedSlot}
+            onValueChange={setSelectedSlot}
+            disabled={loading || !selectedClassroom}
+          >
+            <SelectTrigger id='slot-select'>
+              <SelectValue placeholder='Chọn khung giờ' />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSlots.map((slot) => (
+                <SelectItem
+                  key={slot._id}
+                  value={slot._id}
+                >
+                  {slot.title} (
+                  {Math.floor(slot.start_time).toString().padStart(2, "0")}:
+                  {slot.start_minute.toString().padStart(2, "0")} -{" "}
+                  {Math.floor(slot.end_time).toString().padStart(2, "0")}:
+                  {slot.end_minute.toString().padStart(2, "0")})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator className='my-4' />
@@ -675,47 +730,84 @@ export function AddClassForm({
                             (instructorSearchKey.trim()
                               ? searchedInstructors
                               : availableInstructors
-                            ).map((instructor) => (
-                              <CommandItem
-                                key={instructor._id}
-                                value={instructor.username}
-                                disabled={instructor.is_active === false}
-                                onSelect={() => {
-                                  setSelectedInstructor(instructor._id);
-                                  setInstructorSearchKey("");
-                                  setOpenInstructorPopover(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedInstructor === instructor._id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                <div className='flex items-center gap-2'>
-                                  <Avatar className='h-6 w-6'>
-                                    <AvatarImage
-                                      src={instructorAvatars[instructor._id]}
+                            )
+                              .sort((a, b) => {
+                                // Sort: Free instructors first, then busy ones
+                                const aIsBusy = busyInstructorIds.includes(
+                                  a._id
+                                );
+                                const bIsBusy = busyInstructorIds.includes(
+                                  b._id
+                                );
+                                if (aIsBusy === bIsBusy) return 0;
+                                return aIsBusy ? 1 : -1;
+                              })
+                              .map((instructor) => {
+                                const isBusy = busyInstructorIds.includes(
+                                  instructor._id
+                                );
+                                return (
+                                  <CommandItem
+                                    key={instructor._id}
+                                    value={instructor.username}
+                                    disabled={instructor.is_active === false}
+                                    onSelect={() => {
+                                      setSelectedInstructor(instructor._id);
+                                      setInstructorSearchKey("");
+                                      setOpenInstructorPopover(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedInstructor === instructor._id
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
                                     />
-                                    <AvatarFallback>
-                                      <User className='h-3 w-3' />
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className='flex flex-col'>
-                                    <span>
-                                      {instructor.username} ({instructor.email})
-                                    </span>
-                                    {instructor.is_active === false && (
-                                      <span className='text-xs text-red-500'>
-                                        Không hoạt động
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </CommandItem>
-                            ))
+                                    <div className='flex items-center gap-2 flex-1'>
+                                      <Avatar className='h-6 w-6'>
+                                        <AvatarImage
+                                          src={
+                                            instructorAvatars[instructor._id]
+                                          }
+                                        />
+                                        <AvatarFallback>
+                                          <User className='h-3 w-3' />
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className='flex flex-col flex-1'>
+                                        <div className='flex items-center gap-2'>
+                                          <span>
+                                            {instructor.username} (
+                                            {instructor.email})
+                                          </span>
+                                          {isBusy ? (
+                                            <Badge
+                                              variant='destructive'
+                                              className='text-[10px] px-1.5 py-0 h-5'
+                                            >
+                                              Bận
+                                            </Badge>
+                                          ) : (
+                                            <Badge
+                                              variant='default'
+                                              className='text-[10px] px-1.5 py-0 h-5 bg-green-500 hover:bg-green-600'
+                                            >
+                                              Rảnh
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        {instructor.is_active === false && (
+                                          <span className='text-xs text-red-500'>
+                                            Không hoạt động
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                );
+                              })
                           )}
                         </CommandGroup>
                       </CommandList>

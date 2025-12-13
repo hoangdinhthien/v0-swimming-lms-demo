@@ -59,6 +59,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -115,9 +116,11 @@ interface PoolCapacityInfo {
   capacity_remain: number;
   isAvailable: boolean;
   schedulesUsed: any[];
-  type_of_age?: string;
+  type_of_age?: any; // Changed from string to any to match API response
   hasAgeWarning?: boolean;
   hasInstructorConflict?: boolean;
+  current_usage?: number; // Number of classes currently using this pool
+  hasCapacityWarning?: boolean; // Warning when remaining_capacity < max_member
 }
 
 interface CalendarEvent {
@@ -152,14 +155,9 @@ const STEPS = [
     description: "Chọn các lớp cần xếp lịch",
   },
   {
-    id: "preview",
-    title: "Xem trước",
-    description: "Xem lịch đề xuất",
-  },
-  {
-    id: "pools",
-    title: "Chọn hồ",
-    description: "Chọn hồ bơi cho lịch học",
+    id: "preview-pools",
+    title: "Xem trước & Chọn hồ bơi",
+    description: "Xem lịch đề xuất và chọn hồ bơi",
   },
   {
     id: "confirm",
@@ -385,9 +383,25 @@ export function SchedulePreviewModal({
   const handleSlotToggle = (classId: string, slotId: string) => {
     setClassSelectedSlots((prev) => {
       const currentSlots = prev[classId] || [];
-      const newSlots = currentSlots.includes(slotId)
-        ? currentSlots.filter((id) => id !== slotId)
-        : [...currentSlots, slotId];
+
+      // Limit: Min 1 slot, Max 2 slots
+      let newSlots: string[];
+      if (currentSlots.includes(slotId)) {
+        // Removing slot
+        newSlots = currentSlots.filter((id) => id !== slotId);
+      } else {
+        // Adding slot
+        if (currentSlots.length >= 2) {
+          // Already have 2 slots, show toast and return
+          toast({
+            variant: "destructive",
+            title: "Đã đạt giới hạn",
+            description: "Chỉ được chọn tối đa 2 ca học",
+          });
+          return prev;
+        }
+        newSlots = [...currentSlots, slotId];
+      }
 
       // Auto-calculate min_time and max_time when slots change
       const selectedSlots = allSlots.filter((slot) =>
@@ -398,7 +412,15 @@ export function SchedulePreviewModal({
 
       if (selectedSlots.length > 0) {
         minTime = Math.min(...selectedSlots.map((s) => s.start_time));
-        maxTime = Math.max(...selectedSlots.map((s) => s.end_time));
+        // Fix: max_time = end_time + (end_minute / 100), NOT / 60!
+        // Example: 7h45 = 7 + (45/100) = 7.45
+        const maxSlot = selectedSlots.reduce((max, slot) =>
+          slot.end_time > max.end_time ||
+          (slot.end_time === max.end_time && slot.end_minute > max.end_minute)
+            ? slot
+            : max
+        );
+        maxTime = maxSlot.end_time + maxSlot.end_minute / 100;
       }
 
       // Update config with new times
@@ -624,6 +646,10 @@ export function SchedulePreviewModal({
       });
 
       setPreviewSchedules(parsedPreview);
+
+      // Auto-calculate pool capacity after generating preview (Task 5)
+      await calculatePoolCapacityAfterPreview(parsedPreview);
+
       setCurrentStep(1);
     } catch (err: any) {
       console.error("Preview generation error:", err);
@@ -739,11 +765,18 @@ export function SchedulePreviewModal({
   const handleCalculatePoolCapacity = async () => {
     setIsCalculatingCapacity(true);
     setError(null);
+    await calculatePoolCapacityAfterPreview(previewSchedules);
+    setIsCalculatingCapacity(false);
+  };
+
+  const calculatePoolCapacityAfterPreview = async (schedulesToProcess: {
+    [classId: string]: PreviewSchedule[];
+  }) => {
     try {
       const { fetchDateRangeSchedule } = await import(
         "@/api/manager/schedule-api"
       );
-      const { fetchPools } = await import("@/api/manager/pools-api");
+      const { fetchAvailablePools } = await import("@/api/manager/pools-api");
       const { getSelectedTenant } = await import("@/utils/tenant-utils");
       const { getAuthToken } = await import("@/api/auth-utils");
 
@@ -754,15 +787,33 @@ export function SchedulePreviewModal({
         throw new Error("Vui lòng đăng nhập lại");
       }
 
-      // Step 1: Get all pools
-      const poolsResponse = await fetchPools({}, tenantId, token);
-      const allPools = poolsResponse.pools || [];
+      // Step 1: Build array of all schedules for API call
+      const allSchedulesForApi: Array<{ date: string; slot: { _id: string } }> =
+        [];
+      const scheduleKeyMap: string[] = []; // To map API response index to scheduleKey
 
-      // Step 2: Find date range from all preview schedules
+      Object.entries(schedulesToProcess).forEach(([classId, schedules]) => {
+        schedules.forEach((schedule, scheduleIndex) => {
+          allSchedulesForApi.push({
+            date: schedule.date,
+            slot: { _id: schedule.slot._id },
+          });
+          scheduleKeyMap.push(`${classId}-${scheduleIndex}`);
+        });
+      });
+
+      // Step 2: Call new API to get available pools
+      const availablePoolsArrays = await fetchAvailablePools(
+        allSchedulesForApi,
+        tenantId,
+        token
+      );
+
+      // Step 3: Get date range for instructor conflict check
       let minDate: Date | null = null;
       let maxDate: Date | null = null;
 
-      Object.values(previewSchedules).forEach((schedules) => {
+      Object.values(schedulesToProcess).forEach((schedules) => {
         schedules.forEach((schedule) => {
           const date = new Date(schedule.date);
           if (!minDate || date < minDate) minDate = date;
@@ -774,7 +825,7 @@ export function SchedulePreviewModal({
         throw new Error("Không tìm thấy ngày trong lịch xem trước");
       }
 
-      // Step 3: Fetch existing schedules in date range
+      // Step 4: Fetch existing schedules for instructor conflict check
       const existingSchedules = await fetchDateRangeSchedule(
         minDate,
         maxDate,
@@ -782,149 +833,110 @@ export function SchedulePreviewModal({
         token
       );
 
-      // Step 4: Calculate pool capacity for each preview schedule
+      // Step 5: Process available pools and add validations
       const capacityMap: { [scheduleKey: string]: PoolCapacityInfo[] } = {};
+      let scheduleApiIndex = 0;
 
-      Object.entries(previewSchedules).forEach(([classId, schedules]) => {
+      Object.entries(schedulesToProcess).forEach(([classId, schedules]) => {
         const classItem = availableClasses.find((c) => c._id === classId);
-        const classCapacity =
-          (classItem?.course as any)?.capacity ||
-          (classItem?.course as any)?.max_member ||
-          0;
+        const courseMaxMember = (classItem?.course as any)?.max_member || 0;
 
         schedules.forEach((schedule, scheduleIndex) => {
           const scheduleKey = `${classId}-${scheduleIndex}`;
-          const slotId = schedule.slot._id;
-          const date = schedule.date;
+          const availablePools = availablePoolsArrays[scheduleApiIndex] || [];
+          scheduleApiIndex++;
 
-          // Calculate capacity for each pool
-          const poolCapacities: PoolCapacityInfo[] = allPools.map((pool) => {
-            let capacityUsed = 0;
+          // Map API pools to PoolCapacityInfo with validations
+          const poolCapacities: PoolCapacityInfo[] = availablePools.map(
+            (pool) => {
+              // Validation 1: Check age type matching
+              const courseTypeOfAge = (classItem?.course as any)?.type_of_age;
+              const poolTypeOfAge = pool.type_of_age;
 
-            // Count from existing DB schedules (events)
-            existingSchedules.events.forEach((existingEvent: any) => {
-              if (
-                existingEvent.date === date &&
-                existingEvent.slot?._id === slotId &&
-                existingEvent.pool?._id === pool._id
-              ) {
-                capacityUsed += existingEvent.classroom?.capacity || 0;
-              }
-            });
+              let poolTypeIds: string[] = [];
+              let poolTypeTitles: string[] = [];
 
-            // Count from other preview schedules (already selected)
-            Object.entries(previewSchedules).forEach(
-              ([otherClassId, otherSchedules]) => {
-                otherSchedules.forEach((otherSchedule, otherIndex) => {
-                  const otherKey = `${otherClassId}-${otherIndex}`;
-                  const selectedPoolId = selectedPools[otherKey];
-
-                  if (
-                    selectedPoolId === pool._id &&
-                    otherSchedule.date === date &&
-                    otherSchedule.slot._id === slotId &&
-                    otherKey !== scheduleKey
-                  ) {
-                    const otherClass = availableClasses.find(
-                      (c) => c._id === otherClassId
-                    );
-                    capacityUsed +=
-                      (otherClass?.course as any)?.capacity ||
-                      (otherClass?.course as any)?.max_member ||
-                      0;
+              if (Array.isArray(poolTypeOfAge)) {
+                poolTypeOfAge.forEach((t: any) => {
+                  if (typeof t === "object" && t?._id) {
+                    poolTypeIds.push(t._id);
+                    poolTypeTitles.push(t?.title?.toLowerCase() || "");
+                  } else if (typeof t === "string") {
+                    poolTypeIds.push(t);
                   }
                 });
+              } else if (poolTypeOfAge) {
+                const poolTypeId =
+                  typeof poolTypeOfAge === "object"
+                    ? (poolTypeOfAge as any)?._id
+                    : poolTypeOfAge;
+                const poolTypeTitle =
+                  typeof poolTypeOfAge === "object"
+                    ? (poolTypeOfAge as any)?.title?.toLowerCase()
+                    : (poolTypeOfAge as any)?.toLowerCase();
+                if (poolTypeId) poolTypeIds.push(poolTypeId);
+                if (poolTypeTitle) poolTypeTitles.push(poolTypeTitle);
               }
-            );
 
-            const capacityRemain = (pool.capacity || 0) - capacityUsed;
-            // Changed: isAvailable now only checks if pool has any remaining capacity (> 0)
-            const isAvailable = capacityRemain > 0;
-
-            // Validation 1: Check age type matching (type_of_age)
-            const courseTypeOfAge = (classItem?.course as any)?.type_of_age;
-            const poolTypeOfAge = (pool as any).type_of_age;
-
-            // Handle array of type_of_age (pool can have multiple age types)
-            let poolTypeIds: string[] = [];
-            let poolTypeTitles: string[] = [];
-
-            if (Array.isArray(poolTypeOfAge)) {
-              poolTypeOfAge.forEach((t: any) => {
-                if (typeof t === "object" && t?._id) {
-                  poolTypeIds.push(t._id);
-                  poolTypeTitles.push(t?.title?.toLowerCase() || "");
-                } else if (typeof t === "string") {
-                  poolTypeIds.push(t);
-                }
-              });
-            } else if (poolTypeOfAge) {
-              const poolTypeId =
-                typeof poolTypeOfAge === "object"
-                  ? poolTypeOfAge?._id
-                  : poolTypeOfAge;
-              const poolTypeTitle =
-                typeof poolTypeOfAge === "object"
-                  ? poolTypeOfAge?.title?.toLowerCase()
-                  : poolTypeOfAge?.toLowerCase();
-              if (poolTypeId) poolTypeIds.push(poolTypeId);
-              if (poolTypeTitle) poolTypeTitles.push(poolTypeTitle);
-            }
-
-            // Handle course type_of_age (can also be array)
-            let courseTypeIds: string[] = [];
-            if (Array.isArray(courseTypeOfAge)) {
-              courseTypeOfAge.forEach((t: any) => {
-                if (typeof t === "object" && t?._id) {
-                  courseTypeIds.push(t._id);
-                } else if (typeof t === "string") {
-                  courseTypeIds.push(t);
-                }
-              });
-            } else if (courseTypeOfAge) {
-              const courseTypeId =
-                typeof courseTypeOfAge === "object"
-                  ? courseTypeOfAge?._id
-                  : courseTypeOfAge;
-              if (courseTypeId) courseTypeIds.push(courseTypeId);
-            }
-
-            // Check if pool is "mixed" type (accepts any age)
-            const isMixedPool = poolTypeTitles.some(
-              (t) => t === "mixed" || t === "hỗn hợp"
-            );
-
-            // Has warning if course has type_of_age but pool doesn't match any
-            const hasAgeWarning =
-              courseTypeIds.length > 0 &&
-              poolTypeIds.length > 0 &&
-              !isMixedPool &&
-              !courseTypeIds.some((cId) => poolTypeIds.includes(cId));
-
-            // Validation 2: Check instructor conflict
-            const instructorId = schedule.instructor._id;
-            const hasInstructorConflict = existingSchedules.events.some(
-              (existingEvent: any) => {
-                return (
-                  existingEvent.date === date &&
-                  existingEvent.slot?._id === slotId &&
-                  existingEvent.instructor?._id === instructorId
-                );
+              let courseTypeIds: string[] = [];
+              if (Array.isArray(courseTypeOfAge)) {
+                courseTypeOfAge.forEach((t: any) => {
+                  if (typeof t === "object" && t?._id) {
+                    courseTypeIds.push(t._id);
+                  } else if (typeof t === "string") {
+                    courseTypeIds.push(t);
+                  }
+                });
+              } else if (courseTypeOfAge) {
+                const courseTypeId =
+                  typeof courseTypeOfAge === "object"
+                    ? courseTypeOfAge?._id
+                    : courseTypeOfAge;
+                if (courseTypeId) courseTypeIds.push(courseTypeId);
               }
-            );
 
-            return {
-              _id: pool._id,
-              title: pool.title,
-              capacity: pool.capacity || 0,
-              capacity_remain: capacityRemain,
-              isAvailable, // Now true if capacity_remain > 0
-              schedulesUsed: [],
-              type_of_age: poolTypeOfAge,
-              hasAgeWarning,
-              hasInstructorConflict,
-            };
-          });
+              const isMixedPool = poolTypeTitles.some(
+                (t) => t === "mixed" || t === "hỗn hợp"
+              );
+
+              const hasAgeWarning =
+                courseTypeIds.length > 0 &&
+                poolTypeIds.length > 0 &&
+                !isMixedPool &&
+                !courseTypeIds.some((cId) => poolTypeIds.includes(cId));
+
+              // Validation 2: Check instructor conflict
+              const instructorId = schedule.instructor._id;
+              const hasInstructorConflict = existingSchedules.events.some(
+                (existingEvent: any) => {
+                  return (
+                    existingEvent.date === schedule.date &&
+                    existingEvent.slot?._id === schedule.slot._id &&
+                    existingEvent.instructor?._id === instructorId
+                  );
+                }
+              );
+
+              // Validation 3: Check if remaining_capacity < max_member
+              const hasCapacityWarning =
+                courseMaxMember > 0 &&
+                pool.remaining_capacity < courseMaxMember;
+
+              return {
+                _id: pool._id,
+                title: pool.title,
+                capacity: pool.capacity,
+                capacity_remain: pool.remaining_capacity, // Map API field
+                isAvailable: pool.remaining_capacity > 0,
+                schedulesUsed: [],
+                type_of_age: poolTypeOfAge,
+                hasAgeWarning,
+                hasInstructorConflict,
+                current_usage: pool.current_usage, // Add current_usage from API
+                hasCapacityWarning, // Add new validation
+              };
+            }
+          );
 
           capacityMap[scheduleKey] = poolCapacities;
         });
@@ -932,24 +944,33 @@ export function SchedulePreviewModal({
 
       setPoolCapacities(capacityMap);
 
-      // Step 5: Auto-select best pool for each schedule using NEW scoring algorithm
+      // Step 6: Auto-select pools - prioritize first pool, then apply scoring
       const autoSelectedPools: { [scheduleKey: string]: string } = {};
 
       Object.entries(capacityMap).forEach(([scheduleKey, pools]) => {
-        // Score each pool - NEW LOGIC: Always select a pool if any available
+        if (pools.length === 0) return;
+
+        // Priority 1: Select first pool from API response (backend already optimized order)
+        const firstPool = pools[0];
+        if (firstPool && firstPool.capacity_remain > 0) {
+          autoSelectedPools[scheduleKey] = firstPool._id;
+          return;
+        }
+
+        // Fallback: If first pool has no capacity, use scoring algorithm
         const scoredPools = pools.map((pool) => {
           let score = 0;
 
           // Base score: Pool must have remaining capacity
           if (pool.capacity_remain > 0) {
-            score += 50; // Base points for having capacity
+            score += 50;
           }
 
-          // Priority 1: Age type match (highest priority) - +100 points
+          // Priority 1: Age type match - +100 points
           if (!pool.hasAgeWarning) {
             score += 100;
           } else {
-            score += 20; // Still give some points even with warning (allow selection)
+            score += 20; // Still allow selection with warning
           }
 
           // Priority 2: No instructor conflict - +50 points
@@ -957,54 +978,35 @@ export function SchedulePreviewModal({
             score += 50;
           }
 
-          // Priority 3: Higher remaining capacity is better - proportional score (0-30 points)
+          // Priority 3: No capacity warning - +30 points
+          if (!pool.hasCapacityWarning) {
+            score += 30;
+          }
+
+          // Priority 4: Higher remaining capacity - proportional score (0-30 points)
           if (pool.capacity > 0 && pool.capacity_remain > 0) {
             const capacityRatio = pool.capacity_remain / pool.capacity;
             score += capacityRatio * 30;
           }
 
-          // Small penalty if capacity is 0, but don't make it impossible to select
-          if (pool.capacity_remain <= 0) {
-            score -= 50;
-          }
-
-          return {
-            ...pool,
-            score,
-          };
+          return { ...pool, score };
         });
 
-        // Sort by score descending
         scoredPools.sort((a, b) => b.score - a.score);
 
-        // NEW: Always select best pool if it has any positive score (even with warnings)
         const bestPool = scoredPools[0];
-        if (bestPool && bestPool.score > 0) {
+        if (bestPool) {
           autoSelectedPools[scheduleKey] = bestPool._id;
-        } else if (bestPool && pools.some((p) => p.capacity_remain > 0)) {
-          // Fallback: if no pool with positive score, pick the one with most capacity
-          const poolWithMostCapacity = [...pools].sort(
-            (a, b) => b.capacity_remain - a.capacity_remain
-          )[0];
-          if (
-            poolWithMostCapacity &&
-            poolWithMostCapacity.capacity_remain > 0
-          ) {
-            autoSelectedPools[scheduleKey] = poolWithMostCapacity._id;
-          }
         }
       });
 
       // Apply auto-selected pools
       setSelectedPools(autoSelectedPools);
-      setAutoSelectedPools(autoSelectedPools); // Save initial auto-selections
-
-      setCurrentStep(2);
+      setAutoSelectedPools(autoSelectedPools);
     } catch (err: any) {
       console.error("Pool capacity calculation error:", err);
       setError(err.message || "Không thể tính toán sức chứa hồ bơi");
-    } finally {
-      setIsCalculatingCapacity(false);
+      throw err;
     }
   };
 
@@ -1365,14 +1367,46 @@ export function SchedulePreviewModal({
               </div>
             </StepperStep>
 
-            {/* Step 2: Preview Schedules - Summary View */}
+            {/* Step 2: Preview & Select Pools (MERGED) */}
             <StepperStep step={1}>
               <div className='space-y-4'>
+                {/* Info Alert */}
                 <Alert>
                   <AlertCircle className='h-4 w-4' />
                   <AlertDescription>
-                    Đây là tổng quan lịch học được tạo tự động. Hồ bơi sẽ được
-                    chọn ở bước tiếp theo.
+                    Đây là tổng quan lịch học được tạo tự động. Click vào nút
+                    "Chọn hồ" để chọn hồ bơi cho từng buổi học.
+                  </AlertDescription>
+                </Alert>
+
+                {/* Color Legend */}
+                <Alert
+                  variant='destructive'
+                  className='bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                >
+                  <AlertCircle className='h-4 w-4 text-amber-600' />
+                  <AlertDescription className='text-amber-800 dark:text-amber-200'>
+                    <div className='font-medium mb-1'>Chú thích màu sắc:</div>
+                    <ul className='text-xs space-y-1 ml-0'>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-green-600 flex-shrink-0' />
+                        <span>Xanh lá: Đã chọn hồ bơi</span>
+                      </li>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
+                        <span>Vàng: Có cảnh báo (độ tuổi không phù hợp)</span>
+                      </li>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
+                        <span>
+                          Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
+                        </span>
+                      </li>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
+                        <span>Xám: Chưa chọn hồ bơi</span>
+                      </li>
+                    </ul>
                   </AlertDescription>
                 </Alert>
 
@@ -1534,441 +1568,305 @@ export function SchedulePreviewModal({
                                     ))}
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                    )}
-                  </div>
-                )}
-              </div>
-            </StepperStep>
 
-            {/* Step 3: Select Pools - Summary Style */}
-            <StepperStep step={2}>
-              <div className='space-y-4'>
-                <div className='space-y-2'>
-                  <Alert>
-                    <AlertCircle className='h-4 w-4' />
-                    <AlertDescription>
-                      Click vào nút "Chọn hồ" để chọn hồ bơi cho từng buổi học.
-                    </AlertDescription>
-                  </Alert>
-
-                  <Alert
-                    variant='destructive'
-                    className='bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
-                  >
-                    <AlertCircle className='h-4 w-4 text-amber-600' />
-                    <AlertDescription className='text-amber-800 dark:text-amber-200'>
-                      <div className='font-medium mb-1'>Chú thích màu sắc:</div>
-                      <ul className='text-xs space-y-1 ml-0'>
-                        <li className='flex items-center gap-2'>
-                          <Circle className='h-3 w-3 text-green-600 flex-shrink-0' />
-                          <span>Xanh lá: Đã chọn hồ bơi</span>
-                        </li>
-                        <li className='flex items-center gap-2'>
-                          <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
-                          <span>Vàng: Có cảnh báo (độ tuổi không khớp)</span>
-                        </li>
-                        <li className='flex items-center gap-2'>
-                          <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
-                          <span>
-                            Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
-                          </span>
-                        </li>
-                        <li className='flex items-center gap-2'>
-                          <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
-                          <span>Xám: Chưa chọn hồ bơi</span>
-                        </li>
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                </div>
-
-                {Object.keys(previewSchedules).length === 0 ? (
-                  <div className='text-center py-8 text-muted-foreground'>
-                    Không có dữ liệu lịch học
-                  </div>
-                ) : (
-                  <div className='space-y-4'>
-                    {Object.entries(previewSchedules).map(
-                      ([classId, schedules]) => {
-                        const classItem = availableClasses.find(
-                          (c) => c._id === classId
-                        );
-
-                        // Count stats
-                        const assignedCount = schedules.filter(
-                          (_, idx) => selectedPools[`${classId}-${idx}`]
-                        ).length;
-                        const unassignedCount =
-                          schedules.length - assignedCount;
-                        const warningCount = schedules.filter((_, idx) => {
-                          const scheduleKey = `${classId}-${idx}`;
-                          const selectedPoolId = selectedPools[scheduleKey];
-                          const selectedPool = poolCapacities[
-                            scheduleKey
-                          ]?.find((p) => p._id === selectedPoolId);
-                          return (
-                            selectedPool?.hasAgeWarning ||
-                            selectedPool?.hasInstructorConflict
-                          );
-                        }).length;
-
-                        // Generate summary: group by day of week and slot
-                        const daySlotMap: { [dayName: string]: Set<string> } =
-                          {};
-                        schedules.forEach((schedule) => {
-                          const date = new Date(schedule.date);
-                          const dayName = date.toLocaleDateString("vi-VN", {
-                            weekday: "long",
-                          });
-                          const capitalizedDay =
-                            dayName.charAt(0).toUpperCase() + dayName.slice(1);
-                          if (!daySlotMap[capitalizedDay]) {
-                            daySlotMap[capitalizedDay] = new Set();
-                          }
-                          daySlotMap[capitalizedDay].add(
-                            schedule.slot?.title || ""
-                          );
-                        });
-
-                        // Sort days in week order
-                        const dayOrder = [
-                          "Thứ hai",
-                          "Thứ ba",
-                          "Thứ tư",
-                          "Thứ năm",
-                          "Thứ sáu",
-                          "Thứ bảy",
-                          "Chủ nhật",
-                        ];
-                        const sortedDays = Object.keys(daySlotMap).sort(
-                          (a, b) => {
-                            const aIdx = dayOrder.findIndex((d) =>
-                              a.toLowerCase().includes(d.toLowerCase())
-                            );
-                            const bIdx = dayOrder.findIndex((d) =>
-                              b.toLowerCase().includes(d.toLowerCase())
-                            );
-                            return aIdx - bIdx;
-                          }
-                        );
-
-                        return (
-                          <div
-                            key={classId}
-                            className='border rounded-lg overflow-hidden'
-                          >
-                            {/* Header */}
-                            <div className='bg-muted/50 px-4 py-3 border-b'>
-                              <div className='flex items-center justify-between'>
-                                <div>
-                                  <h4 className='font-medium'>
-                                    {classItem?.name}
-                                  </h4>
-                                  <p className='text-sm text-muted-foreground'>
-                                    Khóa học: {classItem?.course?.title}
-                                  </p>
+                              {/* Pool Selection Section - CARDS Grid Layout */}
+                              <div className='border-t pt-4 mt-4'>
+                                <div className='text-sm font-medium mb-3'>
+                                  Chọn hồ bơi cho các buổi học:
                                 </div>
-                                <div className='flex items-center gap-2'>
-                                  <Badge variant='secondary'>
-                                    {schedules.length} buổi học
-                                  </Badge>
-                                  {unassignedCount > 0 && (
-                                    <Badge variant='destructive'>
-                                      {unassignedCount} chưa chọn hồ
-                                    </Badge>
-                                  )}
-                                  {warningCount > 0 && (
-                                    <Badge
-                                      variant='outline'
-                                      className='border-amber-500 text-amber-600'
-                                    >
-                                      {warningCount} cảnh báo
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
+                                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                                  {schedules.map((schedule, scheduleIndex) => {
+                                    const scheduleKey = `${classId}-${scheduleIndex}`;
+                                    const selectedPoolId =
+                                      selectedPools[scheduleKey];
+                                    const pools =
+                                      poolCapacities[scheduleKey] || [];
+                                    const selectedPool = pools.find(
+                                      (p) => p._id === selectedPoolId
+                                    );
+                                    const hasWarning =
+                                      selectedPool?.hasAgeWarning;
+                                    const hasConflict =
+                                      selectedPool?.hasInstructorConflict;
+                                    const isOpen =
+                                      openPoolPopover === scheduleKey;
 
-                            {/* Summary */}
-                            <div className='px-4 py-3 bg-muted/20 border-b'>
-                              <div className='text-sm font-medium text-muted-foreground mb-2'>
-                                Lịch học hàng tuần:
-                              </div>
-                              <div className='flex flex-wrap gap-2'>
-                                {sortedDays.map((day) => (
-                                  <div
-                                    key={day}
-                                    className='bg-primary/10 rounded-md px-3 py-1.5'
-                                  >
-                                    <span className='font-medium text-sm'>
-                                      {day}
-                                    </span>
-                                    <span className='text-xs text-muted-foreground ml-2'>
-                                      ({Array.from(daySlotMap[day]).join(", ")})
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Schedule List */}
-                            <div className='p-4'>
-                              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
-                                {schedules.map((schedule, idx) => {
-                                  const scheduleKey = `${classId}-${idx}`;
-                                  const selectedPoolId =
-                                    selectedPools[scheduleKey];
-                                  const selectedPool = poolCapacities[
-                                    scheduleKey
-                                  ]?.find((p) => p._id === selectedPoolId);
-                                  const availablePools =
-                                    poolCapacities[scheduleKey] || [];
-                                  const hasWarning =
-                                    selectedPool?.hasAgeWarning;
-                                  const hasConflict =
-                                    selectedPool?.hasInstructorConflict;
-                                  const isOpen =
-                                    openPoolPopover === scheduleKey;
-
-                                  // Determine card color
-                                  let cardBorderColor = "border-border";
-                                  let cardBgColor = "bg-muted/30";
-                                  if (selectedPoolId) {
-                                    if (hasConflict) {
-                                      cardBorderColor = "border-red-400";
-                                      cardBgColor =
-                                        "bg-red-50 dark:bg-red-950/20";
-                                    } else if (hasWarning) {
-                                      cardBorderColor = "border-amber-400";
-                                      cardBgColor =
-                                        "bg-amber-50 dark:bg-amber-950/20";
-                                    } else {
-                                      cardBorderColor = "border-green-400";
-                                      cardBgColor =
-                                        "bg-green-50 dark:bg-green-950/20";
+                                    // Determine card color
+                                    let cardBorderColor = "border-border";
+                                    let cardBgColor = "bg-muted/30";
+                                    if (selectedPoolId) {
+                                      if (hasConflict) {
+                                        cardBorderColor = "border-red-400";
+                                        cardBgColor =
+                                          "bg-red-50 dark:bg-red-950/20";
+                                      } else if (hasWarning) {
+                                        cardBorderColor = "border-amber-400";
+                                        cardBgColor =
+                                          "bg-amber-50 dark:bg-amber-950/20";
+                                      } else {
+                                        cardBorderColor = "border-green-400";
+                                        cardBgColor =
+                                          "bg-green-50 dark:bg-green-950/20";
+                                      }
                                     }
-                                  }
 
-                                  return (
-                                    <div
-                                      key={scheduleKey}
-                                      className={cn(
-                                        "rounded-lg border-2 p-3 transition-all",
-                                        cardBorderColor,
-                                        cardBgColor
-                                      )}
-                                    >
-                                      {/* Date & Slot */}
-                                      <div className='flex items-center justify-between mb-2'>
-                                        <div>
-                                          <div className='font-medium text-sm'>
-                                            {format(
-                                              new Date(schedule.date),
-                                              "EEEE",
-                                              { locale: vi }
-                                            )}
-                                          </div>
-                                          <div className='text-xs text-muted-foreground'>
-                                            {format(
-                                              new Date(schedule.date),
-                                              "dd/MM/yyyy",
-                                              { locale: vi }
-                                            )}
-                                          </div>
-                                        </div>
-                                        <Badge
-                                          variant='outline'
-                                          className='text-xs'
-                                        >
-                                          {schedule.slot?.title}
-                                        </Badge>
-                                      </div>
-
-                                      {/* Instructor */}
-                                      <div className='text-xs text-muted-foreground mb-2'>
-                                        HLV:{" "}
-                                        {schedule.instructor?.username || "N/A"}
-                                      </div>
-
-                                      {/* Pool Selection */}
-                                      <Popover
-                                        open={isOpen}
-                                        onOpenChange={(open) => {
-                                          if (open) {
-                                            setOpenPoolPopover(scheduleKey);
-                                          } else {
-                                            setOpenPoolPopover(null);
-                                          }
-                                        }}
+                                    return (
+                                      <div
+                                        key={scheduleKey}
+                                        className={cn(
+                                          "rounded-lg border-2 p-3 transition-all",
+                                          cardBorderColor,
+                                          cardBgColor
+                                        )}
                                       >
-                                        <PopoverTrigger asChild>
-                                          <Button
-                                            variant={
-                                              selectedPoolId
-                                                ? "outline"
-                                                : "secondary"
-                                            }
-                                            size='sm'
-                                            className={cn(
-                                              "w-full justify-between text-xs h-8",
-                                              !selectedPoolId &&
-                                                "text-muted-foreground"
-                                            )}
-                                          >
-                                            <span className='truncate'>
-                                              {selectedPool
-                                                ? `${selectedPool.title}`
-                                                : "Chọn hồ bơi..."}
-                                            </span>
-                                            <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
-                                          </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent
-                                          className='w-72 p-0'
-                                          align='start'
-                                        >
-                                          <div className='border-b p-3 bg-muted/50'>
-                                            <h4 className='font-medium text-sm'>
-                                              Chọn hồ bơi
-                                            </h4>
-                                            <p className='text-xs text-muted-foreground mt-1'>
+                                        {/* Date & Slot */}
+                                        <div className='flex items-center justify-between mb-2'>
+                                          <div>
+                                            <div className='font-medium text-sm'>
                                               {format(
                                                 new Date(schedule.date),
-                                                "EEEE, dd/MM/yyyy",
+                                                "EEEE",
                                                 { locale: vi }
-                                              )}{" "}
-                                              • {schedule.slot?.title}
-                                            </p>
+                                              )}
+                                            </div>
+                                            <div className='text-xs text-muted-foreground'>
+                                              {format(
+                                                new Date(schedule.date),
+                                                "dd/MM/yyyy",
+                                                { locale: vi }
+                                              )}
+                                            </div>
                                           </div>
-                                          <div className='max-h-[250px] overflow-y-auto p-2'>
-                                            {availablePools.length === 0 ? (
-                                              <div className='text-center py-4 text-sm text-muted-foreground'>
-                                                Không có hồ bơi khả dụng
-                                              </div>
-                                            ) : (
-                                              <div className='space-y-1.5'>
-                                                {availablePools.map((pool) => {
-                                                  const isPoolSelected =
-                                                    selectedPoolId === pool._id;
-                                                  const poolHasWarnings =
-                                                    pool.hasAgeWarning ||
-                                                    pool.hasInstructorConflict;
-                                                  const noCapacity =
-                                                    pool.capacity_remain <= 0;
+                                          <Badge
+                                            variant='outline'
+                                            className='text-xs'
+                                          >
+                                            {schedule.slot?.title}
+                                          </Badge>
+                                        </div>
 
-                                                  return (
-                                                    <button
-                                                      key={pool._id}
-                                                      type='button'
-                                                      onClick={() => {
-                                                        setSelectedPools(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            [scheduleKey]:
-                                                              pool._id,
-                                                          })
-                                                        );
-                                                        setOpenPoolPopover(
-                                                          null
-                                                        );
-                                                      }}
-                                                      disabled={noCapacity}
-                                                      className={cn(
-                                                        "w-full p-2 rounded border text-left text-xs transition-all",
-                                                        isPoolSelected
-                                                          ? "border-primary bg-primary/10"
-                                                          : "border-border hover:border-primary/50",
-                                                        poolHasWarnings &&
-                                                          !isPoolSelected &&
-                                                          "border-amber-300 bg-amber-50/50",
-                                                        noCapacity &&
-                                                          "opacity-50 cursor-not-allowed"
-                                                      )}
-                                                    >
-                                                      <div className='flex justify-between items-start'>
-                                                        <div className='flex-1'>
-                                                          <div className='font-medium flex items-center gap-1'>
-                                                            {pool.title}
-                                                            {isPoolSelected && (
-                                                              <CheckCircle2 className='h-3 w-3 text-primary' />
+                                        {/* Instructor */}
+                                        <div className='text-xs text-muted-foreground mb-2'>
+                                          HLV:{" "}
+                                          {schedule.instructor?.username ||
+                                            "N/A"}
+                                        </div>
+
+                                        {/* Pool Selection */}
+                                        <Popover
+                                          open={isOpen}
+                                          onOpenChange={(open) => {
+                                            if (open) {
+                                              setOpenPoolPopover(scheduleKey);
+                                            } else {
+                                              setOpenPoolPopover(null);
+                                            }
+                                          }}
+                                        >
+                                          <PopoverTrigger asChild>
+                                            <Button
+                                              variant={
+                                                selectedPoolId
+                                                  ? "outline"
+                                                  : "secondary"
+                                              }
+                                              size='sm'
+                                              className={cn(
+                                                "w-full justify-between text-xs h-8",
+                                                !selectedPoolId &&
+                                                  "text-muted-foreground"
+                                              )}
+                                            >
+                                              <span className='truncate'>
+                                                {selectedPool
+                                                  ? `${selectedPool.title}`
+                                                  : "Chọn hồ bơi..."}
+                                              </span>
+                                              <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent
+                                            className='w-72 p-0'
+                                            align='start'
+                                          >
+                                            <div className='border-b p-3 bg-muted/50'>
+                                              <h4 className='font-medium text-sm'>
+                                                Chọn hồ bơi
+                                              </h4>
+                                              <p className='text-xs text-muted-foreground mt-1'>
+                                                {format(
+                                                  new Date(schedule.date),
+                                                  "EEEE, dd/MM/yyyy",
+                                                  { locale: vi }
+                                                )}{" "}
+                                                • {schedule.slot?.title}
+                                              </p>
+                                            </div>
+                                            <div className='max-h-[250px] overflow-y-auto p-2'>
+                                              {pools.length === 0 ? (
+                                                <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                  Không có hồ bơi khả dụng
+                                                </div>
+                                              ) : (
+                                                <div className='space-y-1.5'>
+                                                  {pools.map((pool) => {
+                                                    const isPoolSelected =
+                                                      selectedPoolId ===
+                                                      pool._id;
+                                                    const poolHasWarnings =
+                                                      pool.hasAgeWarning ||
+                                                      pool.hasInstructorConflict;
+                                                    const noCapacity =
+                                                      pool.capacity_remain <= 0;
+
+                                                    return (
+                                                      <button
+                                                        key={pool._id}
+                                                        type='button'
+                                                        onClick={() => {
+                                                          setSelectedPools(
+                                                            (prev) => ({
+                                                              ...prev,
+                                                              [scheduleKey]:
+                                                                pool._id,
+                                                            })
+                                                          );
+                                                          setOpenPoolPopover(
+                                                            null
+                                                          );
+                                                        }}
+                                                        disabled={noCapacity}
+                                                        className={cn(
+                                                          "w-full p-2 rounded border text-left text-xs transition-all",
+                                                          isPoolSelected
+                                                            ? "border-primary bg-primary/10"
+                                                            : "border-border hover:border-primary/50",
+                                                          poolHasWarnings &&
+                                                            !isPoolSelected &&
+                                                            "border-amber-300 bg-amber-50/50",
+                                                          noCapacity &&
+                                                            "opacity-50 cursor-not-allowed"
+                                                        )}
+                                                      >
+                                                        <div className='flex justify-between items-start'>
+                                                          <div className='flex-1'>
+                                                            <div className='font-medium flex items-center gap-1'>
+                                                              {pool.title}
+                                                              {isPoolSelected && (
+                                                                <CheckCircle2 className='h-3 w-3 text-primary' />
+                                                              )}
+                                                            </div>
+                                                            <div className='text-muted-foreground mt-0.5'>
+                                                              Sức chứa:{" "}
+                                                              {pool.capacity}
+                                                            </div>
+                                                            {pool.current_usage !==
+                                                              undefined && (
+                                                              <div className='text-muted-foreground mt-0.5'>
+                                                                Đang sử dụng:{" "}
+                                                                {
+                                                                  pool.current_usage
+                                                                }
+                                                                /{pool.capacity}
+                                                              </div>
                                                             )}
                                                           </div>
-                                                          <div className='text-muted-foreground mt-0.5'>
-                                                            Sức chứa:{" "}
-                                                            {pool.capacity}
+                                                          <div className='text-right'>
+                                                            <div
+                                                              className={cn(
+                                                                "font-semibold",
+                                                                pool.capacity_remain >
+                                                                  0
+                                                                  ? "text-green-600"
+                                                                  : "text-red-600"
+                                                              )}
+                                                            >
+                                                              {
+                                                                pool.capacity_remain
+                                                              }
+                                                            </div>
+                                                            <div className='text-muted-foreground'>
+                                                              còn
+                                                            </div>
                                                           </div>
                                                         </div>
-                                                        <div className='text-right'>
-                                                          <div
-                                                            className={cn(
-                                                              "font-semibold",
-                                                              pool.capacity_remain >
-                                                                0
-                                                                ? "text-green-600"
-                                                                : "text-red-600"
+                                                        {(pool.hasAgeWarning ||
+                                                          pool.hasInstructorConflict ||
+                                                          pool.hasCapacityWarning) && (
+                                                          <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
+                                                            {pool.hasAgeWarning && (
+                                                              <div className='text-amber-600 flex items-center gap-1'>
+                                                                <AlertCircle className='h-3 w-3' />
+                                                                Độ tuổi không
+                                                                phù hợp
+                                                              </div>
                                                             )}
-                                                          >
-                                                            {
-                                                              pool.capacity_remain
-                                                            }
+                                                            {pool.hasInstructorConflict && (
+                                                              <div className='text-red-600 flex items-center gap-1'>
+                                                                <AlertCircle className='h-3 w-3' />
+                                                                Huấn luyện viên
+                                                                trùng lịch
+                                                              </div>
+                                                            )}
+                                                            {pool.hasCapacityWarning && (
+                                                              <div className='text-amber-600 flex items-center gap-1'>
+                                                                <AlertCircle className='h-3 w-3' />
+                                                                Sức chứa hồ bơi
+                                                                (
+                                                                {
+                                                                  pool.capacity_remain
+                                                                }
+                                                                ) nhỏ hơn số học
+                                                                viên tối đa (
+                                                                {(
+                                                                  classItem?.course as any
+                                                                )?.max_member ||
+                                                                  0}
+                                                                )
+                                                              </div>
+                                                            )}
                                                           </div>
-                                                          <div className='text-muted-foreground'>
-                                                            còn
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                      {(pool.hasAgeWarning ||
-                                                        pool.hasInstructorConflict) && (
-                                                        <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
-                                                          {pool.hasAgeWarning && (
-                                                            <div className='text-amber-600 flex items-center gap-1'>
-                                                              <AlertCircle className='h-3 w-3' />
-                                                              Độ tuổi không khớp
-                                                            </div>
-                                                          )}
-                                                          {pool.hasInstructorConflict && (
-                                                            <div className='text-red-600 flex items-center gap-1'>
-                                                              <AlertCircle className='h-3 w-3' />
-                                                              Huấn luyện viên
-                                                              trùng lịch
-                                                            </div>
-                                                          )}
-                                                        </div>
-                                                      )}
-                                                    </button>
-                                                  );
-                                                })}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </PopoverContent>
-                                      </Popover>
+                                                        )}
+                                                      </button>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </PopoverContent>
+                                        </Popover>
 
-                                      {/* Warnings */}
-                                      {selectedPoolId &&
-                                        (hasWarning || hasConflict) && (
-                                          <div className='mt-2 text-xs space-y-0.5'>
-                                            {hasWarning && (
-                                              <div className='text-amber-600 flex items-center gap-1'>
-                                                <AlertCircle className='h-3 w-3' />
-                                                Độ tuổi không khớp
-                                              </div>
-                                            )}
-                                            {hasConflict && (
-                                              <div className='text-red-600 flex items-center gap-1'>
-                                                <AlertCircle className='h-3 w-3' />
-                                                HLV trùng lịch
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-                                    </div>
-                                  );
-                                })}
+                                        {/* Warnings */}
+                                        {selectedPoolId &&
+                                          (hasWarning ||
+                                            hasConflict ||
+                                            selectedPool?.hasCapacityWarning) && (
+                                            <div className='mt-2 text-xs space-y-0.5'>
+                                              {hasWarning && (
+                                                <div className='text-amber-600 flex items-center gap-1'>
+                                                  <AlertCircle className='h-3 w-3' />
+                                                  Độ tuổi không phù hợp
+                                                </div>
+                                              )}
+                                              {hasConflict && (
+                                                <div className='text-red-600 flex items-center gap-1'>
+                                                  <AlertCircle className='h-3 w-3' />
+                                                  HLV trùng lịch
+                                                </div>
+                                              )}
+                                              {selectedPool?.hasCapacityWarning && (
+                                                <div className='text-amber-600 flex items-center gap-1'>
+                                                  <AlertCircle className='h-3 w-3' />
+                                                  Sức chứa hồ bơi nhỏ hơn số học
+                                                  viên tối đa
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1980,8 +1878,11 @@ export function SchedulePreviewModal({
               </div>
             </StepperStep>
 
-            {/* Step 4: Confirm - Table View */}
-            <StepperStep step={3}>
+            {/* Step 2: Select Pools with Cards (Merged from old step 3) - REMOVED DUPLICATE */}
+            {/* This duplicate step has been removed - pool selection is now in Step 1 */}
+
+            {/* Step 3: Confirm with Table View */}
+            <StepperStep step={2}>
               <div className='space-y-4'>
                 {error && (
                   <Alert variant='destructive'>
@@ -2219,12 +2120,11 @@ export function SchedulePreviewModal({
             <Button
               onClick={() => {
                 if (currentStep === 0) {
-                  handleGeneratePreview();
+                  handleGeneratePreview(); // Auto-calculates pools too
                 } else if (currentStep === 1) {
-                  handleCalculatePoolCapacity();
-                } else if (currentStep === 2) {
+                  // Go to confirm step (was step 4, now step 2)
                   setCurrentStep((prev) => prev + 1);
-                } else if (currentStep === 3) {
+                } else if (currentStep === 2) {
                   // Final submit - create schedules
                   handleCreateSchedules();
                 }
@@ -2232,14 +2132,13 @@ export function SchedulePreviewModal({
               disabled={
                 (currentStep === 0 && selectedClassIds.length === 0) ||
                 (currentStep === 1 &&
-                  Object.keys(previewSchedules).length === 0) ||
-                (currentStep === 2 &&
-                  Object.entries(previewSchedules).some(
-                    ([classId, schedules]) =>
-                      schedules.some(
-                        (_, idx) => !selectedPools[`${classId}-${idx}`]
-                      )
-                  )) ||
+                  (Object.keys(previewSchedules).length === 0 ||
+                    Object.entries(previewSchedules).some(
+                      ([classId, schedules]) =>
+                        schedules.some(
+                          (_, idx) => !selectedPools[`${classId}-${idx}`]
+                        )
+                    ))) ||
                 isGeneratingPreview ||
                 isCalculatingCapacity ||
                 isCreatingSchedules
@@ -2257,9 +2156,7 @@ export function SchedulePreviewModal({
               ) : currentStep === STEPS.length - 1 ? (
                 "Tạo lịch"
               ) : currentStep === 0 ? (
-                "Xem trước lịch"
-              ) : currentStep === 1 ? (
-                "Chọn hồ bơi"
+                "Xem trước & Chọn hồ bơi"
               ) : (
                 "Tiếp tục"
               )}

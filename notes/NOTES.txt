@@ -119,7 +119,7 @@ tạo lớp hàng loạt (có validate các thông tin: instructor, age rule,...
 
 
 tạo lớp
-sửa Huấn luyện viên => huấn luyện viên
+
 step 2: cho hiện chuyên môn luôn, api lấy instructor phù hợp vs lớp (profile + level matching)
 
 step 2: cho chặn luôn, 
@@ -130,3 +130,10 @@ step 2: check lịch trùng (cái gì thông tin gì)
 xếp lịch : gộp step 2 và 3 
 
 thêm sort hồ bơi + hiện chi tiết schedule hồ bơi + hover vào sẽ hiện thông tin chi tiết của hồ bơi + thêm dấu tick hoặc cross 
+
+thêm nút refresh vào model, cho chỉnh sửa schedule 
+
+- XẾP LỊCH CHO LỚP CÓ SẮN (schedule-preview-modal.tsx): 
+    . step 3: đổi get fetchPools => thành (post) /workflow-process/manager/pool/available: 
+        . trả ra list hồ bơi phù hợp cho lịch học đó (api preview), từng lịch, sau đó, tự tính lại max member, logic như cũ, chỉ thay api và tính lại dựa theo respons của api NÀY
+
