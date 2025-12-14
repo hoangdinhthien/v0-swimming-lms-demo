@@ -195,6 +195,16 @@ const convertJsDayToBackendDay = (jsDay: number, startDate: Date): number => {
   return diff;
 };
 
+// Helper function to format decimal time to HHhMM format
+const formatTimeDisplay = (decimalTime: number): string => {
+  const hours = Math.floor(decimalTime);
+  const minutes = Math.round((decimalTime - hours) * 100);
+  if (minutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h${minutes.toString().padStart(2, "0")}`;
+};
+
 export function SchedulePreviewModal({
   open,
   onOpenChange,
@@ -1321,8 +1331,9 @@ export function SchedulePreviewModal({
                                       <Alert>
                                         <AlertCircle className='h-4 w-4' />
                                         <AlertDescription className='text-xs'>
-                                          Khung giờ tự động: {config.min_time}h
-                                          - {config.max_time}h
+                                          Khung giờ tự động:{" "}
+                                          {formatTimeDisplay(config.min_time)}-{" "}
+                                          {formatTimeDisplay(config.max_time)}
                                         </AlertDescription>
                                       </Alert>
                                     )}

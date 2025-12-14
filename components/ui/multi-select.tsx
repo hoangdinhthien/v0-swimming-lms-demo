@@ -34,7 +34,7 @@ export default function MultiSelect({
   const filtered = options.filter(
     (o) =>
       !value.includes(o.id) &&
-      o.label.toLowerCase().includes(input.toLowerCase())
+      o.label?.toLowerCase().includes(input.toLowerCase())
   );
 
   useEffect(() => {

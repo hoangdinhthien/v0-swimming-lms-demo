@@ -137,3 +137,4 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
     . step 3: đổi get fetchPools => thành (post) /workflow-process/manager/pool/available: 
         . trả ra list hồ bơi phù hợp cho lịch học đó (api preview), từng lịch, sau đó, tự tính lại max member, logic như cũ, chỉ thay api và tính lại dựa theo respons của api NÀY
 
+- check lại lưu ở step 2

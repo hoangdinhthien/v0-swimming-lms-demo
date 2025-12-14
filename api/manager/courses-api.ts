@@ -110,6 +110,8 @@ export interface CreateCourseData {
   is_active: boolean;
   price: number;
   max_member: number;
+  type_of_age: string[];
+  type: string[];
 }
 
 // Function to create a new course
@@ -169,6 +171,8 @@ export interface UpdateCourseData {
   is_active: boolean;
   price: number;
   max_member: number;
+  type_of_age: string[];
+  type: string[];
 }
 
 // Function to update an existing course

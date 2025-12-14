@@ -452,6 +452,16 @@ export function CreateClassesBatchModal({
     return { min_time: minTime, max_time: maxTime };
   };
 
+  // Helper function to format decimal time to HHhMM format
+  const formatTimeDisplay = (decimalTime: number): string => {
+    const hours = Math.floor(decimalTime);
+    const minutes = Math.round((decimalTime - hours) * 100);
+    if (minutes === 0) {
+      return `${hours}h`;
+    }
+    return `${hours}h${minutes.toString().padStart(2, "0")}`;
+  };
+
   const generateClassName = (course: Course, classNumber: number): string => {
     const slotTitles = allSlots
       .filter((slot) => selectedSlotIds.includes(slot._id))
@@ -1295,8 +1305,8 @@ export function CreateClassesBatchModal({
                       <Info className='h-4 w-4' />
                       <AlertDescription className='text-xs'>
                         Đã chọn {selectedSlotIds.length} ca học. Khung giờ:{" "}
-                        {calculateMinMaxTime().min_time}h -{" "}
-                        {calculateMinMaxTime().max_time}h
+                        {formatTimeDisplay(calculateMinMaxTime().min_time)} -{" "}
+                        {formatTimeDisplay(calculateMinMaxTime().max_time)}
                       </AlertDescription>
                     </Alert>
                   )}

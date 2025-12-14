@@ -1,13 +1,14 @@
-ta cần phải sửa lại logic & thao các của drawer trong trang lịch (manager/calendar) 
+'Trong add-class-form.tsx, logic hiện tại dựa vào fetchSlotDetail để lấy busyInstructorIds từ slotDetail.schedules[] (các schedules đã có cho slot + date cụ thể). Bạn có muốn giữ logic này và chỉ cải thiện bằng cách thêm validation chuyên môn (categories/age_types từ instructor specialists) không?
+Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (không chỉ slot cụ thể), hoặc validate với course của classroom?
+Đối với pool availability, đã implement fetchAvailablePools rồi, có cần cải thiện gì thêm không?'
+===> Ý TƯỞNG BAN ĐẦU CỦA TÔI LÀ NHƯ THẾ NÀY: 
 - case: thêm thủ công lớp học vào LỊCH (ở tab 'Thêm lớp học' trong drawer)
-    . ví dụ 1: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh trong cái slot detail đó) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu chưa có huấn luyện viên thì cho chọn hlv mà đang availale
-    . ví dụ 2: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh trong cái slot detail đó) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu có huấn luyện viên rồi thì vẫn cho người dùng option thay đổi huấn luyện viên bằng cách chọn hlv mà đang availale
-
-ta cần phải sửa lại logic 'Chọn thời gian học *' (ở step 1 schedule-preview-modal.tsx & ở step 1 của create-classes-batch-modal.tsx): 
-- TRÊN UI SẼ CHO CHỌN ÍT NHẤT LÀ 1 SLOT VÀ TỐI ĐA LÀ 2 SLOT
-    . ví dụ 1: chọn slot 1 (7:00 -> 7:45) ==> min_time: 7, max_time: 7.45 ==> Khung giờ tự động: 7h - 7h45
-    . ví dụ 2: chọn slot 1 (7:00 -> 7:45) và slot 2 (8:00 -> 8:45) ==> min_time: 7, max_time: 8.45 ==> Khung giờ tự động: 7h - 8h45
-    . ví dụ 3: chọn slot 5 (11:00 -> 11:45) và slot 8 (15:00 -> 15:45) ==> min_time: 11, max_time: 15.45 ==> Khung giờ tự động: 11h - 15h45
+    . ví dụ 1: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu chưa có huấn luyện viên thì cho chọn select hlv mà đang availale
+    . ví dụ 2: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu có huấn luyện viên rồi thì vẫn cho người dùng option thay đổi huấn luyện viên bằng cách chọn select hlv mà đang availale
+- bây giờ tôi muốn bạn xem cái ý tưởng của tôi ở trên và kết hợp với việc tham khảo logic validate chuyên môn của instructor ở step 2 trong create-classes-batch-modal.tsx và logic validate lịch của instructor + hồ bơi ở step 2 trong schedule-preview-modal.tsx và kết hợp lại thành 1 logic hợp lý cho phần 'Thêm lớp học' và 'Chỉnh sửa lớp học' trong drawer của lịch. và giải thích cho tôi các thao tác mà bạn muốn làm nó sẽ hoạt động như thế nào (gọi api gì? validate logic như thế nào?)
 
 
-logic tính instructor trống/không trống, chưa có check validate (có thể tái sử dụng step 2 trong modal tạo lớp) 
+
+- logic tính instructor trống lịch/không trống lịch đang SAI, chưa có check validate (có thể tái sử dụng step 2 trong modal tạo lớp) 
+    . tham khảo logic validate chuyên môn của instructor ở step 2 trong create-classes-batch-modal.tsx và logic validate lịch của instructor + hồ bơi ở step 2 trong schedule-preview-modal.tsx và kết hợp lại thành 1 logic hợp lý cho phần 'Thêm lớp học' và 'Chỉnh sửa lớp học' trong drawer của lịch.
+    . phần quan trọng trong drawer này là hồ bơi này có available hay không? và lịch dạy của huấn luyện viên này có bị trùng hay không để xếp lịch cho lớp học/để thêm lớp học này vào lịch của ngày hôm đó!!

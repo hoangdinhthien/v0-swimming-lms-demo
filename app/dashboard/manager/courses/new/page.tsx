@@ -36,6 +36,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { createCourse, type CreateCourseData } from "@/api/manager/courses-api";
 import { fetchAllCourseCategories } from "@/api/manager/course-categories";
+import { fetchAgeRules, type AgeRule } from "@/api/manager/age-types";
 import { uploadMedia } from "@/api/media-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -66,6 +67,12 @@ const courseFormSchema = z.object({
   category: z
     .array(z.string())
     .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
+  type: z
+    .array(z.enum(["global", "custom"]))
+    .min(1, " Vui lòng chọn ít nhất 1 loại cho khóa học"),
+  type_of_age: z
+    .array(z.string())
+    .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
   is_active: z.boolean().default(false),
   price: z.coerce
     .number({
@@ -96,6 +103,8 @@ export default function NewCoursePage() {
   >([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [ageRules, setAgeRules] = useState<AgeRule[]>([]);
+  const [loadingAgeRules, setLoadingAgeRules] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State to store form_judge for each detail item
@@ -111,6 +120,8 @@ export default function NewCoursePage() {
     session_number_duration: "45 phút",
     detail: [{ title: "", description: "" }],
     category: [],
+    type: ["global"],
+    type_of_age: [],
     is_active: false,
     price: 0,
     max_member: 20,
@@ -123,7 +134,7 @@ export default function NewCoursePage() {
     defaultValues,
   });
 
-  // Fetch course categories on component mount
+  // Fetch course categories and age rules on component mount
   useEffect(() => {
     async function fetchCategories() {
       setLoadingCategories(true);
@@ -142,7 +153,27 @@ export default function NewCoursePage() {
       }
       setLoadingCategories(false);
     }
+
+    async function fetchAgeRulesData() {
+      setLoadingAgeRules(true);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+        if (!tenantId || !token) throw new Error("Thiếu thông tin xác thực");
+        const rules = await fetchAgeRules({}, tenantId, token);
+        setAgeRules(rules);
+      } catch (e: any) {
+        toast({
+          title: "Lỗi",
+          description: e.message || "Không thể tải danh sách độ tuổi",
+          variant: "destructive",
+        });
+      }
+      setLoadingAgeRules(false);
+    }
+
     fetchCategories();
+    fetchAgeRulesData();
   }, [toast]); // Empty dependency array - only fetch once on mount
 
   // Handle file upload
@@ -501,6 +532,94 @@ export default function NewCoursePage() {
                       )}
                       <FormDescription>
                         Chọn một hoặc nhiều danh mục phù hợp cho khóa học này.
+                        Giữ Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='type'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Loại khóa học <span className='text-red-500'>*</span>
+                      </FormLabel>
+                      <div>
+                        <MultiSelect
+                          options={[
+                            { id: "global", label: "Toàn hệ thống" },
+                            { id: "custom", label: "Tùy chỉnh" },
+                          ]}
+                          value={field.value || []}
+                          onChange={(vals) => field.onChange(vals)}
+                        />
+                      </div>
+                      <FormDescription>
+                        Chọn loại khóa học (ví dụ: global hoặc custom). Giữ Ctrl
+                        (Windows) / Cmd (Mac) để chọn nhiều mục.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='type_of_age'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Độ tuổi phù hợp <span className='text-red-500'>*</span>
+                      </FormLabel>
+                      {loadingAgeRules ? (
+                        <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          <Loader2 className='h-4 w-4 animate-spin' />
+                          Đang tải độ tuổi...
+                        </div>
+                      ) : ageRules.length === 0 ? (
+                        <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          Không có độ tuổi nào
+                        </div>
+                      ) : (
+                        <div>
+                          <MultiSelect
+                            options={ageRules.map((rule) => {
+                              // Prefer `age_range` array [min, max] from API; fallback to min_age/max_age
+                              const ageRange = Array.isArray(rule.age_range)
+                                ? rule.age_range
+                                : undefined;
+                              const min = ageRange?.[0] ?? rule.min_age;
+                              const max = ageRange?.[1] ?? rule.max_age;
+                              let range = "";
+                              if (min != null && max != null) {
+                                // treat very large max (e.g., 120) as open-ended
+                                if (max >= 120) {
+                                  range = `từ ${min} tuổi`;
+                                } else {
+                                  range = `${min}-${max} tuổi`;
+                                }
+                              } else if (min != null) {
+                                range = `từ ${min} tuổi`;
+                              } else if (max != null) {
+                                range = `dưới ${max} tuổi`;
+                              }
+                              return {
+                                id: rule._id,
+                                label: range
+                                  ? `${rule.title} (${range})`
+                                  : rule.title,
+                              };
+                            })}
+                            value={field.value || []}
+                            onChange={(vals) => field.onChange(vals)}
+                          />
+                        </div>
+                      )}
+                      <FormDescription>
+                        Chọn một hoặc nhiều độ tuổi phù hợp cho khóa học này.
                         Giữ Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
                       </FormDescription>
                       <FormMessage />

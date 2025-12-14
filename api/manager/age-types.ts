@@ -6,6 +6,8 @@ import { getUserFrontendRole } from "../role-utils";
 export interface AgeRule {
   _id: string;
   title: string;
+  // Some responses use `age_range` array [min, max]; keep min/max for backward compat
+  age_range?: number[];
   min_age?: number;
   max_age?: number;
   description?: string;
@@ -71,5 +73,11 @@ export async function fetchAgeRules(
 
   const result: AgeRulesApiResponse = await response.json();
 
-  return result.data || [];
+  // Defensive unwrap: some manager endpoints return nested arrays like
+  // data: [ [ { documents: [...] } ] ] or data: [ [ [ ... ] ] ]
+  const payload: any = result.data;
+  const rules =
+    payload?.[0]?.[0]?.documents ?? payload?.[0]?.[0] ?? payload ?? [];
+
+  return Array.isArray(rules) ? rules : [];
 }
