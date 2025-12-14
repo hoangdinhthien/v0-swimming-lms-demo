@@ -107,17 +107,6 @@ export const columns: ColumnDef<Application>[] = [
 
       return (
         <div className='flex items-center gap-2'>
-          <Avatar className='h-8 w-8'>
-            {imageUrl && (
-              <AvatarImage
-                src={imageUrl}
-                alt={createdBy.username}
-              />
-            )}
-            <AvatarFallback>
-              {createdBy.username?.charAt(0).toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
           <div className='flex flex-col'>
             <span className='text-sm font-medium'>{createdBy.username}</span>
             {createdBy.email && (
