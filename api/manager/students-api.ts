@@ -186,7 +186,27 @@ export async function fetchStudents({
   const data = await res.json();
   // Defensive: unwrap the nested structure to get the array of students
   const obj = data.data?.[0]?.[0];
-  return obj && typeof obj === "object" && "data" in obj ? obj.data : [];
+  if (!obj || typeof obj !== "object" || !("data" in obj)) return [];
+
+  // Normalize items: many API responses wrap the real user inside `user` and
+  // the top-level `_id` is a wrapper id. UI expects the primary id to be
+  // the user's `_id` (obj.user._id). Map items so `_id` points to user._id
+  // when available to avoid using the wrong id for routes/updates.
+  const items = Array.isArray(obj.data)
+    ? obj.data.map((item: any) => {
+        try {
+          if (item && item.user && item.user._id) {
+            // copy but override top-level _id with inner user._id for convenience
+            return { ...item, _id: item.user._id };
+          }
+        } catch (e) {
+          // ignore and fall through
+        }
+        return item;
+      })
+    : [];
+
+  return items;
 }
 
 export async function fetchStudentDetail({
