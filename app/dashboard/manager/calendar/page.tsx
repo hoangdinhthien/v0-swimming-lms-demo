@@ -312,9 +312,11 @@ export default function ImprovedAntdCalendarPage() {
       setError(null);
 
       try {
-        // If the current user is staff, the API requires a 'service: Schedule' header
-        const result = await fetchMonthSchedule(
-          currentDate.toDate(),
+        // Fetch schedule for the full calendar grid (include adjacent-month days)
+        const { start, end } = getCalendarRange(currentDate);
+        const result = await fetchDateRangeSchedule(
+          start,
+          end,
           undefined,
           undefined,
           isStaff ? "Schedule" : undefined
@@ -484,6 +486,23 @@ export default function ImprovedAntdCalendarPage() {
     return scheduleEvents.find((event) => event._id === scheduleId) || null;
   };
 
+  // Compute calendar grid start/end (Monday..Sunday) for a given month date
+  const getCalendarRange = (date: Dayjs) => {
+    const startOfMonth = date.startOf("month");
+    const startDay = startOfMonth.day(); // 0=Sun,1=Mon,...
+    const daysFromMonday = startDay === 0 ? 6 : startDay - 1; // distance from Monday
+    const startDate = startOfMonth
+      .subtract(daysFromMonday, "day")
+      .startOf("day");
+
+    const endOfMonth = date.endOf("month");
+    const endDay = endOfMonth.day();
+    const daysToSunday = endDay === 0 ? 0 : 7 - endDay;
+    const endDate = endOfMonth.add(daysToSunday, "day").endOf("day");
+
+    return { start: startDate.toDate(), end: endDate.toDate() };
+  };
+
   // Handle opening class detail modal
   const handleOpenDetailModal = (event: CalendarEvent) => {
     const scheduleEvent = findScheduleEventById(event.scheduleId);
@@ -599,9 +618,11 @@ export default function ImprovedAntdCalendarPage() {
       await deleteScheduleEvent(scheduleToDelete.scheduleId);
       message.success(`Đã xóa lớp ${scheduleToDelete.className} khỏi lịch`);
 
-      // Refresh data without changing page
-      const result = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Refresh data for full calendar grid
+      const { start, end } = getCalendarRange(currentDate);
+      const result = await fetchDateRangeSchedule(
+        start,
+        end,
         undefined,
         undefined,
         isStaff ? "Schedule" : undefined
@@ -812,9 +833,11 @@ export default function ImprovedAntdCalendarPage() {
 
       message.success("Đã thêm lớp học vào lịch thành công");
 
-      // Refresh schedule data
-      const result = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Refresh schedule data for calendar grid
+      const { start, end } = getCalendarRange(currentDate);
+      const result = await fetchDateRangeSchedule(
+        start,
+        end,
         undefined,
         undefined,
         isStaff ? "Schedule" : undefined
@@ -902,9 +925,11 @@ export default function ImprovedAntdCalendarPage() {
 
       message.success("Đã cập nhật lớp học thành công");
 
-      // Refresh schedule data
-      const result = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Refresh schedule data for calendar grid
+      const { start, end } = getCalendarRange(currentDate);
+      const result = await fetchDateRangeSchedule(
+        start,
+        end,
         undefined,
         undefined,
         isStaff ? "Schedule" : undefined
@@ -1235,9 +1260,11 @@ export default function ImprovedAntdCalendarPage() {
         description: `Đã tự động xếp lịch thành công cho ${selectedClassIds.length} lớp học`,
       });
 
-      // Reload schedule data
-      const { events, poolOverflowWarnings } = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Reload schedule data for calendar grid
+      const { start, end } = getCalendarRange(currentDate);
+      const { events, poolOverflowWarnings } = await fetchDateRangeSchedule(
+        start,
+        end,
         tenantId,
         token
       );
@@ -1342,9 +1369,11 @@ export default function ImprovedAntdCalendarPage() {
         description: `Đã tạo và xếp lịch thành công cho ${newClasses.length} lớp học`,
       });
 
-      // Reload schedule data
-      const { events, poolOverflowWarnings } = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Reload schedule data for calendar grid
+      const { start, end } = getCalendarRange(currentDate);
+      const { events, poolOverflowWarnings } = await fetchDateRangeSchedule(
+        start,
+        end,
         tenantId,
         token
       );
@@ -1370,8 +1399,11 @@ export default function ImprovedAntdCalendarPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const result = await fetchMonthSchedule(
-        currentDate.toDate(),
+      // Refresh data for full calendar grid (include adjacent month days)
+      const { start, end } = getCalendarRange(currentDate);
+      const result = await fetchDateRangeSchedule(
+        start,
+        end,
         undefined,
         undefined,
         isStaff ? "Schedule" : undefined

@@ -147,9 +147,14 @@ export const fetchScheduleData = async (
     throw new Error("Missing authentication or tenant information");
   }
 
-  // Format dates as YYYY-MM-DD for the API
+  // Format dates as YYYY-MM-DD for the API using local date components
+  // Avoid using toISOString() because it converts to UTC and can shift the date
+  // when the local timezone is behind UTC (e.g. results in previous day).
+  const pad = (n: number) => String(n).padStart(2, "0");
   const formatDate = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )}`;
   };
 
   const startDateStr = formatDate(startDate);

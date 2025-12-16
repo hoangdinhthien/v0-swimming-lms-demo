@@ -12,3 +12,6 @@ Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (
 - logic tính instructor trống lịch/không trống lịch đang SAI, chưa có check validate (có thể tái sử dụng step 2 trong modal tạo lớp) 
     . tham khảo logic validate chuyên môn của instructor ở step 2 trong create-classes-batch-modal.tsx và logic validate lịch của instructor + hồ bơi ở step 2 trong schedule-preview-modal.tsx và kết hợp lại thành 1 logic hợp lý cho phần 'Thêm lớp học' và 'Chỉnh sửa lớp học' trong drawer của lịch.
     . phần quan trọng trong drawer này là hồ bơi này có available hay không? và lịch dạy của huấn luyện viên này có bị trùng hay không để xếp lịch cho lớp học/để thêm lớp học này vào lịch của ngày hôm đó!!
+
+
+    
