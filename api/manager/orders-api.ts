@@ -818,3 +818,57 @@ export async function updateOrder(
   const order = result.data || result;
   return order;
 }
+
+/**
+ * Refund an order via payment gateway
+ * @param zp_trans_id - the gateway transaction id (string)
+ * @param amount - amount as number (e.g. 199997)
+ * @param description - refund description
+ * @param tenantId - tenant id for header
+ * @param token - auth token for header
+ */
+export async function refundOrder({
+  zp_trans_id,
+  amount,
+  description,
+  tenantId,
+  token,
+}: {
+  zp_trans_id: string;
+  amount: number;
+  description?: string;
+  tenantId: string;
+  token: string;
+}): Promise<any> {
+  if (!tenantId || !token) {
+    throw new Error("Thiếu thông tin xác thực");
+  }
+
+  const url = `https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/refund-order`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": String(tenantId),
+    Authorization: `Bearer ${String(token)}`,
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ zp_trans_id, amount, description }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("[refundOrder] API error:", res.status, text);
+      throw new Error(`Không thể hoàn tiền: ${res.status} ${text}`);
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("[refundOrder] Exception:", error);
+    throw error;
+  }
+}
