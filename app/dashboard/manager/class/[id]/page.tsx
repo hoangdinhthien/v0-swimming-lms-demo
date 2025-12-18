@@ -64,6 +64,7 @@ import { getMediaDetails } from "@/api/media-api";
 //   autoScheduleClass,
 //   type AutoScheduleRequest,
 // } from "@/api/manager/schedule-api";
+import { SchedulePreviewModal } from "@/components/manager/schedule-preview-modal";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getVietnameseDayFromDate } from "@/utils/date-utils";
@@ -166,6 +167,9 @@ export default function ClassDetailPage() {
     session_in_week: 3,
     array_number_in_week: [] as number[],
   });
+
+  // Schedule preview modal state
+  const [isSchedulePreviewModalOpen, setIsSchedulePreviewModalOpen] = useState(false);
 
   // Member management modal state
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -535,7 +539,7 @@ export default function ClassDetailPage() {
         return;
       }
 
-      const requestData: AutoScheduleRequest = {
+      const requestData = {
         min_time: autoScheduleData.min_time,
         max_time: autoScheduleData.max_time,
         session_in_week: autoScheduleData.session_in_week,
@@ -808,11 +812,11 @@ export default function ClassDetailPage() {
                 classData.sessions_remaining > 0) ||
                 (classData.schedules && classData.schedules.length === 0)) && (
                 <Button
-                  onClick={handleAutoScheduleClick}
+                  onClick={() => setIsSchedulePreviewModalOpen(true)}
                   className='inline-flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
                 >
                   <CalendarPlus className='h-4 w-4' />
-                  Tự động xếp lịch học
+                  Xếp lịch cho lớp học
                 </Button>
               )}
               <Badge
@@ -2111,6 +2115,25 @@ export default function ClassDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Schedule Preview Modal */}
+      <SchedulePreviewModal
+        open={isSchedulePreviewModalOpen}
+        onOpenChange={setIsSchedulePreviewModalOpen}
+        availableClasses={classData ? [classData as any] : []}
+        preSelectedClassIds={classData ? [classData._id] : []}
+        onScheduleComplete={() => {
+          // Refresh class data after scheduling
+          if (classroomId) {
+            const tenantId = getSelectedTenant();
+            const token = getAuthToken();
+            if (tenantId && token) {
+              fetchClassDetails(classroomId, tenantId, token).then(setClassData);
+            }
+          }
+          setIsSchedulePreviewModalOpen(false);
+        }}
+      />
     </div>
   );
 }

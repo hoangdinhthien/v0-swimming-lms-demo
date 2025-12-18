@@ -14,4 +14,14 @@ Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (
     . phần quan trọng trong drawer này là hồ bơi này có available hay không? và lịch dạy của huấn luyện viên này có bị trùng hay không để xếp lịch cho lớp học/để thêm lớp học này vào lịch của ngày hôm đó!!
 
 
-    
+
+=====
+
+tôi cần bạn sửa lại phần này:
+- sử button 'Tự động xếp lịch học' thành 'Xếp lịch cho lớp học'
+- ở trang 'manager/class/[id]' (trang class detail), modal 'Tự động xếp lịch học cho lớp' không còn cần nữa.
+- bây giờ, tôi muốn tái sử dụng lại modal (schedule-preview-modal.tsx) để thay thế cho modal 'Tự động xếp lịch học cho lớp'
+- khi manager/staff click vào button 'Xếp lịch cho lớp học' thì sẽ hiện lên modal schedule-preview-modal.tsx
+- lưu ý: chỉ thay đổi logic cho phần xếp lịch thôi, còn các logic còn lại như chỉnh sửa thông tin lớp học & add member & remove member, etc. thì vẫn như cũ
+- lưu ý: ở step 1 trong modal schedule-preview-modal.tsx CHỈ SẼ HIỆN LÊN mỗi lớp đó thôi
+- CÓ GÌ THẮC MẮC THÌ CỨ HỎI TÔI

@@ -670,97 +670,122 @@ export default function TransactionDetailPage() {
             <Pencil className='mr-2 h-4 w-4' />
             Chỉnh sửa
           </Button>
-          {order?.payment?.zp_trans_id && !order.status?.includes("refunded") && (
-            <>
-              <Button
-                variant='outline'
-                onClick={() => {
-                  setRefundDescription(`Hoàn tiền cho đơn ${order._id}`);
-                  setShowRefundModal(true);
-                }}
-              >
-                Hoàn tiền
-              </Button>
+          {order?.payment?.zp_trans_id &&
+            !order.status?.includes("refunded") && (
+              <>
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    setRefundDescription(`Hoàn tiền cho đơn ${order._id}`);
+                    setShowRefundModal(true);
+                  }}
+                >
+                  Hoàn tiền
+                </Button>
 
-              <Dialog open={showRefundModal} onOpenChange={setShowRefundModal}>
-                <DialogContent className='sm:max-w-[520px]'>
-                  <DialogHeader>
-                    <DialogTitle>Hoàn tiền</DialogTitle>
-                    <DialogDescription>
-                      Xem lại thông tin hoàn tiền và xác nhận.
-                    </DialogDescription>
-                  </DialogHeader>
+                <Dialog
+                  open={showRefundModal}
+                  onOpenChange={setShowRefundModal}
+                >
+                  <DialogContent className='sm:max-w-[520px]'>
+                    <DialogHeader>
+                      <DialogTitle>Hoàn tiền</DialogTitle>
+                      <DialogDescription>
+                        Xem lại thông tin hoàn tiền và xác nhận.
+                      </DialogDescription>
+                    </DialogHeader>
 
-                  <div className='space-y-4 mt-2'>
-                    <div>
-                      <div className='text-sm text-muted-foreground'>Mã giao dịch ZaloPay</div>
-                      <div className='font-mono text-sm mt-1'>{String(order.payment?.zp_trans_id)}</div>
+                    <div className='space-y-4 mt-2'>
+                      <div>
+                        <div className='text-sm text-muted-foreground'>
+                          Mã giao dịch ZaloPay
+                        </div>
+                        <div className='font-mono text-sm mt-1'>
+                          {String(order.payment?.zp_trans_id)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className='text-sm text-muted-foreground'>
+                          Số tiền
+                        </div>
+                        <div className='font-medium mt-1'>
+                          {formatPrice(order.price)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className='text-sm text-muted-foreground'>
+                          Mô tả (có thể chỉnh sửa)
+                        </div>
+                        <Input
+                          value={refundDescription}
+                          onChange={(e) =>
+                            setRefundDescription(
+                              (e.target as HTMLInputElement).value
+                            )
+                          }
+                          placeholder={`Hoàn tiền cho đơn ${order._id}`}
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <div className='text-sm text-muted-foreground'>Số tiền</div>
-                      <div className='font-medium mt-1'>{formatPrice(order.price)}</div>
+                    <div className='flex justify-end gap-2 mt-6'>
+                      <Button
+                        variant='outline'
+                        onClick={() => setShowRefundModal(false)}
+                        disabled={isRefunding}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          if (!token || !tenantId || !order) return;
+                          setIsRefunding(true);
+                          try {
+                            await refundOrder({
+                              zp_trans_id: String(order.payment?.zp_trans_id),
+                              amount: Number(order.price),
+                              description: refundDescription,
+                              tenantId,
+                              token,
+                            });
+
+                            const updatedOrder = await fetchOrderById({
+                              orderId: order._id,
+                              tenantId,
+                              token,
+                            });
+                            setOrder(updatedOrder);
+
+                            toast({
+                              title: "Hoàn tiền thành công",
+                              description: "Yêu cầu hoàn tiền đã được gửi.",
+                            });
+                            setShowRefundModal(false);
+                          } catch (err: any) {
+                            console.error("Refund error:", err);
+                            toast({
+                              variant: "destructive",
+                              title: "Lỗi hoàn tiền",
+                              description:
+                                err?.message || "Không thể hoàn tiền",
+                            });
+                          } finally {
+                            setIsRefunding(false);
+                          }
+                        }}
+                        disabled={isRefunding}
+                      >
+                        {isRefunding
+                          ? "Đang hoàn tiền..."
+                          : "Xác nhận hoàn tiền"}
+                      </Button>
                     </div>
-
-                    <div>
-                      <div className='text-sm text-muted-foreground'>Mô tả (có thể chỉnh sửa)</div>
-                      <Input
-                        value={refundDescription}
-                        onChange={(e) => setRefundDescription((e.target as HTMLInputElement).value)}
-                        placeholder={`Hoàn tiền cho đơn ${order._id}`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className='flex justify-end gap-2 mt-6'>
-                    <Button variant='outline' onClick={() => setShowRefundModal(false)} disabled={isRefunding}>
-                      Hủy
-                    </Button>
-                    <Button
-                      onClick={async () => {
-                        if (!token || !tenantId || !order) return;
-                        setIsRefunding(true);
-                        try {
-                          await refundOrder({
-                            zp_trans_id: String(order.payment?.zp_trans_id),
-                            amount: Number(order.price),
-                            description: refundDescription,
-                            tenantId,
-                            token,
-                          });
-
-                          const updatedOrder = await fetchOrderById({
-                            orderId: order._id,
-                            tenantId,
-                            token,
-                          });
-                          setOrder(updatedOrder);
-
-                          toast({
-                            title: "Hoàn tiền thành công",
-                            description: "Yêu cầu hoàn tiền đã được gửi.",
-                          });
-                          setShowRefundModal(false);
-                        } catch (err: any) {
-                          console.error("Refund error:", err);
-                          toast({
-                            variant: "destructive",
-                            title: "Lỗi hoàn tiền",
-                            description: err?.message || "Không thể hoàn tiền",
-                          });
-                        } finally {
-                          setIsRefunding(false);
-                        }
-                      }}
-                      disabled={isRefunding}
-                    >
-                      {isRefunding ? "Đang hoàn tiền..." : "Xác nhận hoàn tiền"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
 
           <Button
             variant='outline'
