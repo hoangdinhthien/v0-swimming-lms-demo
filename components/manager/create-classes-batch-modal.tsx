@@ -1258,46 +1258,103 @@ export function CreateClassesBatchModal({
                       Đang tải ca học...
                     </div>
                   ) : (
-                    <div className='grid grid-cols-2 md:grid-cols-3 gap-2'>
-                      {allSlots.map((slot) => {
-                        const isSelected = selectedSlotIds.includes(slot._id);
-                        const formatTime = (hour: number, minute: number) =>
-                          `${hour.toString().padStart(2, "0")}:${minute
-                            .toString()
-                            .padStart(2, "0")}`;
+                    <div className='relative'>
+                      {/* Range highlight overlay */}
+                      {(() => {
+                        if (selectedSlotIds.length === 2) {
+                          const sortedSlots = [...allSlots].sort(
+                            (a, b) =>
+                              a.start_time - b.start_time ||
+                              a.start_minute - b.start_minute
+                          );
+                          const selectedIndices = selectedSlotIds
+                            .map((id) =>
+                              sortedSlots.findIndex((s) => s._id === id)
+                            )
+                            .filter((i) => i !== -1)
+                            .sort((a, b) => a - b);
 
-                        return (
-                          <button
-                            key={slot._id}
-                            type='button'
-                            onClick={() => handleSlotToggle(slot._id)}
-                            className={cn(
-                              "p-3 rounded-md border transition-all text-left",
-                              isSelected
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-primary/50"
-                            )}
-                          >
-                            <div className='flex items-start justify-between'>
-                              <div>
-                                <div className='font-medium text-sm'>
-                                  {slot.title}
-                                </div>
-                                <div className='text-xs text-muted-foreground mt-1'>
-                                  {formatTime(
-                                    slot.start_time,
-                                    slot.start_minute
-                                  )}{" "}
-                                  - {formatTime(slot.end_time, slot.end_minute)}
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <CheckCircle2 className='h-4 w-4 text-primary flex-shrink-0' />
+                          if (selectedIndices.length === 2) {
+                            const [minIdx, maxIdx] = selectedIndices;
+
+                            return (
+                              <div className='absolute inset-0 pointer-events-none z-0 rounded-md bg-primary/5 border border-primary/20' />
+                            );
+                          }
+                        }
+                        return null;
+                      })()}
+
+                      <div className='grid grid-cols-2 md:grid-cols-3 gap-2 relative z-10'>
+                        {allSlots.map((slot) => {
+                          const isSelected = selectedSlotIds.includes(slot._id);
+
+                          // Check if slot is in range for highlighting
+                          let isInRange = false;
+                          if (selectedSlotIds.length === 2) {
+                            const sortedSlots = [...allSlots].sort(
+                              (a, b) =>
+                                a.start_time - b.start_time ||
+                                a.start_minute - b.start_minute
+                            );
+                            const selectedIndices = selectedSlotIds
+                              .map((id) =>
+                                sortedSlots.findIndex((s) => s._id === id)
+                              )
+                              .filter((i) => i !== -1)
+                              .sort((a, b) => a - b);
+
+                            if (selectedIndices.length === 2) {
+                              const [minIdx, maxIdx] = selectedIndices;
+                              const currentIdx = sortedSlots.findIndex(
+                                (s) => s._id === slot._id
+                              );
+                              isInRange =
+                                currentIdx >= minIdx && currentIdx <= maxIdx;
+                            }
+                          }
+
+                          const formatTime = (hour: number, minute: number) =>
+                            `${hour.toString().padStart(2, "0")}:${minute
+                              .toString()
+                              .padStart(2, "0")}`;
+
+                          return (
+                            <button
+                              key={slot._id}
+                              type='button'
+                              onClick={() => handleSlotToggle(slot._id)}
+                              className={cn(
+                                "p-3 rounded-md border transition-all text-left relative",
+                                isSelected
+                                  ? "border-primary bg-primary/10 shadow-sm"
+                                  : isInRange
+                                  ? "border-primary/50 bg-primary/5"
+                                  : "border-border hover:border-primary/50"
                               )}
-                            </div>
-                          </button>
-                        );
-                      })}
+                            >
+                              <div className='flex items-start justify-between'>
+                                <div>
+                                  <div className='font-medium text-sm'>
+                                    {slot.title}
+                                  </div>
+                                  <div className='text-xs text-muted-foreground mt-1'>
+                                    {formatTime(
+                                      slot.start_time,
+                                      slot.start_minute
+                                    )}{" "}
+                                    -{" "}
+                                    {formatTime(slot.end_time, slot.end_minute)}
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <CheckCircle2 className='h-4 w-4 text-primary flex-shrink-0' />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   {selectedSlotIds.length > 0 && (
