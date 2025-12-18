@@ -169,7 +169,8 @@ export default function ClassDetailPage() {
   });
 
   // Schedule preview modal state
-  const [isSchedulePreviewModalOpen, setIsSchedulePreviewModalOpen] = useState(false);
+  const [isSchedulePreviewModalOpen, setIsSchedulePreviewModalOpen] =
+    useState(false);
 
   // Member management modal state
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -2128,7 +2129,9 @@ export default function ClassDetailPage() {
             const tenantId = getSelectedTenant();
             const token = getAuthToken();
             if (tenantId && token) {
-              fetchClassDetails(classroomId, tenantId, token).then(setClassData);
+              fetchClassDetails(classroomId, tenantId, token).then(
+                setClassData
+              );
             }
           }
           setIsSchedulePreviewModalOpen(false);
