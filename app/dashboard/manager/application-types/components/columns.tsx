@@ -35,15 +35,21 @@ export type ApplicationType = {
 
 const getRoleBadgeVariant = (role: string) => {
   const lowerRole = role.toLowerCase();
-  if (lowerRole.includes("manager") || lowerRole.includes("quản lý"))
-    return "default";
-  if (lowerRole.includes("staff") || lowerRole.includes("nhân viên"))
-    return "secondary";
-  if (lowerRole.includes("student") || lowerRole.includes("học viên"))
-    return "outline";
-  if (lowerRole.includes("parent") || lowerRole.includes("phụ huynh"))
-    return "outline";
+  if (lowerRole.includes("quản lý")) return "default";
+  if (lowerRole.includes("nhân viên")) return "secondary";
+  if (lowerRole.includes("học viên")) return "outline";
+  if (lowerRole.includes("huấn luyện viên")) return "secondary";
   return "secondary";
+};
+
+const getRoleDisplayName = (role: string) => {
+  const roleMap: Record<string, string> = {
+    member: "Học viên",
+    instructor: "Huấn luyện viên",
+    staff: "Nhân viên",
+    manager: "Quản lý",
+  };
+  return roleMap[role] || role;
 };
 
 // Actions cell component - receives delete handler from parent
@@ -157,10 +163,10 @@ export const createColumns = (
             types.map((type, index) => (
               <Badge
                 key={index}
-                variant={getRoleBadgeVariant(type)}
+                variant={getRoleBadgeVariant(getRoleDisplayName(type))}
                 className='text-xs'
               >
-                {type}
+                {getRoleDisplayName(type)}
               </Badge>
             ))
           ) : (
