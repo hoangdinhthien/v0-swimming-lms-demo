@@ -40,12 +40,15 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Classroom } from "@/api/manager/class-api";
+import { Classroom, Instructor, fetchClasses } from "@/api/manager/class-api";
 import { Pool } from "@/api/manager/pools-api";
 import { SlotDetail } from "@/api/manager/slot-api";
-import { fetchDateRangeSchedule } from "@/api/manager/schedule-api";
-import { fetchClasses } from "@/api/manager/class-api";
-import { fetchInstructors } from "@/api/manager/instructors-api";
+import { fetchAllCourseCategories } from "@/api/manager/course-categories";
+import { fetchAgeRules } from "@/api/manager/age-types";
+import {
+  fetchInstructorSpecialist,
+  fetchInstructors,
+} from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { cn } from "@/lib/utils";
@@ -56,18 +59,19 @@ import {
   formatAgeType,
 } from "@/utils/pool-validation";
 
-interface Instructor {
+interface InstructorSpecialist {
   _id: string;
-  username: string;
-  email: string;
-  phone?: string;
-  is_active?: boolean;
-  role_front?: string[];
-  featured_image?: any[];
-  birthday?: string;
-  address?: string;
-  created_at?: string;
-  updated_at?: string;
+  user: string | { _id: string; username: string };
+  category: Array<{ _id: string; title: string }> | string[];
+  age_types: Array<{ _id: string; title: string }> | string[];
+}
+
+interface ValidationWarning {
+  instructorId: string;
+  type: "category" | "age_type" | "schedule_conflict";
+  severity: "warning" | "error";
+  message: string;
+  details: string;
 }
 
 interface AddClassFormProps {
@@ -131,6 +135,23 @@ export function AddClassForm({
     initialValues.instructor || ""
   );
 
+  // Instructor specialist validation
+  const [instructorSpecialists, setInstructorSpecialists] = useState<
+    Map<string, InstructorSpecialist>
+  >(new Map());
+  const [validationWarnings, setValidationWarnings] = useState<
+    ValidationWarning[]
+  >([]);
+
+  // Category and age type mappings for display
+  const [categoryTitles, setCategoryTitles] = useState<Map<string, string>>(
+    new Map()
+  );
+  const [ageTypeTitles, setAgeTypeTitles] = useState<Map<string, string>>(
+    new Map()
+  );
+  const [mappingsLoaded, setMappingsLoaded] = useState(false);
+
   // Search states for Classroom
   const [classroomSearchKey, setClassroomSearchKey] = useState("");
   const [searchedClassrooms, setSearchedClassrooms] = useState<Classroom[]>([]);
@@ -162,6 +183,9 @@ export function AddClassForm({
     classInstructor._id
   );
 
+  // Check if Step 1 is completed
+  const isStep1Complete = selectedSlot && selectedClassroom;
+
   // Auto-fill instructor if class has one
   useEffect(() => {
     if (hasClassInstructor && classInstructor._id) {
@@ -169,14 +193,55 @@ export function AddClassForm({
     }
   }, [hasClassInstructor, classInstructor]);
 
-  // Search classrooms by API
+  // Load category and age type mappings on mount
   useEffect(() => {
-    const searchClassrooms = async () => {
-      if (!classroomSearchKey.trim()) {
-        setSearchedClassrooms([]);
-        return;
-      }
+    const loadMappings = async () => {
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
 
+        if (!tenantId || !token) return;
+
+        // Load categories
+        const categories = await fetchAllCourseCategories({
+          tenantId,
+          token,
+        });
+        const categoryMap = new Map(
+          categories.map((cat) => [cat._id, cat.title])
+        );
+        setCategoryTitles(categoryMap);
+
+        // Load age types
+        const ageTypes = await fetchAgeRules();
+        const ageTypeMap = new Map(ageTypes.map((age) => [age._id, age.title]));
+        setAgeTypeTitles(ageTypeMap);
+
+        setMappingsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load category/age type mappings:", error);
+        setMappingsLoaded(true); // Still set to true to avoid infinite loading
+      }
+    };
+
+    loadMappings();
+  }, []);
+
+  // Trigger pool validation when Step 1 is completed
+  useEffect(() => {
+    if (isStep1Complete) {
+      validatePoolsForSelection();
+    } else {
+      // Reset when step 1 is not complete
+      setValidatedPools([]);
+      setSelectedPool("");
+      setLoadingPools(false);
+    }
+  }, [isStep1Complete, selectedDate, selectedSlot, selectedClassroom]);
+
+  // Load classrooms by API (always use API for search and initial load)
+  useEffect(() => {
+    const loadClassrooms = async () => {
       setIsSearchingClassrooms(true);
       try {
         const tenantId = getSelectedTenant();
@@ -191,18 +256,22 @@ export function AddClassForm({
           token,
           1,
           50,
-          classroomSearchKey
+          classroomSearchKey.trim() ? classroomSearchKey : undefined
         );
 
         setSearchedClassrooms(result.data as Classroom[]);
       } catch (error: any) {
-        console.error("Failed to search classrooms:", error);
+        console.error("Failed to load classrooms:", error);
+        setSearchedClassrooms([]);
       } finally {
         setIsSearchingClassrooms(false);
       }
     };
 
-    const timeoutId = setTimeout(searchClassrooms, 300);
+    const timeoutId = setTimeout(
+      loadClassrooms,
+      classroomSearchKey.trim() ? 300 : 0
+    );
     return () => clearTimeout(timeoutId);
   }, [classroomSearchKey]);
 
@@ -284,18 +353,161 @@ export function AddClassForm({
     fetchSlotDetailData();
   }, [selectedSlot, selectedDate]);
 
-  // Validate pools when Slot + Classroom are selected
+  // Validate instructor specialist when instructor is selected
   useEffect(() => {
-    if (selectedSlot && selectedClassroom && selectedClassDetails) {
-      validatePoolsForSelection();
-    } else {
-      setValidatedPools([]);
-      setSelectedPool("");
+    if (
+      selectedInstructor &&
+      selectedClassDetails &&
+      isStep1Complete &&
+      mappingsLoaded
+    ) {
+      validateInstructorSpecialist(selectedInstructor);
     }
-  }, [selectedSlot, selectedClassroom]);
+  }, [
+    selectedInstructor,
+    selectedClassDetails,
+    isStep1Complete,
+    mappingsLoaded,
+  ]);
+
+  const validateInstructorSpecialist = async (instructorId: string) => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token || !selectedClassDetails) return;
+
+      const course = (selectedClassDetails as any).course;
+      if (!course) return;
+
+      // Fetch specialist info for this instructor
+      const specialistsResponse = await fetchInstructorSpecialist({
+        searchParams: {
+          "search[user._id:in]": instructorId,
+        },
+        tenantId,
+        token,
+      });
+
+      const specialist = specialistsResponse[0];
+      if (specialist) {
+        setInstructorSpecialists((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(instructorId, specialist);
+          return newMap;
+        });
+      }
+
+      // Clear previous warnings for this instructor
+      setValidationWarnings((prev) =>
+        prev.filter((w) => w.instructorId !== instructorId)
+      );
+
+      const warnings: ValidationWarning[] = [];
+
+      // Missing specialist
+      if (!specialist) {
+        warnings.push({
+          instructorId,
+          type: "schedule_conflict",
+          severity: "warning",
+          message: "Huấn luyện viên chưa có thông tin chuyên môn",
+          details:
+            "Cần cập nhật Danh mục và Loại độ tuổi cho Huấn luyện viên này",
+        });
+        setValidationWarnings((prev) => [...prev, ...warnings]);
+        return;
+      }
+
+      // Parse specialist data
+      const specialistCategories = Array.isArray(specialist.category)
+        ? specialist.category.map((cat: any) =>
+            typeof cat === "object" ? cat._id : cat
+          )
+        : [];
+      const specialistAgeTypes = Array.isArray(specialist.age_types)
+        ? specialist.age_types.map((age: any) =>
+            typeof age === "object" ? age._id : age
+          )
+        : [];
+
+      const courseCategories: string[] = course.category || [];
+      const courseAgeTypes: string[] = course.type_of_age || [];
+
+      // Validate category match
+      const categoryMatch = courseCategories.some((catId) =>
+        specialistCategories.includes(catId)
+      );
+
+      if (
+        !categoryMatch &&
+        courseCategories.length > 0 &&
+        specialistCategories.length > 0
+      ) {
+        const courseCategoryTitles = courseCategories
+          .map((catId) => categoryTitles.get(catId) || catId)
+          .join(", ");
+        const specialistCategoryTitles = specialist.category
+          .map((cat: any) => (typeof cat === "object" ? cat.title : ""))
+          .filter(Boolean)
+          .join(", ");
+
+        warnings.push({
+          instructorId,
+          type: "category",
+          severity: "warning",
+          message: "Danh mục không phù hợp",
+          details: `Khóa học: [${courseCategoryTitles}] ≠ Huấn luyện viên: [${specialistCategoryTitles}]`,
+        });
+      }
+
+      // Validate age_type match
+      const ageTypeMatch = courseAgeTypes.some((ageId) =>
+        specialistAgeTypes.includes(ageId)
+      );
+
+      if (
+        !ageTypeMatch &&
+        courseAgeTypes.length > 0 &&
+        specialistAgeTypes.length > 0
+      ) {
+        const courseAgeTypeTitles = courseAgeTypes
+          .map((ageId) => ageTypeTitles.get(ageId) || ageId)
+          .join(", ");
+        const specialistAgeTypeTitles = specialist.age_types
+          .map((age: any) => (typeof age === "object" ? age.title : ""))
+          .filter(Boolean)
+          .join(", ");
+
+        warnings.push({
+          instructorId,
+          type: "age_type",
+          severity: "warning",
+          message: "Độ tuổi không phù hợp",
+          details: `Khóa học: [${courseAgeTypeTitles}] ≠ Huấn luyện viên: [${specialistAgeTypeTitles}]`,
+        });
+      }
+
+      // Check schedule conflict
+      const hasScheduleConflict = busyInstructorIds.includes(instructorId);
+      if (hasScheduleConflict) {
+        warnings.push({
+          instructorId,
+          type: "schedule_conflict",
+          severity: "error",
+          message: "Huấn luyện viên đã bận trong khung giờ này",
+          details: "Vui lòng chọn Huấn luyện viên khác hoặc khung giờ khác",
+        });
+      }
+
+      setValidationWarnings((prev) => [...prev, ...warnings]);
+    } catch (error) {
+      console.error("Failed to validate instructor:", error);
+    }
+  };
 
   const validatePoolsForSelection = async () => {
-    if (!selectedClassDetails) return;
+    if (!selectedClassDetails || !selectedSlot || !selectedDate) return;
 
     setLoadingPools(true);
     try {
@@ -323,31 +535,127 @@ export function AddClassForm({
       // We only sent 1 date+slot combo, so we get availablePoolsResult[0]
       const poolsForSelectedSlot = availablePoolsResult[0] || [];
 
-      // Map to PoolValidationInfo format
+      // Get course details for validation
+      const course = (selectedClassDetails as any).course;
+      const courseMaxMember = course?.max_member || 0;
+
+      // Map to PoolValidationInfo format with enhanced validation
       const validatedPoolsData: PoolValidationInfo[] = poolsForSelectedSlot.map(
-        (pool: any) => ({
-          ...pool,
-          isAvailable: pool.remaining_capacity > 0,
-          hasCapacityWarning:
-            pool.remaining_capacity <= 2 && pool.remaining_capacity > 0,
-          hasAgeWarning: false, // Age validation is handled by API
-          hasInstructorConflict: false, // Instructor conflict is handled by slot detail
-          capacity_remain: pool.remaining_capacity,
-        })
+        (pool: any) => {
+          // Validation 1: Check age type matching (from schedule-preview-modal.tsx)
+          const courseTypeOfAge = course?.type_of_age;
+          const poolTypeOfAge = pool.type_of_age;
+
+          let poolTypeIds: string[] = [];
+          let poolTypeTitles: string[] = [];
+
+          if (Array.isArray(poolTypeOfAge)) {
+            poolTypeOfAge.forEach((t: any) => {
+              if (typeof t === "object" && t?._id) {
+                poolTypeIds.push(t._id);
+                poolTypeTitles.push(t?.title?.toLowerCase() || "");
+              } else if (typeof t === "string") {
+                poolTypeIds.push(t);
+              }
+            });
+          } else if (poolTypeOfAge) {
+            const poolTypeId =
+              typeof poolTypeOfAge === "object"
+                ? (poolTypeOfAge as any)?._id
+                : poolTypeOfAge;
+            const poolTypeTitle =
+              typeof poolTypeOfAge === "object"
+                ? (poolTypeOfAge as any)?.title?.toLowerCase()
+                : (poolTypeOfAge as any)?.toLowerCase();
+            if (poolTypeId) poolTypeIds.push(poolTypeId);
+            if (poolTypeTitle) poolTypeTitles.push(poolTypeTitle);
+          }
+
+          let courseTypeIds: string[] = [];
+          if (Array.isArray(courseTypeOfAge)) {
+            courseTypeOfAge.forEach((t: any) => {
+              if (typeof t === "object" && t?._id) {
+                courseTypeIds.push(t._id);
+              } else if (typeof t === "string") {
+                courseTypeIds.push(t);
+              }
+            });
+          } else if (courseTypeOfAge) {
+            const courseTypeId =
+              typeof courseTypeOfAge === "object"
+                ? courseTypeOfAge?._id
+                : courseTypeOfAge;
+            if (courseTypeId) courseTypeIds.push(courseTypeId);
+          }
+
+          const isMixedPool = poolTypeTitles.some(
+            (t) => t === "mixed" || t === "hỗn hợp"
+          );
+
+          const hasAgeWarning =
+            courseTypeIds.length > 0 &&
+            poolTypeIds.length > 0 &&
+            !isMixedPool &&
+            !courseTypeIds.some((cId) => poolTypeIds.includes(cId));
+
+          // Validation 2: Check capacity warning (from schedule-preview-modal.tsx)
+          const hasCapacityWarning =
+            courseMaxMember > 0 && pool.remaining_capacity < courseMaxMember;
+
+          return {
+            ...pool,
+            isAvailable: pool.remaining_capacity > 0,
+            hasCapacityWarning,
+            hasAgeWarning,
+            hasInstructorConflict: false, // Will be checked when instructor is selected
+            capacity_remain: pool.remaining_capacity,
+          };
+        }
       );
 
       setValidatedPools(validatedPoolsData);
 
-      // Auto-select first available pool
-      const bestPool = validatedPoolsData.find((p) => p.isAvailable);
-      if (bestPool) {
+      // Auto-select best pool with scoring algorithm (from schedule-preview-modal.tsx)
+      if (validatedPoolsData.length > 0) {
+        const scoredPools = validatedPoolsData.map((pool) => {
+          let score = 0;
+
+          // Base score: Pool must have remaining capacity
+          if (pool.capacity_remain > 0) {
+            score += 50;
+          }
+
+          // Priority 1: Age type match - +100 points
+          if (!pool.hasAgeWarning) {
+            score += 100;
+          } else {
+            score += 20; // Still allow selection with warning
+          }
+
+          // Priority 2: No capacity warning - +30 points
+          if (!pool.hasCapacityWarning) {
+            score += 30;
+          }
+
+          // Priority 3: Higher remaining capacity - proportional score (0-30 points)
+          if (pool.capacity > 0 && pool.capacity_remain > 0) {
+            const capacityRatio = pool.capacity_remain / pool.capacity;
+            score += capacityRatio * 30;
+          }
+
+          return { ...pool, score };
+        });
+
+        // Select pool with highest score
+        const bestPool = scoredPools.reduce((best, current) =>
+          current.score > best.score ? current : best
+        );
+
         setSelectedPool(bestPool._id);
-      } else if (validatedPoolsData.length > 0) {
-        // If no available pool, select the first one anyway
-        setSelectedPool(validatedPoolsData[0]._id);
       }
     } catch (error) {
       console.error("Pool validation error:", error);
+      setValidatedPools([]);
     } finally {
       setLoadingPools(false);
     }
@@ -372,15 +680,24 @@ export function AddClassForm({
     });
   };
 
+  // Get warnings for selected instructor
+  const selectedInstructorWarnings = validationWarnings.filter(
+    (w) => w.instructorId === selectedInstructor
+  );
+
+  // Check if selected instructor has blocking errors
+  const hasBlockingErrors = selectedInstructorWarnings.some(
+    (w) => w.severity === "error"
+  );
+
   const isFormValid =
     selectedSlot &&
     selectedClassroom &&
     selectedPool &&
     selectedInstructor &&
-    availableInstructors.length > 0;
-
-  // Check if Step 1 is completed
-  const isStep1Complete = selectedSlot && selectedClassroom;
+    availableInstructors.length > 0 &&
+    !hasBlockingErrors &&
+    !loadingPools;
 
   return (
     <div className='space-y-6'>
@@ -433,11 +750,13 @@ export function AddClassForm({
                   !selectedClassroom && "text-muted-foreground"
                 )}
               >
-                {selectedClassroom
-                  ? availableClassrooms.find(
-                      (classroom) => classroom._id === selectedClassroom
-                    )?.name
-                  : "Chọn lớp học..."}
+                <span className='truncate flex-1 text-left'>
+                  {selectedClassroom
+                    ? availableClassrooms.find(
+                        (classroom) => classroom._id === selectedClassroom
+                      )?.name
+                    : "Chọn lớp học..."}
+                </span>
                 <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
               </Button>
             </PopoverTrigger>
@@ -464,10 +783,7 @@ export function AddClassForm({
                         Đang tìm kiếm...
                       </div>
                     ) : (
-                      (classroomSearchKey.trim()
-                        ? searchedClassrooms
-                        : availableClassrooms
-                      ).map((classroom) => (
+                      searchedClassrooms.map((classroom) => (
                         <CommandItem
                           key={classroom._id}
                           value={classroom.name}
@@ -566,6 +882,7 @@ export function AddClassForm({
               {loadingPools ? (
                 <div className='flex items-center justify-center py-8'>
                   <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
+                  <span className='ml-2'>Đang tải danh sách hồ bơi...</span>
                 </div>
               ) : (
                 <Select
@@ -598,14 +915,6 @@ export function AddClassForm({
 
                             {/* Status badges */}
                             <div className='flex items-center gap-1 flex-shrink-0'>
-                              {pool.hasInstructorConflict && (
-                                <Badge
-                                  variant='destructive'
-                                  className='text-[10px] px-1.5 py-0 h-5'
-                                >
-                                  HLV trùng
-                                </Badge>
-                              )}
                               {pool.hasAgeWarning &&
                                 !pool.hasInstructorConflict && (
                                   <Badge
@@ -636,186 +945,248 @@ export function AddClassForm({
 
             <Separator className='my-4' />
 
-            {/* Step 3: Instructor Selection */}
-            <div className='space-y-2'>
-              <Label
-                htmlFor='instructor-select'
-                className='flex items-center gap-2'
-              >
-                <User className='h-4 w-4' />
-                Huấn luyện viên <span className='text-red-500'>*</span>
-              </Label>
+            {/* Step 3: Instructor Selection (only shown after pools loaded) */}
+            {!loadingPools && validatedPools.length > 0 && (
+              <div className='space-y-2'>
+                <Label
+                  htmlFor='instructor-select'
+                  className='flex items-center gap-2'
+                >
+                  <User className='h-4 w-4' />
+                  Huấn luyện viên <span className='text-red-500'>*</span>
+                </Label>
 
-              {hasClassInstructor ? (
-                <div className='flex items-center gap-3 p-3 border rounded-md bg-muted'>
-                  <Avatar className='h-8 w-8'>
-                    <AvatarImage src={instructorAvatars[classInstructor._id]} />
-                    <AvatarFallback>
-                      <User className='h-4 w-4' />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className='flex-1'>
-                    <div className='font-medium'>
-                      {classInstructor.username || "N/A"}
+                {hasClassInstructor && (
+                  <div className='mb-2'>
+                    <div className='flex items-center gap-3 p-3 border rounded-md bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'>
+                      <Avatar className='h-8 w-8'>
+                        <AvatarImage
+                          src={instructorAvatars[classInstructor._id]}
+                        />
+                        <AvatarFallback>
+                          <User className='h-4 w-4' />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className='flex-1'>
+                        <div className='font-medium text-blue-900 dark:text-blue-100'>
+                          {classInstructor.username || "N/A"}
+                        </div>
+                        <div className='text-xs text-blue-700 dark:text-blue-300'>
+                          Huấn luyện viên hiện tại của lớp
+                        </div>
+                      </div>
+                      <Badge
+                        variant='default'
+                        className='bg-blue-500 hover:bg-blue-600'
+                      >
+                        Huấn luyện viên lớp
+                      </Badge>
                     </div>
-                    <div className='text-xs text-muted-foreground'>
-                      {classInstructor.email || ""}
+                    <div className='text-xs text-muted-foreground mt-1'>
+                      Bạn có thể chọn huấn luyện viên khác nếu cần thay đổi
                     </div>
                   </div>
-                  <Badge variant='secondary'>Huấn luyện viên lớp</Badge>
-                </div>
-              ) : (
-                <Popover
-                  open={openInstructorPopover}
-                  onOpenChange={setOpenInstructorPopover}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant='outline'
-                      role='combobox'
-                      disabled={loading}
-                      className={cn(
-                        "w-full justify-between",
-                        !selectedInstructor && "text-muted-foreground"
-                      )}
+                )}
+
+                <div className='space-y-2'>
+                  <Popover
+                    open={openInstructorPopover}
+                    onOpenChange={setOpenInstructorPopover}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant='outline'
+                        role='combobox'
+                        disabled={loading}
+                        className={cn(
+                          "w-full justify-between",
+                          !selectedInstructor && "text-muted-foreground",
+                          hasBlockingErrors &&
+                            "border-red-500 bg-red-50 dark:bg-red-900/20"
+                        )}
+                      >
+                        {selectedInstructor
+                          ? (() => {
+                              const instructor = availableInstructors.find(
+                                (i) => i._id === selectedInstructor
+                              );
+                              return instructor ? (
+                                <div className='flex items-center gap-2'>
+                                  <Avatar className='h-6 w-6'>
+                                    <AvatarImage
+                                      src={instructorAvatars[instructor._id]}
+                                    />
+                                    <AvatarFallback>
+                                      <User className='h-3 w-3' />
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span>{instructor.username}</span>
+                                </div>
+                              ) : (
+                                "Chọn Huấn luyện viên..."
+                              );
+                            })()
+                          : "Chọn Huấn luyện viên..."}
+                        <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className='w-[--radix-popover-trigger-width] p-0'
+                      align='start'
                     >
-                      {selectedInstructor
-                        ? (() => {
-                            const instructor = availableInstructors.find(
-                              (i) => i._id === selectedInstructor
-                            );
-                            return instructor ? (
-                              <div className='flex items-center gap-2'>
-                                <Avatar className='h-6 w-6'>
-                                  <AvatarImage
-                                    src={instructorAvatars[instructor._id]}
-                                  />
-                                  <AvatarFallback>
-                                    <User className='h-3 w-3' />
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{instructor.username}</span>
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder='Tìm kiếm Huấn luyện viên...'
+                          value={instructorSearchKey}
+                          onValueChange={setInstructorSearchKey}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {isSearchingInstructors
+                              ? "Đang tìm kiếm..."
+                              : "Không tìm thấy Huấn luyện viên."}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {isSearchingInstructors ? (
+                              <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
+                                <Loader2 className='h-4 w-4 animate-spin' />
+                                Đang tìm kiếm...
                               </div>
                             ) : (
-                              "Chọn Huấn luyện viên..."
-                            );
-                          })()
-                        : "Chọn Huấn luyện viên..."}
-                      <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className='w-[--radix-popover-trigger-width] p-0'
-                    align='start'
-                  >
-                    <Command shouldFilter={false}>
-                      <CommandInput
-                        placeholder='Tìm kiếm Huấn luyện viên...'
-                        value={instructorSearchKey}
-                        onValueChange={setInstructorSearchKey}
-                      />
-                      <CommandList>
-                        <CommandEmpty>
-                          {isSearchingInstructors
-                            ? "Đang tìm kiếm..."
-                            : "Không tìm thấy Huấn luyện viên."}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {isSearchingInstructors ? (
-                            <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
-                              <Loader2 className='h-4 w-4 animate-spin' />
-                              Đang tìm kiếm...
-                            </div>
-                          ) : (
-                            (instructorSearchKey.trim()
-                              ? searchedInstructors
-                              : availableInstructors
-                            )
-                              .sort((a, b) => {
-                                // Sort: Free instructors first, then busy ones
-                                const aIsBusy = busyInstructorIds.includes(
-                                  a._id
-                                );
-                                const bIsBusy = busyInstructorIds.includes(
-                                  b._id
-                                );
-                                if (aIsBusy === bIsBusy) return 0;
-                                return aIsBusy ? 1 : -1;
-                              })
-                              .map((instructor) => {
-                                const isBusy = busyInstructorIds.includes(
-                                  instructor._id
-                                );
-                                return (
-                                  <CommandItem
-                                    key={instructor._id}
-                                    value={instructor.username}
-                                    disabled={instructor.is_active === false}
-                                    onSelect={() => {
-                                      setSelectedInstructor(instructor._id);
-                                      setInstructorSearchKey("");
-                                      setOpenInstructorPopover(false);
-                                    }}
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedInstructor === instructor._id
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                    <div className='flex items-center gap-2 flex-1'>
-                                      <Avatar className='h-6 w-6'>
-                                        <AvatarImage
-                                          src={
-                                            instructorAvatars[instructor._id]
-                                          }
-                                        />
-                                        <AvatarFallback>
-                                          <User className='h-3 w-3' />
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div className='flex flex-col flex-1'>
-                                        <div className='flex items-center gap-2'>
-                                          <span>
-                                            {instructor.username} (
-                                            {instructor.email})
-                                          </span>
-                                          {isBusy ? (
-                                            <Badge
-                                              variant='destructive'
-                                              className='text-[10px] px-1.5 py-0 h-5'
-                                            >
-                                              Bận
-                                            </Badge>
-                                          ) : (
-                                            <Badge
-                                              variant='default'
-                                              className='text-[10px] px-1.5 py-0 h-5 bg-green-500 hover:bg-green-600'
-                                            >
-                                              Rảnh
-                                            </Badge>
+                              (instructorSearchKey.trim()
+                                ? searchedInstructors
+                                : availableInstructors
+                              )
+                                .sort((a, b) => {
+                                  // Sort: Free instructors first, then busy ones
+                                  const aIsBusy = busyInstructorIds.includes(
+                                    a._id
+                                  );
+                                  const bIsBusy = busyInstructorIds.includes(
+                                    b._id
+                                  );
+                                  if (aIsBusy === bIsBusy) return 0;
+                                  return aIsBusy ? 1 : -1;
+                                })
+                                .map((instructor) => {
+                                  const isBusy = busyInstructorIds.includes(
+                                    instructor._id
+                                  );
+                                  const instructorWarnings =
+                                    validationWarnings.filter(
+                                      (w) => w.instructorId === instructor._id
+                                    );
+                                  const hasErrors = instructorWarnings.some(
+                                    (w) => w.severity === "error"
+                                  );
+                                  return (
+                                    <CommandItem
+                                      key={instructor._id}
+                                      value={instructor.username}
+                                      disabled={instructor.is_active === false}
+                                      onSelect={() => {
+                                        setSelectedInstructor(instructor._id);
+                                        setInstructorSearchKey("");
+                                        setOpenInstructorPopover(false);
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          selectedInstructor === instructor._id
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      <div className='flex items-center gap-2 flex-1'>
+                                        <Avatar className='h-6 w-6'>
+                                          <AvatarImage
+                                            src={
+                                              instructorAvatars[instructor._id]
+                                            }
+                                          />
+                                          <AvatarFallback>
+                                            <User className='h-3 w-3' />
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className='flex flex-col flex-1'>
+                                          <div className='flex items-center gap-2'>
+                                            <span>
+                                              {instructor.username} (
+                                              {instructor.email})
+                                            </span>
+                                            {isBusy ? (
+                                              <Badge
+                                                variant='destructive'
+                                                className='text-[10px] px-1.5 py-0 h-5'
+                                              >
+                                                Bận
+                                              </Badge>
+                                            ) : (
+                                              <Badge
+                                                variant='default'
+                                                className='text-[10px] px-1.5 py-0 h-5 bg-green-500 hover:bg-green-600'
+                                              >
+                                                Rảnh
+                                              </Badge>
+                                            )}
+                                            {hasErrors && (
+                                              <Badge
+                                                variant='destructive'
+                                                className='text-[10px] px-1.5 py-0 h-5'
+                                              >
+                                                Lỗi
+                                              </Badge>
+                                            )}
+                                          </div>
+                                          {instructor.is_active === false && (
+                                            <span className='text-xs text-red-500'>
+                                              Không hoạt động
+                                            </span>
                                           )}
                                         </div>
-                                        {instructor.is_active === false && (
-                                          <span className='text-xs text-red-500'>
-                                            Không hoạt động
-                                          </span>
-                                        )}
                                       </div>
-                                    </div>
-                                  </CommandItem>
-                                );
-                              })
-                          )}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
+                                    </CommandItem>
+                                  );
+                                })
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Show warnings for selected instructor */}
+                {selectedInstructorWarnings.length > 0 && (
+                  <div className='space-y-1'>
+                    {selectedInstructorWarnings.map((warning, index) => (
+                      <Alert
+                        key={index}
+                        variant={
+                          warning.severity === "error"
+                            ? "destructive"
+                            : "default"
+                        }
+                        className={
+                          warning.severity === "warning"
+                            ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
+                            : ""
+                        }
+                      >
+                        <AlertCircle className='h-4 w-4' />
+                        <AlertDescription className='text-sm'>
+                          <div className='font-medium'>{warning.message}</div>
+                          <div className='text-xs opacity-80'>
+                            {warning.details}
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

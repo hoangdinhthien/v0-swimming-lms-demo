@@ -1,6 +1,7 @@
 'Trong add-class-form.tsx, logic hiện tại dựa vào fetchSlotDetail để lấy busyInstructorIds từ slotDetail.schedules[] (các schedules đã có cho slot + date cụ thể). Bạn có muốn giữ logic này và chỉ cải thiện bằng cách thêm validation chuyên môn (categories/age_types từ instructor specialists) không?
 Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (không chỉ slot cụ thể), hoặc validate với course của classroom?
 Đối với pool availability, đã implement fetchAvailablePools rồi, có cần cải thiện gì thêm không?'
+TÔI CẦN CHECK VÀ TRẢ LỜI CÂU HỎI CỦA TÔI VỀ PHẦN DRAWER TRONG TRANG LỊCH (manager/calendar):
 ===> Ý TƯỞNG BAN ĐẦU CỦA TÔI LÀ NHƯ THẾ NÀY: 
 - case: thêm thủ công lớp học vào LỊCH (ở tab 'Thêm lớp học' trong drawer)
     . ví dụ 1: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu chưa có huấn luyện viên thì cho chọn select hlv mà đang availale
@@ -17,11 +18,15 @@ Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (
 
 =====
 
-tôi cần bạn sửa lại phần này:
-- sử button 'Tự động xếp lịch học' thành 'Xếp lịch cho lớp học'
-- ở trang 'manager/class/[id]' (trang class detail), modal 'Tự động xếp lịch học cho lớp' không còn cần nữa.
-- bây giờ, tôi muốn tái sử dụng lại modal (schedule-preview-modal.tsx) để thay thế cho modal 'Tự động xếp lịch học cho lớp'
-- khi manager/staff click vào button 'Xếp lịch cho lớp học' thì sẽ hiện lên modal schedule-preview-modal.tsx
-- lưu ý: chỉ thay đổi logic cho phần xếp lịch thôi, còn các logic còn lại như chỉnh sửa thông tin lớp học & add member & remove member, etc. thì vẫn như cũ
-- lưu ý: ở step 1 trong modal schedule-preview-modal.tsx CHỈ SẼ HIỆN LÊN mỗi lớp đó thôi
-- CÓ GÌ THẮC MẮC THÌ CỨ HỎI TÔI
+tôi cần bạn sửa lại phần này ở trang class detail (manager/class/[id]), ở modal 'Chỉnh sửa thông tin lớp học':
+- đây là request body mới của api updateClass: 
+    {
+        "course": "69079ef9c5d0d1fc7a75e5bb",
+        "name": "test 6",
+        "instructor": "683c810c0707d1bbac3063f0",
+        "show_on_regist_course": true, //  ===> đây là field mới
+        "member_passed": [ ===> đây là field mới
+            "693e72a140d61b05c39ce2d1"
+        ]
+    }
+- khi manager/staff chỉnh sửa thông tin của lớp học, họ có thể đánh dấu 
