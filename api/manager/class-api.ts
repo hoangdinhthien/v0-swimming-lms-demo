@@ -365,7 +365,7 @@ export const fetchClassesByIds = async (
 
   // Add service header for staff users
   if (getUserFrontendRole() === "staff") {
-    headers["service"] = "Classroom";
+    headers["service"] = "Class";
   }
 
   const response = await fetch(url, {

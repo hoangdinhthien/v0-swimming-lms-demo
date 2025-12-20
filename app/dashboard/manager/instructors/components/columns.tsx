@@ -3,7 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Phone, Calendar, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mail, Phone, Calendar, Settings } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import Link from "next/link";
 
@@ -27,12 +28,14 @@ export type Instructor = {
   students: number;
   classes: number;
   joinDate: string;
-  rating: number;
   avatar: string;
   featuredImageData?: any;
 };
 
-export const columns: ColumnDef<Instructor>[] = [
+// Create columns factory that accepts callback
+export const createColumns = (
+  onEditSpecialist: (instructor: Instructor) => void
+): ColumnDef<Instructor>[] => [
   {
     accessorKey: "name",
     id: "name",
@@ -206,24 +209,28 @@ export const columns: ColumnDef<Instructor>[] = [
     enableHiding: true,
   },
   {
-    accessorKey: "rating",
-    id: "rating",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Đánh giá'
-      />
-    ),
+    id: "actions",
+    header: "Thao tác",
     cell: ({ row }) => {
-      const rating = row.getValue("rating") as number;
+      const instructor = row.original;
+
       return (
-        <div className='flex items-center gap-1'>
-          <Star className='h-4 w-4 text-yellow-500 fill-yellow-500' />
-          <span className='font-medium'>{rating.toFixed(1)}</span>
-        </div>
+        <Button
+          variant='ghost'
+          size='sm'
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditSpecialist(instructor);
+          }}
+          className='h-8 w-8 p-0'
+          title='Chỉnh sửa chuyên môn'
+        >
+          <Settings className='h-4 w-4' />
+        </Button>
       );
     },
-    enableSorting: true,
-    enableHiding: true,
   },
 ];
+
+// Default columns export for backward compatibility
+export const columns = createColumns(() => {});
