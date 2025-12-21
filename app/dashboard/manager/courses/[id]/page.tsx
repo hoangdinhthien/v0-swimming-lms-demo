@@ -380,7 +380,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           : course.category
           ? [course.category]
           : [],
-        type: course.type || "global",
+        type: Array.isArray(course.type)
+          ? course.type[0]
+          : course.type || "global",
         type_of_age: Array.isArray(course.type_of_age)
           ? course.type_of_age.map((age: any) => age._id || age)
           : course.type_of_age?._id
@@ -557,7 +559,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         session_number_duration: values.session_number_duration,
         detail: detailWithFormJudge,
         category: values.category,
-        type: values.type,
+        type: [values.type], // Convert string to array as required by API
         type_of_age: values.type_of_age,
         media: remainingMediaIds,
         is_active: values.is_active,

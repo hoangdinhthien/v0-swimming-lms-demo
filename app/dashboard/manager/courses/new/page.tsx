@@ -320,6 +320,7 @@ export default function NewCoursePage() {
       await createCourse({
         courseData: {
           ...values,
+          type: [values.type], // Convert string to array as required by API
           detail: detailWithFormJudge,
         } as any,
         tenantId,
