@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { convertFormJudgeSchema } from "@/components/manager/form-judge-builder";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface DataDisplayProps {
@@ -114,6 +115,11 @@ function getFieldConfig(moduleType: string): FieldConfig[] {
       { key: "session_number", label: "Số buổi học", type: "number" },
       { key: "max_member", label: "Số học viên tối đa", type: "number" },
       { key: "detail", label: "Chi tiết nội dung", type: "course_detail" },
+      {
+        key: "form_judge",
+        label: "Form đánh giá kỹ thuật",
+        type: "form_judge",
+      },
       { key: "category", label: "Danh mục", type: "array" },
       { key: "media", label: "Media", type: "array" },
       { key: "is_active", label: "Trạng thái hoạt động", type: "boolean" },
@@ -167,6 +173,75 @@ function getFieldConfig(moduleType: string): FieldConfig[] {
   return configs[moduleType] || [];
 }
 
+// Render a form_judge schema as a human-friendly UI (never raw JSON)
+function renderFormJudgeUI(schema: any) {
+  const normalized = convertFormJudgeSchema(schema);
+  if (
+    !normalized ||
+    !Array.isArray(normalized.items) ||
+    normalized.items.length === 0
+  ) {
+    return (
+      <div className='bg-muted/50 p-3 rounded-md text-sm'>
+        <em>Không có tiêu chí đánh giá</em>
+      </div>
+    );
+  }
+
+  return (
+    <div className='space-y-2'>
+      {normalized.items.map((item: any, idx: number) => (
+        <div
+          key={idx}
+          className='bg-white dark:bg-gray-800 p-2 rounded border'
+        >
+          <div className='flex items-center justify-between mb-1'>
+            <span className='font-medium text-sm'>{item.name}</span>
+            <div className='flex items-center gap-2'>
+              <Badge
+                variant='outline'
+                className='text-xs'
+              >
+                {getFieldTypeLabel(item.field?.type || "unknown")}
+              </Badge>
+              {item.field?.required && (
+                <Badge
+                  variant='secondary'
+                  className='text-xs'
+                >
+                  Bắt buộc
+                </Badge>
+              )}
+            </div>
+          </div>
+          {item.field && (
+            <div className='text-xs text-muted-foreground space-y-1'>
+              {item.field.is_filter && <div>• Cho phép lọc/tìm kiếm</div>}
+              {item.field.type === "string" && item.field.text_type && (
+                <div>• Kiểu nhập: {item.field.text_type}</div>
+              )}
+              {item.field.type === "number" && (
+                <div>
+                  • Khoảng: {item.field.min ?? 0} - {item.field.max ?? "∞"}
+                </div>
+              )}
+              {item.field.type === "select" && item.field.select_values && (
+                <div>
+                  • Lựa chọn:{" "}
+                  {String(item.field.select_values).split(",").length} tùy chọn
+                </div>
+              )}
+              {item.field.type === "relation" && item.field.entity && (
+                <div>• Đính kèm: {item.field.entity}</div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Format value based on type
 function formatValue(value: any, type: string, moduleType?: string) {
   if (value === null || value === undefined) {
@@ -197,12 +272,90 @@ function formatValue(value: any, type: string, moduleType?: string) {
                   </p>
                 )}
                 {item.form_judge && (
-                  <Badge
-                    variant='outline'
-                    className='text-xs'
-                  >
-                    Có form đánh giá kỹ thuật
-                  </Badge>
+                  <div className='mt-2'>
+                    <div className='text-xs font-medium text-blue-800 dark:text-blue-200 mb-2'>
+                      Form đánh giá kỹ thuật:
+                    </div>
+                    {item.form_judge.type === "object" &&
+                    Array.isArray(item.form_judge.items) ? (
+                      <div className='bg-blue-50 dark:bg-blue-900/10 p-3 rounded border border-blue-200 dark:border-blue-700'>
+                        <div className='space-y-2'>
+                          {item.form_judge.items.map(
+                            (criteria: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className='bg-white dark:bg-gray-800 p-2 rounded border'
+                              >
+                                <div className='flex items-center justify-between mb-1'>
+                                  <span className='font-medium text-sm'>
+                                    {criteria.name}
+                                  </span>
+                                  <div className='flex items-center gap-2'>
+                                    <Badge
+                                      variant='outline'
+                                      className='text-xs'
+                                    >
+                                      {getFieldTypeLabel(
+                                        criteria.field?.type || "unknown"
+                                      )}
+                                    </Badge>
+                                    {criteria.field?.required && (
+                                      <Badge
+                                        variant='secondary'
+                                        className='text-xs'
+                                      >
+                                        Bắt buộc
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                {criteria.field && (
+                                  <div className='text-xs text-muted-foreground space-y-1'>
+                                    {criteria.field.is_filter && (
+                                      <div>• Cho phép lọc/tìm kiếm</div>
+                                    )}
+                                    {criteria.field.type === "string" &&
+                                      criteria.field.text_type && (
+                                        <div>
+                                          • Kiểu nhập:{" "}
+                                          {criteria.field.text_type}
+                                        </div>
+                                      )}
+                                    {criteria.field.type === "number" && (
+                                      <div>
+                                        • Khoảng: {criteria.field.min || 0} -{" "}
+                                        {criteria.field.max || "∞"}
+                                      </div>
+                                    )}
+                                    {criteria.field.type === "select" &&
+                                      criteria.field.select_values && (
+                                        <div>
+                                          • Lựa chọn:{" "}
+                                          {
+                                            criteria.field.select_values.split(
+                                              ","
+                                            ).length
+                                          }{" "}
+                                          tùy chọn
+                                        </div>
+                                      )}
+                                    {criteria.field.type === "relation" &&
+                                      criteria.field.entity && (
+                                        <div>
+                                          • Đính kèm: {criteria.field.entity}
+                                        </div>
+                                      )}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>{renderFormJudgeUI(item.form_judge)}</div>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -212,6 +365,84 @@ function formatValue(value: any, type: string, moduleType?: string) {
       return (
         <span className='text-muted-foreground italic text-sm'>
           Chưa có nội dung
+        </span>
+      );
+
+    case "form_judge":
+      // Special handling for form judge schema
+      if (value && typeof value === "object") {
+        return (
+          <div className='bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700'>
+            <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-3'>
+              Biểu mẫu đánh giá kỹ thuật
+            </h4>
+            {value.type === "object" && Array.isArray(value.items) ? (
+              <div className='space-y-3'>
+                {value.items.map((item: any, index: number) => (
+                  <div
+                    key={index}
+                    className='bg-white dark:bg-gray-800 p-3 rounded border'
+                  >
+                    <div className='flex items-center justify-between mb-2'>
+                      <h5 className='font-medium text-sm'>{item.name}</h5>
+                      <div className='flex items-center gap-2'>
+                        <Badge
+                          variant='outline'
+                          className='text-xs'
+                        >
+                          {getFieldTypeLabel(item.field?.type || "unknown")}
+                        </Badge>
+                        {item.field?.required && (
+                          <Badge
+                            variant='secondary'
+                            className='text-xs'
+                          >
+                            Bắt buộc
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {item.field && (
+                      <div className='text-xs text-muted-foreground space-y-1'>
+                        {item.field.is_filter && (
+                          <div>• Cho phép lọc/tìm kiếm</div>
+                        )}
+                        {item.field.type === "string" &&
+                          item.field.text_type && (
+                            <div>• Kiểu nhập: {item.field.text_type}</div>
+                          )}
+                        {item.field.type === "number" && (
+                          <div>
+                            • Khoảng: {item.field.min || 0} -{" "}
+                            {item.field.max || "∞"}
+                          </div>
+                        )}
+                        {item.field.type === "select" &&
+                          item.field.select_values && (
+                            <div>
+                              • Lựa chọn:{" "}
+                              {item.field.select_values.split(",").length} tùy
+                              chọn
+                            </div>
+                          )}
+                        {item.field.type === "relation" &&
+                          item.field.entity && (
+                            <div>• Đính kèm: {item.field.entity}</div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>{renderFormJudgeUI(value)}</div>
+            )}
+          </div>
+        );
+      }
+      return (
+        <span className='text-muted-foreground italic text-sm'>
+          Không có form đánh giá
         </span>
       );
 
@@ -343,4 +574,17 @@ function formatValue(value: any, type: string, moduleType?: string) {
         </p>
       );
   }
+}
+
+// Helper function to get Vietnamese label for field type
+function getFieldTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    string: "Văn bản",
+    number: "Số",
+    boolean: "Đúng/Sai",
+    select: "Lựa chọn",
+    relation: "Đính kèm tập tin",
+    unknown: "Không xác định",
+  };
+  return labels[type] || type;
 }

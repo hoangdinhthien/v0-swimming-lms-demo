@@ -1101,3 +1101,155 @@ export const createAndAutoScheduleClasses = async (
     "createAndAutoScheduleClasses has been deprecated. Please use createClass() followed by autoScheduleClassPreview() from schedule-api.ts instead."
   );
 };
+
+// ============================================================================
+// Class Notes API
+// ============================================================================
+
+export interface ClassNote {
+  _id: string;
+  member: {
+    _id: string;
+    username: string;
+    email?: string;
+    role_front?: string[];
+    parent_id?: string[];
+    is_active?: boolean;
+    birthday?: string;
+    created_at?: string;
+    created_by?: string;
+    updated_at?: string;
+    updated_by?: string;
+    featured_image?: string[];
+    role?: string[];
+  };
+  class: {
+    _id: string;
+    name: string;
+    course: string;
+    instructor: string;
+    show_on_regist_course?: boolean;
+    created_at?: string;
+    created_by?: string;
+    updated_at?: string;
+    updated_by?: string;
+    tenant_id?: string;
+    member?: string[];
+    member_passed?: string[];
+  };
+  schedule?: {
+    _id: string;
+    slot: string;
+    date: string;
+    classroom: string;
+    pool: string;
+    instructor: string;
+    created_at?: string;
+    created_by?: string;
+    updated_at?: string;
+    updated_by?: string;
+    tenant_id?: string;
+  };
+  note: string; // JSON string that needs to be parsed
+  created_at: string;
+  created_by: {
+    _id: string;
+    username: string;
+    email?: string;
+    role_front?: string[];
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    featured_image?: string[];
+    role?: string[];
+  };
+  updated_at: string;
+  updated_by: {
+    _id: string;
+    username: string;
+    email?: string;
+    role_front?: string[];
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+    featured_image?: string[];
+    role?: string[];
+  };
+  tenant_id: string;
+}
+
+export interface ClassNotesResponse {
+  data: [
+    [
+      {
+        limit: number;
+        skip: number;
+        count: number;
+        documents: ClassNote[];
+      }
+    ]
+  ];
+  message: string;
+  statusCode: number;
+}
+
+/**
+ * Fetch class notes for a specific class
+ * @param classId - The ID of the class to fetch notes for
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with class notes data
+ */
+export const fetchClassNotes = async (
+  scheduleId: string,
+  tenantId?: string,
+  token?: string
+): Promise<ClassNote[]> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!scheduleId) {
+    throw new Error("Schedule ID is required");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class/note?search[schedule._id:equal]=${scheduleId}`,
+    {
+      method: "GET",
+      headers,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch class notes: ${response.status}`);
+  }
+
+  const result: ClassNotesResponse = await response.json();
+
+  // Extract documents from nested response
+  if (
+    result.data &&
+    result.data[0] &&
+    result.data[0][0] &&
+    result.data[0][0].documents
+  ) {
+    return result.data[0][0].documents;
+  }
+
+  return [];
+};

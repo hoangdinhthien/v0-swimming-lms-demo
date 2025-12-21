@@ -24,16 +24,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Info, Edit, Trash2 } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { fetchSlotDetail, type SlotDetail } from "@/api/manager/slot-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
-import { getMediaDetails } from "@/api/media-api";
-import { fetchStudentDetail } from "@/api/manager/students-api";
-import { fetchInstructorDetail } from "@/api/manager/instructors-api";
+import { fetchClassNotes, type ClassNote } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import type { ScheduleEvent } from "@/api/manager/schedule-api";
@@ -56,22 +54,6 @@ interface CourseDetail {
   level?: string;
   duration?: string;
   capacity?: number;
-}
-
-interface StudentDetail {
-  _id: string;
-  username: string;
-  email?: string;
-  phone?: string;
-  featured_image?: string[];
-}
-
-interface InstructorDetail {
-  _id: string;
-  username: string;
-  email?: string;
-  phone?: string;
-  featured_image?: string[];
 }
 
 // Interface phù hợp với response thực tế từ fetchSlotDetail
@@ -97,7 +79,13 @@ interface ActualSchedule {
   _id: string;
   classroom: ActualClassroom;
   pool: ActualPool; // Từ response data thì pool là single object, không phải array
-  instructor?: string; // Huấn luyện viên được phân công cho slot
+  instructor?: {
+    _id: string;
+    username: string;
+    email?: string;
+    phone?: string;
+    featured_image?: string[];
+  }; // Full instructor object from response
   date: string;
 }
 
@@ -114,19 +102,9 @@ export default function ClassDetailModal({
   const [detailedSchedule, setDetailedSchedule] =
     useState<ActualSchedule | null>(null);
 
-  // Students and instructors details
-  const [studentsDetails, setStudentsDetails] = useState<StudentDetail[]>([]);
-  const [classInstructor, setClassInstructor] =
-    useState<InstructorDetail | null>(null); // Huấn luyện viên cố định
-  const [slotInstructor, setSlotInstructor] = useState<InstructorDetail | null>(
-    null
-  ); // Huấn luyện viên slot
-  const [classInstructorAvatar, setClassInstructorAvatar] =
-    useState<string>("");
-  const [slotInstructorAvatar, setSlotInstructorAvatar] = useState<string>("");
-  const [studentsAvatars, setStudentsAvatars] = useState<{
-    [key: string]: string;
-  }>({});
+  // Class notes
+  const [classNotes, setClassNotes] = useState<ClassNote[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(false);
 
   // Load additional details when modal opens
   useEffect(() => {
@@ -142,12 +120,8 @@ export default function ClassDetailModal({
     setCourseDetail(null);
     setSlotDetail(null);
     setDetailedSchedule(null);
-    setStudentsDetails([]);
-    setClassInstructor(null);
-    setSlotInstructor(null);
-    setClassInstructorAvatar("");
-    setSlotInstructorAvatar("");
-    setStudentsAvatars({});
+    setClassNotes([]);
+    setLoadingNotes(false);
   };
 
   const loadDetailedInformation = async () => {
@@ -191,6 +165,24 @@ export default function ClassDetailModal({
             };
             setDetailedSchedule(actualSchedule);
 
+            // Fetch class notes using schedule ID
+            if (actualSchedule._id) {
+              try {
+                setLoadingNotes(true);
+                const notes = await fetchClassNotes(
+                  actualSchedule._id,
+                  tenantId,
+                  token
+                );
+                setClassNotes(notes);
+              } catch (error) {
+                console.warn("❌ Failed to fetch class notes:", error);
+                setClassNotes([]);
+              } finally {
+                setLoadingNotes(false);
+              }
+            }
+
             // Fetch course details
             if (actualSchedule.classroom?.course) {
               try {
@@ -202,280 +194,6 @@ export default function ClassDetailModal({
                 setCourseDetail(course);
               } catch (error) {
                 console.warn("❌ Failed to fetch course details:", error);
-              }
-            }
-
-            // Fetch students details
-            if (
-              actualSchedule.classroom?.member &&
-              actualSchedule.classroom.member.length > 0
-            ) {
-              // Test với student ID cụ thể từ response data
-              const testStudentId = "68e9111431a4b3bf3e942d56";
-              if (actualSchedule.classroom.member.includes(testStudentId)) {
-                try {
-                  const testStudent = await fetchStudentDetail({
-                    studentId: testStudentId,
-                    tenantId,
-                    token,
-                  });
-                } catch (testError) {
-                  console.error("🧪 Test student failed:", testError);
-                }
-              }
-
-              try {
-                const studentsData = await Promise.all(
-                  actualSchedule.classroom.member.map(
-                    async (studentId: string) => {
-                      try {
-                        const studentResponse = await fetchStudentDetail({
-                          studentId,
-                          tenantId,
-                          token,
-                        });
-
-                        // Extract user data from the nested response structure
-                        const student =
-                          studentResponse?.user || studentResponse;
-
-                        // Ensure we have a valid student object
-                        if (!student || !student._id) {
-                          console.warn(
-                            `❌ Invalid student data for ID ${studentId}:`,
-                            student
-                          );
-                          return null;
-                        }
-
-                        // Fetch student avatar - handle different featured_image structures
-                        let avatarUrl = "";
-                        let featuredImagePath = null;
-
-                        if (student.featured_image) {
-                          // Handle array of objects with path property: [{path: [...]}]
-                          if (
-                            Array.isArray(student.featured_image) &&
-                            student.featured_image[0]?.path
-                          ) {
-                            if (Array.isArray(student.featured_image[0].path)) {
-                              featuredImagePath =
-                                student.featured_image[0].path[0];
-                            } else {
-                              featuredImagePath =
-                                student.featured_image[0].path;
-                            }
-                          }
-                          // Handle object with path property: {path: "..."}
-                          else if (student.featured_image.path) {
-                            featuredImagePath = student.featured_image.path;
-                          }
-                          // Handle direct array: ["imageId"]
-                          else if (
-                            Array.isArray(student.featured_image) &&
-                            student.featured_image.length > 0
-                          ) {
-                            featuredImagePath = student.featured_image[0];
-                          }
-                        }
-
-                        // If we have a direct URL, use it; otherwise try to fetch media details
-                        if (featuredImagePath) {
-                          if (featuredImagePath.startsWith("http")) {
-                            avatarUrl = featuredImagePath;
-                          } else {
-                            try {
-                              avatarUrl =
-                                (await getMediaDetails(featuredImagePath)) ||
-                                "";
-                            } catch (error) {
-                              console.warn(
-                                "Failed to fetch student avatar:",
-                                error
-                              );
-                            }
-                          }
-                        }
-
-                        if (avatarUrl) {
-                          setStudentsAvatars((prev) => ({
-                            ...prev,
-                            [studentId]: avatarUrl,
-                          }));
-                        }
-
-                        return student;
-                      } catch (error) {
-                        console.warn(
-                          `❌ Failed to fetch student ${studentId}:`,
-                          error
-                        );
-                        return null;
-                      }
-                    }
-                  )
-                );
-
-                const validStudents = studentsData.filter(Boolean);
-
-                setStudentsDetails(validStudents);
-              } catch (error) {
-                console.warn("Failed to fetch students details:", error);
-              }
-            }
-
-            // Fetch class instructor (Huấn luyện viên cố định của lớp)
-            if (actualSchedule.classroom?.instructor) {
-              try {
-                const instructorResponse = await fetchInstructorDetail({
-                  instructorId: actualSchedule.classroom.instructor,
-                  tenantId,
-                  token,
-                });
-
-                // Extract user data from the nested response structure
-                const instructor =
-                  instructorResponse?.user || instructorResponse;
-
-                // Ensure we have a valid instructor object
-                if (instructor && instructor._id) {
-                  setClassInstructor(instructor);
-
-                  // Fetch class instructor avatar - handle different featured_image structures
-                  let avatarUrl = "";
-                  let featuredImagePath = null;
-
-                  if (instructor.featured_image) {
-                    // Handle array of objects with path property: [{path: [...]}]
-                    if (
-                      Array.isArray(instructor.featured_image) &&
-                      instructor.featured_image[0]?.path
-                    ) {
-                      if (Array.isArray(instructor.featured_image[0].path)) {
-                        featuredImagePath =
-                          instructor.featured_image[0].path[0];
-                      } else {
-                        featuredImagePath = instructor.featured_image[0].path;
-                      }
-                    }
-                    // Handle object with path property: {path: "..."}
-                    else if (instructor.featured_image.path) {
-                      featuredImagePath = instructor.featured_image.path;
-                    }
-                    // Handle direct array: ["imageId"]
-                    else if (
-                      Array.isArray(instructor.featured_image) &&
-                      instructor.featured_image.length > 0
-                    ) {
-                      featuredImagePath = instructor.featured_image[0];
-                    }
-                  }
-
-                  // If we have a direct URL, use it; otherwise try to fetch media details
-                  if (featuredImagePath) {
-                    if (featuredImagePath.startsWith("http")) {
-                      avatarUrl = featuredImagePath;
-                    } else {
-                      try {
-                        avatarUrl =
-                          (await getMediaDetails(featuredImagePath)) || "";
-                      } catch (error) {
-                        console.warn(
-                          "Failed to fetch class instructor avatar:",
-                          error
-                        );
-                      }
-                    }
-                  }
-
-                  setClassInstructorAvatar(avatarUrl);
-                } else {
-                  console.warn("❌ Invalid class instructor data:", instructor);
-                }
-              } catch (error) {
-                console.warn(
-                  "❌ Failed to fetch class instructor details:",
-                  error
-                );
-              }
-            }
-
-            // Fetch slot instructor (Huấn luyện viên được phân công cho slot)
-            if (
-              actualSchedule.instructor &&
-              actualSchedule.instructor !== actualSchedule.classroom?.instructor
-            ) {
-              try {
-                const instructorResponse = await fetchInstructorDetail({
-                  instructorId: actualSchedule.instructor,
-                  tenantId,
-                  token,
-                });
-
-                // Extract user data from the nested response structure
-                const instructor =
-                  instructorResponse?.user || instructorResponse;
-
-                // Ensure we have a valid instructor object
-                if (instructor && instructor._id) {
-                  setSlotInstructor(instructor);
-
-                  // Fetch slot instructor avatar - handle different featured_image structures
-                  let avatarUrl = "";
-                  let featuredImagePath = null;
-
-                  if (instructor.featured_image) {
-                    // Handle array of objects with path property: [{path: [...]}]
-                    if (
-                      Array.isArray(instructor.featured_image) &&
-                      instructor.featured_image[0]?.path
-                    ) {
-                      if (Array.isArray(instructor.featured_image[0].path)) {
-                        featuredImagePath =
-                          instructor.featured_image[0].path[0];
-                      } else {
-                        featuredImagePath = instructor.featured_image[0].path;
-                      }
-                    }
-                    // Handle object with path property: {path: "..."}
-                    else if (instructor.featured_image.path) {
-                      featuredImagePath = instructor.featured_image.path;
-                    }
-                    // Handle direct array: ["imageId"]
-                    else if (
-                      Array.isArray(instructor.featured_image) &&
-                      instructor.featured_image.length > 0
-                    ) {
-                      featuredImagePath = instructor.featured_image[0];
-                    }
-                  }
-
-                  // If we have a direct URL, use it; otherwise try to fetch media details
-                  if (featuredImagePath) {
-                    if (featuredImagePath.startsWith("http")) {
-                      avatarUrl = featuredImagePath;
-                    } else {
-                      try {
-                        avatarUrl =
-                          (await getMediaDetails(featuredImagePath)) || "";
-                      } catch (error) {
-                        console.warn(
-                          "Failed to fetch slot instructor avatar:",
-                          error
-                        );
-                      }
-                    }
-                  }
-
-                  setSlotInstructorAvatar(avatarUrl);
-                } else {
-                  console.warn("❌ Invalid slot instructor data:", instructor);
-                }
-              } catch (error) {
-                console.warn(
-                  "❌ Failed to fetch slot instructor details:",
-                  error
-                );
               }
             }
           }
@@ -554,293 +272,374 @@ export default function ClassDetailModal({
             </p>
           </div>
         ) : (
-          <div className='space-y-4'>
-            {/* Header Card */}
-            <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700'>
-              <CardContent className='p-4'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-4'>
-                    <Avatar className='h-12 w-12'>
-                      <AvatarFallback className='bg-blue-500 text-white'>
-                        <TeamOutlined className='text-xl' />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className='text-xl font-semibold mb-1'>
-                        {detailedSchedule?.classroom?.name || "Không xác định"}
-                      </h3>
-                      <p className='text-sm text-muted-foreground'>
-                        {slotDetail?.title || "Không xác định"}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant='secondary'
-                    className='text-sm px-3 py-1'
-                  >
-                    {getTimeRange()}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+          <Tabs
+            defaultValue='slot-info'
+            className='w-full'
+          >
+            <TabsList className='grid w-full grid-cols-2'>
+              <TabsTrigger value='slot-info'>Thông tin slot</TabsTrigger>
+              <TabsTrigger value='class-notes'>Ghi chú học viên</TabsTrigger>
+            </TabsList>
 
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-base'>Thông tin cơ bản</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {/* Ngày học */}
-                <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
-                  <CalendarOutlined className='text-lg text-blue-500 mt-0.5' />
-                  <div className='flex-1'>
-                    <div className='text-sm text-muted-foreground mb-1'>
-                      Ngày học
-                    </div>
-                    <div className='font-semibold'>{getFormattedDate()}</div>
-                  </div>
-                </div>
-
-                {/* Thời gian */}
-                <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
-                  <ClockCircleOutlined className='text-lg text-blue-500 mt-0.5' />
-                  <div className='flex-1'>
-                    <div className='text-sm text-muted-foreground mb-1'>
-                      Thời gian
-                    </div>
-                    <div className='font-semibold'>{getTimeRange()}</div>
-                    {slotDetail?.duration && (
-                      <div className='text-sm text-muted-foreground mt-1'>
-                        Thời lượng: {slotDetail.duration}
+            <TabsContent
+              value='slot-info'
+              className='space-y-4 mt-4'
+            >
+              {/* Header Card */}
+              <Card className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700'>
+                <CardContent className='p-4'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-4'>
+                      <Avatar className='h-12 w-12'>
+                        <AvatarFallback className='bg-blue-500 text-white'>
+                          <TeamOutlined className='text-xl' />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className='text-xl font-semibold mb-1'>
+                          {detailedSchedule?.classroom?.name ||
+                            "Không xác định"}
+                        </h3>
+                        <p className='text-sm text-muted-foreground'>
+                          {slotDetail?.title || "Không xác định"}
+                        </p>
                       </div>
-                    )}
+                    </div>
+                    <Badge
+                      variant='secondary'
+                      className='text-sm px-3 py-1'
+                    >
+                      {getTimeRange()}
+                    </Badge>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                {/* Khóa học */}
-                <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
-                  <BookOutlined className='text-lg text-blue-500 mt-0.5' />
-                  <div className='flex-1'>
-                    <div className='text-sm text-muted-foreground mb-1'>
-                      Khóa học
-                    </div>
-                    <div className='font-semibold'>
-                      {courseDetail?.title ||
-                        detailedSchedule?.classroom?.name ||
-                        "Đang tải..."}
-                    </div>
-                    {courseDetail?.description && (
-                      <div className='text-sm text-muted-foreground mt-1'>
-                        {courseDetail.description}
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className='text-base'>Thông tin cơ bản</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {/* Ngày học */}
+                  <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
+                    <CalendarOutlined className='text-lg text-blue-500 mt-0.5' />
+                    <div className='flex-1'>
+                      <div className='text-sm text-muted-foreground mb-1'>
+                        Ngày học
                       </div>
-                    )}
-                    {courseDetail?.level && (
-                      <Badge
-                        variant='secondary'
-                        className='mt-2'
-                      >
-                        {courseDetail.level}
-                      </Badge>
-                    )}
+                      <div className='font-semibold'>{getFormattedDate()}</div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Hồ bơi */}
-                <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
-                  <EnvironmentOutlined className='text-lg text-blue-500 mt-0.5' />
-                  <div className='flex-1'>
-                    <div className='text-sm text-muted-foreground mb-1'>
-                      Hồ bơi
-                    </div>
-                    <div className='font-semibold'>
-                      {detailedSchedule?.pool?.title || "Không xác định"}
-                    </div>
-                    {detailedSchedule?.pool && (
-                      <div className='text-sm text-muted-foreground mt-2 space-y-1'>
-                        {detailedSchedule.pool.type && (
-                          <div>Loại: {detailedSchedule.pool.type}</div>
-                        )}
-                        {detailedSchedule.pool.dimensions && (
-                          <div>
-                            Kích thước: {detailedSchedule.pool.dimensions}
-                          </div>
-                        )}
-                        {detailedSchedule.pool.depth && (
-                          <div>Độ sâu: {detailedSchedule.pool.depth}</div>
-                        )}
-                        {detailedSchedule.pool.capacity && (
-                          <div>
-                            Sức chứa: {detailedSchedule.pool.capacity} người
-                          </div>
-                        )}
+                  {/* Thời gian */}
+                  <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
+                    <ClockCircleOutlined className='text-lg text-blue-500 mt-0.5' />
+                    <div className='flex-1'>
+                      <div className='text-sm text-muted-foreground mb-1'>
+                        Thời gian
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Huấn luyện viên */}
-                <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
-                  <UserOutlined className='text-lg text-blue-500 mt-0.5' />
-                  <div className='flex-1'>
-                    <div className='text-sm text-muted-foreground mb-2'>
-                      Huấn luyện viên
-                    </div>
-                    <div className='space-y-3'>
-                      {/* Huấn luyện viên cố định của lớp */}
-                      {classInstructor && (
-                        <div>
-                          <div className='text-xs text-muted-foreground mb-2 flex items-center gap-1'>
-                            <BookOutlined />
-                            Huấn luyện viên phụ trách lớp học:
-                          </div>
-                          <div className='flex items-center gap-3'>
-                            <Avatar>
-                              <AvatarImage src={classInstructorAvatar} />
-                              <AvatarFallback>
-                                <UserOutlined />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className='font-semibold'>
-                                {classInstructor.username}
-                              </div>
-                              {classInstructor.email && (
-                                <div className='text-sm text-muted-foreground'>
-                                  {classInstructor.email}
-                                </div>
-                              )}
-                              {classInstructor.phone && (
-                                <div className='text-sm text-muted-foreground'>
-                                  {classInstructor.phone}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Huấn luyện viên được phân công cho slot */}
-                      {slotInstructor &&
-                        slotInstructor._id !== classInstructor?._id && (
-                          <div>
-                            <Separator className='my-2' />
-                            <div className='text-xs text-muted-foreground mb-2 flex items-center gap-1'>
-                              <ClockCircleOutlined />
-                              Huấn luyện viên phân công cho slot này:
-                            </div>
-                            <div className='flex items-center gap-3'>
-                              <Avatar>
-                                <AvatarImage src={slotInstructorAvatar} />
-                                <AvatarFallback>
-                                  <UserOutlined />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className='font-semibold'>
-                                  {slotInstructor.username}
-                                </div>
-                                {slotInstructor.email && (
-                                  <div className='text-sm text-muted-foreground'>
-                                    {slotInstructor.email}
-                                  </div>
-                                )}
-                                {slotInstructor.phone && (
-                                  <div className='text-sm text-muted-foreground'>
-                                    {slotInstructor.phone}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                      {/* Không có Huấn luyện viên nào */}
-                      {!classInstructor && !slotInstructor && (
-                        <div className='text-sm text-muted-foreground'>
-                          Chưa có Huấn luyện viên được phân công
+                      <div className='font-semibold'>{getTimeRange()}</div>
+                      {slotDetail?.duration && (
+                        <div className='text-sm text-muted-foreground mt-1'>
+                          Thời lượng: {slotDetail.duration}
                         </div>
                       )}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Class Members */}
-            {detailedSchedule?.classroom?.member &&
-              detailedSchedule.classroom.member.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='text-base flex items-center gap-2'>
-                      <TeamOutlined />
-                      Danh sách học viên
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className='space-y-3'>
-                      <div className='flex items-center gap-2 text-sm'>
-                        <span className='font-semibold'>Sĩ số:</span>
-                        <Badge variant='secondary'>
-                          {detailedSchedule.classroom.member.length}
-                          {courseDetail?.capacity &&
-                            ` / ${courseDetail.capacity}`}{" "}
-                          học viên
+                  {/* Khóa học */}
+                  <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
+                    <BookOutlined className='text-lg text-blue-500 mt-0.5' />
+                    <div className='flex-1'>
+                      <div className='text-sm text-muted-foreground mb-1'>
+                        Khóa học
+                      </div>
+                      <div className='font-semibold'>
+                        {courseDetail?.title ||
+                          detailedSchedule?.classroom?.name ||
+                          "Đang tải..."}
+                      </div>
+                      {courseDetail?.description && (
+                        <div className='text-sm text-muted-foreground mt-1'>
+                          {courseDetail.description}
+                        </div>
+                      )}
+                      {courseDetail?.level && (
+                        <Badge
+                          variant='secondary'
+                          className='mt-2'
+                        >
+                          {courseDetail.level}
                         </Badge>
-                      </div>
+                      )}
+                    </div>
+                  </div>
 
-                      {studentsDetails.length > 0 ? (
-                        <div className='grid grid-cols-2 gap-2'>
-                          {studentsDetails.map((student) => (
-                            <div
-                              key={student._id}
-                              className='flex items-center gap-2 p-2 rounded-lg border bg-card hover:bg-accent/50 transition-colors'
-                            >
-                              <Avatar className='h-8 w-8'>
-                                <AvatarImage
-                                  src={studentsAvatars[student._id]}
-                                />
-                                <AvatarFallback>
-                                  <UserOutlined />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className='flex-1 min-w-0'>
-                                <div className='text-sm font-medium truncate'>
-                                  {student.username}
-                                </div>
-                                {student.email && (
-                                  <div className='text-xs text-muted-foreground truncate'>
-                                    {student.email}
-                                  </div>
-                                )}
-                              </div>
+                  {/* Hồ bơi */}
+                  <div className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'>
+                    <EnvironmentOutlined className='text-lg text-blue-500 mt-0.5' />
+                    <div className='flex-1'>
+                      <div className='text-sm text-muted-foreground mb-1'>
+                        Hồ bơi
+                      </div>
+                      <div className='font-semibold'>
+                        {detailedSchedule?.pool?.title || "Không xác định"}
+                      </div>
+                      {detailedSchedule?.pool && (
+                        <div className='text-sm text-muted-foreground mt-2 space-y-1'>
+                          {detailedSchedule.pool.type && (
+                            <div>Loại: {detailedSchedule.pool.type}</div>
+                          )}
+                          {detailedSchedule.pool.dimensions && (
+                            <div>
+                              Kích thước: {detailedSchedule.pool.dimensions}
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className='text-sm text-muted-foreground text-center py-4'>
-                          Không có thông tin học viên
+                          )}
+                          {detailedSchedule.pool.depth && (
+                            <div>Độ sâu: {detailedSchedule.pool.depth}</div>
+                          )}
+                          {detailedSchedule.pool.capacity && (
+                            <div>
+                              Sức chứa: {detailedSchedule.pool.capacity} người
+                            </div>
+                          )}
                         </div>
                       )}
+                    </div>
+                  </div>
+
+                  <div className='flex items-center gap-2'>
+                    <UserOutlined className='text-muted-foreground' />
+                    <span className='font-medium'>Huấn luyện viên:</span>
+                    <div className='flex items-center gap-2'>
+                      <b>
+                        {detailedSchedule?.instructor?.username ||
+                          "Đang tải..."}
+                      </b>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Additional Info */}
+              {slotDetail?.schedules && slotDetail.schedules.length > 1 && (
+                <Card className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'>
+                  <CardContent className='p-4'>
+                    <div className='flex items-center gap-2 text-sm'>
+                      <Info className='h-4 w-4 text-blue-500' />
+                      <span>
+                        Khung giờ này có {slotDetail.schedules.length} lớp học
+                        khác trong cùng ngày
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
               )}
+            </TabsContent>
 
-            {/* Additional Info */}
-            {slotDetail?.schedules && slotDetail.schedules.length > 1 && (
-              <Card className='bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'>
-                <CardContent className='p-4'>
-                  <div className='flex items-center gap-2 text-sm'>
-                    <Info className='h-4 w-4 text-blue-500' />
-                    <span>
-                      Khung giờ này có {slotDetail.schedules.length} lớp học
-                      khác trong cùng ngày
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+            <TabsContent
+              value='class-notes'
+              className='space-y-4 mt-4'
+            >
+              {loadingNotes ? (
+                <div className='flex flex-col items-center justify-center py-8'>
+                  <Loader2 className='h-6 w-6 animate-spin text-muted-foreground mb-2' />
+                  <p className='text-sm text-muted-foreground'>
+                    Đang tải ghi chú...
+                  </p>
+                </div>
+              ) : classNotes.length > 0 ? (
+                <div className='space-y-4'>
+                  {classNotes.map((note) => {
+                    let parsedNote = null;
+                    try {
+                      parsedNote = JSON.parse(note.note);
+                    } catch (error) {
+                      console.warn("Failed to parse note:", error);
+                    }
+
+                    return (
+                      <Card key={note._id}>
+                        <CardHeader className='pb-3'>
+                          <div className='flex items-center justify-between'>
+                            <div className='flex items-center gap-3'>
+                              <Avatar className='h-8 w-8'>
+                                <AvatarImage
+                                  src={note.member.featured_image?.[0]}
+                                />
+                                <AvatarFallback>
+                                  {note.member.username
+                                    ?.charAt(0)
+                                    ?.toUpperCase() || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h4 className='font-medium'>
+                                  {note.member.username}
+                                </h4>
+                                <p className='text-sm text-muted-foreground'>
+                                  {note.member.email}
+                                </p>
+                              </div>
+                            </div>
+                            <div className='text-xs text-muted-foreground'>
+                              {dayjs(note.created_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {parsedNote ? (
+                            <div className='space-y-4'>
+                              {parsedNote.text && (
+                                <div className='p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
+                                  <span className='font-medium text-blue-700 dark:text-blue-300'>
+                                    Ghi chú:{" "}
+                                  </span>
+                                  <span className='text-sm text-blue-600 dark:text-blue-400'>
+                                    {parsedNote.text}
+                                  </span>
+                                </div>
+                              )}
+                              {parsedNote.evaluation &&
+                                parsedNote.evaluationCriteria && (
+                                  <div className='space-y-3'>
+                                    <span className='font-medium'>
+                                      Đánh giá chi tiết:
+                                    </span>
+                                    {parsedNote.evaluationCriteria.map(
+                                      (
+                                        criteria: any,
+                                        criteriaIndex: number
+                                      ) => {
+                                        const criteriaKey = `${criteriaIndex}_`;
+                                        const relevantEvaluations =
+                                          Object.entries(parsedNote.evaluation)
+                                            .filter(([key]) =>
+                                              key.startsWith(criteriaKey)
+                                            )
+                                            .map(([key, value]) => ({
+                                              field: key.replace(
+                                                criteriaKey,
+                                                ""
+                                              ),
+                                              value,
+                                            }));
+
+                                        return (
+                                          <div
+                                            key={criteria._id}
+                                            className='border rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50'
+                                          >
+                                            <h5 className='font-medium text-sm mb-2'>
+                                              {criteria.title}
+                                            </h5>
+                                            <div className='space-y-1'>
+                                              {relevantEvaluations.map(
+                                                ({ field, value }) => (
+                                                  <div
+                                                    key={field}
+                                                    className='flex justify-between items-center text-sm'
+                                                  >
+                                                    <span className='text-muted-foreground'>
+                                                      {field}:
+                                                    </span>
+                                                    <span
+                                                      className={`font-medium ${
+                                                        value === 1
+                                                          ? "text-green-600"
+                                                          : value === 0
+                                                          ? "text-red-600"
+                                                          : typeof value ===
+                                                              "number" &&
+                                                            value > 0
+                                                          ? "text-blue-600"
+                                                          : ""
+                                                      }`}
+                                                    >
+                                                      {value === 1
+                                                        ? "✓ Đạt"
+                                                        : value === 0
+                                                        ? "✗ Không đạt"
+                                                        : typeof value ===
+                                                          "number"
+                                                        ? value
+                                                        : String(value)}
+                                                    </span>
+                                                  </div>
+                                                )
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                )}
+                              {!parsedNote.evaluationCriteria &&
+                                parsedNote.evaluation && (
+                                  <div className='p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700'>
+                                    <span className='font-medium text-yellow-700 dark:text-yellow-300'>
+                                      Đánh giá:{" "}
+                                    </span>
+                                    <div className='text-sm mt-1 space-y-1'>
+                                      {Object.entries(
+                                        parsedNote.evaluation
+                                      ).map(([key, value]) => (
+                                        <div
+                                          key={key}
+                                          className='flex justify-between'
+                                        >
+                                          <span className='text-muted-foreground'>
+                                            {key}:
+                                          </span>
+                                          <span
+                                            className={`font-medium ${
+                                              value === 1
+                                                ? "text-green-600"
+                                                : value === 0
+                                                ? "text-red-600"
+                                                : typeof value === "number" &&
+                                                  value > 0
+                                                ? "text-blue-600"
+                                                : ""
+                                            }`}
+                                          >
+                                            {value === 1
+                                              ? "✓ Đạt"
+                                              : value === 0
+                                              ? "✗ Không đạt"
+                                              : typeof value === "number"
+                                              ? value
+                                              : String(value)}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+                          ) : (
+                            <div className='text-sm text-muted-foreground text-center py-4'>
+                              Không thể hiển thị ghi chú
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className='text-center py-8'>
+                  <p className='text-sm text-muted-foreground'>
+                    Chưa có ghi chú nào cho lớp học này
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
 
         <DialogFooter className='gap-2'>

@@ -1661,7 +1661,7 @@ export function SchedulePreviewModal({
                               {/* Pool Selection Section - CARDS Grid Layout */}
                               <div className='border-t pt-4 mt-4'>
                                 <div className='text-sm font-medium mb-3'>
-                                  Chọn hồ bơi cho các buổi học:
+                                  Xem trước lịch các buổi học:
                                 </div>
                                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
                                   {schedules.map((schedule, scheduleIndex) => {

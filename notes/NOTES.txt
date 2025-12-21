@@ -155,3 +155,5 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
 field type trong request body của createCourse và updateCourse phải là "type":["custom"] hoặc "type":["global"] 
 
 - fix column trạng thái
+
+- step 2: ko có pool available -> cho đổi slot trực tiếp ở step 2 (thêm slot mới) (edit trực tiếp trên card)

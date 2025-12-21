@@ -1,32 +1,418 @@
-'Trong add-class-form.tsx, logic hiện tại dựa vào fetchSlotDetail để lấy busyInstructorIds từ slotDetail.schedules[] (các schedules đã có cho slot + date cụ thể). Bạn có muốn giữ logic này và chỉ cải thiện bằng cách thêm validation chuyên môn (categories/age_types từ instructor specialists) không?
-Hay cần kiểm tra thêm instructor có lịch trùng trong toàn bộ ngày (không chỉ slot cụ thể), hoặc validate với course của classroom?
-Đối với pool availability, đã implement fetchAvailablePools rồi, có cần cải thiện gì thêm không?'
-TÔI CẦN CHECK VÀ TRẢ LỜI CÂU HỎI CỦA TÔI VỀ PHẦN DRAWER TRONG TRANG LỊCH (manager/calendar):
-===> Ý TƯỞNG BAN ĐẦU CỦA TÔI LÀ NHƯ THẾ NÀY: 
-- case: thêm thủ công lớp học vào LỊCH (ở tab 'Thêm lớp học' trong drawer)
-    . ví dụ 1: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu chưa có huấn luyện viên thì cho chọn select hlv mà đang availale
-    . ví dụ 2: đầu tiên sẽ cho chọn lớp học trước -> sau đó đến chọn slot + chạy api fetchSlotDetail (để biết xem trong ngày đó và slot đó có huấn luyện viên nào bận hay không? rồi hiện lên UI huấn luyện viên nào bận và huấn luyện viên nào rảnh) -> sau đó hiện mục chọn hồ bơi (sử dụng api fetchAvailablePools) -> check xem lớp học đó đã có huấn luyện viên hay chưa? nếu có huấn luyện viên rồi thì vẫn cho người dùng option thay đổi huấn luyện viên bằng cách chọn select hlv mà đang availale
-- bây giờ tôi muốn bạn xem cái ý tưởng của tôi ở trên và kết hợp với việc tham khảo logic validate chuyên môn của instructor ở step 2 trong create-classes-batch-modal.tsx và logic validate lịch của instructor + hồ bơi ở step 2 trong schedule-preview-modal.tsx và kết hợp lại thành 1 logic hợp lý cho phần 'Thêm lớp học' và 'Chỉnh sửa lớp học' trong drawer của lịch. và giải thích cho tôi các thao tác mà bạn muốn làm nó sẽ hoạt động như thế nào (gọi api gì? validate logic như thế nào?)
+- trong modal 'Chi tiết buổi học' (class-detail-modal), tôi muốn chia ra làm 2 tab, 1 tab để xem thông tin của slot đó (fetchSlotDetail) và 1 tab để xem các ghi chú cho từng học viên trong lớp học đó (class note)
 
-
-
-- logic tính instructor trống lịch/không trống lịch đang SAI, chưa có check validate (có thể tái sử dụng step 2 trong modal tạo lớp) 
-    . tham khảo logic validate chuyên môn của instructor ở step 2 trong create-classes-batch-modal.tsx và logic validate lịch của instructor + hồ bơi ở step 2 trong schedule-preview-modal.tsx và kết hợp lại thành 1 logic hợp lý cho phần 'Thêm lớp học' và 'Chỉnh sửa lớp học' trong drawer của lịch.
-    . phần quan trọng trong drawer này là hồ bơi này có available hay không? và lịch dạy của huấn luyện viên này có bị trùng hay không để xếp lịch cho lớp học/để thêm lớp học này vào lịch của ngày hôm đó!!
-
-
-
-=====
-
-tôi cần bạn sửa lại phần này ở trang class detail (manager/class/[id]), ở modal 'Chỉnh sửa thông tin lớp học':
-- đây là request body mới của api updateClass: 
-    {
-        "course": "69079ef9c5d0d1fc7a75e5bb",
-        "name": "test 6",
-        "instructor": "683c810c0707d1bbac3063f0",
-        "show_on_regist_course": true, //  ===> đây là field mới
-        "member_passed": [ ===> đây là field mới
-            "693e72a140d61b05c39ce2d1"
+1 tab để xem thông tin của slot đó:
+- trong tab này chỉ cần hiện phần UI 'Thông tin cơ bản' thôi
+- bỏ phần UI show 'Danh sách học viên' đi, để không cần phải gọi api để lấy thông tin user nữa
+- đây là response data mới của 'fetchSlotDetail': 
+{
+    "data": [
+        [
+            [
+                {
+                    "_id": "681f0d450e90714dae7a5dda",
+                    "title": "Slot 5",
+                    "start_time": 11,
+                    "end_time": 11,
+                    "duration": "45 phút",
+                    "start_minute": 0,
+                    "end_minute": 45,
+                    "created_at": "2025-05-10T15:24:37.000Z",
+                    "created_by": "6711e8a47b45b2974bd6133c",
+                    "updated_at": "2025-12-09T18:57:07.000Z",
+                    "updated_by": "6711e8a47b45b2974bd6133c",
+                    "tenant_id": "67cabc98c87dc080914265d4",
+                    "time_string": "11:00 đến 11:45",
+                    "schedules": [
+                        {
+                            "_id": "6947a7dd05450e10f348d0de",
+                            "slot": "681f0d450e90714dae7a5dda",
+                            "date": "2026-01-01T00:00:00.000Z",
+                            "classroom": {
+                                "_id": "693d419bd1fea29571df82ed",
+                                "name": "Bơi Sải Cơ Bản Cho Người Lớn - S1,S5,S9 - T5,T6,T7,CN - Lớp 2",
+                                "course": "6904cc92f2b4e2ea577cdc95",
+                                "instructor": "69356b6e9ec79b818e25b2cb",
+                                "show_on_regist_course": false,
+                                "created_at": "2025-12-13T17:36:11.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-12-21T13:46:14.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "member": [
+                                    "69364967a5a4158256e11048",
+                                    "67cd20759d0aaee8d9cd88ad"
+                                ],
+                                "member_passed": [
+                                    "67cd20759d0aaee8d9cd88ad"
+                                ]
+                            },
+                            "pool": {
+                                "_id": "69088704b4e8cbef8e57f02d",
+                                "title": "Hồ bơi PB03",
+                                "type": "Thi đấu",
+                                "dimensions": "50 mét",
+                                "depth": "2 mét",
+                                "capacity": 100,
+                                "is_active": true,
+                                "created_at": "2025-11-03T17:42:12.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-12-12T21:44:48.000Z",
+                                "updated_by": "6711e8a47b45b2974bd6133c",
+                                "tenant_id": "67cabc98c87dc080914265d4",
+                                "type_of_age": [
+                                    "693196f612fb3088bf2a0dfe",
+                                    "69319672068928286b329e4a"
+                                ]
+                            },
+                            "instructor": {
+                                "_id": "69356b6e9ec79b818e25b2cb",
+                                "username": "Instructor 2",
+                                "email": "instructor2@gmail.com",
+                                "password": "$2b$10$Zj7RVkmlkN91wRZvwWMYhuvjhimmfsvd86QkDWXWlycA7C23ecm5O",
+                                "role_front": [
+                                    "instructor"
+                                ],
+                                "phone": "0708797724",
+                                "is_active": true,
+                                "birthday": "2000-12-01T00:00:00.000Z",
+                                "address": "",
+                                "created_at": "2025-12-07T18:56:30.000Z",
+                                "created_by": "6831d35a95ac46cc9b686001",
+                                "updated_at": "2025-12-20T09:39:53.380Z",
+                                "updated_by": "6831d35a95ac46cc9b686001",
+                                "featured_image": [
+                                    "68e60cef91889a255f77c86d"
+                                ],
+                                "parent_id": null,
+                                "role": []
+                            },
+                            "created_at": "2025-12-21T14:55:09.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-21T14:55:09.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4"
+                        }
+                    ]
+                }
+            ]
         ]
-    }
-- khi manager/staff chỉnh sửa thông tin của lớp học, họ có thể đánh dấu 
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- không cần hiện thông tin của field 'classroom' này lên cho tab này
+
+
+tab để xem các ghi chú cho từng học viên trong lớp học đó (class note):
+- thể hiện lên UI cho tab này, bạn cần phải lấy id của field 'class' trong resposne data của 'fetchSlotDetail' để gọi api ở dưới đây: 
+- thêm api này vào trong file class-api.ts: 'https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/class/note?search[class._id:equal]=693d419bd1fea29571df82ed
+- api này dùng để get các ghi chú cho từng học viên trong lớp học đó
+- đây là response data: {
+    "data": [
+        [
+            {
+                "limit": 10,
+                "skip": 0,
+                "count": 3,
+                "documents": [
+                    // đây là note instructor cho member
+                    {
+                        "_id": "69479aeb577dfb7814df8999",
+                        "member": {
+                            "_id": "69364967a5a4158256e11048",
+                            "username": "MemberChild",
+                            "email": "memchild@gmail.com",
+                            "role_front": [
+                                "member"
+                            ],
+                            "parent_id": [
+                                "67cd20759d0aaee8d9cd88ad"
+                            ],
+                            "is_active": true,
+                            "birthday": "2020-12-08T00:00:00.000Z",
+                            "created_at": "2025-12-08T10:43:35.000Z",
+                            "created_by": "67cd20759d0aaee8d9cd88ad",
+                            "updated_at": "2025-12-14T07:46:55.679Z",
+                            "updated_by": "69364967a5a4158256e11048",
+                            "featured_image": [
+                                "693b8832dd4b728273cdce2f"
+                            ],
+                            "role": []
+                        },
+                        "class": {
+                            "_id": "693d419bd1fea29571df82ed",
+                            "name": "Bơi Sải Cơ Bản Cho Người Lớn - S1,S5,S9 - T5,T6,T7,CN - Lớp 2",
+                            "course": "6904cc92f2b4e2ea577cdc95",
+                            "instructor": "69356b6e9ec79b818e25b2cb",
+                            "show_on_regist_course": false,
+                            "created_at": "2025-12-13T17:36:11.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-21T13:46:14.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "member": [
+                                "69364967a5a4158256e11048",
+                                "67cd20759d0aaee8d9cd88ad"
+                            ],
+                            "member_passed": [
+                                "67cd20759d0aaee8d9cd88ad"
+                            ]
+                        },
+                        "schedule": {
+                            "_id": "694655647c44403af8a59c20",
+                            "slot": "681f0d110e90714dae7a5dc5",
+                            "date": "2025-12-21T00:00:00.000Z",
+                            "classroom": "693d419bd1fea29571df82ed",
+                            "pool": "69088704b4e8cbef8e57f02d",
+                            "instructor": "683c810c0707d1bbac3063f0",
+                            "created_at": "2025-12-20T14:51:00.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T14:51:00.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4"
+                        },
+                        // ĐÂY LÀ NOTE
+                        "note": "{\"text\":\"ngo\",\"evaluation\":{\"0_Đạt tiêu chuẩn \":1},\"evaluationCriteria\":[{\"_id\":\"criteria_0\",\"title\":\"Tư thế thân\",\"form_judge\":{\"type\":\"object\",\"items\":{\"Đạt tiêu chuẩn \":{\"type\":\"boolean\",\"required\":true,\"is_filter\":false}}},\"evaluationFields\":[\"Đạt tiêu chuẩn \"]}]}",
+                        "created_at": "2025-12-21T13:59:55.000Z",
+                        "created_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "updated_at": "2025-12-21T13:59:55.000Z",
+                        "updated_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    // đây là note instructor cho member
+                    {
+                        "_id": "694797dc6e0a32dd7b24080a",
+                        "member": {
+                            "_id": "67cd20759d0aaee8d9cd88ad",
+                            "email": "member1@gmail.com",
+                            "username": "Member",
+                            "role_system": "user",
+                            "role": [],
+                            "is_active": true,
+                            "created_at": "2025-03-09T05:00:37.736Z",
+                            "updated_at": "2025-12-15T08:44:42.212Z",
+                            "role_front": [
+                                "member"
+                            ],
+                            "parent_id": null,
+                            "featured_image": [
+                                "693b87f91d679999b293278c"
+                            ],
+                            "updated_by": "67cd20759d0aaee8d9cd88ad",
+                            "phone": "0934102678",
+                            "birthday": "2000-01-01T00:00:00.000Z"
+                        },
+                        "class": {
+                            "_id": "693d419bd1fea29571df82ed",
+                            "name": "Bơi Sải Cơ Bản Cho Người Lớn - S1,S5,S9 - T5,T6,T7,CN - Lớp 2",
+                            "course": "6904cc92f2b4e2ea577cdc95",
+                            "instructor": "69356b6e9ec79b818e25b2cb",
+                            "show_on_regist_course": false,
+                            "created_at": "2025-12-13T17:36:11.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-21T13:46:14.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "member": [
+                                "69364967a5a4158256e11048",
+                                "67cd20759d0aaee8d9cd88ad"
+                            ],
+                            "member_passed": [
+                                "67cd20759d0aaee8d9cd88ad"
+                            ]
+                        },
+                        "schedule": {
+                            "_id": "694655647c44403af8a59c20",
+                            "slot": "681f0d110e90714dae7a5dc5",
+                            "date": "2025-12-21T00:00:00.000Z",
+                            "classroom": "693d419bd1fea29571df82ed",
+                            "pool": "69088704b4e8cbef8e57f02d",
+                            "instructor": "683c810c0707d1bbac3063f0",
+                            "created_at": "2025-12-20T14:51:00.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T14:51:00.000Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "tenant_id": "67cabc98c87dc080914265d4"
+                        },
+                        "note": "{\"text\":\"Non\",\"evaluation\":{\"0_Đạt tiêu chuẩn \":1},\"evaluationCriteria\":[{\"_id\":\"criteria_0\",\"title\":\"Tư thế thân\",\"form_judge\":{\"type\":\"object\",\"items\":{\"Đạt tiêu chuẩn \":{\"type\":\"boolean\",\"required\":true,\"is_filter\":false}}},\"evaluationFields\":[\"Đạt tiêu chuẩn \"]}]}",
+                        "created_at": "2025-12-21T13:46:52.000Z",
+                        "created_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "updated_at": "2025-12-21T13:46:52.000Z",
+                        "updated_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    },
+                    {
+                        "_id": "6947708d6c761c533f8768d7",
+                        "member": {
+                            "_id": "67cd20759d0aaee8d9cd88ad",
+                            "email": "member1@gmail.com",
+                            "username": "Member",
+                            "role_system": "user",
+                            "role": [],
+                            "is_active": true,
+                            "created_at": "2025-03-09T05:00:37.736Z",
+                            "updated_at": "2025-12-15T08:44:42.212Z",
+                            "role_front": [
+                                "member"
+                            ],
+                            "parent_id": null,
+                            "featured_image": [
+                                "693b87f91d679999b293278c"
+                            ],
+                            "updated_by": "67cd20759d0aaee8d9cd88ad",
+                            "phone": "0934102678",
+                            "birthday": "2000-01-01T00:00:00.000Z"
+                        },
+                        "class": {
+                            "_id": "694668b6b21fd8ecc9a03c65",
+                            "name": "Khóa Học Kỹ Thuật Bơi Bướm - Butterfly Stroke - S1,S3 - T5,T6,T7,CN - Lớp 1",
+                            "course": "694667b171f49c03c10e8eee",
+                            "instructor": "69356b6e9ec79b818e25b2cb",
+                            "show_on_regist_course": true,
+                            "created_at": "2025-12-20T16:13:26.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-21T14:19:41.000Z",
+                            "updated_by": "6711e8a47b45b2974bd6133c",
+                            "tenant_id": "67cabc98c87dc080914265d4",
+                            "member": [],
+                            "order": [
+                                "69466c8baddc7b2551250d4b",
+                                "694772e863b32f9e06c50b6c",
+                                "694790757b53811f6263b24d"
+                            ]
+                        },
+                        "note": "{\"text\":\"S\",\"evaluation\":{\"0_Điểm số\":19,\"0_Đạt hay không \":0},\"evaluationCriteria\":[{\"_id\":\"criteria_1\",\"title\":\"Đánh giá buổi 2\",\"form_judge\":{\"type\":\"object\",\"items\":{\"Điểm số\":{\"type\":\"number\",\"required\":false,\"is_filter\":false,\"is_array\":false,\"min\":0,\"max\":100},\"Lựa chọn \":{\"type\":\"select\",\"required\":false,\"is_filter\":false,\"select_values\":\"1 lựa, 2 lựa, 3 lựa \"},\"Đạt hay không \":{\"type\":\"boolean\",\"required\":false,\"is_filter\":false}}},\"evaluationFields\":[\"Điểm số\",\"Lựa chọn \",\"Đạt hay không \"]}]}",
+                        "created_at": "2025-12-21T10:59:09.000Z",
+                        "created_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "updated_at": "2025-12-21T10:59:09.000Z",
+                        "updated_by": {
+                            "_id": "69356b6e9ec79b818e25b2cb",
+                            "username": "Instructor 2",
+                            "email": "instructor2@gmail.com",
+                            "role_front": [
+                                "instructor"
+                            ],
+                            "phone": "0708797724",
+                            "is_active": true,
+                            "birthday": "2000-12-01T00:00:00.000Z",
+                            "address": "",
+                            "created_at": "2025-12-07T18:56:30.000Z",
+                            "created_by": "6831d35a95ac46cc9b686001",
+                            "updated_at": "2025-12-20T09:39:53.380Z",
+                            "updated_by": "6831d35a95ac46cc9b686001",
+                            "featured_image": [
+                                "68e60cef91889a255f77c86d"
+                            ],
+                            "parent_id": null,
+                            "role": []
+                        },
+                        "tenant_id": "67cabc98c87dc080914265d4"
+                    }
+                ]
+            }
+        ]
+    ],
+    "message": "Success",
+    "statusCode": 200
+}
+- LƯU Ý: FIELD 'note' NÀY LÀ FIELD QUAN TRỌNG NHẤT, FIELD 'note' ĐANG ĐỂ Ở DẠNG PARSE STRING, VÀ MỖI NOTE CHO 1 HỌC VIÊN LÀ KHÁC NHAU NÊN CẦN PHẢI CHECK XEM CÁI FIELD NOTE ĐÓ MÀ HIỆN CHO CẨN THẬN
