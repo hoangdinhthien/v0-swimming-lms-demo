@@ -20,9 +20,67 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash2, Settings2 } from "lucide-react";
+import { Plus, Trash2, Settings2, GripVertical } from "lucide-react";
 import { FormJudgeFieldConfig } from "./form-judge-field-config";
 import { FormJudgeDependencyConfig } from "./form-judge-dependency-config";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Sortable Item Component
+interface SortableItemProps {
+  id: string;
+  children: React.ReactNode;
+}
+
+function SortableItem({ id, children }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+    >
+      <div className='flex items-center gap-2'>
+        <div
+          {...listeners}
+          className='cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded'
+        >
+          <GripVertical className='h-4 w-4 text-muted-foreground' />
+        </div>
+        <div className='flex-1'>{children}</div>
+      </div>
+    </div>
+  );
+}
 
 // Types for FormJudge Schema
 export interface FormJudgeField {
@@ -58,7 +116,7 @@ export interface FormJudgeField {
 
 export interface FormJudgeSchema {
   type: "object";
-  items: Record<string, FormJudgeField>;
+  items: Array<{ name: string; field: FormJudgeField }>;
 }
 
 interface FormJudgeBuilderProps {
@@ -66,16 +124,58 @@ interface FormJudgeBuilderProps {
   onChange: (schema: FormJudgeSchema) => void;
 }
 
+// Helper function to convert old schema format to new format
+export function convertFormJudgeSchema(schema: any): FormJudgeSchema {
+  if (!schema || typeof schema !== "object") {
+    return { type: "object", items: [] };
+  }
+
+  if (Array.isArray(schema.items)) {
+    // Already in new format
+    return schema as FormJudgeSchema;
+  }
+
+  // Convert old format (Record) to new format (Array)
+  const items: Array<{ name: string; field: FormJudgeField }> = [];
+  if (schema.items && typeof schema.items === "object") {
+    Object.entries(schema.items).forEach(([name, field]) => {
+      items.push({ name, field: field as FormJudgeField });
+    });
+  }
+
+  return {
+    type: schema.type || "object",
+    items,
+  };
+}
+
+// Helper function to convert new schema format to old format for API
+export function convertFormJudgeSchemaToAPI(schema: FormJudgeSchema): any {
+  const items: Record<string, FormJudgeField> = {};
+  schema.items.forEach((item) => {
+    items[item.name] = item.field;
+  });
+
+  return {
+    type: schema.type,
+    items,
+  };
+}
+
 export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
   const [schema, setSchema] = useState<FormJudgeSchema>(
-    value || {
-      type: "object",
-      items: {},
-    }
+    convertFormJudgeSchema(value)
   );
   const [newFieldName, setNewFieldName] = useState("");
   const [editingFieldName, setEditingFieldName] = useState<string | null>(null);
   const [tempFieldName, setTempFieldName] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Update parent when schema changes
   const updateSchema = (newSchema: FormJudgeSchema) => {
@@ -86,71 +186,83 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
   // Add a new field
   const addField = () => {
     if (!newFieldName.trim()) return;
-    if (schema.items[newFieldName]) {
+    if (schema.items.some((item) => item.name === newFieldName)) {
       alert("Tên field đã tồn tại!");
       return;
     }
 
     const newSchema = {
       ...schema,
-      items: {
+      items: [
         ...schema.items,
-        [newFieldName]: {
-          type: "string" as const,
-          required: false,
-          is_filter: false,
-          text_type: "short_text" as const,
+        {
+          name: newFieldName,
+          field: {
+            type: "string" as const,
+            required: false,
+            is_filter: false,
+            text_type: "short_text" as const,
+          },
         },
-      },
+      ],
     };
     updateSchema(newSchema);
     setNewFieldName("");
   };
 
   // Remove a field
-  const removeField = (fieldName: string) => {
-    const newItems = { ...schema.items };
-    delete newItems[fieldName];
+  const removeField = (index: number) => {
+    const newItems = schema.items.filter((_, i) => i !== index);
     updateSchema({ ...schema, items: newItems });
   };
 
   // Update a field
-  const updateField = (fieldName: string, fieldData: FormJudgeField) => {
-    updateSchema({
-      ...schema,
-      items: {
-        ...schema.items,
-        [fieldName]: fieldData,
-      },
-    });
+  const updateField = (index: number, fieldData: FormJudgeField) => {
+    const newItems = [...schema.items];
+    newItems[index] = { ...newItems[index], field: fieldData };
+    updateSchema({ ...schema, items: newItems });
   };
 
   // Start editing field name
-  const startEditingField = (fieldName: string) => {
-    setEditingFieldName(fieldName);
-    setTempFieldName(fieldName);
+  const startEditingField = (index: number) => {
+    setEditingFieldName(index.toString());
+    setTempFieldName(schema.items[index].name);
   };
 
   // Handle renaming a field
-  const handleRenameField = (oldName: string, newName: string) => {
-    if (!newName.trim() || newName === oldName) {
+  const handleRenameField = (index: number, newName: string) => {
+    if (!newName.trim() || newName === schema.items[index].name) {
       setEditingFieldName(null);
       return;
     }
-    if (schema.items[newName]) {
+    if (schema.items.some((item) => item.name === newName)) {
       alert("Tên field đã tồn tại!");
       return;
     }
 
-    const newItems = { ...schema.items };
-    newItems[newName] = newItems[oldName];
-    delete newItems[oldName];
+    const newItems = [...schema.items];
+    newItems[index] = { ...newItems[index], name: newName };
     updateSchema({ ...schema, items: newItems });
     setEditingFieldName(null);
   };
 
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = schema.items.findIndex(
+        (item) => item.name === active.id
+      );
+      const newIndex = schema.items.findIndex((item) => item.name === over.id);
+
+      const newItems = arrayMove(schema.items, oldIndex, newIndex);
+      updateSchema({ ...schema, items: newItems });
+    }
+  };
+
   // Get all field names
-  const allFieldNames = Object.keys(schema.items);
+  const allFieldNames = schema.items.map((item) => item.name);
 
   // Get Vietnamese label for field type
   const getFieldTypeLabel = (type: string): string => {
@@ -212,182 +324,205 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
           </p>
         </div>
       ) : (
-        <div className='space-y-3'>
-          {allFieldNames.map((fieldName) => {
-            const field = schema.items[fieldName];
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={allFieldNames}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className='space-y-3'>
+              {schema.items.map((item, index) => {
+                const fieldName = item.name;
+                const field = item.field;
 
-            return (
-              <Card
-                key={fieldName}
-                className='border-2'
-              >
-                <CardContent className='p-4'>
-                  {/* Field Header */}
-                  <div className='flex items-start justify-between mb-4 pb-4 border-b'>
-                    <div className='flex-1'>
-                      <div className='flex items-center gap-2 mb-2'>
-                        {editingFieldName === fieldName ? (
-                          <Input
-                            value={tempFieldName}
-                            onChange={(e) => setTempFieldName(e.target.value)}
-                            onBlur={() =>
-                              handleRenameField(fieldName, tempFieldName)
-                            }
-                            onKeyPress={(e) =>
-                              e.key === "Enter" &&
-                              handleRenameField(fieldName, tempFieldName)
-                            }
-                            autoFocus
-                            className='font-semibold text-base h-auto p-1 border rounded focus-visible:ring-1'
-                          />
-                        ) : (
-                          <h4
-                            className='font-semibold text-base cursor-pointer'
-                            onClick={() => startEditingField(fieldName)}
-                          >
-                            {fieldName}
-                          </h4>
-                        )}
-                        <Badge variant='outline'>
-                          {getFieldTypeLabel(field.type)}
-                        </Badge>
-                      </div>
-                      <div className='flex gap-2 flex-wrap'>
-                        {field.required && (
-                          <span className='text-xs text-red-600 font-medium'>
-                            • Bắt buộc điền
-                          </span>
-                        )}
-                        {field.is_filter && (
-                          <span className='text-xs text-blue-600 font-medium'>
-                            • Có thể dùng làm bộ lọc
-                          </span>
-                        )}
-                        {!field.required && !field.is_filter && (
-                          <span className='text-xs text-muted-foreground'>
-                            • Tùy chọn
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => removeField(fieldName)}
-                      className='text-destructive hover:text-destructive hover:bg-destructive/10'
-                    >
-                      <Trash2 className='h-4 w-4' />
-                    </Button>
-                  </div>
-
-                  {/* Quick Info - Always visible */}
-                  <div className='space-y-2 mb-4 text-sm'>
-                    {field.type === "string" && (
-                      <p className='text-muted-foreground'>
-                        Kiểu văn bản:{" "}
-                        <span className='font-medium text-foreground'>
-                          {field.text_type === "short_text" && "Văn bản ngắn"}
-                          {field.text_type === "long_text" && "Văn bản dài"}
-                          {field.text_type === "email" && "Email"}
-                          {field.text_type === "url" && "Đường dẫn URL"}
-                          {field.text_type === "datetime" && "Ngày giờ"}
-                          {field.text_type === "date" && "Ngày tháng"}
-                          {field.text_type === "time" && "Giờ"}
-                          {field.text_type === "color" && "Màu sắc"}
-                          {field.text_type === "html" && "Văn bản định dạng"}
-                        </span>
-                        {field.min !== undefined && field.max !== undefined && (
-                          <>
-                            {" "}
-                            • Độ dài: {field.min}-{field.max} ký tự
-                          </>
-                        )}
-                      </p>
-                    )}
-                    {field.type === "number" && (
-                      <p className='text-muted-foreground'>
-                        {field.is_array ? (
-                          <>
-                            Danh sách số{" "}
-                            {field.number_type === "coordinates" && "(Tọa độ)"}{" "}
-                            • Giới hạn: {field.min_array_lenght || 0} -{" "}
-                            {field.max_array_lenght || 10} phần tử
-                          </>
-                        ) : (
-                          <>
-                            Giá trị số • Khoảng: {field.min || 0} -{" "}
-                            {field.max || 100}
-                          </>
-                        )}
-                      </p>
-                    )}
-                    {field.type === "boolean" && (
-                      <p className='text-muted-foreground'>
-                        Huấn luyện viên chọn Đúng hoặc Sai (checkbox)
-                      </p>
-                    )}
-                    {field.type === "select" && field.select_values && (
-                      <div className='text-muted-foreground'>
-                        <span>Các lựa chọn: </span>
-                        {field.select_values.split(",").map((opt, i) => {
-                          const [label] = opt.split(":");
-                          return (
-                            <Badge
-                              key={i}
-                              variant='secondary'
-                              className='ml-1 text-xs'
-                            >
-                              {label.trim()}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {field.type === "relation" && (
-                      <p className='text-muted-foreground'>
-                        Đính kèm{" "}
-                        {field.entity === "media" ? "ảnh/video" : field.entity}{" "}
-                        •{" "}
-                        {field.relation_type === "1-1"
-                          ? "Tối đa 1 tập tin"
-                          : field.relation_type === "1-n"
-                          ? "Nhiều tập tin"
-                          : "Nhiều-nhiều"}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Advanced Settings - Collapsible */}
-                  <Accordion
-                    type='single'
-                    collapsible
-                    className='border-t pt-3'
+                return (
+                  <SortableItem
+                    key={fieldName}
+                    id={fieldName}
                   >
-                    <AccordionItem
-                      value='settings'
-                      className='border-0'
-                    >
-                      <AccordionTrigger className='py-2 hover:no-underline'>
-                        <span className='text-sm font-medium'>
-                          Cài đặt chi tiết
-                        </span>
-                      </AccordionTrigger>
-                      <AccordionContent className='pt-4'>
-                        <FormJudgeFieldConfig
-                          fieldName={fieldName}
-                          field={field}
-                          onChange={(updatedField: FormJudgeField) =>
-                            updateField(fieldName, updatedField)
-                          }
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <Card className='border-2'>
+                      <CardContent className='p-4'>
+                        {/* Field Header */}
+                        <div className='flex items-start justify-between mb-4 pb-4 border-b'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-2 mb-2'>
+                              {editingFieldName === index.toString() ? (
+                                <Input
+                                  value={tempFieldName}
+                                  onChange={(e) =>
+                                    setTempFieldName(e.target.value)
+                                  }
+                                  onBlur={() =>
+                                    handleRenameField(index, tempFieldName)
+                                  }
+                                  onKeyPress={(e) =>
+                                    e.key === "Enter" &&
+                                    handleRenameField(index, tempFieldName)
+                                  }
+                                  autoFocus
+                                  className='font-semibold text-base h-auto p-1 border rounded focus-visible:ring-1'
+                                />
+                              ) : (
+                                <h4
+                                  className='font-semibold text-base cursor-pointer'
+                                  onClick={() => startEditingField(index)}
+                                >
+                                  {fieldName}
+                                </h4>
+                              )}
+                              <Badge variant='outline'>
+                                {getFieldTypeLabel(field.type)}
+                              </Badge>
+                            </div>
+                            <div className='flex gap-2 flex-wrap'>
+                              {field.required && (
+                                <span className='text-xs text-red-600 font-medium'>
+                                  • Bắt buộc điền
+                                </span>
+                              )}
+                              {field.is_filter && (
+                                <span className='text-xs text-blue-600 font-medium'>
+                                  • Có thể dùng làm bộ lọc
+                                </span>
+                              )}
+                              {!field.required && !field.is_filter && (
+                                <span className='text-xs text-muted-foreground'>
+                                  • Tùy chọn
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => removeField(index)}
+                            className='text-destructive hover:text-destructive hover:bg-destructive/10'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        </div>
+
+                        {/* Quick Info - Always visible */}
+                        <div className='space-y-2 mb-4 text-sm'>
+                          {field.type === "string" && (
+                            <p className='text-muted-foreground'>
+                              Kiểu văn bản:{" "}
+                              <span className='font-medium text-foreground'>
+                                {field.text_type === "short_text" &&
+                                  "Văn bản ngắn"}
+                                {field.text_type === "long_text" &&
+                                  "Văn bản dài"}
+                                {field.text_type === "email" && "Email"}
+                                {field.text_type === "url" && "Đường dẫn URL"}
+                                {field.text_type === "datetime" && "Ngày giờ"}
+                                {field.text_type === "date" && "Ngày tháng"}
+                                {field.text_type === "time" && "Giờ"}
+                                {field.text_type === "color" && "Màu sắc"}
+                                {field.text_type === "html" &&
+                                  "Văn bản định dạng"}
+                              </span>
+                              {field.min !== undefined &&
+                                field.max !== undefined && (
+                                  <>
+                                    {" "}
+                                    • Độ dài: {field.min}-{field.max} ký tự
+                                  </>
+                                )}
+                            </p>
+                          )}
+                          {field.type === "number" && (
+                            <p className='text-muted-foreground'>
+                              {field.is_array ? (
+                                <>
+                                  Danh sách số{" "}
+                                  {field.number_type === "coordinates" &&
+                                    "(Tọa độ)"}{" "}
+                                  • Giới hạn: {field.min_array_lenght || 0} -{" "}
+                                  {field.max_array_lenght || 10} phần tử
+                                </>
+                              ) : (
+                                <>
+                                  Giá trị số • Khoảng: {field.min || 0} -{" "}
+                                  {field.max || 100}
+                                </>
+                              )}
+                            </p>
+                          )}
+                          {field.type === "boolean" && (
+                            <p className='text-muted-foreground'>
+                              Huấn luyện viên chọn Đúng hoặc Sai (checkbox)
+                            </p>
+                          )}
+                          {field.type === "select" && field.select_values && (
+                            <div className='text-muted-foreground'>
+                              <span>Các lựa chọn: </span>
+                              {field.select_values.split(",").map((opt, i) => {
+                                const [label] = opt.split(":");
+                                return (
+                                  <Badge
+                                    key={i}
+                                    variant='secondary'
+                                    className='ml-1 text-xs'
+                                  >
+                                    {label.trim()}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {field.type === "relation" && (
+                            <p className='text-muted-foreground'>
+                              Đính kèm{" "}
+                              {field.entity === "media"
+                                ? "ảnh/video"
+                                : field.entity}{" "}
+                              •{" "}
+                              {field.relation_type === "1-1"
+                                ? "Tối đa 1 tập tin"
+                                : field.relation_type === "1-n"
+                                ? "Nhiều tập tin"
+                                : "Nhiều-nhiều"}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Advanced Settings - Collapsible */}
+                        <Accordion
+                          type='single'
+                          collapsible
+                          className='border-t pt-3'
+                        >
+                          <AccordionItem
+                            value='settings'
+                            className='border-0'
+                          >
+                            <AccordionTrigger className='py-2 hover:no-underline'>
+                              <span className='text-sm font-medium'>
+                                Cài đặt chi tiết
+                              </span>
+                            </AccordionTrigger>
+                            <AccordionContent className='pt-4'>
+                              <FormJudgeFieldConfig
+                                fieldName={fieldName}
+                                field={field}
+                                onChange={(updatedField: FormJudgeField) =>
+                                  updateField(index, updatedField)
+                                }
+                              />
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
+                      </CardContent>
+                    </Card>
+                  </SortableItem>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

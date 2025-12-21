@@ -152,3 +152,5 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
 - hiện form-judge trong 'Chi tiết buổi học' trong lịch học
 
 - cho sửa title khi edit form judge
+
+field type trong request body của createCourse và updateCourse phải là "type":["custom"] hoặc "type":["global"] 

@@ -10,8 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   FormJudgeBuilder,
   type FormJudgeSchema,
+  convertFormJudgeSchemaToAPI,
 } from "@/components/manager/form-judge-builder";
 import {
   Form,
@@ -29,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import MultiSelect from "@/components/ui/multi-select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -67,9 +75,7 @@ const courseFormSchema = z.object({
   category: z
     .array(z.string())
     .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
-  type: z
-    .array(z.enum(["global", "custom"]))
-    .min(1, " Vui lòng chọn ít nhất 1 loại cho khóa học"),
+  type: z.enum(["global", "custom"]),
   type_of_age: z
     .array(z.string())
     .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
@@ -120,7 +126,7 @@ export default function NewCoursePage() {
     session_number_duration: "45 phút",
     detail: [{ title: "", description: "" }],
     category: [],
-    type: ["global"],
+    type: "global",
     type_of_age: [],
     is_active: false,
     price: 0,
@@ -302,10 +308,12 @@ export default function NewCoursePage() {
       // Merge detail with form_judge data
       const detailWithFormJudge = values.detail.map((item, index) => ({
         ...item,
-        form_judge: detailFormJudges[index] || {
-          type: "object" as const,
-          items: {},
-        },
+        form_judge: convertFormJudgeSchemaToAPI(
+          detailFormJudges[index] || {
+            type: "object" as const,
+            items: [],
+          }
+        ),
       }));
 
       // Use our API function to create the course
@@ -543,24 +551,33 @@ export default function NewCoursePage() {
                   control={form.control}
                   name='type'
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className='space-y-3'>
                       <FormLabel>
                         Loại khóa học <span className='text-red-500'>*</span>
                       </FormLabel>
-                      <div>
-                        <MultiSelect
-                          options={[
-                            { id: "global", label: "Toàn hệ thống" },
-                            { id: "custom", label: "Tùy chỉnh" },
-                          ]}
-                          value={field.value || []}
-                          onChange={(vals) => field.onChange(vals)}
-                        />
-                      </div>
-                      <FormDescription>
-                        Chọn loại khóa học (ví dụ: global hoặc custom). Giữ Ctrl
-                        (Windows) / Cmd (Mac) để chọn nhiều mục.
-                      </FormDescription>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className='flex flex-col space-y-1'
+                        >
+                          <div className='flex items-center space-x-2'>
+                            <RadioGroupItem
+                              value='global'
+                              id='global'
+                            />
+                            <Label htmlFor='global'>Toàn hệ thống</Label>
+                          </div>
+                          <div className='flex items-center space-x-2'>
+                            <RadioGroupItem
+                              value='custom'
+                              id='custom'
+                            />
+                            <Label htmlFor='custom'>Tùy chỉnh</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormDescription>Chọn loại khóa học.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -657,75 +674,101 @@ export default function NewCoursePage() {
                 <CardTitle>Nội dung chi tiết</CardTitle>
               </CardHeader>
               <CardContent className='space-y-6'>
-                {form.watch("detail")?.map((_, index) => (
-                  <Card
-                    key={index}
-                    className='border-2'
-                  >
-                    <CardHeader className='pb-4'>
-                      <div className='flex items-center justify-between'>
-                        <h3 className='font-semibold'>Nội dung {index + 1}</h3>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          onClick={() => removeDetail(index)}
-                          disabled={form.watch("detail")?.length <= 1}
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <FormField
-                        control={form.control}
-                        name={`detail.${index}.title`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tiêu đề {index + 1}</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder='Tiêu đề nội dung chi tiết'
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`detail.${index}.description`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mô tả {index + 1}</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder='Mô tả chi tiết nội dung'
-                                className='resize-none min-h-[80px]'
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <Accordion
+                  type='multiple'
+                  className='w-full'
+                >
+                  {form.watch("detail")?.map((_, index) => (
+                    <AccordionItem
+                      key={index}
+                      value={`detail-${index}`}
+                      className='border rounded-lg mb-4'
+                    >
+                      <AccordionTrigger className='px-4 py-3 hover:no-underline'>
+                        <div className='flex items-center justify-between w-full mr-4'>
+                          <div className='flex items-center gap-3'>
+                            <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
+                              {index + 1}
+                            </div>
+                            <div className='text-left'>
+                              <h4 className='font-semibold text-foreground'>
+                                Nội dung {index + 1}
+                              </h4>
+                              {form.watch(`detail.${index}.title`) && (
+                                <p className='text-sm text-muted-foreground'>
+                                  {form.watch(`detail.${index}.title`)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='icon'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeDetail(index);
+                            }}
+                            disabled={form.watch("detail")?.length <= 1}
+                            className='h-8 w-8'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className='px-4 pb-4'>
+                        <div className='space-y-4 pt-2'>
+                          <FormField
+                            control={form.control}
+                            name={`detail.${index}.title`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tiêu đề {index + 1}</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder='Tiêu đề nội dung chi tiết'
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`detail.${index}.description`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Mô tả {index + 1}</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder='Mô tả chi tiết nội dung'
+                                    className='resize-none min-h-[80px]'
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      {/* FormJudge Builder */}
-                      <div className='mt-4'>
-                        <FormJudgeBuilder
-                          value={detailFormJudges[index]}
-                          onChange={(schema) => {
-                            setDetailFormJudges((prev) => ({
-                              ...prev,
-                              [index]: schema,
-                            }));
-                          }}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          {/* FormJudge Builder */}
+                          <div className='mt-4'>
+                            <FormJudgeBuilder
+                              value={detailFormJudges[index]}
+                              onChange={(schema) => {
+                                setDetailFormJudges((prev) => ({
+                                  ...prev,
+                                  [index]: schema,
+                                }));
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
 
                 <Button
                   type='button'

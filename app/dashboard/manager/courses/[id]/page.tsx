@@ -31,7 +31,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import MultiSelect from "@/components/ui/multi-select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog,
   DialogContent,
@@ -48,13 +55,77 @@ import {
   updateCourse,
 } from "@/api/manager/courses-api";
 import { fetchAllCourseCategories } from "@/api/manager/course-categories";
+import { fetchAgeRules } from "@/api/manager/age-types";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails, uploadMedia, deleteMedia } from "@/api/media-api";
 import config from "@/api/config.json";
 import {
   FormJudgeBuilder,
   type FormJudgeSchema,
+  convertFormJudgeSchema,
+  convertFormJudgeSchemaToAPI,
 } from "@/components/manager/form-judge-builder";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+// Form schema for validation
+const courseFormSchema = z.object({
+  title: z.string().min(1, " Tên khóa học không được để trống"),
+  description: z.string().min(1, " Mô tả khóa học không được để trống"),
+  session_number: z.coerce
+    .number({
+      required_error: " Vui lòng nhập số buổi học",
+      invalid_type_error: " Số buổi học phải là số nguyên dương",
+    })
+    .int(" Số buổi học phải là số nguyên")
+    .positive(" Số buổi học phải lớn hơn 0"),
+  session_number_duration: z
+    .string()
+    .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
+  detail: z
+    .array(
+      z.object({
+        title: z.string().min(1, " Tiêu đề nội dung không được để trống"),
+        description: z.string().min(1, " Mô tả nội dung không được để trống"),
+      })
+    )
+    .min(1, " Vui lòng thêm ít nhất 1 nội dung chi tiết cho khóa học"),
+  category: z
+    .array(z.string())
+    .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
+  type: z.enum(["global", "custom"]),
+  type_of_age: z
+    .array(z.string())
+    .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
+  is_active: z.boolean().default(false),
+  price: z.coerce
+    .number({
+      required_error: " Vui lòng nhập giá khóa học",
+      invalid_type_error: " Giá khóa học phải là số",
+    })
+    .int(" Giá khóa học phải là số nguyên")
+    .nonnegative(" Giá khóa học không được là số âm"),
+  max_member: z.coerce
+    .number({
+      required_error: " Vui lòng nhập số học viên tối đa",
+      invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
+    })
+    .int(" Số học viên tối đa phải là số nguyên")
+    .positive(" Số học viên tối đa phải lớn hơn 0"),
+  media: z.array(z.string()).optional(),
+});
+
+type CourseFormValues = z.infer<typeof courseFormSchema>;
 
 import ManagerNotFound from "@/components/manager/not-found";
 
@@ -81,6 +152,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     session_number_duration: "",
     detail: [{ title: "", description: "" }],
     category: [] as string[],
+    type: "global",
+    type_of_age: [] as string[],
     price: 0,
     max_member: 20,
     is_active: true,
@@ -90,6 +163,27 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [ageRules, setAgeRules] = useState<any[]>([]);
+  const [loadingAgeRules, setLoadingAgeRules] = useState(false);
+
+  // Initialize the form
+  const form = useForm<CourseFormValues>({
+    resolver: zodResolver(courseFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      session_number: 1,
+      session_number_duration: "45 phút",
+      detail: [{ title: "", description: "" }],
+      category: [],
+      type: "global",
+      type_of_age: [],
+      is_active: false,
+      price: 0,
+      max_member: 20,
+      media: [],
+    },
+  });
 
   // State for form_judge for each detail item
   const [detailFormJudges, setDetailFormJudges] = useState<
@@ -202,6 +296,29 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     loadCategories();
   }, []);
 
+  // Load age rules
+  useEffect(() => {
+    async function loadAgeRules() {
+      setLoadingAgeRules(true);
+      try {
+        const tenantId = getSelectedTenant();
+        const token = getAuthToken();
+        if (tenantId && token) {
+          const ageRulesData = await fetchAgeRules({
+            tenantId,
+            token,
+          });
+          setAgeRules(ageRulesData);
+        }
+      } catch (error) {
+        console.error("Error loading age rules:", error);
+      } finally {
+        setLoadingAgeRules(false);
+      }
+    }
+    loadAgeRules();
+  }, []);
+
   // Navigation functions for image slider
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
@@ -247,11 +364,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   // Handle opening edit modal
   const handleEditClick = () => {
     if (course) {
-      setFormData({
+      form.reset({
         title: course.title || "",
         description: course.description || "",
-        session_number: course.session_number || 0,
-        session_number_duration: course.session_number_duration || "",
+        session_number: course.session_number || 1,
+        session_number_duration: course.session_number_duration || "45 phút",
         detail:
           course.detail?.length > 0
             ? course.detail
@@ -263,9 +380,24 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
           : course.category
           ? [course.category]
           : [],
+        type: course.type || "global",
+        type_of_age: Array.isArray(course.type_of_age)
+          ? course.type_of_age.map((age: any) => age._id || age)
+          : course.type_of_age?._id
+          ? [course.type_of_age._id]
+          : course.type_of_age
+          ? [course.type_of_age]
+          : [],
         price: course.price || 0,
         max_member: course.max_member || 20,
-        is_active: course.is_active ?? true,
+        is_active: course.is_active ?? false,
+        media: Array.isArray(course.media)
+          ? course.media.map((m: any) => m._id || m).filter(Boolean)
+          : course.media?._id
+          ? [course.media._id]
+          : course.media
+          ? [course.media]
+          : [],
       });
       setUploadedMediaIds(
         Array.isArray(course.media)
@@ -281,7 +413,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       const formJudges: Record<number, FormJudgeSchema> = {};
       course.detail?.forEach((item: any, index: number) => {
         if (item.form_judge) {
-          formJudges[index] = item.form_judge;
+          formJudges[index] = convertFormJudgeSchema(item.form_judge);
         }
       });
       setDetailFormJudges(formJudges);
@@ -367,7 +499,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   };
 
   // Handle form submission
-  const handleSaveCourse = async () => {
+  const handleSaveCourse = async (values: CourseFormValues) => {
     try {
       setIsSaving(true);
       const tenantId = getSelectedTenant();
@@ -406,27 +538,31 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       }
 
       // Prepare update payload
-      const detailWithFormJudge = formData.detail
+      const detailWithFormJudge = values.detail
         .filter((item) => item.title.trim() !== "")
         .map((item, index) => ({
           ...item,
-          form_judge: detailFormJudges[index] || {
-            type: "object" as const,
-            items: {},
-          },
+          form_judge: convertFormJudgeSchemaToAPI(
+            detailFormJudges[index] || {
+              type: "object" as const,
+              items: [],
+            }
+          ),
         }));
 
       const updatePayload = {
-        title: formData.title,
-        description: formData.description,
-        session_number: formData.session_number,
-        session_number_duration: formData.session_number_duration,
+        title: values.title,
+        description: values.description,
+        session_number: values.session_number,
+        session_number_duration: values.session_number_duration,
         detail: detailWithFormJudge,
-        category: formData.category,
+        category: values.category,
+        type: values.type,
+        type_of_age: values.type_of_age,
         media: remainingMediaIds,
-        is_active: formData.is_active,
-        price: formData.price,
-        max_member: formData.max_member,
+        is_active: values.is_active,
+        price: values.price,
+        max_member: values.max_member,
       };
 
       // Update course using API function
@@ -1013,347 +1149,606 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className='space-y-6'>
-            {/* Basic Information */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='title'>Tên khóa học *</Label>
-                <Input
-                  id='title'
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder='Nhập tên khóa học'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='price'>Giá (VNĐ) *</Label>
-                <Input
-                  id='price'
-                  type='number'
-                  value={formData.price}
-                  onChange={(e) =>
-                    handleInputChange("price", parseInt(e.target.value) || 0)
-                  }
-                  placeholder='0'
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='description'>Mô tả</Label>
-              <Textarea
-                id='description'
-                value={formData.description}
-                onChange={(e) =>
-                  handleInputChange("description", e.target.value)
-                }
-                placeholder='Nhập mô tả khóa học'
-                rows={3}
-              />
-            </div>
-            {/* Session Information */}
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='session_number'>Số buổi học *</Label>
-                <Input
-                  id='session_number'
-                  type='number'
-                  value={formData.session_number}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "session_number",
-                      parseInt(e.target.value) || 0
-                    )
-                  }
-                  placeholder='0'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='session_duration'>Thời lượng mỗi buổi *</Label>
-                <Input
-                  id='session_duration'
-                  value={formData.session_number_duration}
-                  onChange={(e) =>
-                    handleInputChange("session_number_duration", e.target.value)
-                  }
-                  placeholder='VD: 2 giờ, 90 phút'
-                />
-              </div>
-            </div>
-
-            {/* Max Member */}
-            <div className='space-y-2'>
-              <Label htmlFor='max_member'>Số học viên tối đa *</Label>
-              <Input
-                id='max_member'
-                type='number'
-                value={formData.max_member}
-                onChange={(e) =>
-                  handleInputChange(
-                    "max_member",
-                    parseInt(e.target.value) || 20
-                  )
-                }
-                placeholder='20'
-              />
-            </div>
-
-            {/* Course Details */}
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
-                <Label>Nội dung khóa học</Label>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={addDetailItem}
-                >
-                  <Plus className='h-4 w-4 mr-1' />
-                  Thêm mục
-                </Button>
-              </div>
-              <div className='space-y-4'>
-                {formData.detail.map((item, index) => (
-                  <Card
-                    key={index}
-                    className='border-2'
-                  >
-                    <CardHeader className='pb-3'>
-                      <div className='flex items-center justify-between'>
-                        <h4 className='font-semibold'>Nội dung {index + 1}</h4>
-                        {formData.detail.length > 1 && (
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='icon'
-                            onClick={() => removeDetailItem(index)}
-                          >
-                            <Trash2 className='h-4 w-4' />
-                          </Button>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <Input
-                        value={item.title}
-                        onChange={(e) =>
-                          updateDetailItem(index, "title", e.target.value)
-                        }
-                        placeholder={`Tiêu đề ${index + 1}`}
-                      />
-                      <Textarea
-                        value={item.description}
-                        onChange={(e) =>
-                          updateDetailItem(index, "description", e.target.value)
-                        }
-                        placeholder={`Mô tả ${index + 1}`}
-                        className='resize-none min-h-[80px]'
-                      />
-
-                      {/* FormJudge Builder */}
-                      <div className='mt-4'>
-                        <FormJudgeBuilder
-                          value={detailFormJudges[index]}
-                          onChange={(schema) => {
-                            setDetailFormJudges((prev) => ({
-                              ...prev,
-                              [index]: schema,
-                            }));
-                          }}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Course Categories */}
-            <div className='space-y-4'>
-              <Label>Danh mục khóa học</Label>
-              {loadingCategories ? (
-                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                  Đang tải danh mục...
-                </div>
-              ) : categories.length === 0 ? (
-                <div className='text-sm text-muted-foreground'>
-                  Không có danh mục nào
-                </div>
-              ) : (
-                <div>
-                  <MultiSelect
-                    options={categories.map((c) => ({
-                      id: c._id,
-                      label: c.title,
-                    }))}
-                    value={formData.category}
-                    onChange={(vals: string[]) =>
-                      setFormData((prev) => ({ ...prev, category: vals }))
-                    }
+          <Form {...form}>
+            <form
+              id='edit-course-form'
+              onSubmit={form.handleSubmit(handleSaveCourse)}
+              className='space-y-8'
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Thông tin cơ bản</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  <FormField
+                    control={form.control}
+                    name='title'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Tên khóa học <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='Nhập tên khóa học'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-              )}
-            </div>
 
-            {/* Media Upload */}
-            <div className='space-y-4'>
-              <Label>Hình ảnh khóa học</Label>
+                  <FormField
+                    control={form.control}
+                    name='description'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Mô tả khóa học <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder='Nhập mô tả chi tiết về khóa học'
+                            className='resize-none min-h-[120px]'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              {/* Current Images */}
-              {courseImages.length > 0 && (
-                <div className='space-y-2'>
-                  <p className='text-sm text-muted-foreground'>
-                    Hình ảnh hiện tại:
-                  </p>
-                  <div className='flex gap-2 flex-wrap'>
-                    {course.media && Array.isArray(course.media)
-                      ? course.media.map((mediaItem: any, index: number) => {
-                          const mediaId = mediaItem._id || mediaItem;
-                          const imagePath = courseImages[index];
-                          const isMarkedForDeletion =
-                            imagesToDelete.includes(mediaId);
+                  <div className='grid gap-4 md:grid-cols-2'>
+                    <FormField
+                      control={form.control}
+                      name='session_number'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Số buổi học <span className='text-red-500'>*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              placeholder='Nhập số buổi học'
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                          return (
-                            <div
-                              key={mediaId}
-                              className={`relative w-20 h-20 rounded border overflow-hidden ${
-                                isMarkedForDeletion
-                                  ? "opacity-50 bg-red-100 border-red-300"
+                    <FormField
+                      control={form.control}
+                      name='session_number_duration'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Thời lượng mỗi buổi{" "}
+                            <span className='text-red-500'>*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder='Ví dụ: 45 phút'
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className='grid gap-4 md:grid-cols-2'>
+                    <FormField
+                      control={form.control}
+                      name='price'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Giá khóa học (VNĐ){" "}
+                            <span className='text-red-500'>*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type='text'
+                              placeholder='Nhập giá khóa học'
+                              value={
+                                field.value
+                                  ? field.value.toLocaleString("vi-VN")
                                   : ""
-                              }`}
-                            >
-                              <img
-                                src={imagePath}
-                                alt={`Current ${index + 1}`}
-                                className='w-full h-full object-cover'
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, "");
+                                field.onChange(value ? parseInt(value) : 0);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name='max_member'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Số học viên tối đa{" "}
+                            <span className='text-red-500'>*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type='number'
+                              placeholder='Nhập số học viên tối đa'
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Phân loại khóa học</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  <FormField
+                    control={form.control}
+                    name='category'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Danh mục khóa học{" "}
+                          <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        {loadingCategories ? (
+                          <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            <Loader2 className='h-4 w-4 animate-spin' />
+                            Đang tải danh mục...
+                          </div>
+                        ) : categories.length === 0 ? (
+                          <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            Không có danh mục nào
+                          </div>
+                        ) : (
+                          <div>
+                            <MultiSelect
+                              options={categories.map((c) => ({
+                                id: c._id,
+                                label: c.title,
+                              }))}
+                              value={field.value || []}
+                              onChange={(vals) => field.onChange(vals)}
+                            />
+                          </div>
+                        )}
+                        <FormDescription>
+                          Chọn một hoặc nhiều danh mục phù hợp cho khóa học này.
+                          Giữ Ctrl (Windows) / Cmd (Mac) để chọn nhiều mục.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='type'
+                    render={({ field }) => (
+                      <FormItem className='space-y-3'>
+                        <FormLabel>
+                          Loại khóa học <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className='flex flex-col space-y-1'
+                          >
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem
+                                value='global'
+                                id='edit-global'
                               />
-                              {isMarkedForDeletion ? (
+                              <Label htmlFor='edit-global'>Toàn hệ thống</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem
+                                value='custom'
+                                id='edit-custom'
+                              />
+                              <Label htmlFor='edit-custom'>Tùy chỉnh</Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormDescription>Chọn loại khóa học.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='type_of_age'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Độ tuổi phù hợp{" "}
+                          <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        {loadingAgeRules ? (
+                          <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            <Loader2 className='h-4 w-4 animate-spin' />
+                            Đang tải độ tuổi...
+                          </div>
+                        ) : ageRules.length === 0 ? (
+                          <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            Không có độ tuổi nào
+                          </div>
+                        ) : (
+                          <div>
+                            <MultiSelect
+                              options={ageRules.map((rule) => {
+                                // Prefer `age_range` array [min, max] from API; fallback to min_age/max_age
+                                const ageRange = Array.isArray(rule.age_range)
+                                  ? rule.age_range
+                                  : [rule.min_age || 0, rule.max_age || 99];
+                                const ageLabel = `${rule.title} (${ageRange[0]} - ${ageRange[1]} tuổi)`;
+                                return {
+                                  id: rule._id,
+                                  label: ageLabel,
+                                };
+                              })}
+                              value={field.value || []}
+                              onChange={(vals) => field.onChange(vals)}
+                            />
+                          </div>
+                        )}
+                        <FormDescription>
+                          Chọn độ tuổi phù hợp cho khóa học.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nội dung khóa học</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  <div className='flex items-center justify-between'>
+                    <Label>Nội dung chi tiết</Label>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => {
+                        const currentDetails = form.getValues("detail") || [];
+                        form.setValue("detail", [
+                          ...currentDetails,
+                          { title: "", description: "" },
+                        ]);
+                      }}
+                    >
+                      <Plus className='h-4 w-4 mr-1' />
+                      Thêm mục
+                    </Button>
+                  </div>
+                  <Accordion
+                    type='multiple'
+                    className='w-full'
+                  >
+                    {form.watch("detail")?.map((item, index) => (
+                      <AccordionItem
+                        key={index}
+                        value={`detail-${index}`}
+                        className='border rounded-lg mb-4'
+                      >
+                        <AccordionTrigger className='px-4 py-3 hover:no-underline'>
+                          <div className='flex items-center justify-between w-full mr-4'>
+                            <div className='flex items-center gap-3'>
+                              <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
+                                {index + 1}
+                              </div>
+                              <div className='text-left'>
+                                <h4 className='font-semibold text-foreground'>
+                                  Nội dung {index + 1}
+                                </h4>
+                                {item.title && (
+                                  <p className='text-sm text-muted-foreground'>
+                                    {item.title}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {form.watch("detail").length > 1 && (
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='icon'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const currentDetails =
+                                    form.getValues("detail");
+                                  if (currentDetails.length <= 1) return;
+                                  const newDetails = [...currentDetails];
+                                  newDetails.splice(index, 1);
+                                  form.setValue("detail", newDetails);
+
+                                  // Remove form_judge for this detail
+                                  const newFormJudges = { ...detailFormJudges };
+                                  delete newFormJudges[index];
+                                  // Re-index remaining form_judges
+                                  const reindexed: Record<
+                                    number,
+                                    FormJudgeSchema
+                                  > = {};
+                                  Object.keys(newFormJudges).forEach((key) => {
+                                    const oldIndex = parseInt(key);
+                                    const newIndex =
+                                      oldIndex > index
+                                        ? oldIndex - 1
+                                        : oldIndex;
+                                    reindexed[newIndex] =
+                                      newFormJudges[oldIndex];
+                                  });
+                                  setDetailFormJudges(reindexed);
+                                }}
+                                className='h-8 w-8'
+                              >
+                                <Trash2 className='h-4 w-4' />
+                              </Button>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className='px-4 pb-4'>
+                          <div className='space-y-4 pt-2'>
+                            <div className='space-y-2'>
+                              <Label>Tiêu đề {index + 1}</Label>
+                              <Input
+                                value={item.title}
+                                onChange={(e) => {
+                                  const currentDetails =
+                                    form.getValues("detail");
+                                  const newDetails = [...currentDetails];
+                                  newDetails[index] = {
+                                    ...newDetails[index],
+                                    title: e.target.value,
+                                  };
+                                  form.setValue("detail", newDetails);
+                                }}
+                                placeholder={`Tiêu đề ${index + 1}`}
+                              />
+                            </div>
+                            <div className='space-y-2'>
+                              <Label>Mô tả {index + 1}</Label>
+                              <Textarea
+                                value={item.description}
+                                onChange={(e) => {
+                                  const currentDetails =
+                                    form.getValues("detail");
+                                  const newDetails = [...currentDetails];
+                                  newDetails[index] = {
+                                    ...newDetails[index],
+                                    description: e.target.value,
+                                  };
+                                  form.setValue("detail", newDetails);
+                                }}
+                                placeholder={`Mô tả ${index + 1}`}
+                                className='resize-none min-h-[80px]'
+                              />
+                            </div>
+
+                            {/* FormJudge Builder */}
+                            <div className='mt-4'>
+                              <FormJudgeBuilder
+                                value={detailFormJudges[index]}
+                                onChange={(schema) => {
+                                  setDetailFormJudges((prev) => ({
+                                    ...prev,
+                                    [index]: schema,
+                                  }));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hình ảnh khóa học</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {/* Current Images */}
+                  {courseImages.length > 0 && (
+                    <div className='space-y-2'>
+                      <p className='text-sm text-muted-foreground'>
+                        Hình ảnh hiện tại:
+                      </p>
+                      <div className='flex gap-2 flex-wrap'>
+                        {course.media && Array.isArray(course.media)
+                          ? course.media.map(
+                              (mediaItem: any, index: number) => {
+                                const mediaId = mediaItem._id || mediaItem;
+                                const imagePath = courseImages[index];
+                                const isMarkedForDeletion =
+                                  imagesToDelete.includes(mediaId);
+
+                                return (
+                                  <div
+                                    key={mediaId}
+                                    className={`relative w-20 h-20 rounded border overflow-hidden ${
+                                      isMarkedForDeletion
+                                        ? "opacity-50 bg-red-100 border-red-300"
+                                        : ""
+                                    }`}
+                                  >
+                                    <img
+                                      src={imagePath}
+                                      alt={`Current ${index + 1}`}
+                                      className='w-full h-full object-cover'
+                                    />
+                                    {isMarkedForDeletion ? (
+                                      <button
+                                        type='button'
+                                        onClick={() =>
+                                          setImagesToDelete((prev) =>
+                                            prev.filter((id) => id !== mediaId)
+                                          )
+                                        }
+                                        className='absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-green-600'
+                                        title='Khôi phục hình ảnh'
+                                      >
+                                        +
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type='button'
+                                        onClick={() =>
+                                          setImagesToDelete((prev) => [
+                                            ...prev,
+                                            mediaId,
+                                          ])
+                                        }
+                                        className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
+                                        title='Xóa hình ảnh'
+                                      >
+                                        <X className='h-3 w-3' />
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              }
+                            )
+                          : course.media &&
+                            courseImages[0] && (
+                              <div className='relative w-20 h-20 rounded border overflow-hidden'>
+                                <img
+                                  src={courseImages[0]}
+                                  alt='Current'
+                                  className='w-full h-full object-cover'
+                                />
                                 <button
                                   type='button'
                                   onClick={() =>
-                                    unmarkImageForDeletion(mediaId)
+                                    setImagesToDelete((prev) => [
+                                      ...prev,
+                                      course.media._id || course.media,
+                                    ])
                                   }
-                                  className='absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-green-600'
-                                  title='Khôi phục hình ảnh'
-                                >
-                                  +
-                                </button>
-                              ) : (
-                                <button
-                                  type='button'
-                                  onClick={() => markImageForDeletion(mediaId)}
                                   className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
                                   title='Xóa hình ảnh'
                                 >
                                   <X className='h-3 w-3' />
                                 </button>
-                              )}
-                            </div>
-                          );
-                        })
-                      : course.media &&
-                        courseImages[0] && (
-                          <div className='relative w-20 h-20 rounded border overflow-hidden'>
-                            <img
-                              src={courseImages[0]}
-                              alt='Current'
-                              className='w-full h-full object-cover'
-                            />
-                            <button
-                              type='button'
-                              onClick={() =>
-                                markImageForDeletion(
-                                  course.media._id || course.media
-                                )
-                              }
-                              className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
-                              title='Xóa hình ảnh'
-                            >
-                              <X className='h-3 w-3' />
-                            </button>
-                          </div>
-                        )}
-                  </div>
-                  {imagesToDelete.length > 0 && (
-                    <p className='text-sm text-red-600'>
-                      {imagesToDelete.length} hình ảnh sẽ bị xóa khi lưu thay
-                      đổi
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* File Upload */}
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <input
-                    type='file'
-                    accept='image/*'
-                    multiple
-                    onChange={handleFileSelect}
-                    className='hidden'
-                    id='media-upload'
-                  />
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() =>
-                      document.getElementById("media-upload")?.click()
-                    }
-                  >
-                    <Upload className='h-4 w-4 mr-2' />
-                    Thêm hình ảnh
-                  </Button>
-                </div>
-
-                {/* Selected Files Preview */}
-                {selectedFiles.length > 0 && (
-                  <div className='space-y-2'>
-                    <p className='text-sm text-muted-foreground'>
-                      Hình ảnh mới:
-                    </p>
-                    <div className='flex gap-2 flex-wrap'>
-                      {selectedFiles.map((file, index) => (
-                        <div
-                          key={index}
-                          className='relative w-20 h-20 rounded border overflow-hidden'
-                        >
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`New ${index + 1}`}
-                            className='w-full h-full object-cover'
-                          />
-                          <button
-                            type='button'
-                            onClick={() => removeSelectedFile(index)}
-                            className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs'
-                          >
-                            <X className='h-3 w-3' />
-                          </button>
-                        </div>
-                      ))}
+                              </div>
+                            )}
+                      </div>
+                      {imagesToDelete.length > 0 && (
+                        <p className='text-sm text-red-600'>
+                          {imagesToDelete.length} hình ảnh sẽ bị xóa khi lưu
+                          thay đổi
+                        </p>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                  )}
 
-            {/* Active Status */}
-            <div className='flex items-center space-x-2'>
-              <Switch
-                id='is_active'
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  handleInputChange("is_active", checked)
-                }
-              />
-              <Label htmlFor='is_active'>Khóa học đang hoạt động</Label>
-            </div>
-          </div>
+                  {/* File Upload */}
+                  <div className='space-y-2'>
+                    <div className='flex items-center gap-2'>
+                      <input
+                        type='file'
+                        accept='image/*'
+                        multiple
+                        onChange={handleFileSelect}
+                        className='hidden'
+                        id='media-upload'
+                      />
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={() =>
+                          document.getElementById("media-upload")?.click()
+                        }
+                      >
+                        <Upload className='h-4 w-4 mr-2' />
+                        Thêm hình ảnh
+                      </Button>
+                    </div>
+
+                    {/* Selected Files Preview */}
+                    {selectedFiles.length > 0 && (
+                      <div className='space-y-2'>
+                        <p className='text-sm text-muted-foreground'>
+                          Hình ảnh mới:
+                        </p>
+                        <div className='flex gap-2 flex-wrap'>
+                          {selectedFiles.map((file, index) => (
+                            <div
+                              key={index}
+                              className='relative w-20 h-20 rounded border overflow-hidden'
+                            >
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={`New ${index + 1}`}
+                                className='w-full h-full object-cover'
+                              />
+                              <button
+                                type='button'
+                                onClick={() => removeSelectedFile(index)}
+                                className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs'
+                              >
+                                <X className='h-3 w-3' />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className='flex items-center space-x-2'>
+                <FormField
+                  control={form.control}
+                  name='is_active'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-center space-x-3 space-y-0'>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className='space-y-1 leading-none'>
+                        <FormLabel>Khóa học đang hoạt động</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </form>
+          </Form>
 
           <DialogFooter>
             <Button
+              type='button'
               variant='outline'
               onClick={() => setIsEditModalOpen(false)}
               disabled={isSaving}
@@ -1361,8 +1756,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
               Hủy
             </Button>
             <Button
-              onClick={handleSaveCourse}
-              disabled={isSaving || !formData.title.trim()}
+              type='submit'
+              form='edit-course-form'
+              disabled={isSaving}
             >
               {isSaving ? (
                 <>
