@@ -1268,38 +1268,6 @@ export function SchedulePreviewModal({
                                       </div>
                                     ) : (
                                       <div className='relative'>
-                                        {/* Range highlight overlay */}
-                                        {(() => {
-                                          const selectedSlotIds =
-                                            classSelectedSlots[classItem._id] ||
-                                            [];
-                                          if (selectedSlotIds.length === 2) {
-                                            const sortedSlots = [
-                                              ...allSlots,
-                                            ].sort(
-                                              (a, b) =>
-                                                a.start_time - b.start_time ||
-                                                a.start_minute - b.start_minute
-                                            );
-                                            const selectedIndices =
-                                              selectedSlotIds
-                                                .map((id) =>
-                                                  sortedSlots.findIndex(
-                                                    (s) => s._id === id
-                                                  )
-                                                )
-                                                .filter((i) => i !== -1)
-                                                .sort((a, b) => a - b);
-
-                                            if (selectedIndices.length === 2) {
-                                              return (
-                                                <div className='absolute inset-0 pointer-events-none z-0 rounded-md bg-primary/5 border border-primary/20' />
-                                              );
-                                            }
-                                          }
-                                          return null;
-                                        })()}
-
                                         <div className='grid grid-cols-3 gap-2 relative z-10'>
                                           {allSlots.map((slot) => {
                                             const isSlotSelected = (
