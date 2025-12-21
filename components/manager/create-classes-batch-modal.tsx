@@ -626,59 +626,55 @@ export function CreateClassesBatchModal({
           )
         : [];
 
+      // Create maps for title lookup
+      const specialistCategoryTitles = new Map(
+        specialist.category?.map((cat: any) => [
+          typeof cat === "object" ? cat._id : cat,
+          typeof cat === "object" ? cat.title : cat,
+        ]) || []
+      );
+      const specialistAgeTypeTitles = new Map(
+        specialist.age_types?.map((age: any) => [
+          typeof age === "object" ? age._id : age,
+          typeof age === "object" ? age.title : age,
+        ]) || []
+      );
+
       const courseCategories = course.category?.map((cat) => cat._id) || [];
       const courseAgeTypes = course.type_of_age?.map((age) => age._id) || [];
 
-      // Validate category match
-      const categoryMatch = courseCategories.some((catId) =>
-        specialistCategories.includes(catId)
-      );
-
-      if (
-        !categoryMatch &&
-        courseCategories.length > 0 &&
-        specialistCategories.length > 0
-      ) {
-        const courseCategoryTitles =
-          course.category?.map((cat) => cat.title).join(", ") || "";
-        const specialistCategoryTitles = specialist.category
-          .map((cat: any) => (typeof cat === "object" ? cat.title : ""))
-          .filter(Boolean)
-          .join(", ");
-
-        warnings.push({
-          classId,
-          type: "category",
-          severity: "warning",
-          message: "Danh mục không phù hợp",
-          details: `Khóa học: [${courseCategoryTitles}] ≠ Huấn luyện viên: [${specialistCategoryTitles}]`,
+      // Validate category match - check each course category
+      if (courseCategories.length > 0) {
+        courseCategories.forEach((catId) => {
+          if (!specialistCategories.includes(catId)) {
+            const courseCatTitle =
+              course.category?.find((cat) => cat._id === catId)?.title || catId;
+            warnings.push({
+              classId,
+              type: "category",
+              severity: "info",
+              message: `Huấn luyện viên thiếu chuyên môn: ${courseCatTitle}`,
+              details: `Khóa học yêu cầu chuyên môn này nhưng Huấn luyện viên chưa có`,
+            });
+          }
         });
       }
 
-      // Validate age_type match
-      const ageTypeMatch = courseAgeTypes.some((ageId) =>
-        specialistAgeTypes.includes(ageId)
-      );
-
-      if (
-        !ageTypeMatch &&
-        courseAgeTypes.length > 0 &&
-        specialistAgeTypes.length > 0
-      ) {
-        // Use populated course.type_of_age objects for titles
-        const courseAgeTypeTitles =
-          course.type_of_age?.map((age) => age.title).join(", ") || "";
-        const specialistAgeTypeTitles = specialist.age_types
-          .map((age: any) => (typeof age === "object" ? age.title : ""))
-          .filter(Boolean)
-          .join(", ");
-
-        warnings.push({
-          classId,
-          type: "age_type",
-          severity: "warning",
-          message: "Độ tuổi không phù hợp",
-          details: `Khóa học: [${courseAgeTypeTitles}] ≠ Huấn luyện viên: [${specialistAgeTypeTitles}]`,
+      // Validate age_type match - check each course age type
+      if (courseAgeTypes.length > 0) {
+        courseAgeTypes.forEach((ageId) => {
+          if (!specialistAgeTypes.includes(ageId)) {
+            const courseAgeTitle =
+              course.type_of_age?.find((age) => age._id === ageId)?.title ||
+              ageId;
+            warnings.push({
+              classId,
+              type: "age_type",
+              severity: "info",
+              message: `Huấn luyện viên thiếu độ tuổi: ${courseAgeTitle}`,
+              details: `Khóa học yêu cầu độ tuổi này nhưng Huấn luyện viên chưa có`,
+            });
+          }
         });
       }
 
@@ -812,55 +808,41 @@ export function CreateClassesBatchModal({
           .map((age: any) => (typeof age === "object" ? age.title : null))
           .filter(Boolean);
 
-        // Validation 2: Category matching
+        // Validation 2: Category matching - check each course category
         const courseCategories = course.category?.map((cat) => cat._id) || [];
-        const courseCategoryTitles =
-          course.category?.map((cat) => cat.title) || [];
-
-        const hasMatchingCategory =
-          courseCategories.length === 0 ||
-          specialistCategoryIds.length === 0 ||
-          courseCategories.some((catId) =>
-            specialistCategoryIds.includes(catId)
-          );
-
-        if (!hasMatchingCategory) {
-          const courseNames = courseCategoryTitles.join(", ") || "N/A";
-          const instructorNames =
-            specialistCategoryTitles.length > 0
-              ? specialistCategoryTitles.join(", ")
-              : "Chưa có";
-          warnings.push({
-            classId: classItem.id,
-            type: "category",
-            severity: "warning",
-            message: "Category không khớp",
-            details: `Khóa học: [${courseNames}] ≠ Huấn luyện viên: [${instructorNames}]`,
+        if (courseCategories.length > 0) {
+          courseCategories.forEach((catId) => {
+            if (!specialistCategoryIds.includes(catId)) {
+              const courseCatTitle =
+                course.category?.find((cat) => cat._id === catId)?.title ||
+                catId;
+              warnings.push({
+                classId: classItem.id,
+                type: "category",
+                severity: "info",
+                message: `Huấn luyện viên thiếu chuyên môn: ${courseCatTitle}`,
+                details: `Khóa học yêu cầu chuyên môn này nhưng Huấn luyện viên chưa có`,
+              });
+            }
           });
         }
 
-        // Validation 3: Age type matching
+        // Validation 3: Age type matching - check each course age type
         const courseAgeTypes = course.type_of_age?.map((age) => age._id) || [];
-        const courseAgeNames =
-          course.type_of_age?.map((age) => age.title) || [];
-
-        const hasMatchingAge =
-          courseAgeTypes.length === 0 ||
-          specialistAgeTypeIds.length === 0 ||
-          courseAgeTypes.some((ageId) => specialistAgeTypeIds.includes(ageId));
-
-        if (!hasMatchingAge) {
-          const courseAgeDisplay = courseAgeNames.join(", ") || "N/A";
-          const instructorAgeDisplay =
-            specialistAgeTypeTitles.length > 0
-              ? specialistAgeTypeTitles.join(", ")
-              : "Chưa có";
-          warnings.push({
-            classId: classItem.id,
-            type: "age_type",
-            severity: "warning",
-            message: "Độ tuổi không phù hợp",
-            details: `Khóa học: [${courseAgeDisplay}] ≠ Huấn luyện viên: [${instructorAgeDisplay}]`,
+        if (courseAgeTypes.length > 0) {
+          courseAgeTypes.forEach((ageId) => {
+            if (!specialistAgeTypeIds.includes(ageId)) {
+              const courseAgeTitle =
+                course.type_of_age?.find((age) => age._id === ageId)?.title ||
+                ageId;
+              warnings.push({
+                classId: classItem.id,
+                type: "age_type",
+                severity: "info",
+                message: `Huấn luyện viên thiếu độ tuổi: ${courseAgeTitle}`,
+                details: `Khóa học yêu cầu độ tuổi này nhưng Huấn luyện viên chưa có`,
+              });
+            }
           });
         }
 
