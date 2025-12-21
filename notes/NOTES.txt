@@ -148,11 +148,7 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
 
 - search order: tìm/filter cùng lúc member vs khoá học (ví dụ: tìm xem học viên đó có đăng ký cho khoá học này không và ngược lại)
 
-- hiện form-judge trong 'Chi tiết buổi học' trong lịch học
-
 - cho sửa title khi edit form judge
-
-field type trong request body của createCourse và updateCourse phải là "type":["custom"] hoặc "type":["global"] 
 
 - fix column trạng thái
 

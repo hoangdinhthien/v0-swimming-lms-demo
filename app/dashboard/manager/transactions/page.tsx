@@ -89,7 +89,10 @@ export default function TransactionsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { token, tenantId, loading: authLoading } = useAuth();
+  const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [courseSearch, setCourseSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [courseFilter, setCourseFilter] = useState("all");
@@ -125,10 +128,15 @@ export default function TransactionsPage() {
   const [createOrderModalOpen, setCreateOrderModalOpen] = useState(false);
 
   // Debounce timer for search
+  // Debounce timer for search
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const memberSearchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const courseSearchTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedMemberSearch, setDebouncedMemberSearch] = useState("");
+  const [debouncedCourseSearch, setDebouncedCourseSearch] = useState("");
 
-  // Debounce search query
+  // Debounce simple search
   useEffect(() => {
     if (searchTimerRef.current) {
       clearTimeout(searchTimerRef.current);
@@ -145,7 +153,41 @@ export default function TransactionsPage() {
     };
   }, [searchQuery]);
 
-  // Fetch orders from API
+  // Debounce member search
+  useEffect(() => {
+    if (memberSearchTimerRef.current) {
+      clearTimeout(memberSearchTimerRef.current);
+    }
+
+    memberSearchTimerRef.current = setTimeout(() => {
+      setDebouncedMemberSearch(memberSearch);
+    }, 300);
+
+    return () => {
+      if (memberSearchTimerRef.current) {
+        clearTimeout(memberSearchTimerRef.current);
+      }
+    };
+  }, [memberSearch]);
+
+  // Debounce course search
+  useEffect(() => {
+    if (courseSearchTimerRef.current) {
+      clearTimeout(courseSearchTimerRef.current);
+    }
+
+    courseSearchTimerRef.current = setTimeout(() => {
+      setDebouncedCourseSearch(courseSearch);
+    }, 300);
+
+    return () => {
+      if (courseSearchTimerRef.current) {
+        clearTimeout(courseSearchTimerRef.current);
+      }
+    };
+  }, [courseSearch]);
+
+
   useEffect(() => {
     // Wait for auth to complete
     if (authLoading) return;
@@ -160,19 +202,40 @@ export default function TransactionsPage() {
         return;
       }
       try {
-        if (debouncedSearch && debouncedSearch.trim()) {
+        // Check if any search is active
+        const hasAdvancedSearch = (debouncedMemberSearch && debouncedMemberSearch.trim()) || (debouncedCourseSearch && debouncedCourseSearch.trim());
+        const hasSimpleSearch = debouncedSearch && debouncedSearch.trim();
+
+        if (hasAdvancedSearch || hasSimpleSearch) {
           setIsSearching(true);
         } else {
           setLoading(true);
         }
 
-        // Build search params using searchOr for multiple fields
-        const searchParams = debouncedSearch?.trim()
-          ? {
-              "searchOr[course.title:contains]": debouncedSearch.trim(),
-              "searchOr[user.username:contains]": debouncedSearch.trim(),
-            }
-          : undefined;
+        // Build search params
+        let searchParams: Record<string, string> | undefined = undefined;
+
+        if (isAdvancedSearch) {
+           // Advanced Search (AND logic)
+           const params: Record<string, string> = {};
+           if (debouncedMemberSearch && debouncedMemberSearch.trim()) {
+             params["search[user.username:contains]"] = debouncedMemberSearch.trim();
+           }
+           if (debouncedCourseSearch && debouncedCourseSearch.trim()) {
+             params["search[course.title:contains]"] = debouncedCourseSearch.trim();
+           }
+           if (Object.keys(params).length > 0) {
+             searchParams = params;
+           }
+        } else {
+           // Simple Search (OR logic)
+           if (debouncedSearch && debouncedSearch.trim()) {
+             searchParams = {
+                "searchOr[course.title:contains]": debouncedSearch.trim(),
+                "searchOr[user.username:contains]": debouncedSearch.trim(),
+             };
+           }
+        }
 
         const ordersData = await fetchOrders({
           tenantId,
@@ -245,7 +308,7 @@ export default function TransactionsPage() {
       }
     }
     getOrders();
-  }, [token, tenantId, currentPage, limit, authLoading, debouncedSearch]);
+  }, [token, tenantId, currentPage, limit, authLoading, debouncedMemberSearch, debouncedCourseSearch, debouncedSearch, isAdvancedSearch]);
 
   // Fetch course details for a given course ID
   const fetchCourseDetails = async (courseId: string) => {
@@ -283,17 +346,38 @@ export default function TransactionsPage() {
 
     setRefreshing(true);
     try {
+      // Build search params using separate search fields for AND logic
+      // Build search params
+      let searchParams: Record<string, string> | undefined = undefined;
+
+      if (isAdvancedSearch) {
+         // Advanced Search (AND logic)
+         const params: Record<string, string> = {};
+         if (debouncedMemberSearch && debouncedMemberSearch.trim()) {
+           params["search[user.username:contains]"] = debouncedMemberSearch.trim();
+         }
+         if (debouncedCourseSearch && debouncedCourseSearch.trim()) {
+           params["search[course.title:contains]"] = debouncedCourseSearch.trim();
+         }
+         if (Object.keys(params).length > 0) {
+           searchParams = params;
+         }
+      } else {
+         // Simple Search (OR logic)
+         if (debouncedSearch && debouncedSearch.trim()) {
+           searchParams = {
+              "searchOr[course.title:contains]": debouncedSearch.trim(),
+              "searchOr[user.username:contains]": debouncedSearch.trim(),
+           };
+         }
+      }
+
       const ordersData = await fetchOrders({
         tenantId,
         token,
         page: currentPage,
         limit,
-        searchParams: debouncedSearch?.trim()
-          ? {
-              "searchOr[course.title:contains]": debouncedSearch.trim(),
-              "searchOr[user.username:contains]": debouncedSearch.trim(),
-            }
-          : undefined,
+        searchParams,
       });
 
       if (ordersData && ordersData.orders) {
@@ -309,6 +393,26 @@ export default function TransactionsPage() {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setMemberSearch("");
+    setCourseSearch("");
+    setDebouncedMemberSearch("");
+    setDebouncedCourseSearch("");
+    setSearchQuery("");
+    setDebouncedSearch("");
+    setStatusFilter("all");
+    setCourseFilter("all");
+    setDateFilter(undefined);
+  };
+
+  // Toggle search mode
+  const toggleSearchMode = () => {
+    // Only toggle visibility, don't necessarily clear filters unless desired
+    // User mockup implies it's just an accordion
+    setIsAdvancedSearch(!isAdvancedSearch);
   };
 
   // Handle delete order
@@ -454,7 +558,7 @@ export default function TransactionsPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, courseFilter, dateFilter, debouncedSearch]);
+  }, [statusFilter, courseFilter, dateFilter, debouncedMemberSearch, debouncedCourseSearch, debouncedSearch]);
 
   if (loading && orders.length === 0) {
     return (
@@ -588,83 +692,150 @@ export default function TransactionsPage() {
         </Card>
       </div>
 
-      <Card className='mt-8'>
-        <CardHeader>
-          <CardTitle>Lịch sử giao dịch</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='flex flex-col gap-4 md:flex-row md:items-center mb-6'>
-            <div className='flex-1 relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Tìm kiếm (tên học viên, tên khóa học)...'
-                className='pl-8'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {isSearching && (
-                <Loader2 className='absolute right-2.5 top-2.5 h-4 w-4 animate-spin text-muted-foreground' />
-              )}
-            </div>
+      <div className='mt-8 space-y-4'>
+         <div className="flex items-center justify-between">
+           <h2 className="text-xl font-semibold">Lịch sử giao dịch</h2>
+         </div>
 
-            <div className='grid grid-cols-3 gap-4'>
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Trạng thái' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='paid'>Đã thanh toán</SelectItem>
-                  <SelectItem value='pending'>Đang chờ</SelectItem>
-                  <SelectItem value='expired'>Đã hết hạn</SelectItem>
-                </SelectContent>
-              </Select>
+         {/* Filter Row */}
+         <div className="flex flex-col md:flex-row gap-4">
+             {/* Simple Search */}
+             <div className='relative flex-1'>
+                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                 <Input
+                   placeholder='Tìm kiếm (tên học viên, tên khóa học)...'
+                   className='pl-8'
+                   value={searchQuery}
+                   onChange={(e) => {
+                     setSearchQuery(e.target.value);
+                     if (e.target.value && isAdvancedSearch) {
+                        setIsAdvancedSearch(false); // Auto-close advanced if typing here? Or just clear advanced inputs? 
+                        // Let's stick to the plan: switching separates them.
+                        // But for better UX, if user types here, we treat it as simple search.
+                        setMemberSearch("");
+                        setCourseSearch("");
+                        setDebouncedMemberSearch("");
+                        setDebouncedCourseSearch("");
+                     }
+                   }}
+                   disabled={isAdvancedSearch && (!!memberSearch || !!courseSearch)} // Optional: disable if advanced is active? No, just let them type and switch.
+                 />
+             </div>
 
-              {/* <Select
-                value={courseFilter}
-                onValueChange={setCourseFilter}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Khóa học' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Tất cả khóa học</SelectItem>
-                  {courses.map((course) => (
-                    <SelectItem
-                      key={course}
-                      value={course}
-                    >
-                      {course}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select> */}
+             {/* Status Filter */}
+             <div className="w-full md:w-[200px]">
+               <Select
+                 value={statusFilter}
+                 onValueChange={setStatusFilter}
+               >
+                 <SelectTrigger>
+                   <SelectValue placeholder='Trạng thái' />
+                 </SelectTrigger>
+                 <SelectContent>
+                   <SelectItem value='all'>Tất cả trạng thái</SelectItem>
+                   <SelectItem value='paid'>Đã thanh toán</SelectItem>
+                   <SelectItem value='pending'>Đang chờ</SelectItem>
+                   <SelectItem value='expired'>Đã hết hạn</SelectItem>
+                 </SelectContent>
+               </Select>
+             </div>
 
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant='outline'
-                    className='w-full justify-start text-left font-normal'
-                  >
-                    <CalendarIcon className='mr-2 h-4 w-4' />
-                    {dateFilter ? format(dateFilter, "PPP") : "Chọn ngày"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0'>
-                  <Calendar
-                    mode='single'
-                    selected={dateFilter}
-                    onSelect={setDateFilter}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+             {/* Date Filter */}
+             <div className="w-full md:w-[200px]">
+               <Popover>
+                 <PopoverTrigger asChild>
+                   <Button
+                     variant='outline'
+                     className='w-full justify-start text-left font-normal'
+                   >
+                     <CalendarIcon className='mr-2 h-4 w-4' />
+                     {dateFilter ? format(dateFilter, "PPP") : "Chọn ngày"}
+                   </Button>
+                 </PopoverTrigger>
+                 <PopoverContent className='w-auto p-0'>
+                   <Calendar
+                     mode='single'
+                     selected={dateFilter}
+                     onSelect={setDateFilter}
+                     initialFocus
+                   />
+                 </PopoverContent>
+               </Popover>
+             </div>
 
+             {/* Clear Filters */}
+             <Button 
+               variant="outline" 
+               onClick={handleResetFilters}
+               className="whitespace-nowrap"
+             >
+               <Trash2 className="h-4 w-4 mr-2" />
+               Xóa bộ lọc
+             </Button>
+         </div>
+
+         {/* Advanced Search Accordion */}
+         <div className="border rounded-md bg-card">
+           <button 
+             onClick={toggleSearchMode}
+             className="w-full flex items-center justify-between p-4 text-sm font-medium hover:bg-muted/50 transition-colors"
+           >
+              <div className="flex items-center gap-2">
+                 <Filter className="h-4 w-4" />
+                 Tìm kiếm nâng cao
+              </div>
+              {isAdvancedSearch ? <ChevronRight className="h-4 w-4 rotate-90 transition-transform" /> : <ChevronRight className="h-4 w-4 transition-transform" />}
+           </button>
+           
+           {isAdvancedSearch && (
+             <div className="p-4 border-t grid gap-4 animate-in slide-in-from-top-2 duration-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Tên học viên</label>
+                    <Input
+                      placeholder='Nhập tên học viên...'
+                      value={memberSearch}
+                      onChange={(e) => {
+                         setMemberSearch(e.target.value);
+                         if(e.target.value) {
+                            setSearchQuery(""); // Clear simple search if using advanced
+                            setDebouncedSearch("");
+                         }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Tên khóa học</label>
+                    <Input
+                      placeholder='Nhập tên khóa học...'
+                      value={courseSearch}
+                      onChange={(e) => {
+                         setCourseSearch(e.target.value);
+                         if(e.target.value) {
+                             setSearchQuery(""); 
+                             setDebouncedSearch("");
+                         }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                   Tìm kiếm với AND logic: Kết quả phải khớp <strong>cả hai</strong> điều kiện (nếu nhập cả hai).
+                </div>
+             </div>
+           )}
+         </div>
+
+         {/* Loading Indicator */}
+         {isSearching && (
+           <div className="flex items-center justify-center py-4">
+             <Loader2 className='h-6 w-6 animate-spin text-primary' />
+           </div>
+         )}
+      </div>
+
+      <Card className='border-none shadow-none'> 
+        <CardContent className="p-0">
           <div className='rounded-md border overflow-hidden'>
             <Table>
               <TableHeader>
@@ -718,9 +889,9 @@ export default function TransactionsPage() {
                         <TableCell className='group-hover:bg-muted/50 transition-colors duration-200'>
                           <div className='flex items-start flex-col'>
                             <div className='font-medium'>
-                              <HighlightText
+                                <HighlightText
                                 text={userName}
-                                searchQuery={debouncedSearch}
+                                searchQuery={isAdvancedSearch ? debouncedMemberSearch : debouncedSearch}
                               />
                             </div>
                             <div className='text-xs text-muted-foreground'>
@@ -736,7 +907,7 @@ export default function TransactionsPage() {
                           ) : (
                             <HighlightText
                               text={courseName}
-                              searchQuery={debouncedSearch}
+                              searchQuery={isAdvancedSearch ? debouncedCourseSearch : debouncedSearch}
                             />
                           )}
                         </TableCell>
