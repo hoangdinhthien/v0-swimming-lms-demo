@@ -426,7 +426,9 @@ export default function TransactionDetailPage() {
 
       // Proceed with refund (validation already done when loading)
       await refundOrder({
-        zp_trans_id: order.payment?.zp_trans_id || "",
+        zp_trans_id: order.payment?.zp_trans_id
+          ? String(order.payment.zp_trans_id)
+          : "",
         amount: order.price,
         description: refundDescription || "Hoàn tiền theo yêu cầu",
         tenantId,
