@@ -1008,13 +1008,15 @@ export async function addMemberToClass(
  * @param members - Single member ID string or array of member IDs
  * @param tenantId - Optional tenant ID
  * @param token - Optional auth token
+ * @param order - Optional order ID for refund scenarios
  * @returns Promise with response data
  */
 export async function removeMemberFromClass(
   classId: string,
   members: string | string[],
   tenantId?: string,
-  token?: string
+  token?: string,
+  order?: string
 ): Promise<any> {
   const finalTenantId = tenantId || getSelectedTenant();
   const finalToken = token || getAuthToken();
@@ -1043,14 +1045,17 @@ export async function removeMemberFromClass(
     ? members.map((memberId) => ({ member: memberId }))
     : { member: members };
 
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/class/remove-member?id=${classId}`,
-    {
-      method: "PUT",
-      headers,
-      body: JSON.stringify(requestBody),
-    }
-  );
+  // Build URL with optional order parameter
+  let url = `${config.API}/v1/workflow-process/manager/class/remove-member?id=${classId}`;
+  if (order) {
+    url += `&order=${order}`;
+  }
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(requestBody),
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

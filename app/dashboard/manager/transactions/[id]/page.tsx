@@ -79,6 +79,7 @@ import {
   fetchClassroomsByCourse,
   fetchClassroomsByCourseAndSchedule,
   addUserToClass,
+  removeMemberFromClass,
 } from "@/api/manager/class-api";
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import { fetchFirstSlotByClassId } from "@/api/manager/schedule-api";
@@ -434,6 +435,40 @@ export default function TransactionDetailPage() {
         tenantId,
         token,
       });
+
+      // If order has a class assigned, remove the member from the class
+      if (order.class) {
+        try {
+          const classId =
+            typeof order.class === "string" ? order.class : order.class._id;
+          // Ensure userId is a string
+          const userId = Array.isArray(order.user)
+            ? order.user[0]?._id || order.user[0]
+            : order.user?._id || order.user;
+
+          await removeMemberFromClass(
+            classId,
+            userId,
+            tenantId,
+            token,
+            order._id
+          );
+
+          toast({
+            title: "Thông báo",
+            description: "Đã remove học viên khỏi lớp học",
+          });
+        } catch (removeError) {
+          console.error("Error removing member from class:", removeError);
+          // Don't fail the entire refund process if removing from class fails
+          toast({
+            variant: "destructive",
+            title: "Cảnh báo",
+            description:
+              "Hoàn tiền thành công nhưng không thể remove khỏi lớp. Vui lòng kiểm tra thủ công.",
+          });
+        }
+      }
 
       toast({
         title: "Thành công",
