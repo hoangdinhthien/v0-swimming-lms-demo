@@ -74,6 +74,8 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
     }
   );
   const [newFieldName, setNewFieldName] = useState("");
+  const [editingFieldName, setEditingFieldName] = useState<string | null>(null);
+  const [tempFieldName, setTempFieldName] = useState("");
 
   // Update parent when schema changes
   const updateSchema = (newSchema: FormJudgeSchema) => {
@@ -121,6 +123,30 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
         [fieldName]: fieldData,
       },
     });
+  };
+
+  // Start editing field name
+  const startEditingField = (fieldName: string) => {
+    setEditingFieldName(fieldName);
+    setTempFieldName(fieldName);
+  };
+
+  // Handle renaming a field
+  const handleRenameField = (oldName: string, newName: string) => {
+    if (!newName.trim() || newName === oldName) {
+      setEditingFieldName(null);
+      return;
+    }
+    if (schema.items[newName]) {
+      alert("Tên field đã tồn tại!");
+      return;
+    }
+
+    const newItems = { ...schema.items };
+    newItems[newName] = newItems[oldName];
+    delete newItems[oldName];
+    updateSchema({ ...schema, items: newItems });
+    setEditingFieldName(null);
   };
 
   // Get all field names
@@ -200,7 +226,28 @@ export function FormJudgeBuilder({ value, onChange }: FormJudgeBuilderProps) {
                   <div className='flex items-start justify-between mb-4 pb-4 border-b'>
                     <div className='flex-1'>
                       <div className='flex items-center gap-2 mb-2'>
-                        <h4 className='font-semibold text-base'>{fieldName}</h4>
+                        {editingFieldName === fieldName ? (
+                          <Input
+                            value={tempFieldName}
+                            onChange={(e) => setTempFieldName(e.target.value)}
+                            onBlur={() =>
+                              handleRenameField(fieldName, tempFieldName)
+                            }
+                            onKeyPress={(e) =>
+                              e.key === "Enter" &&
+                              handleRenameField(fieldName, tempFieldName)
+                            }
+                            autoFocus
+                            className='font-semibold text-base h-auto p-1 border rounded focus-visible:ring-1'
+                          />
+                        ) : (
+                          <h4
+                            className='font-semibold text-base cursor-pointer'
+                            onClick={() => startEditingField(fieldName)}
+                          >
+                            {fieldName}
+                          </h4>
+                        )}
                         <Badge variant='outline'>
                           {getFieldTypeLabel(field.type)}
                         </Badge>

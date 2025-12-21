@@ -394,12 +394,6 @@ function ManagerDashboardPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Link href='/dashboard/manager/reports'>
-            <Button variant='outline'>
-              <FileText className='mr-2 h-4 w-4' />
-              Báo Cáo
-            </Button>
-          </Link>
           <Link href='/dashboard/manager/settings'>
             <Button variant='outline'>
               <Settings className='mr-2 h-4 w-4' />
@@ -409,10 +403,9 @@ function ManagerDashboardPage() {
         </div>
       </div>{" "}
       <Tabs defaultValue='overview'>
-        <TabsList className='grid w-full grid-cols-3 md:w-auto'>
+        <TabsList className='grid w-full grid-cols-2 md:w-auto'>
           <TabsTrigger value='overview'>Tổng Quan</TabsTrigger>
           <TabsTrigger value='calendar'>Lịch</TabsTrigger>
-          <TabsTrigger value='reports'>Báo Cáo</TabsTrigger>
         </TabsList>
         <TabsContent value='overview'>
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
