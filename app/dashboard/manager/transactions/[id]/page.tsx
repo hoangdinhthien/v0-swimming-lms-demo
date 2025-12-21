@@ -34,6 +34,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -50,6 +51,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../../../../../hooks/use-auth";
@@ -78,6 +81,7 @@ import {
   addUserToClass,
 } from "@/api/manager/class-api";
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
+import { fetchFirstSlotByClassId } from "@/api/manager/schedule-api";
 import ManagerNotFound from "@/components/manager/not-found";
 import CreateStudentModal from "@/components/create-student-modal";
 import { EditOrderModal } from "@/components/manager/edit-order-modal";
@@ -128,6 +132,73 @@ export default function TransactionDetailPage() {
   // Refund modal state and description
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundDescription, setRefundDescription] = useState<string>("");
+  const [canRefund, setCanRefund] = useState<boolean>(false);
+  const [checkingRefundEligibility, setCheckingRefundEligibility] =
+    useState<boolean>(false);
+
+  // Check if order can be refunded
+  const checkRefundEligibility = async (orderData: Order) => {
+    // Reset state
+    setCanRefund(false);
+    setCheckingRefundEligibility(true);
+
+    try {
+      // Basic checks: must be paid and not already refunded
+      if (
+        !orderData.status?.includes("paid") ||
+        orderData.status?.includes("refunded")
+      ) {
+        setCanRefund(false);
+        return;
+      }
+
+      // If no payment info, cannot refund
+      if (!orderData.payment?.zp_trans_id) {
+        setCanRefund(false);
+        return;
+      }
+
+      // If order has no class assigned, allow refund
+      if (!orderData.class) {
+        setCanRefund(true);
+        return;
+      }
+
+      // If has class, check first slot date
+      try {
+        const classId =
+          typeof orderData.class === "string"
+            ? orderData.class
+            : orderData.class._id;
+        const firstSlot = await fetchFirstSlotByClassId(
+          classId,
+          tenantId,
+          token
+        );
+
+        if (firstSlot) {
+          const firstSlotDate = new Date(firstSlot.date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+          // Allow refund if first slot is in the future
+          setCanRefund(firstSlotDate > today);
+        } else {
+          // If no first slot found, allow refund (edge case)
+          setCanRefund(true);
+        }
+      } catch (error) {
+        console.error("Error checking first slot:", error);
+        // If cannot check, allow refund to be safe
+        setCanRefund(true);
+      }
+    } catch (error) {
+      console.error("Error checking refund eligibility:", error);
+      setCanRefund(false);
+    } finally {
+      setCheckingRefundEligibility(false);
+    }
+  };
 
   // Fetch order details and related course
   useEffect(() => {
@@ -181,6 +252,13 @@ export default function TransactionDetailPage() {
 
     getOrderDetails();
   }, [token, tenantId, orderId]);
+
+  // Check refund eligibility when order changes
+  useEffect(() => {
+    if (order && token && tenantId) {
+      checkRefundEligibility(order);
+    }
+  }, [order, token, tenantId]);
 
   // Check for newly created user from guest account creation flow
   useEffect(() => {
@@ -336,6 +414,56 @@ export default function TransactionDetailPage() {
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
+    }
+  };
+
+  // Handle refund order
+  const handleRefundOrder = async () => {
+    if (!order || !token || !tenantId) return;
+
+    try {
+      setIsRefunding(true);
+
+      // Proceed with refund (validation already done when loading)
+      await refundOrder({
+        zp_trans_id: order.payment?.zp_trans_id || "",
+        amount: order.price,
+        description: refundDescription || "Hoàn tiền theo yêu cầu",
+        tenantId,
+        token,
+      });
+
+      toast({
+        title: "Thành công",
+        description: "Đã hoàn tiền thành công",
+      });
+
+      // Refresh order data
+      const updatedOrder = await fetchOrderById({
+        orderId: order._id,
+        tenantId,
+        token,
+      });
+      setOrder(updatedOrder);
+
+      // Re-check refund eligibility after update
+      await checkRefundEligibility(updatedOrder);
+
+      // Close modal and reset
+      setShowRefundModal(false);
+      setRefundDescription("");
+    } catch (error) {
+      console.error("Error refunding order:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Không thể hoàn tiền. Vui lòng thử lại.",
+      });
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -671,7 +799,8 @@ export default function TransactionDetailPage() {
             Chỉnh sửa
           </Button>
           {order?.payment?.zp_trans_id &&
-            !order.status?.includes("refunded") && (
+            !order.status?.includes("refunded") &&
+            canRefund && (
               <>
                 <Button
                   variant='outline'
@@ -682,108 +811,6 @@ export default function TransactionDetailPage() {
                 >
                   Hoàn tiền
                 </Button>
-
-                <Dialog
-                  open={showRefundModal}
-                  onOpenChange={setShowRefundModal}
-                >
-                  <DialogContent className='sm:max-w-[520px]'>
-                    <DialogHeader>
-                      <DialogTitle>Hoàn tiền</DialogTitle>
-                      <DialogDescription>
-                        Xem lại thông tin hoàn tiền và xác nhận.
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <div className='space-y-4 mt-2'>
-                      <div>
-                        <div className='text-sm text-muted-foreground'>
-                          Mã giao dịch ZaloPay
-                        </div>
-                        <div className='font-mono text-sm mt-1'>
-                          {String(order.payment?.zp_trans_id)}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className='text-sm text-muted-foreground'>
-                          Số tiền
-                        </div>
-                        <div className='font-medium mt-1'>
-                          {formatPrice(order.price)}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className='text-sm text-muted-foreground'>
-                          Mô tả (có thể chỉnh sửa)
-                        </div>
-                        <Input
-                          value={refundDescription}
-                          onChange={(e) =>
-                            setRefundDescription(
-                              (e.target as HTMLInputElement).value
-                            )
-                          }
-                          placeholder={`Hoàn tiền cho đơn ${order._id}`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className='flex justify-end gap-2 mt-6'>
-                      <Button
-                        variant='outline'
-                        onClick={() => setShowRefundModal(false)}
-                        disabled={isRefunding}
-                      >
-                        Hủy
-                      </Button>
-                      <Button
-                        onClick={async () => {
-                          if (!token || !tenantId || !order) return;
-                          setIsRefunding(true);
-                          try {
-                            await refundOrder({
-                              zp_trans_id: String(order.payment?.zp_trans_id),
-                              amount: Number(order.price),
-                              description: refundDescription,
-                              tenantId,
-                              token,
-                            });
-
-                            const updatedOrder = await fetchOrderById({
-                              orderId: order._id,
-                              tenantId,
-                              token,
-                            });
-                            setOrder(updatedOrder);
-
-                            toast({
-                              title: "Hoàn tiền thành công",
-                              description: "Yêu cầu hoàn tiền đã được gửi.",
-                            });
-                            setShowRefundModal(false);
-                          } catch (err: any) {
-                            console.error("Refund error:", err);
-                            toast({
-                              variant: "destructive",
-                              title: "Lỗi hoàn tiền",
-                              description:
-                                err?.message || "Không thể hoàn tiền",
-                            });
-                          } finally {
-                            setIsRefunding(false);
-                          }
-                        }}
-                        disabled={isRefunding}
-                      >
-                        {isRefunding
-                          ? "Đang hoàn tiền..."
-                          : "Xác nhận hoàn tiền"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
               </>
             )}
 
@@ -1580,6 +1607,79 @@ export default function TransactionDetailPage() {
           }
         }}
       />
+
+      {/* Refund Order Modal */}
+      <Dialog
+        open={showRefundModal}
+        onOpenChange={setShowRefundModal}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hoàn tiền giao dịch</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn hoàn tiền cho giao dịch này không? Hành động
+              này không thể hoàn tác.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className='space-y-4'>
+            <div className='p-4 bg-muted rounded-lg'>
+              <h4 className='font-semibold mb-2'>Thông tin giao dịch:</h4>
+              <div className='space-y-1 text-sm'>
+                <p>
+                  <strong>Mã giao dịch:</strong> {order?._id}
+                </p>
+                <p>
+                  <strong>Khách hàng:</strong> {getOrderUserName(order!)}
+                </p>
+                <p>
+                  <strong>Khóa học:</strong> {getOrderCourseTitle(order!)}
+                </p>
+                <p>
+                  <strong>Số tiền:</strong> {formatPrice(order?.price || 0)}
+                </p>
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='refund-description'>
+                Lý do hoàn tiền (tùy chọn)
+              </Label>
+              <Textarea
+                id='refund-description'
+                placeholder='Nhập lý do hoàn tiền...'
+                value={refundDescription}
+                onChange={(e) => setRefundDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowRefundModal(false)}
+              disabled={isRefunding}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={handleRefundOrder}
+              disabled={isRefunding}
+            >
+              {isRefunding ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Xác nhận hoàn tiền"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

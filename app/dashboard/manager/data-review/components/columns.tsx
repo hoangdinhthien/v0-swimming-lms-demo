@@ -4,7 +4,10 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { DataReviewRecord } from "@/api/manager/data-review-api";
+import {
+  DataReviewRecord,
+  fetchDataReviewDetail,
+} from "@/api/manager/data-review-api";
 
 // Mapping tiếng Anh -> tiếng Việt
 const MODULE_LABELS: Record<string, string> = {
@@ -106,6 +109,10 @@ const ActionsCell = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [note, setNote] = useState("");
+  const [detailRecord, setDetailRecord] = useState<DataReviewRecord | null>(
+    null
+  );
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
   const [loadingOriginal, setLoadingOriginal] = useState(false);
   const record = row.original as DataReviewRecord;
@@ -117,6 +124,37 @@ const ActionsCell = ({
     ? record.method[0]
     : record.method;
   const isPutRequest = method === "PUT";
+
+  // Load detail data when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const loadDetail = async () => {
+        setLoadingDetail(true);
+        try {
+          const tenantId = getSelectedTenant();
+          const token = getAuthToken();
+          if (!tenantId || !token) {
+            throw new Error("Thiếu thông tin tenant hoặc token");
+          }
+
+          const detail = await fetchDataReviewDetail({
+            id: record._id,
+            type: service,
+            tenantId,
+            token,
+          });
+          setDetailRecord(detail);
+        } catch (error) {
+          console.error("Failed to load detail data:", error);
+          setDetailRecord(null);
+        } finally {
+          setLoadingDetail(false);
+        }
+      };
+
+      loadDetail();
+    }
+  }, [isOpen, record._id, service]);
 
   // Load original data when modal opens for PUT requests
   useEffect(() => {
@@ -253,7 +291,14 @@ const ActionsCell = ({
               )}
 
               {/* Data content - show comparison for PUT, formatted display for POST/DELETE */}
-              {isPutRequest ? (
+              {loadingDetail ? (
+                <div className='flex items-center justify-center py-8'>
+                  <Loader2 className='h-6 w-6 animate-spin text-primary' />
+                  <span className='ml-2 text-sm text-muted-foreground'>
+                    Đang tải chi tiết dữ liệu...
+                  </span>
+                </div>
+              ) : isPutRequest ? (
                 <div>
                   <h4 className='font-semibold mb-3'>So sánh thay đổi:</h4>
                   {loadingOriginal ? (
@@ -266,7 +311,7 @@ const ActionsCell = ({
                   ) : (
                     <DataComparison
                       originalData={originalData}
-                      updatedData={record.data}
+                      updatedData={detailRecord?.data || record.data}
                       moduleType={service}
                     />
                   )}
@@ -275,7 +320,7 @@ const ActionsCell = ({
                 <div>
                   <h4 className='font-semibold mb-3'>Dữ liệu yêu cầu:</h4>
                   <DataDisplay
-                    data={record.data}
+                    data={detailRecord?.data || record.data}
                     moduleType={service}
                   />
                 </div>

@@ -114,10 +114,66 @@ export interface ScheduleApiResponse {
   statusCode: number;
 }
 
-export interface ScheduleDataResult {
-  events: ScheduleEvent[];
-  poolOverflowWarnings: PoolOverflowWarning[];
+export interface FirstSlotResponse {
+  data: [[[ScheduleEvent]]];
+  message: string;
+  statusCode: number;
 }
+
+/**
+ * Fetch the first slot/schedule event for a specific class
+ * @param classId - The ID of the class to fetch first slot for
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with the first schedule event or null if not found
+ */
+export const fetchFirstSlotByClassId = async (
+  classId: string,
+  tenantId?: string,
+  token?: string
+): Promise<ScheduleEvent | null> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Tenant ID and token are required");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/schedules/get-first-slot?class=${classId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to fetch first slot: ${response.status} ${errorText}`
+    );
+  }
+
+  const result: FirstSlotResponse = await response.json();
+
+  // Unwrap nested structure similar to other schedule APIs
+  if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+    const level1 = result.data[0];
+    if (Array.isArray(level1) && level1.length > 0) {
+      const level2 = level1[0];
+      if (Array.isArray(level2) && level2.length > 0) {
+        return level2[0] as ScheduleEvent;
+      }
+    }
+  }
+
+  return null;
+};
 
 // Parameters for fetching schedule data
 export interface FetchScheduleParams {
@@ -480,15 +536,22 @@ export const fetchScheduleById = async (
     throw new Error("Missing authentication or tenant information");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users so staff frontend can call manager endpoints
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Schedule";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/schedule?id=${scheduleId}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 

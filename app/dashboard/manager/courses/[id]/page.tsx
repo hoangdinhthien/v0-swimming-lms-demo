@@ -649,14 +649,6 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                 <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
                 <div className='absolute bottom-4 left-4 right-4 z-10'>
                   <div className='flex items-center justify-between'>
-                    <div className='flex items-center gap-2 text-white'>
-                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                      <Star className='h-5 w-5 fill-yellow-400 text-yellow-400' />
-                      <Star className='h-5 w-5 fill-gray-300 text-gray-300' />
-                      <span className='text-sm font-medium ml-1'>4.0/5</span>
-                    </div>
                     {courseImages && courseImages.length > 0 && (
                       <div className='flex items-center gap-2'>
                         <div className='bg-black/30 text-white text-xs px-2 py-1 rounded'>
@@ -950,7 +942,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </Card>
 
             {/* Additional Info */}
-            <Card className='shadow-lg border'>
+            {/* <Card className='shadow-lg border'>
               <CardHeader>
                 <CardTitle className='text-lg'>Thống kê</CardTitle>
               </CardHeader>
@@ -1003,7 +995,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   </span>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

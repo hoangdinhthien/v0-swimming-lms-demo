@@ -269,7 +269,15 @@ function formatValue(value: any, type: string, moduleType?: string) {
                 variant='outline'
                 className='text-xs'
               >
-                {typeof item === "string" ? item : JSON.stringify(item)}
+                {typeof item === "string"
+                  ? item
+                  : typeof item === "object" && item !== null
+                  ? item.title ||
+                    item.name ||
+                    item.username ||
+                    item._id ||
+                    JSON.stringify(item)
+                  : JSON.stringify(item)}
               </Badge>
             ))}
           </div>

@@ -15,17 +15,57 @@ export interface DataReviewRecord {
   tenant_id?: string;
 }
 
-export interface DataReviewListResponse {
-  data: [
-    {
-      limit: number;
-      skip: number;
-      count: number;
-      documents: DataReviewRecord[];
-    }
-  ];
+export interface DataReviewDetailResponse {
+  data: [[[DataReviewRecord]]];
   message: string;
   statusCode: number;
+}
+
+export async function fetchDataReviewDetail({
+  id,
+  type,
+  tenantId,
+  token,
+}: {
+  id: string;
+  type: string;
+  tenantId: string;
+  token: string;
+}): Promise<DataReviewRecord | null> {
+  if (!tenantId || !token) throw new Error("Missing tenantId or token");
+
+  const url = `${config.API}/v1/workflow-process/manager/data-review/detail?id=${id}&type=${type}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "x-tenant-id": String(tenantId),
+      Authorization: `Bearer ${String(token)}`,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("fetchDataReviewDetail error", res.status, text);
+    throw new Error("Không thể lấy chi tiết data-review");
+  }
+
+  const body = (await res.json()) as DataReviewDetailResponse;
+
+  // Unwrap nested structure similar to fetchDataReviewList
+  if (Array.isArray(body?.data) && body.data.length > 0) {
+    const level1 = body.data[0];
+    if (Array.isArray(level1) && level1.length > 0) {
+      const level2 = level1[0];
+      if (Array.isArray(level2) && level2.length > 0) {
+        return level2[0] as DataReviewRecord;
+      }
+    }
+  }
+
+  return null;
 }
 
 export async function fetchDataReviewList({
