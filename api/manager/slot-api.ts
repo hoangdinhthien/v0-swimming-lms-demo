@@ -100,7 +100,7 @@ export const fetchSlotDetail = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
-        ...(getUserFrontendRole() === "staff" && { service: "Slot" }),
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
       },
     }
   );
@@ -190,7 +190,7 @@ export const fetchAllSlots = async (
       "Content-Type": "application/json",
       "x-tenant-id": finalTenantId,
       Authorization: `Bearer ${finalToken}`,
-      ...(getUserFrontendRole() === "staff" && { service: "Slot" }),
+      ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
     },
   });
 
@@ -261,7 +261,7 @@ export const createSlot = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
-        ...(getUserFrontendRole() === "staff" && { service: "Slot" }),
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
       },
       body: JSON.stringify(slotData),
     }
@@ -311,7 +311,7 @@ export const updateSlot = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
-        ...(getUserFrontendRole() === "staff" && { service: "Slot" }),
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
       },
       body: JSON.stringify(slotData),
     }
@@ -358,7 +358,7 @@ export const deleteSlot = async (
       headers: {
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
-        ...(getUserFrontendRole() === "staff" && { service: "Slot" }),
+        ...(getUserFrontendRole() === "staff" && { service: "Schedule" }),
       },
     }
   );

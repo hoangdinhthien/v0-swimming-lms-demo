@@ -141,13 +141,11 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
 
 =====
 
+
 - staff tạo lớp trong lịch (cho tất cả module): hiện message trên UI 'không có quyền tạo lớp trực tiếp, phải đợi view mới qua step 2 được'
 
 - manager data-review: sẽ thêm api mới - get data-review-detail (param: truyền _id & type)
 
-- valdiate order detail để refund: 
-    bước 1: check field 'class' trong order detail detail data có tồn tại hay ko? nếu ko có field 'class' -> cho refund
-    bước 2. nếu có class -> gọi api manager/schedule/get-first-slot để check -> nếu chưa tới ngày diễn ra first slot thì cho refund, nếu đã tới hoặc đã qua ngày diễn ra first slot thì ko refund
 
 - search order: tìm/filter cùng lúc member vs khoá học (ví dụ: tìm xem học viên đó có đăng ký cho khoá học này không và ngược lại)
 

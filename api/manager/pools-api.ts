@@ -121,7 +121,7 @@ export async function fetchPools(
 
   // Add service header for staff users so they can call manager endpoints when allowed
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(url, {
@@ -187,7 +187,7 @@ export async function createPool(
 
   // Add service header for staff users so they can call manager endpoints when allowed
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(
@@ -236,7 +236,7 @@ export async function getPoolDetail(
 
   // Add service header for staff users so they can call manager endpoints when allowed
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(
@@ -299,7 +299,7 @@ export async function updatePool(
 
   // Add service header for staff users so they can call manager endpoints when allowed
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(
@@ -347,7 +347,7 @@ export async function deletePool(
 
   // Add service header for staff users so they can call manager endpoints when allowed
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(
@@ -400,7 +400,7 @@ export async function fetchAvailablePools(
 
   // Add service header for staff users
   if (getUserFrontendRole() === "staff") {
-    headers.service = "Pool";
+    headers.service = "Schedule";
   }
 
   const response = await fetch(

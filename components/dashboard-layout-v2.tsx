@@ -715,16 +715,6 @@ export default function DashboardLayout({
                     //     ]
                     //   : []),
                     // Data Review - only for managers
-                    ...(isManager || allowedNavigationItems.includes("slots")
-                      ? [
-                          {
-                            name: "Slots",
-                            href: "/dashboard/manager/slots",
-                            icon: <Clock className='h-4 w-4' />,
-                          },
-                        ]
-                      : []),
-                    // Data Review - only for managers
                     ...(isManager
                       ? [
                           {
