@@ -1449,6 +1449,18 @@ export function CreateClassesBatchModal({
                               </TableCell>
                               <TableCell className='align-top pt-4'>
                                 <div className='space-y-2'>
+                                  <Input
+                                    value={classItem.name}
+                                    onChange={(e) =>
+                                      handleUpdateClass(
+                                        classItem.id,
+                                        "name",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder='Tên lớp học...'
+                                  />
+
                                   {/* Course Info Display (Task 4) */}
                                   {selectedCourse && (
                                     <div className='p-2 border rounded-md bg-blue-50 dark:bg-blue-950/20 space-y-1.5 text-xs'>
@@ -1499,18 +1511,6 @@ export function CreateClassesBatchModal({
                                         )}
                                     </div>
                                   )}
-
-                                  <Input
-                                    value={classItem.name}
-                                    onChange={(e) =>
-                                      handleUpdateClass(
-                                        classItem.id,
-                                        "name",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder='Tên lớp học...'
-                                  />
                                 </div>
                               </TableCell>
                               <TableCell className='align-top pt-4'>
