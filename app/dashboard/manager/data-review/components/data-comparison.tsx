@@ -26,7 +26,7 @@ export function DataComparison({
       <Card className='border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20'>
         <CardContent className='pt-6'>
           <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-            ⚠️ Không thể tải dữ liệu gốc để so sánh. Module{" "}
+            Không thể tải dữ liệu gốc để so sánh. Module{" "}
             <strong>{moduleType}</strong> có thể chưa hỗ trợ xem chi tiết hoặc
             dữ liệu đã bị xóa.
           </p>

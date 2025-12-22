@@ -906,107 +906,123 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                 <div className='flex items-center gap-2 mb-3'>
                                   <Settings2 className='h-4 w-4 text-primary' />
                                   <span className='text-sm font-semibold text-foreground'>
-                                    Form đánh giá học viên
+                                    Biểu mẫu đánh giá học viên
                                   </span>
                                   <Badge
                                     variant='secondary'
                                     className='text-xs'
                                   >
                                     {Object.keys(item.form_judge.items).length}{" "}
-                                    fields
+                                    trường
                                   </Badge>
                                 </div>
 
                                 <div className='space-y-2.5'>
-                                  {Object.entries(item.form_judge.items).map(
-                                    ([fieldName, fieldConfig]: [
-                                      string,
-                                      any
-                                    ]) => (
-                                      <div
-                                        key={fieldName}
-                                        className='bg-background rounded-md p-3 border'
-                                      >
-                                        <div className='flex items-start justify-between gap-2 mb-2'>
-                                          <div className='flex items-center gap-2 flex-1'>
-                                            <span className='font-medium text-sm text-foreground'>
-                                              {fieldName}
-                                            </span>
-                                            <Badge
-                                              variant='outline'
-                                              className='text-xs'
-                                            >
-                                              {fieldConfig.type}
-                                            </Badge>
-                                          </div>
-                                          <div className='flex gap-1.5'>
-                                            {fieldConfig.required && (
+                                  {(() => {
+                                    const typeTranslations: {
+                                      [key: string]: string;
+                                    } = {
+                                      string: "Chuỗi",
+                                      number: "Số",
+                                      select: "Lựa chọn",
+                                      relation: "Quan hệ",
+                                      array: "Mảng",
+                                    };
+                                    return Object.entries(
+                                      item.form_judge.items
+                                    ).map(
+                                      ([fieldName, fieldConfig]: [
+                                        string,
+                                        any
+                                      ]) => (
+                                        <div
+                                          key={fieldName}
+                                          className='bg-background rounded-md p-3 border'
+                                        >
+                                          <div className='flex items-start justify-between gap-2 mb-2'>
+                                            <div className='flex items-center gap-2 flex-1'>
+                                              <span className='font-medium text-sm text-foreground'>
+                                                {fieldName}
+                                              </span>
                                               <Badge
-                                                variant='destructive'
+                                                variant='outline'
                                                 className='text-xs'
                                               >
-                                                Bắt buộc
+                                                {typeTranslations[
+                                                  fieldConfig.type
+                                                ] || fieldConfig.type}
                                               </Badge>
-                                            )}
-                                            {fieldConfig.is_filter && (
-                                              <Badge
-                                                variant='secondary'
-                                                className='text-xs'
-                                              >
-                                                Filter
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        </div>
-
-                                        {/* Type-specific info */}
-                                        <div className='text-xs text-muted-foreground space-y-1'>
-                                          {fieldConfig.type === "string" &&
-                                            fieldConfig.text_type && (
-                                              <div>
-                                                Loại: {fieldConfig.text_type}
-                                              </div>
-                                            )}
-                                          {fieldConfig.type === "number" &&
-                                            fieldConfig.is_array && (
-                                              <div>
-                                                Array{" "}
-                                                {fieldConfig.number_type ===
-                                                  "coordinates" && "(Tọa độ)"}
-                                              </div>
-                                            )}
-                                          {fieldConfig.type === "select" &&
-                                            fieldConfig.select_values && (
-                                              <div>
-                                                Options:{" "}
-                                                {
-                                                  fieldConfig.select_values.split(
-                                                    ","
-                                                  ).length
-                                                }{" "}
-                                                lựa chọn
-                                              </div>
-                                            )}
-                                          {fieldConfig.type === "relation" &&
-                                            fieldConfig.entity && (
-                                              <div>
-                                                Entity: {fieldConfig.entity} (
-                                                {fieldConfig.relation_type})
-                                              </div>
-                                            )}
-                                          {(fieldConfig.min !== undefined ||
-                                            fieldConfig.max !== undefined) && (
-                                            <div>
-                                              📏 Range:{" "}
-                                              {fieldConfig.min ?? "N/A"} -{" "}
-                                              {fieldConfig.max ?? "N/A"}
                                             </div>
-                                          )}
-                                          {/* REMOVED: Dependencies display - not needed anymore */}
+                                            <div className='flex gap-1.5'>
+                                              {fieldConfig.required && (
+                                                <Badge
+                                                  variant='destructive'
+                                                  className='text-xs'
+                                                >
+                                                  Bắt buộc
+                                                </Badge>
+                                              )}
+                                              {fieldConfig.is_filter && (
+                                                <Badge
+                                                  variant='secondary'
+                                                  className='text-xs'
+                                                >
+                                                  Bộ lọc
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          {/* Type-specific info */}
+                                          <div className='text-xs text-muted-foreground space-y-1'>
+                                            {fieldConfig.type === "string" &&
+                                              fieldConfig.text_type && (
+                                                <div>
+                                                  Loại: {fieldConfig.text_type}
+                                                </div>
+                                              )}
+                                            {fieldConfig.type === "number" &&
+                                              fieldConfig.is_array && (
+                                                <div>
+                                                  Mảng{" "}
+                                                  {fieldConfig.number_type ===
+                                                    "coordinates" && "(Tọa độ)"}
+                                                </div>
+                                              )}
+                                            {fieldConfig.type === "select" &&
+                                              fieldConfig.select_values && (
+                                                <div>
+                                                  Tùy chọn:{" "}
+                                                  {
+                                                    fieldConfig.select_values.split(
+                                                      ","
+                                                    ).length
+                                                  }{" "}
+                                                  lựa chọn
+                                                </div>
+                                              )}
+                                            {fieldConfig.type === "relation" &&
+                                              fieldConfig.entity && (
+                                                <div>
+                                                  Thực thể: {fieldConfig.entity}{" "}
+                                                  ({fieldConfig.relation_type})
+                                                </div>
+                                              )}
+                                            {(fieldConfig.min !== undefined ||
+                                              fieldConfig.max !==
+                                                undefined) && (
+                                              <div>
+                                                📏 Phạm vi:{" "}
+                                                {fieldConfig.min ?? "N/A"} -{" "}
+                                                {fieldConfig.max ?? "N/A"}
+                                              </div>
+                                            )}
+                                            {/* REMOVED: Dependencies display - not needed anymore */}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )
-                                  )}
+                                      )
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </CardContent>

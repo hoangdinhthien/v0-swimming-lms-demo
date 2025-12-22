@@ -510,8 +510,7 @@ export function CreateOrderModal({
                   courses.find((c) => c._id === selectedCourseId)?.is_active ===
                     false && (
                     <p className='text-xs text-destructive'>
-                      ⚠️ Khóa học này đang không hoạt động, không thể tạo giao
-                      dịch
+                      Khóa học này đang không hoạt động, không thể tạo giao dịch
                     </p>
                   )}
               </CardContent>

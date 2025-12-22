@@ -101,7 +101,7 @@ export interface CreateClassData {
    - Set Show on Registration
 6. System validates:
    - ✅ Green checkmark: All valid
-   - ⚠️ Amber warning: Validation issues (but can still create)
+   -  Amber warning: Validation issues (but can still create)
 7. Click "Tạo X lớp học"
 8. Classes created successfully
 ```
@@ -195,7 +195,7 @@ Response:
 ### Clean UX
 
 - Table layout with clear columns
-- Status column with icons (✅/⚠️)
+- Status column with icons (✅/)
 - Expandable warning rows below each class
 - Add/remove rows easily
 - Disabled state during creation

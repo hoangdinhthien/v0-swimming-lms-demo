@@ -525,8 +525,8 @@ export function EditOrderModal({
                   courses.find((c) => c._id === selectedCourseId)?.is_active ===
                     false && (
                     <p className='text-xs text-destructive'>
-                      ⚠️ Khóa học này đang không hoạt động, không thể cập nhật
-                      giao dịch
+                      Khóa học này đang không hoạt động, không thể cập nhật giao
+                      dịch
                     </p>
                   )}
               </CardContent>
