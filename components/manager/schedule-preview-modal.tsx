@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClassItem } from "@/api/manager/class-api";
-import { fetchClasses } from "@/api/manager/class-api";
+import { fetchClasses, fetchClassesByIds } from "@/api/manager/class-api";
 import type { SlotDetail } from "@/api/manager/slot-api";
 import {
   Accordion,
@@ -292,7 +292,11 @@ export function SchedulePreviewModal({
         loadSlots();
       }
       if (classes.length === 0) {
-        fetchClassesForModal();
+        if (preSelectedClassIds && preSelectedClassIds.length > 0) {
+          fetchClassesForModal(undefined, preSelectedClassIds);
+        } else {
+          fetchClassesForModal();
+        }
       }
     }
   }, [open]);
@@ -373,7 +377,10 @@ export function SchedulePreviewModal({
     }
   };
 
-  const fetchClassesForModal = async (searchKey?: string) => {
+  const fetchClassesForModal = async (
+    searchKey?: string,
+    classIds?: string[]
+  ) => {
     setLoadingClasses(true);
     try {
       const { getSelectedTenant } = await import("@/utils/tenant-utils");
@@ -386,8 +393,14 @@ export function SchedulePreviewModal({
         throw new Error("Thiếu thông tin tenant hoặc token");
       }
 
-      const result = await fetchClasses(tenantId, token, 1, 1000, searchKey);
-      setClasses(result.data);
+      if (classIds && classIds.length > 0) {
+        // Fetch only the specified classes by IDs
+        const result = await fetchClassesByIds(classIds, tenantId, token);
+        setClasses(result || []);
+      } else {
+        const result = await fetchClasses(tenantId, token, 1, 1000, searchKey);
+        setClasses(result.data);
+      }
     } catch (error: any) {
       console.error("Failed to fetch classes:", error);
       toast({
