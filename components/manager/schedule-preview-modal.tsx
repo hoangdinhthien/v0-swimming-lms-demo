@@ -1585,7 +1585,7 @@ export function SchedulePreviewModal({
                       </li>
                       <li className='flex items-center gap-2'>
                         <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
-                        <span>Vàng: Có cảnh báo (độ tuổi không phù hợp)</span>
+                        <span>Vàng: Có cảnh báo (Độ tuổi không phù hợp)</span>
                       </li>
                       <li className='flex items-center gap-2'>
                         <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
@@ -2310,19 +2310,12 @@ export function SchedulePreviewModal({
                                             {/* Warnings */}
                                             {selectedPoolId &&
                                               (hasWarning ||
-                                                hasConflict ||
                                                 selectedPool?.hasCapacityWarning) && (
                                                 <div className='mt-2 text-xs space-y-0.5'>
                                                   {hasWarning && (
                                                     <div className='text-amber-600 flex items-center gap-1'>
                                                       <AlertCircle className='h-3 w-3' />
                                                       Độ tuổi không phù hợp
-                                                    </div>
-                                                  )}
-                                                  {hasConflict && (
-                                                    <div className='text-red-600 flex items-center gap-1'>
-                                                      <AlertCircle className='h-3 w-3' />
-                                                      HLV trùng lịch
                                                     </div>
                                                   )}
                                                   {selectedPool?.hasCapacityWarning && (
