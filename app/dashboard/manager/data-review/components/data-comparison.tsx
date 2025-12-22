@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { convertFormJudgeSchema } from "@/components/manager/form-judge-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Settings2 } from "lucide-react";
 
 interface DataComparisonProps {
   originalData: any;
@@ -38,11 +38,12 @@ export function DataComparison({
   // Get field configurations based on module type
   const fieldConfig = getFieldConfig(moduleType);
 
-  // Find changed fields
+  // Find changed fields (pass moduleType so we can ignore slug for Course)
   const changedFields = findChangedFields(
     originalData,
     updatedData,
-    fieldConfig
+    fieldConfig,
+    moduleType
   );
 
   if (changedFields.length === 0) {
@@ -176,55 +177,117 @@ function renderFormJudgeUI(schema: any) {
   }
 
   return (
-    <div className='space-y-2'>
-      {normalized.items.map((item: any, idx: number) => (
-        <div
-          key={idx}
-          className='bg-white dark:bg-gray-800 p-2 rounded border'
+    <div className='space-y-3'>
+      <div className='flex items-center gap-2 mb-2'>
+        <Settings2 className='h-4 w-4 text-primary' />
+        <span className='text-sm font-semibold'>
+          Tiêu chí đánh giá học viên
+        </span>
+        <Badge
+          variant='secondary'
+          className='text-xs'
         >
-          <div className='flex items-center justify-between mb-1'>
-            <span className='font-medium text-sm'>{item.name}</span>
-            <div className='flex items-center gap-2'>
-              <Badge
-                variant='outline'
-                className='text-xs'
-              >
-                {getFieldTypeLabel(item.field?.type || "unknown")}
-              </Badge>
-              {item.field?.required && (
+          {normalized.items.length} tiêu chí
+        </Badge>
+      </div>
+
+      <div className='space-y-2 ml-6'>
+        {normalized.items.map((item: any, idx: number) => (
+          <Card
+            key={idx}
+            className='p-3 border-l-4 border-l-primary/20'
+          >
+            <div className='flex items-start justify-between mb-2'>
+              <div className='flex items-center gap-2 flex-1'>
+                <div className='w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs font-medium text-primary'>
+                  {idx + 1}
+                </div>
+                <span className='font-medium text-sm'>{item.name}</span>
+              </div>
+              <div className='flex items-center gap-2'>
                 <Badge
-                  variant='secondary'
+                  variant='outline'
                   className='text-xs'
                 >
-                  Bắt buộc
+                  {getFieldTypeLabel(item.field?.type || "unknown")}
                 </Badge>
-              )}
+                {item.field?.required && (
+                  <Badge
+                    variant='destructive'
+                    className='text-xs'
+                  >
+                    Bắt buộc
+                  </Badge>
+                )}
+                {item.field?.is_filter && (
+                  <Badge
+                    variant='secondary'
+                    className='text-xs'
+                  >
+                    Bộ lọc
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-          {item.field && (
-            <div className='text-xs text-muted-foreground space-y-1'>
-              {item.field.is_filter && <div>• Cho phép lọc/tìm kiếm</div>}
-              {item.field.type === "string" && item.field.text_type && (
-                <div>• Kiểu nhập: {item.field.text_type}</div>
-              )}
-              {item.field.type === "number" && (
-                <div>
-                  • Khoảng: {item.field.min ?? 0} - {item.field.max ?? "∞"}
-                </div>
-              )}
-              {item.field.type === "select" && item.field.select_values && (
-                <div>
-                  • Lựa chọn:{" "}
-                  {String(item.field.select_values).split(",").length} tùy chọn
-                </div>
-              )}
-              {item.field.type === "relation" && item.field.entity && (
-                <div>• Đính kèm: {item.field.entity}</div>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
+
+            {item.field && (
+              <div className='text-xs text-muted-foreground space-y-1 mt-2'>
+                {item.field.type === "string" && item.field.text_type && (
+                  <div className='flex items-center gap-1'>
+                    <span className='font-medium'>Kiểu nhập:</span>
+                    <span>{item.field.text_type}</span>
+                  </div>
+                )}
+                {item.field.type === "number" && (
+                  <div className='flex items-center gap-1'>
+                    <span className='font-medium'>Khoảng giá trị:</span>
+                    <span>
+                      {item.field.min ?? "Không giới hạn"} -{" "}
+                      {item.field.max ?? "Không giới hạn"}
+                    </span>
+                  </div>
+                )}
+                {item.field.type === "select" && item.field.select_values && (
+                  <div>
+                    <div className='flex items-center gap-1 mb-1'>
+                      <span className='font-medium'>Lựa chọn:</span>
+                      <span>
+                        {String(item.field.select_values).split(",").length} tùy
+                        chọn
+                      </span>
+                    </div>
+                    <div className='ml-4 space-y-1'>
+                      {String(item.field.select_values)
+                        .split(",")
+                        .map((option: string, optIdx: number) => (
+                          <div
+                            key={optIdx}
+                            className='text-xs bg-muted/50 px-2 py-1 rounded'
+                          >
+                            {option.trim()}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {item.field.type === "relation" && item.field.entity && (
+                  <div className='flex items-center gap-1'>
+                    <span className='font-medium'>Liên kết:</span>
+                    <span>
+                      {item.field.entity} ({item.field.relation_type})
+                    </span>
+                  </div>
+                )}
+                {item.field.type === "boolean" && (
+                  <div className='text-xs text-muted-foreground italic'>
+                    Đánh giá dạng Có/Không hoặc Đạt/Không đạt
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -233,12 +296,15 @@ function renderFormJudgeUI(schema: any) {
 function findChangedFields(
   originalData: any,
   updatedData: any,
-  fieldConfig: any[]
+  fieldConfig: any[],
+  moduleType?: string
 ) {
   const changedFields: any[] = [];
 
   // First, check configured fields
   fieldConfig.forEach((config) => {
+    // Ignore slug for Course type
+    if (config.key === "slug" && moduleType === "Course") return;
     const oldValue = originalData[config.key];
     const newValue = updatedData[config.key];
 
@@ -272,6 +338,8 @@ function findChangedFields(
 
   allKeys.forEach((key) => {
     if (skipKeys.includes(key)) return;
+    // Ignore slug in Course comparison
+    if (key === "slug" && moduleType === "Course") return;
 
     // Skip if already checked in config
     if (fieldConfig.find((c) => c.key === key)) return;

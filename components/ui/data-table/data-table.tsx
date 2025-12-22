@@ -85,6 +85,11 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnFilters,
     },
+    // Use provided rowIdentifier to generate a stable row id (avoid remounts)
+    getRowId: (row: any, index) => {
+      const id = row?.[rowIdentifier as string];
+      return id !== undefined && id !== null ? String(id) : String(index);
+    },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,

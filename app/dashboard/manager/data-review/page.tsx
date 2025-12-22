@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+// toasts disabled on this page due to UX conflicts
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { createColumns } from "./components/columns";
 import {
@@ -31,7 +31,6 @@ const MODULES = [
 ] as const;
 
 export default function ManagerDataReviewPage() {
-  const { toast } = useToast();
   const [records, setRecords] = useState<DataReviewRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +59,6 @@ export default function ManagerDataReviewPage() {
     } catch (e: any) {
       setError(e?.message || "Lỗi khi tải danh sách data-review");
       setRecords([]);
-      toast({
-        title: "❌ Lỗi",
-        description: e?.message || "Không thể tải danh sách data-review",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -102,7 +96,21 @@ export default function ManagerDataReviewPage() {
         status,
         note,
       });
-      await loadRecords(false); // Reload list after update
+
+      // Update local records in-place to avoid remounting ActionsCell components
+      // (which caused modals to be closed when we reloaded the entire list).
+      setRecords((prev) =>
+        prev.map((r) =>
+          r._id === id
+            ? {
+                ...r,
+                status: [status],
+                note: note || r.note,
+                updated_at: new Date().toISOString(),
+              }
+            : r
+        )
+      );
     } catch (error) {
       throw error; // Re-throw to be handled by ActionsCell
     }

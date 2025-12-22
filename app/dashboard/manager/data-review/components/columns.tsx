@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle2, XCircle, Eye, Clock, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+// toasts disabled on this page due to UX conflicts
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -105,7 +105,7 @@ const ActionsCell = ({
     note: string
   ) => Promise<void>;
 }) => {
-  const { toast } = useToast();
+  // toasts disabled on this page due to UX conflicts
   const [isOpen, setIsOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [note, setNote] = useState("");
@@ -115,6 +115,7 @@ const ActionsCell = ({
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [originalData, setOriginalData] = useState<any>(null);
   const [loadingOriginal, setLoadingOriginal] = useState(false);
+  const [opError, setOpError] = useState<string | null>(null);
   const record = row.original as DataReviewRecord;
 
   const service = Array.isArray(record.type) ? record.type[0] : record.type;
@@ -191,19 +192,14 @@ const ActionsCell = ({
     setIsProcessing(true);
     try {
       await onUpdateStatus(record._id, service, "approved", note);
-      toast({
-        title: "Đã phê duyệt",
-        description: `Đã phê duyệt yêu cầu ${service}`,
-      });
       setIsOpen(false);
       setNote("");
     } catch (error) {
-      toast({
-        title: "❌ Lỗi",
-        description:
-          error instanceof Error ? error.message : "Không thể phê duyệt",
-        variant: "destructive",
-      });
+      // show inline error in modal instead of global toast
+      console.error("Approve failed:", error);
+      setOpError(
+        error instanceof Error ? error.message : "Không thể phê duyệt"
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -213,19 +209,12 @@ const ActionsCell = ({
     setIsProcessing(true);
     try {
       await onUpdateStatus(record._id, service, "rejected", note);
-      toast({
-        title: "Đã từ chối",
-        description: `Đã từ chối yêu cầu ${service}`,
-      });
       setIsOpen(false);
       setNote("");
     } catch (error) {
-      toast({
-        title: "❌ Lỗi",
-        description:
-          error instanceof Error ? error.message : "Không thể từ chối",
-        variant: "destructive",
-      });
+      // show inline error in modal instead of global toast
+      console.error("Reject failed:", error);
+      setOpError(error instanceof Error ? error.message : "Không thể từ chối");
     } finally {
       setIsProcessing(false);
     }
@@ -258,6 +247,12 @@ const ActionsCell = ({
 
           <ScrollArea className='h-[50vh] pr-4'>
             <div className='space-y-4'>
+              {opError && (
+                <div className='p-3 bg-destructive/10 text-destructive rounded-md'>
+                  <strong className='block'>Lỗi:</strong>
+                  <div className='text-sm'>{opError}</div>
+                </div>
+              )}
               {/* Metadata */}
               <div className='grid grid-cols-2 gap-4 text-sm'>
                 <div>

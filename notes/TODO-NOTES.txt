@@ -1,19 +1,15 @@
-- step 2: ko có pool available -> cho đổi slot trực tiếp ở step 2 (thêm slot mới) (edit trực tiếp trên card)
+BÂY GIỜ TA SẼ TIẾN HÀNH CHỈNH SỬA LẠI PHẦN DATA-REVIEW CỦA MANAGER:
 
-BÂY GIỜ TA SẼ TIẾN HÀNH CẢI TIẾN THÊM STEP 2 TRONG MODAL 'Xếp lịch cho lớp có sẵn' (schedule-preview-modal.tsx)
+- hiện tại manager có thể cấp quyền truy cập cho staff 8 module: khóa học (Course), giao dịch (Order), Lớp học (Class), Lịch (Schedule), người dùng (User: instructor và student), Tin tức (News), Đơn từ (Application), Liên hệ (ContactForm)
 
-- ở step 2 khi xếp hồ bơi; tôi sẽ chia ra làm 3 case nhỏ:
-    - case 1: sẽ có trường hợp là SẼ CÓ THỂ KHÔNG CÓ BẤT KỲ HỒ BƠI NÀO AVAILABLE CHO BUỔI HỌC NGÀY HÔM ĐÓ
-    - case 2: sẽ có trường hợp là HUẤN LUYỆN VIÊN BỊ TRÙNG LỊCH DẠY HỌC 
-    - case 3: là trường hợp có cả case 1 và case 2
-===> chính vì thế nên ta phải cho manager/staff option (lựa chọn) để thay đổi/chỉnh sửa cái buổi học đó (thay đổi huấn luyện viên cho buổi học đó), và mục đích chính là có thể thay đổi được ngày. ví dụ: response data của schedule preview trả ra có ngày từ ngày 25/12/2025 đến ngày 23/01/2026 nhưng khi validate trên UI thì ngày 25/12/2025 có 1 trong 3 case mà tôi nói ở trên thì khi đó manager/staff có thể đổi/chỉnh sửa/chọn thủ công huấn luyện viên và hồ bơi được cho buổi học mà có case 3 ngày từ ngày 24/01/2026 trở đi (sau ngày 23/01/2026), cho manager/staff edit trực tiếp trên card, edit xong thì sẽ sắp xếp lại các card trên UI theo thứ tự các ngày. sau đó thì sẽ áp dụng các logic validate hiện tại cho cái buổi học vừa mới setup đó.
+- staff sẽ sử dụng được chung phần lớn các api của manager với header "service: 'tên của module' (bạn có thể coi lại trong các file apis)
+- nếu như trong permission của staff đó có "noReview": false thì có nghĩa là staff đó khi tạo mới hay chỉnh sửa data của mỗi module phải 'Cần phê duyệt từ quản lý'
+- ngược lại, nếu như trong permission của staff đó có "noReview": true thì có nghĩa là staff đó khi tạo mới hay chỉnh sửa data của mỗi module phải 'Không cần phê duyệt' từ manager 
 
-- NẾU CÓ GÌ KHÔNG HIỂU/THẮC MẮC THÌ HỎI TÔI NGAY
+- trong trường hợp khi staff đó có "noReview": false, thì khi họ tạo mới và chỉnh sửa các data của mỗi module, thì sẽ phải đợi manager xem và phê duyệt (ở trong UI ở trang 'dashboard/manager/data-review') 
 
-- ko cho chọn ngày hiện tại và quá khứ 
-- edit slot, vaslidate 
+- VÌ LÀ CÓ TẬN 8 MODULE, VÀ MỖI MODULE CÓ KIỂU RESPONSE DATA STRUCTURE KHÁC NHAU (CHUNG QUY THÌ VẪN RESPONSE RA JSON) NÊN PHẦN MODAL 'Chi tiết yêu cầu' Ở TRANG '/dashboard/manager/data-review' TA CẦN PHÀI LÀM KỸ.
+- KHI MỞ MODAL 'Chi tiết yêu cầu' RA THÌ SẼ GỌI API 'fetchDataReviewDetail' NÀY VÀ BẮT BUỘC KÈM VỚI ĐÓ TA PHẢI CHECK XEM FIELD  "type" TRONG RESPOSNE DATA CỦA fetchDataReviewDetail NÀY LÀ CỦA MODULE NÀO ĐỂ CÓ THỂ GỌI API GET DETAIL CỦA MODULE ĐÓ RA VÀ GIỮA DATA HIỆN TẠI VÀ DATA MÀ STAFF ĐÓ CHỈNH SỬA
 
-TÔI MUỐN CHỈNH SỬA LẠI 1 CHÚT:
-- vẫn cho manager/staff option để chỉnh sửa các card mà không có warning
-- không cho chọn ngày hiện và quá khứ khi chỉnh sửa các card ở step 2 trong 'Xếp lịch cho lớp có sẵn' (schedule-preview-modal.tsx)
-- khi edit các card, cho manager/staff chỉnh sửa/chọn lại được các slot, huấn luyện viên và chọn lại ngày
+
+- PHẦN CỰC KỲ QUAN TRỌNG Ở ĐÂY LÀ  VÌ LÀ CÓ TẬN 8 MODULE, VÀ MỖI MODULE CÓ KIỂU RESPONSE DATA STRUCTURE KHÁC NHAU, NÊN TA PHẢI LINH HOẠT (DYNAMIC) TRONG VIỆC HIỆN LÊN UI CÁC PHẦN NÀY, QUAN TRỌNG NHẤT LÀ PHẦN HIỂN THỊ RÕ CÁC PHẦN FORM JUDGE CỦA KHÓA HỌC

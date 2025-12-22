@@ -153,3 +153,7 @@ thêm nút refresh vào model, cho chỉnh sửa schedule
 - fix column trạng thái
 
 - step 2: ko có pool available -> cho đổi slot trực tiếp ở step 2 (thêm slot mới) (edit trực tiếp trên card)
+
+- search lớp học ở step 1 
+Xếp lịch cho lớp có sẵn, ko cho chọn nhiều lớp, cho tick lên hết, validate liền khi chọn, thêm slider khi ấn chỉnh lịch (card), validate lại 
+1 dòng 2 ô
