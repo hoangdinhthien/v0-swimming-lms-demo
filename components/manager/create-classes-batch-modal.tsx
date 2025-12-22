@@ -915,31 +915,36 @@ export function CreateClassesBatchModal({
       // Call API to create classes
       const response = await createClass(classesToCreate, tenantId, token);
 
-      // Extract insertedIds from response
-      // Handle different response structures:
-      // - Single class: data[0][0][0].insertedId
-      // - Multiple classes: data[0][0][0].insertedIds or data[N][0][0].insertedId
+      // Extract insertedIds from response robustly (handles nested structures)
       let insertedIds: string[] = [];
 
-      if (response.data && Array.isArray(response.data)) {
-        // Check if it's array of arrays (multiple classes)
-        if (response.data.length > 1) {
-          // Multiple classes: each element is [[[{insertedId}]]]
-          insertedIds = response.data
-            .map((item: any) => item?.[0]?.[0]?.insertedId)
-            .filter(Boolean);
-        } else if (response.data[0]?.[0]?.[0]) {
-          // Single or batch response
-          const firstItem = response.data[0][0][0];
-          if (firstItem.insertedIds && Array.isArray(firstItem.insertedIds)) {
-            // Batch create with insertedIds array
-            insertedIds = firstItem.insertedIds;
-          } else if (firstItem.insertedId) {
-            // Single create with insertedId
-            insertedIds = [firstItem.insertedId];
+      const extractIds = (node: any) => {
+        if (!node) return;
+        if (Array.isArray(node)) {
+          node.forEach(extractIds);
+        } else if (typeof node === "object") {
+          // Direct fields
+          if (node.insertedId && typeof node.insertedId === "string") {
+            insertedIds.push(node.insertedId);
           }
+          if (node.insertedIds && Array.isArray(node.insertedIds)) {
+            node.insertedIds.forEach((id: any) => {
+              if (typeof id === "string") insertedIds.push(id);
+            });
+          }
+
+          // Some responses nest the result under a `data` property
+          if (node.data) extractIds(node.data);
+
+          // Recurse into object properties to catch other nesting patterns
+          Object.values(node).forEach(extractIds);
         }
-      }
+      };
+
+      extractIds(response.data);
+
+      // Deduplicate
+      insertedIds = Array.from(new Set(insertedIds));
 
       if (insertedIds.length === 0) {
         throw new Error("Không nhận được ID các lớp học vừa tạo");

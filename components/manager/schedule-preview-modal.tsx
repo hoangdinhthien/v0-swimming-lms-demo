@@ -25,7 +25,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -47,6 +48,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClassItem } from "@/api/manager/class-api";
+import { fetchClasses } from "@/api/manager/class-api";
 import type { SlotDetail } from "@/api/manager/slot-api";
 import {
   Accordion,
@@ -152,7 +154,7 @@ const STEPS = [
   {
     id: "select",
     title: "Chọn lớp",
-    description: "Chọn các lớp cần xếp lịch",
+    description: "Chọn lớp học để xếp lịch",
   },
   {
     id: "preview-pools",
@@ -216,7 +218,12 @@ export function SchedulePreviewModal({
   preScheduleConfigs,
 }: SchedulePreviewModalProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
-  const [selectedClassIds, setSelectedClassIds] = React.useState<string[]>([]);
+  const [selectedClassId, setSelectedClassId] = React.useState<string | null>(
+    null
+  );
+  const [classes, setClasses] = React.useState<ClassItem[]>([]);
+  const [loadingClasses, setLoadingClasses] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [classScheduleConfigs, setClassScheduleConfigs] = React.useState<{
     [classId: string]: ClassScheduleConfig;
   }>({});
@@ -263,7 +270,9 @@ export function SchedulePreviewModal({
   React.useEffect(() => {
     if (!open) {
       setCurrentStep(0);
-      setSelectedClassIds([]);
+      setSelectedClassId(null);
+      setClasses([]);
+      setSearchQuery("");
       setClassScheduleConfigs({});
       setClassSelectedSlots({});
       setPreviewSchedules({});
@@ -276,10 +285,15 @@ export function SchedulePreviewModal({
     }
   }, [open]);
 
-  // Load slots when modal opens
+  // Load slots and classes when modal opens
   React.useEffect(() => {
-    if (open && allSlots.length === 0) {
-      loadSlots();
+    if (open) {
+      if (allSlots.length === 0) {
+        loadSlots();
+      }
+      if (classes.length === 0) {
+        fetchClassesForModal();
+      }
     }
   }, [open]);
 
@@ -288,44 +302,38 @@ export function SchedulePreviewModal({
     if (open && preSelectedClassIds && preSelectedClassIds.length > 0) {
       // Filter out classes that are already fully scheduled
       const validClassIds = preSelectedClassIds.filter((classId) => {
-        const classItem = availableClasses.find((c) => c._id === classId);
+        const classItem = classes.find((c) => c._id === classId);
         if (!classItem) return false;
         return !isClassFullyScheduled(classItem);
       });
 
-      // Only set selected class IDs if there are valid ones
+      // Only set selected class ID if there are valid ones
       if (validClassIds.length > 0) {
-        setSelectedClassIds(validClassIds);
+        const first = validClassIds[0];
+        setSelectedClassId(first);
 
-        // Set selected slots only for valid classes
-        if (preSelectedSlots) {
-          const validSlots: { [classId: string]: string[] } = {};
-          validClassIds.forEach((classId) => {
-            if (preSelectedSlots[classId]) {
-              validSlots[classId] = preSelectedSlots[classId];
-            }
-          });
-          setClassSelectedSlots(validSlots);
+        // If preSelectedSlots provided, set for this class
+        if (preSelectedSlots && preSelectedSlots[first]) {
+          setClassSelectedSlots((prev) => ({
+            ...prev,
+            [first]: preSelectedSlots[first],
+          }));
         }
 
-        // Set schedule configs only for valid classes
-        if (preScheduleConfigs) {
-          const convertedConfigs: { [classId: string]: ClassScheduleConfig } =
-            {};
-          validClassIds.forEach((classId) => {
-            const config = preScheduleConfigs[classId];
-            if (config) {
-              convertedConfigs[classId] = {
-                min_time: config.min_time,
-                max_time: config.max_time,
-                session_in_week: config.session_in_week,
-                array_number_in_week:
-                  config.selectedDays || config.array_number_in_week,
-                start_date: config.start_date,
-              };
-            }
-          });
-          setClassScheduleConfigs(convertedConfigs);
+        // If preScheduleConfigs provided, set for this class
+        if (preScheduleConfigs && preScheduleConfigs[first]) {
+          const cfg = preScheduleConfigs[first];
+          setClassScheduleConfigs((prev) => ({
+            ...prev,
+            [first]: {
+              min_time: cfg.min_time,
+              max_time: cfg.max_time,
+              session_in_week: cfg.session_in_week,
+              array_number_in_week:
+                cfg.selectedDays || cfg.array_number_in_week,
+              start_date: cfg.start_date,
+            },
+          }));
         }
       }
     }
@@ -334,7 +342,7 @@ export function SchedulePreviewModal({
     preSelectedClassIds,
     preSelectedSlots,
     preScheduleConfigs,
-    availableClasses,
+    classes,
   ]);
 
   const loadSlots = async () => {
@@ -365,7 +373,34 @@ export function SchedulePreviewModal({
     }
   };
 
-  // Initialize default config for selected classes
+  const fetchClassesForModal = async (searchKey?: string) => {
+    setLoadingClasses(true);
+    try {
+      const { getSelectedTenant } = await import("@/utils/tenant-utils");
+      const { getAuthToken } = await import("@/api/auth-utils");
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        throw new Error("Thiếu thông tin tenant hoặc token");
+      }
+
+      const result = await fetchClasses(tenantId, token, 1, 1000, searchKey);
+      setClasses(result.data);
+    } catch (error: any) {
+      console.error("Failed to fetch classes:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải danh sách lớp học",
+      });
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
+  // Initialize default config for selected class
   React.useEffect(() => {
     const newConfigs = { ...classScheduleConfigs };
     const newSlots = { ...classSelectedSlots };
@@ -375,9 +410,9 @@ export function SchedulePreviewModal({
     tomorrow.setDate(tomorrow.getDate() + 1);
     const defaultStartDate = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    selectedClassIds.forEach((classId) => {
-      if (!newConfigs[classId]) {
-        newConfigs[classId] = {
+    if (selectedClassId) {
+      if (!newConfigs[selectedClassId]) {
+        newConfigs[selectedClassId] = {
           min_time: 7,
           max_time: 18,
           session_in_week: 0,
@@ -385,20 +420,16 @@ export function SchedulePreviewModal({
           start_date: defaultStartDate,
         };
       }
-      if (!newSlots[classId]) {
-        newSlots[classId] = [];
+      if (!newSlots[selectedClassId]) {
+        newSlots[selectedClassId] = [];
       }
-    });
+    }
     setClassScheduleConfigs(newConfigs);
     setClassSelectedSlots(newSlots);
-  }, [selectedClassIds]);
+  }, [selectedClassId]);
 
-  const handleClassToggle = (classId: string) => {
-    setSelectedClassIds((prev) =>
-      prev.includes(classId)
-        ? prev.filter((id) => id !== classId)
-        : [...prev, classId]
-    );
+  const handleClassSelect = (classId: string) => {
+    setSelectedClassId(classId);
   };
 
   const handleSlotToggle = (classId: string, slotId: string) => {
@@ -497,39 +528,37 @@ export function SchedulePreviewModal({
 
   // Validate Step 1 data
   const validateStep1 = (): { valid: boolean; message?: string } => {
-    if (selectedClassIds.length === 0) {
-      return { valid: false, message: "Vui lòng chọn ít nhất một lớp học" };
+    if (!selectedClassId) {
+      return { valid: false, message: "Vui lòng chọn một lớp học" };
     }
 
-    for (const classId of selectedClassIds) {
-      const config = classScheduleConfigs[classId];
-      const slots = classSelectedSlots[classId] || [];
-      const classItem = availableClasses.find((c) => c._id === classId);
-      const className = classItem?.name || "Lớp học";
+    const config = classScheduleConfigs[selectedClassId];
+    const slots = classSelectedSlots[selectedClassId] || [];
+    const classItem = classes.find((c) => c._id === selectedClassId);
+    const className = classItem?.name || "Lớp học";
 
-      if (!config?.start_date) {
-        return {
-          valid: false,
-          message: `${className}: Vui lòng chọn ngày bắt đầu xếp lịch`,
-        };
-      }
+    if (!config?.start_date) {
+      return {
+        valid: false,
+        message: `${className}: Vui lòng chọn ngày bắt đầu xếp lịch`,
+      };
+    }
 
-      if (slots.length === 0) {
-        return {
-          valid: false,
-          message: `${className}: Vui lòng chọn ít nhất một ca học`,
-        };
-      }
+    if (slots.length === 0) {
+      return {
+        valid: false,
+        message: `${className}: Vui lòng chọn ít nhất một ca học`,
+      };
+    }
 
-      if (
-        !config?.array_number_in_week ||
-        config.array_number_in_week.length === 0
-      ) {
-        return {
-          valid: false,
-          message: `${className}: Vui lòng chọn ít nhất một ngày học trong tuần`,
-        };
-      }
+    if (
+      !config?.array_number_in_week ||
+      config.array_number_in_week.length === 0
+    ) {
+      return {
+        valid: false,
+        message: `${className}: Vui lòng chọn ít nhất một ngày học trong tuần`,
+      };
     }
 
     return { valid: true };
@@ -569,24 +598,30 @@ export function SchedulePreviewModal({
         throw new Error("Vui lòng đăng nhập lại");
       }
 
-      // Build request array for selected classes
-      const requestData = selectedClassIds.map((classId) => {
-        const config = classScheduleConfigs[classId];
-        const startDate = config.start_date
-          ? new Date(config.start_date)
-          : new Date();
-
-        return {
-          class_id: classId,
-          min_time: config.min_time,
-          max_time: config.max_time,
-          session_in_week: config.session_in_week,
-          start_date: config.start_date, // Add start_date to request
-          array_number_in_week: config.array_number_in_week.map((jsDay) =>
-            convertJsDayToBackendDay(jsDay, startDate)
-          ),
-        };
-      });
+      // Build request array for selected class
+      const requestData = selectedClassId
+        ? [
+            {
+              class_id: selectedClassId,
+              min_time: classScheduleConfigs[selectedClassId].min_time,
+              max_time: classScheduleConfigs[selectedClassId].max_time,
+              session_in_week:
+                classScheduleConfigs[selectedClassId].session_in_week,
+              start_date: classScheduleConfigs[selectedClassId].start_date, // Add start_date to request
+              array_number_in_week: classScheduleConfigs[
+                selectedClassId
+              ].array_number_in_week.map((jsDay) =>
+                convertJsDayToBackendDay(
+                  jsDay,
+                  new Date(
+                    classScheduleConfigs[selectedClassId].start_date ||
+                      new Date()
+                  )
+                )
+              ),
+            },
+          ]
+        : [];
 
       // Call preview API
       const response = await autoScheduleClassPreview(
@@ -615,7 +650,7 @@ export function SchedulePreviewModal({
       const parsedPreview: { [classId: string]: PreviewSchedule[] } = {};
 
       response.data.forEach((classSchedules: any[], index: number) => {
-        const classId = selectedClassIds[index];
+        const classId = selectedClassId;
         if (classId && Array.isArray(classSchedules)) {
           // Enrich each schedule with full slot and instructor details
           const enrichedSchedules = classSchedules.map((schedule: any) => {
@@ -1237,7 +1272,7 @@ export function SchedulePreviewModal({
         <DialogHeader>
           <DialogTitle>Xếp lịch cho lớp có sẵn</DialogTitle>
           <DialogDescription>
-            Chọn các lớp học và thiết lập thời gian để xếp lịch tự động
+            Chọn lớp học và thiết lập thời gian để xếp lịch tự động
           </DialogDescription>
         </DialogHeader>
 
@@ -1258,25 +1293,47 @@ export function SchedulePreviewModal({
                   </Alert>
                 )}
 
-                {loading ? (
+                <div className='space-y-2'>
+                  <Label>Tìm kiếm lớp học</Label>
+                  <Input
+                    placeholder='Tìm kiếm lớp học (tên, khóa học, huấn luyện viên)...'
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      fetchClassesForModal(e.target.value);
+                    }}
+                  />
+                </div>
+
+                {loadingClasses ? (
+                  <div className='flex flex-col items-center justify-center py-12'>
+                    <Loader2 className='h-8 w-8 animate-spin text-primary mb-4' />
+                    <p className='text-muted-foreground'>
+                      Đang tìm kiếm lớp học...
+                    </p>
+                  </div>
+                ) : loading ? (
                   <div className='flex flex-col items-center justify-center py-12'>
                     <Loader2 className='h-8 w-8 animate-spin text-primary mb-4' />
                     <p className='text-muted-foreground'>
                       Đang tải danh sách lớp học...
                     </p>
                   </div>
-                ) : availableClasses.length === 0 ? (
+                ) : classes.length === 0 ? (
                   <div className='text-center py-12'>
                     <p className='text-muted-foreground'>
-                      Không có lớp học nào để xếp lịch
+                      {searchQuery
+                        ? "Không tìm thấy lớp học nào"
+                        : "Không có lớp học nào để xếp lịch"}
                     </p>
                   </div>
                 ) : (
-                  <div className='space-y-2'>
-                    {availableClasses.map((classItem) => {
-                      const isSelected = selectedClassIds.includes(
-                        classItem._id
-                      );
+                  <RadioGroup
+                    value={selectedClassId || ""}
+                    onValueChange={handleClassSelect}
+                  >
+                    {classes.map((classItem) => {
+                      const isSelected = selectedClassId === classItem._id;
                       const isFullyScheduled = isClassFullyScheduled(classItem);
                       const remainingSessions =
                         getRemainingSessionsCount(classItem);
@@ -1292,12 +1349,10 @@ export function SchedulePreviewModal({
                           )}
                         >
                           <div className='flex items-start gap-4'>
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={() =>
-                                handleClassToggle(classItem._id)
-                              }
+                            <RadioGroupItem
+                              value={classItem._id}
                               disabled={isFullyScheduled}
+                              className='mt-1'
                             />
                             <div className='flex-1 space-y-3'>
                               <div className='flex items-center justify-between'>
@@ -1552,7 +1607,7 @@ export function SchedulePreviewModal({
                         </div>
                       );
                     })}
-                  </div>
+                  </RadioGroup>
                 )}
               </div>
             </StepperStep>
@@ -2606,7 +2661,7 @@ export function SchedulePreviewModal({
                 }
               }}
               disabled={
-                (currentStep === 0 && selectedClassIds.length === 0) ||
+                (currentStep === 0 && !selectedClassId) ||
                 (currentStep === 1 &&
                   (Object.keys(previewSchedules).length === 0 ||
                     Object.entries(previewSchedules).some(
