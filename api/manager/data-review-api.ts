@@ -147,7 +147,7 @@ export async function updateDataReviewStatus({
       "x-tenant-id": String(tenantId),
       Authorization: `Bearer ${String(token)}`,
       "Content-Type": "application/json",
-      service: service, // IMPORTANT: service header is required for PUT method
+      service: service,
     },
     body: JSON.stringify({
       status: [status],
