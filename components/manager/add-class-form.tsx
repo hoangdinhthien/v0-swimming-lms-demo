@@ -169,6 +169,7 @@ export function AddClassForm({
   // Slot detail for instructor busy status
   const [slotDetail, setSlotDetail] = useState<any>(null);
   const [busyInstructorIds, setBusyInstructorIds] = useState<string[]>([]);
+  const [busyClassroomIds, setBusyClassroomIds] = useState<string[]>([]);
 
   // Get selected classroom details
   const selectedClassDetails = availableClassrooms.find(
@@ -343,10 +344,24 @@ export function AddClassForm({
           .map((schedule: any) => schedule.instructor?._id)
           .filter(Boolean);
         setBusyInstructorIds(busyIds);
+
+        // Extract busy classroom IDs from schedules
+        const busyClassroomIds = (result.schedules || [])
+          .map((schedule: any) => schedule.classroom?._id)
+          .filter(Boolean);
+        setBusyClassroomIds(busyClassroomIds);
+
+        // Manually re-validate instructor if already selected
+        // This is needed because the state update is async and might not trigger the effect immediately with new data
+        if (selectedInstructor) {
+          // We need to pass the busyIds directly because state update hasn't propagated yet
+          validateInstructorSpecialist(selectedInstructor, busyIds);
+        }
       } catch (error: any) {
         console.error("Failed to fetch slot detail:", error);
         setSlotDetail(null);
         setBusyInstructorIds([]);
+        setBusyClassroomIds([]);
       }
     };
 
@@ -368,9 +383,13 @@ export function AddClassForm({
     selectedClassDetails,
     isStep1Complete,
     mappingsLoaded,
+    busyInstructorIds,
   ]);
 
-  const validateInstructorSpecialist = async (instructorId: string) => {
+  const validateInstructorSpecialist = async (
+    instructorId: string,
+    currentBusyInstructorIds?: string[]
+  ) => {
     try {
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
@@ -489,7 +508,8 @@ export function AddClassForm({
       }
 
       // Check schedule conflict
-      const hasScheduleConflict = busyInstructorIds.includes(instructorId);
+      const busyIdsToCheck = currentBusyInstructorIds || busyInstructorIds;
+      const hasScheduleConflict = busyIdsToCheck.includes(instructorId);
       if (hasScheduleConflict) {
         warnings.push({
           instructorId,
@@ -697,16 +717,20 @@ export function AddClassForm({
     selectedInstructor &&
     availableInstructors.length > 0 &&
     !hasBlockingErrors &&
-    !loadingPools;
+    !loadingPools &&
+    !busyClassroomIds.includes(selectedClassroom);
+
+  // Check for classroom conflict
+  const hasClassroomConflict = busyClassroomIds.includes(selectedClassroom);
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       {/* Header Alert */}
       <Alert>
-        <AlertCircle className='h-4 w-4' />
+        <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           {editMode ? "Chỉnh sửa" : "Thêm"} lớp học cho ngày{" "}
-          <span className='font-semibold'>
+          <span className="font-semibold">
             {new Date(selectedDate).toLocaleDateString("vi-VN", {
               day: "2-digit",
               month: "2-digit",
@@ -717,8 +741,8 @@ export function AddClassForm({
       </Alert>
 
       {availableInstructors.length === 0 && (
-        <Alert variant='destructive'>
-          <AlertCircle className='h-4 w-4' />
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Không có Huấn luyện viên nào. Vui lòng thêm Huấn luyện viên vào hệ
             thống trước khi tạo lớp học.
@@ -726,15 +750,12 @@ export function AddClassForm({
         </Alert>
       )}
 
-      <div className='space-y-4'>
+      <div className="space-y-4">
         {/* Step 1: Classroom Selection */}
-        <div className='space-y-2'>
-          <Label
-            htmlFor='classroom-select'
-            className='flex items-center gap-2'
-          >
-            <Users className='h-4 w-4' />
-            Lớp học <span className='text-red-500'>*</span>
+        <div className="space-y-2">
+          <Label htmlFor="classroom-select" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Lớp học <span className="text-red-500">*</span>
           </Label>
           <Popover
             open={openClassroomPopover}
@@ -742,31 +763,31 @@ export function AddClassForm({
           >
             <PopoverTrigger asChild>
               <Button
-                variant='outline'
-                role='combobox'
+                variant="outline"
+                role="combobox"
                 disabled={loading}
                 className={cn(
                   "w-full justify-between",
                   !selectedClassroom && "text-muted-foreground"
                 )}
               >
-                <span className='truncate flex-1 text-left'>
+                <span className="truncate flex-1 text-left">
                   {selectedClassroom
                     ? availableClassrooms.find(
                         (classroom) => classroom._id === selectedClassroom
                       )?.name
                     : "Chọn lớp học..."}
                 </span>
-                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className='w-[--radix-popover-trigger-width] p-0'
-              align='start'
+              className="w-[--radix-popover-trigger-width] p-0"
+              align="start"
             >
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder='Tìm kiếm lớp học...'
+                  placeholder="Tìm kiếm lớp học..."
                   value={classroomSearchKey}
                   onValueChange={setClassroomSearchKey}
                 />
@@ -778,65 +799,82 @@ export function AddClassForm({
                   </CommandEmpty>
                   <CommandGroup>
                     {isSearchingClassrooms ? (
-                      <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
-                        <Loader2 className='h-4 w-4 animate-spin' />
+                      <div className="p-2 text-sm text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         Đang tìm kiếm...
                       </div>
                     ) : (
-                      searchedClassrooms.map((classroom) => (
-                        <CommandItem
-                          key={classroom._id}
-                          value={classroom.name}
-                          onSelect={() => {
-                            setSelectedClassroom(classroom._id);
-                            setClassroomSearchKey("");
-                            setOpenClassroomPopover(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedClassroom === classroom._id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {classroom.name} -{" "}
-                          {(classroom.course as any)?.title ||
-                            "Không có khóa học"}
-                        </CommandItem>
-                      ))
+                      searchedClassrooms.map((classroom) => {
+                        const isBusy = busyClassroomIds.includes(classroom._id);
+                        return (
+                          <CommandItem
+                            key={classroom._id}
+                            value={classroom.name}
+                            onSelect={() => {
+                              setSelectedClassroom(classroom._id);
+                              setClassroomSearchKey("");
+                              setOpenClassroomPopover(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedClassroom === classroom._id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              <span>
+                                {classroom.name} -{" "}
+                                {(classroom.course as any)?.title ||
+                                  "Không có khóa học"}
+                              </span>
+                              {isBusy && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-[10px] px-1.5 py-0 h-5"
+                                >
+                                  Đang học
+                                </Badge>
+                              )}
+                            </div>
+                          </CommandItem>
+                        );
+                      })
                     )}
                   </CommandGroup>
                 </CommandList>
               </Command>
             </PopoverContent>
           </Popover>
+          {hasClassroomConflict && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Lớp học này đã có lịch trong khung giờ được chọn.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         {/* Step 2: Slot Selection */}
-        <div className='space-y-2'>
-          <Label
-            htmlFor='slot-select'
-            className='flex items-center gap-2'
-          >
-            <Clock className='h-4 w-4' />
-            Khung giờ <span className='text-red-500'>*</span>
+        <div className="space-y-2">
+          <Label htmlFor="slot-select" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Khung giờ <span className="text-red-500">*</span>
           </Label>
           <Select
             value={selectedSlot}
             onValueChange={setSelectedSlot}
             disabled={loading || !selectedClassroom}
           >
-            <SelectTrigger id='slot-select'>
-              <SelectValue placeholder='Chọn khung giờ' />
+            <SelectTrigger id="slot-select">
+              <SelectValue placeholder="Chọn khung giờ" />
             </SelectTrigger>
             <SelectContent>
               {availableSlots.map((slot) => (
-                <SelectItem
-                  key={slot._id}
-                  value={slot._id}
-                >
+                <SelectItem key={slot._id} value={slot._id}>
                   {slot.title} (
                   {Math.floor(slot.start_time).toString().padStart(2, "0")}:
                   {slot.start_minute.toString().padStart(2, "0")} -{" "}
@@ -848,41 +886,34 @@ export function AddClassForm({
           </Select>
         </div>
 
-        <Separator className='my-4' />
+        <Separator className="my-4" />
 
         {/* Step 2: Pool Selection (only shown after Step 1) */}
         {isStep1Complete && (
           <>
-            <div className='space-y-2'>
-              <Label
-                htmlFor='pool-select'
-                className='flex items-center gap-2'
-              >
+            <div className="space-y-2">
+              <Label htmlFor="pool-select" className="flex items-center gap-2">
                 <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='h-4 w-4'
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
                 >
-                  <path d='M2 12h20' />
-                  <path d='M12 2v20' />
-                  <circle
-                    cx='12'
-                    cy='12'
-                    r='10'
-                  />
+                  <path d="M2 12h20" />
+                  <path d="M12 2v20" />
+                  <circle cx="12" cy="12" r="10" />
                 </svg>
-                Hồ bơi <span className='text-red-500'>*</span>
+                Hồ bơi <span className="text-red-500">*</span>
               </Label>
 
               {loadingPools ? (
-                <div className='flex items-center justify-center py-8'>
-                  <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
-                  <span className='ml-2'>Đang tải danh sách hồ bơi...</span>
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2">Đang tải danh sách hồ bơi...</span>
                 </div>
               ) : (
                 <Select
@@ -890,22 +921,22 @@ export function AddClassForm({
                   onValueChange={setSelectedPool}
                   disabled={loading}
                 >
-                  <SelectTrigger id='pool-select'>
-                    <SelectValue placeholder='Chọn hồ bơi' />
+                  <SelectTrigger id="pool-select">
+                    <SelectValue placeholder="Chọn hồ bơi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <ScrollArea className='h-[300px]'>
+                    <ScrollArea className="h-[300px]">
                       {validatedPools.map((pool) => (
                         <SelectItem
                           key={pool._id}
                           value={pool._id}
                           disabled={!pool.isAvailable}
                         >
-                          <div className='flex items-center justify-between gap-2 py-1'>
+                          <div className="flex items-center justify-between gap-2 py-1">
                             {/* Pool name and details */}
-                            <div className='flex items-center gap-2'>
-                              <span className='font-medium'>{pool.title}</span>
-                              <span className='text-xs text-muted-foreground'>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{pool.title}</span>
+                              <span className="text-xs text-muted-foreground">
                                 {pool.capacity_remain}/{pool.capacity} chỗ
                                 {pool.type_of_age && (
                                   <> • {formatAgeType(pool.type_of_age)}</>
@@ -914,12 +945,12 @@ export function AddClassForm({
                             </div>
 
                             {/* Status badges */}
-                            <div className='flex items-center gap-1 flex-shrink-0'>
+                            <div className="flex items-center gap-1 flex-shrink-0">
                               {pool.hasAgeWarning &&
                                 !pool.hasInstructorConflict && (
                                   <Badge
-                                    variant='outline'
-                                    className='text-[10px] px-1.5 py-0 h-5 border-yellow-500 text-yellow-700'
+                                    variant="outline"
+                                    className="text-[10px] px-1.5 py-0 h-5 border-yellow-500 text-yellow-700"
                                   >
                                     Tuổi
                                   </Badge>
@@ -927,8 +958,8 @@ export function AddClassForm({
                               {pool.hasCapacityWarning &&
                                 !pool.hasInstructorConflict && (
                                   <Badge
-                                    variant='secondary'
-                                    className='text-[10px] px-1.5 py-0 h-5'
+                                    variant="secondary"
+                                    className="text-[10px] px-1.5 py-0 h-5"
                                   >
                                     Gần đầy
                                   </Badge>
@@ -943,60 +974,60 @@ export function AddClassForm({
               )}
             </div>
 
-            <Separator className='my-4' />
+            <Separator className="my-4" />
 
             {/* Step 3: Instructor Selection (only shown after pools loaded) */}
             {!loadingPools && validatedPools.length > 0 && (
-              <div className='space-y-2'>
+              <div className="space-y-2">
                 <Label
-                  htmlFor='instructor-select'
-                  className='flex items-center gap-2'
+                  htmlFor="instructor-select"
+                  className="flex items-center gap-2"
                 >
-                  <User className='h-4 w-4' />
-                  Huấn luyện viên <span className='text-red-500'>*</span>
+                  <User className="h-4 w-4" />
+                  Huấn luyện viên <span className="text-red-500">*</span>
                 </Label>
 
                 {hasClassInstructor && (
-                  <div className='mb-2'>
-                    <div className='flex items-center gap-3 p-3 border rounded-md bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'>
-                      <Avatar className='h-8 w-8'>
+                  <div className="mb-2">
+                    <div className="flex items-center gap-3 p-3 border rounded-md bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                      <Avatar className="h-8 w-8">
                         <AvatarImage
                           src={instructorAvatars[classInstructor._id]}
                         />
                         <AvatarFallback>
-                          <User className='h-4 w-4' />
+                          <User className="h-4 w-4" />
                         </AvatarFallback>
                       </Avatar>
-                      <div className='flex-1'>
-                        <div className='font-medium text-blue-900 dark:text-blue-100'>
+                      <div className="flex-1">
+                        <div className="font-medium text-blue-900 dark:text-blue-100">
                           {classInstructor.username || "N/A"}
                         </div>
-                        <div className='text-xs text-blue-700 dark:text-blue-300'>
+                        <div className="text-xs text-blue-700 dark:text-blue-300">
                           Huấn luyện viên hiện tại của lớp
                         </div>
                       </div>
                       <Badge
-                        variant='default'
-                        className='bg-blue-500 hover:bg-blue-600'
+                        variant="default"
+                        className="bg-blue-500 hover:bg-blue-600"
                       >
                         Huấn luyện viên lớp
                       </Badge>
                     </div>
-                    <div className='text-xs text-muted-foreground mt-1'>
+                    <div className="text-xs text-muted-foreground mt-1">
                       Bạn có thể chọn huấn luyện viên khác nếu cần thay đổi
                     </div>
                   </div>
                 )}
 
-                <div className='space-y-2'>
+                <div className="space-y-2">
                   <Popover
                     open={openInstructorPopover}
                     onOpenChange={setOpenInstructorPopover}
                   >
                     <PopoverTrigger asChild>
                       <Button
-                        variant='outline'
-                        role='combobox'
+                        variant="outline"
+                        role="combobox"
                         disabled={loading}
                         className={cn(
                           "w-full justify-between",
@@ -1011,13 +1042,13 @@ export function AddClassForm({
                                 (i) => i._id === selectedInstructor
                               );
                               return instructor ? (
-                                <div className='flex items-center gap-2'>
-                                  <Avatar className='h-6 w-6'>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-6 w-6">
                                     <AvatarImage
                                       src={instructorAvatars[instructor._id]}
                                     />
                                     <AvatarFallback>
-                                      <User className='h-3 w-3' />
+                                      <User className="h-3 w-3" />
                                     </AvatarFallback>
                                   </Avatar>
                                   <span>{instructor.username}</span>
@@ -1027,16 +1058,16 @@ export function AddClassForm({
                               );
                             })()
                           : "Chọn Huấn luyện viên..."}
-                        <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                      className='w-[--radix-popover-trigger-width] p-0'
-                      align='start'
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
                     >
                       <Command shouldFilter={false}>
                         <CommandInput
-                          placeholder='Tìm kiếm Huấn luyện viên...'
+                          placeholder="Tìm kiếm Huấn luyện viên..."
                           value={instructorSearchKey}
                           onValueChange={setInstructorSearchKey}
                         />
@@ -1048,8 +1079,8 @@ export function AddClassForm({
                           </CommandEmpty>
                           <CommandGroup>
                             {isSearchingInstructors ? (
-                              <div className='p-2 text-sm text-muted-foreground flex items-center gap-2'>
-                                <Loader2 className='h-4 w-4 animate-spin' />
+                              <div className="p-2 text-sm text-muted-foreground flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
                                 Đang tìm kiếm...
                               </div>
                             ) : (
@@ -1098,49 +1129,49 @@ export function AddClassForm({
                                             : "opacity-0"
                                         )}
                                       />
-                                      <div className='flex items-center gap-2 flex-1'>
-                                        <Avatar className='h-6 w-6'>
+                                      <div className="flex items-center gap-2 flex-1">
+                                        <Avatar className="h-6 w-6">
                                           <AvatarImage
                                             src={
                                               instructorAvatars[instructor._id]
                                             }
                                           />
                                           <AvatarFallback>
-                                            <User className='h-3 w-3' />
+                                            <User className="h-3 w-3" />
                                           </AvatarFallback>
                                         </Avatar>
-                                        <div className='flex flex-col flex-1'>
-                                          <div className='flex items-center gap-2'>
+                                        <div className="flex flex-col flex-1">
+                                          <div className="flex items-center gap-2">
                                             <span>
                                               {instructor.username} (
                                               {instructor.email})
                                             </span>
                                             {isBusy ? (
                                               <Badge
-                                                variant='destructive'
-                                                className='text-[10px] px-1.5 py-0 h-5'
+                                                variant="destructive"
+                                                className="text-[10px] px-1.5 py-0 h-5"
                                               >
                                                 Bận
                                               </Badge>
                                             ) : (
                                               <Badge
-                                                variant='default'
-                                                className='text-[10px] px-1.5 py-0 h-5 bg-green-500 hover:bg-green-600'
+                                                variant="default"
+                                                className="text-[10px] px-1.5 py-0 h-5 bg-green-500 hover:bg-green-600"
                                               >
                                                 Rảnh
                                               </Badge>
                                             )}
                                             {hasErrors && (
                                               <Badge
-                                                variant='destructive'
-                                                className='text-[10px] px-1.5 py-0 h-5'
+                                                variant="destructive"
+                                                className="text-[10px] px-1.5 py-0 h-5"
                                               >
                                                 Lỗi
                                               </Badge>
                                             )}
                                           </div>
                                           {instructor.is_active === false && (
-                                            <span className='text-xs text-red-500'>
+                                            <span className="text-xs text-red-500">
                                               Không hoạt động
                                             </span>
                                           )}
@@ -1159,7 +1190,7 @@ export function AddClassForm({
 
                 {/* Show warnings for selected instructor */}
                 {selectedInstructorWarnings.length > 0 && (
-                  <div className='space-y-1'>
+                  <div className="space-y-1">
                     {selectedInstructorWarnings.map((warning, index) => (
                       <Alert
                         key={index}
@@ -1174,10 +1205,10 @@ export function AddClassForm({
                             : ""
                         }
                       >
-                        <AlertCircle className='h-4 w-4' />
-                        <AlertDescription className='text-sm'>
-                          <div className='font-medium'>{warning.message}</div>
-                          <div className='text-xs opacity-80'>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          <div className="font-medium">{warning.message}</div>
+                          <div className="text-xs opacity-80">
                             {warning.details}
                           </div>
                         </AlertDescription>
@@ -1192,38 +1223,34 @@ export function AddClassForm({
       </div>
 
       {/* Action Buttons */}
-      <div className='flex gap-2 pt-4'>
+      <div className="flex gap-2 pt-4">
         <Button
           onClick={handleSubmit}
           disabled={!isFormValid || loading}
-          className='flex-1'
+          className="flex-1"
         >
           {loading ? (
             <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {editMode ? "Đang cập nhật..." : "Đang thêm..."}
             </>
           ) : (
             <>
-              <Save className='mr-2 h-4 w-4' />
+              <Save className="mr-2 h-4 w-4" />
               {editMode ? "Cập nhật" : "Thêm lớp học"}
             </>
           )}
         </Button>
-        <Button
-          variant='outline'
-          onClick={onCancel}
-          disabled={loading}
-        >
-          <X className='mr-2 h-4 w-4' />
-          Hủy
+        <Button variant="outline" onClick={onCancel} disabled={loading}>
+          <X className="mr-2 h-4 w-4" />
+          Hủy cmm
         </Button>
       </div>
 
       {/* Info Alert */}
       {isStep1Complete && !loadingPools && validatedPools.length === 0 && (
         <Alert>
-          <AlertCircle className='h-4 w-4' />
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Không tìm thấy hồ bơi phù hợp. Vui lòng kiểm tra lại khung giờ và
             lớp học.
