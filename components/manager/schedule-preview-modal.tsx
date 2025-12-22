@@ -250,6 +250,15 @@ export function SchedulePreviewModal({
   const [error, setError] = React.useState<string | null>(null);
   const { toast } = useToast();
 
+  // New state for editing schedules in step 2
+  const [editingSchedules, setEditingSchedules] = React.useState<{
+    [scheduleKey: string]: boolean;
+  }>({});
+  const [availableInstructors, setAvailableInstructors] = React.useState<any[]>(
+    []
+  );
+  const [loadingInstructors, setLoadingInstructors] = React.useState(false);
+
   // Reset state when modal closes
   React.useEffect(() => {
     if (!open) {
@@ -261,6 +270,8 @@ export function SchedulePreviewModal({
       setPoolCapacities({});
       setSelectedPools({});
       setSelectedScheduleKey(null);
+      setEditingSchedules({});
+      setAvailableInstructors([]);
       setError(null);
     }
   }, [open]);
@@ -1020,6 +1031,128 @@ export function SchedulePreviewModal({
     }
   };
 
+  // Load available instructors for editing
+  const loadAvailableInstructors = async () => {
+    if (availableInstructors.length > 0) return; // Already loaded
+
+    setLoadingInstructors(true);
+    try {
+      const { fetchInstructors } = await import(
+        "@/api/manager/instructors-api"
+      );
+      const { getSelectedTenant } = await import("@/utils/tenant-utils");
+      const { getAuthToken } = await import("@/api/auth-utils");
+
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token) {
+        throw new Error("Vui lòng đăng nhập lại");
+      }
+
+      const instructors = await fetchInstructors({
+        tenantId,
+        token,
+        role: "instructor",
+      });
+      setAvailableInstructors(instructors);
+    } catch (error: any) {
+      console.error("Failed to load instructors:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải danh sách huấn luyện viên",
+      });
+    } finally {
+      setLoadingInstructors(false);
+    }
+  };
+
+  // Handle editing a schedule (change instructor, date, and slot)
+  const handleEditSchedule = async (
+    scheduleKey: string,
+    newInstructorId: string,
+    newDate: string,
+    newSlotId: string
+  ) => {
+    const [classId, scheduleIndexStr] = scheduleKey.split("-");
+    const scheduleIndex = parseInt(scheduleIndexStr);
+
+    if (!classId || isNaN(scheduleIndex)) return;
+
+    const currentSchedules = previewSchedules[classId];
+    if (!currentSchedules || !currentSchedules[scheduleIndex]) return;
+
+    // Find the selected slot details
+    const selectedSlotDetail = allSlots.find((slot) => slot._id === newSlotId);
+    if (!selectedSlotDetail) return;
+
+    const updatedSchedule = {
+      ...currentSchedules[scheduleIndex],
+      date: newDate,
+      slot: {
+        _id: selectedSlotDetail._id,
+        title: selectedSlotDetail.title,
+        start_time: selectedSlotDetail.start_time,
+        start_minute: selectedSlotDetail.start_minute,
+        end_time: selectedSlotDetail.end_time,
+        end_minute: selectedSlotDetail.end_minute,
+      },
+      instructor:
+        availableInstructors.find((inst) => inst._id === newInstructorId) ||
+        currentSchedules[scheduleIndex].instructor,
+    };
+
+    // Update the schedule
+    const updatedSchedules = [...currentSchedules];
+    updatedSchedules[scheduleIndex] = updatedSchedule;
+
+    // Re-sort schedules by date
+    const sortedSchedules = updatedSchedules.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Update preview schedules
+    setPreviewSchedules((prev) => ({
+      ...prev,
+      [classId]: sortedSchedules,
+    }));
+
+    // Clear selected pools and editing state for this class, then re-calculate
+    const newSelectedPools = { ...selectedPools };
+    const newEditingSchedules = { ...editingSchedules };
+
+    // Clear old keys
+    updatedSchedules.forEach((_, idx) => {
+      const oldKey = `${classId}-${idx}`;
+      delete newSelectedPools[oldKey];
+      delete newEditingSchedules[oldKey];
+    });
+
+    setSelectedPools(newSelectedPools);
+    setEditingSchedules(newEditingSchedules);
+
+    // Re-calculate pool capacities with updated schedules
+    await calculatePoolCapacityAfterPreview({ [classId]: sortedSchedules });
+
+    toast({
+      title: "Đã cập nhật",
+      description: "Lịch học đã được cập nhật và sắp xếp lại theo ngày.",
+    });
+  };
+
+  // Check if a schedule needs editing (cases 1, 2, or 3)
+  const needsEditing = (scheduleKey: string): boolean => {
+    const pools = poolCapacities[scheduleKey] || [];
+    const selectedPoolId = selectedPools[scheduleKey];
+    const selectedPool = pools.find((p) => p._id === selectedPoolId);
+
+    const noPoolsAvailable = pools.length === 0;
+    const hasInstructorConflict = selectedPool?.hasInstructorConflict;
+
+    return noPoolsAvailable || hasInstructorConflict;
+  };
+
   const handleCreateSchedules = async () => {
     setIsCreatingSchedules(true);
     setError(null);
@@ -1431,8 +1564,9 @@ export function SchedulePreviewModal({
                 <Alert>
                   <AlertCircle className='h-4 w-4' />
                   <AlertDescription>
-                    Đây là tổng quan lịch học được tạo tự động. Click vào nút
-                    "Chọn hồ" để chọn hồ bơi cho từng buổi học.
+                    Đây là tổng quan lịch học được tạo tự động. Bạn có thể chỉnh
+                    sửa từng buổi học bằng cách nhấn nút edit trên mỗi thẻ. Chọn
+                    hồ bơi cho từng buổi học sau khi chỉnh sửa xong.
                   </AlertDescription>
                 </Alert>
 
@@ -1458,6 +1592,17 @@ export function SchedulePreviewModal({
                         <span>
                           Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
                         </span>
+                      </li>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-orange-500 flex-shrink-0' />
+                        <span>
+                          Cam: Có vấn đề cần chỉnh sửa (không có hồ bơi hoặc HLV
+                          trùng lịch)
+                        </span>
+                      </li>
+                      <li className='flex items-center gap-2'>
+                        <Circle className='h-3 w-3 text-blue-500 flex-shrink-0' />
+                        <span>Xanh dương: Có thể chỉnh sửa (ấn nút edit)</span>
                       </li>
                       <li className='flex items-center gap-2'>
                         <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
@@ -1647,6 +1792,10 @@ export function SchedulePreviewModal({
                                       selectedPool?.hasInstructorConflict;
                                     const isOpen =
                                       openPoolPopover === scheduleKey;
+                                    const isEditing =
+                                      editingSchedules[scheduleKey];
+                                    const requiresEditing =
+                                      needsEditing(scheduleKey);
 
                                     // Determine card color
                                     let cardBorderColor = "border-border";
@@ -1665,6 +1814,10 @@ export function SchedulePreviewModal({
                                         cardBgColor =
                                           "bg-green-50 dark:bg-green-950/20";
                                       }
+                                    } else if (requiresEditing) {
+                                      cardBorderColor = "border-orange-400";
+                                      cardBgColor =
+                                        "bg-orange-50 dark:bg-orange-950/20";
                                     }
 
                                     return (
@@ -1694,12 +1847,32 @@ export function SchedulePreviewModal({
                                               )}
                                             </div>
                                           </div>
-                                          <Badge
-                                            variant='outline'
-                                            className='text-xs'
-                                          >
-                                            {schedule.slot?.title}
-                                          </Badge>
+                                          <div className='flex gap-1'>
+                                            <Badge
+                                              variant='outline'
+                                              className='text-xs'
+                                            >
+                                              {schedule.slot?.title}
+                                            </Badge>
+                                            {!isEditing && (
+                                              <Button
+                                                variant='outline'
+                                                size='sm'
+                                                className='h-6 px-2 text-xs'
+                                                onClick={() => {
+                                                  loadAvailableInstructors();
+                                                  setEditingSchedules(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [scheduleKey]: true,
+                                                    })
+                                                  );
+                                                }}
+                                              >
+                                                <Edit2 className='h-3 w-3' />
+                                              </Button>
+                                            )}
+                                          </div>
                                         </div>
 
                                         {/* Instructor */}
@@ -1709,217 +1882,470 @@ export function SchedulePreviewModal({
                                             "N/A"}
                                         </div>
 
-                                        {/* Pool Selection */}
-                                        <Popover
-                                          open={isOpen}
-                                          onOpenChange={(open) => {
-                                            if (open) {
-                                              setOpenPoolPopover(scheduleKey);
-                                            } else {
-                                              setOpenPoolPopover(null);
-                                            }
-                                          }}
-                                        >
-                                          <PopoverTrigger asChild>
-                                            <Button
-                                              variant={
-                                                selectedPoolId
-                                                  ? "outline"
-                                                  : "secondary"
-                                              }
-                                              size='sm'
-                                              className={cn(
-                                                "w-full justify-between text-xs h-8",
-                                                !selectedPoolId &&
-                                                  "text-muted-foreground"
-                                              )}
-                                            >
-                                              <span className='truncate'>
-                                                {selectedPool
-                                                  ? `${selectedPool.title}`
-                                                  : "Chọn hồ bơi..."}
-                                              </span>
-                                              <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
-                                            </Button>
-                                          </PopoverTrigger>
-                                          <PopoverContent
-                                            className='w-72 p-0'
-                                            align='start'
-                                          >
-                                            <div className='border-b p-3 bg-muted/50'>
-                                              <h4 className='font-medium text-sm'>
-                                                Chọn hồ bơi
-                                              </h4>
-                                              <p className='text-xs text-muted-foreground mt-1'>
-                                                {format(
-                                                  new Date(schedule.date),
-                                                  "EEEE, dd/MM/yyyy",
-                                                  { locale: vi }
-                                                )}{" "}
-                                                • {schedule.slot?.title}
-                                              </p>
+                                        {/* Editing Interface */}
+                                        {isEditing ? (
+                                          <div className='space-y-2 border-t pt-2'>
+                                            <div className='text-xs font-medium text-blue-600'>
+                                              Chỉnh sửa buổi học:
                                             </div>
-                                            <div className='max-h-[250px] overflow-y-auto p-2'>
-                                              {pools.length === 0 ? (
-                                                <div className='text-center py-4 text-sm text-muted-foreground'>
-                                                  Không có hồ bơi khả dụng
-                                                </div>
-                                              ) : (
-                                                <div className='space-y-1.5'>
-                                                  {pools.map((pool) => {
-                                                    const isPoolSelected =
-                                                      selectedPoolId ===
-                                                      pool._id;
-                                                    const poolHasWarnings =
-                                                      pool.hasAgeWarning ||
-                                                      pool.hasInstructorConflict;
-                                                    const noCapacity =
-                                                      pool.capacity_remain <= 0;
 
-                                                    return (
-                                                      <button
-                                                        key={pool._id}
-                                                        type='button'
-                                                        onClick={() => {
-                                                          setSelectedPools(
-                                                            (prev) => ({
-                                                              ...prev,
-                                                              [scheduleKey]:
-                                                                pool._id,
-                                                            })
-                                                          );
-                                                          setOpenPoolPopover(
-                                                            null
-                                                          );
-                                                        }}
-                                                        disabled={noCapacity}
-                                                        className={cn(
-                                                          "w-full p-2 rounded border text-left text-xs transition-all",
-                                                          isPoolSelected
-                                                            ? "border-primary bg-primary/10"
-                                                            : "border-border hover:border-primary/50",
-                                                          poolHasWarnings &&
-                                                            !isPoolSelected &&
-                                                            "border-amber-300 bg-amber-50/50",
-                                                          noCapacity &&
-                                                            "opacity-50 cursor-not-allowed"
-                                                        )}
+                                            {/* Slot Selection */}
+                                            <Select
+                                              value={schedule.slot._id}
+                                              onValueChange={(slotId) => {
+                                                const selectedSlotDetail =
+                                                  allSlots.find(
+                                                    (slot) =>
+                                                      slot._id === slotId
+                                                  );
+                                                if (selectedSlotDetail) {
+                                                  const updatedSchedule = {
+                                                    ...schedule,
+                                                    slot: {
+                                                      _id: selectedSlotDetail._id,
+                                                      title:
+                                                        selectedSlotDetail.title,
+                                                      start_time:
+                                                        selectedSlotDetail.start_time,
+                                                      start_minute:
+                                                        selectedSlotDetail.start_minute,
+                                                      end_time:
+                                                        selectedSlotDetail.end_time,
+                                                      end_minute:
+                                                        selectedSlotDetail.end_minute,
+                                                    },
+                                                  };
+                                                  const updatedSchedules = [
+                                                    ...schedules,
+                                                  ];
+                                                  updatedSchedules[
+                                                    scheduleIndex
+                                                  ] = updatedSchedule;
+                                                  setPreviewSchedules(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [classId]:
+                                                        updatedSchedules,
+                                                    })
+                                                  );
+                                                }
+                                              }}
+                                            >
+                                              <SelectTrigger className='h-7 text-xs'>
+                                                <SelectValue placeholder='Chọn ca học' />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {allSlots.map((slot) => (
+                                                  <SelectItem
+                                                    key={slot._id}
+                                                    value={slot._id}
+                                                    className='text-xs'
+                                                  >
+                                                    {slot.title} (
+                                                    {formatTimeDisplay(
+                                                      slot.start_time
+                                                    )}{" "}
+                                                    -{" "}
+                                                    {formatTimeDisplay(
+                                                      slot.end_time
+                                                    )}
+                                                    )
+                                                  </SelectItem>
+                                                ))}
+                                              </SelectContent>
+                                            </Select>
+
+                                            {/* Instructor Selection */}
+                                            <Select
+                                              value={schedule.instructor._id}
+                                              onValueChange={(instructorId) => {
+                                                const updatedSchedule = {
+                                                  ...schedule,
+                                                  instructor:
+                                                    availableInstructors.find(
+                                                      (inst) =>
+                                                        inst._id ===
+                                                        instructorId
+                                                    ) || schedule.instructor,
+                                                };
+                                                const updatedSchedules = [
+                                                  ...schedules,
+                                                ];
+                                                updatedSchedules[
+                                                  scheduleIndex
+                                                ] = updatedSchedule;
+                                                setPreviewSchedules((prev) => ({
+                                                  ...prev,
+                                                  [classId]: updatedSchedules,
+                                                }));
+                                              }}
+                                            >
+                                              <SelectTrigger className='h-7 text-xs'>
+                                                <SelectValue placeholder='Chọn HLV' />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {loadingInstructors ? (
+                                                  <div className='flex items-center justify-center py-2'>
+                                                    <Loader2 className='h-4 w-4 animate-spin' />
+                                                  </div>
+                                                ) : (
+                                                  availableInstructors.map(
+                                                    (inst) => (
+                                                      <SelectItem
+                                                        key={inst._id}
+                                                        value={inst._id}
+                                                        className='text-xs'
                                                       >
-                                                        <div className='flex justify-between items-start'>
-                                                          <div className='flex-1'>
-                                                            <div className='font-medium flex items-center gap-1'>
-                                                              {pool.title}
-                                                              {isPoolSelected && (
-                                                                <CheckCircle2 className='h-3 w-3 text-primary' />
-                                                              )}
-                                                            </div>
-                                                            <div className='text-muted-foreground mt-0.5'>
-                                                              Sức chứa:{" "}
-                                                              {pool.capacity}
-                                                            </div>
-                                                            {pool.current_usage !==
-                                                              undefined && (
-                                                              <div className='text-muted-foreground mt-0.5'>
-                                                                Đang sử dụng:{" "}
-                                                                {
-                                                                  pool.current_usage
-                                                                }
-                                                                /{pool.capacity}
-                                                              </div>
-                                                            )}
-                                                          </div>
-                                                          <div className='text-right'>
-                                                            <div
+                                                        {inst.username}
+                                                      </SelectItem>
+                                                    )
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+
+                                            {/* Date Selection */}
+                                            <Popover>
+                                              <PopoverTrigger asChild>
+                                                <Button
+                                                  variant='outline'
+                                                  className='w-full justify-start text-left font-normal h-7 text-xs'
+                                                >
+                                                  <CalendarLucide className='mr-1 h-3 w-3' />
+                                                  {format(
+                                                    new Date(schedule.date),
+                                                    "dd/MM/yyyy",
+                                                    { locale: vi }
+                                                  )}
+                                                </Button>
+                                              </PopoverTrigger>
+                                              <PopoverContent
+                                                className='w-auto p-0'
+                                                align='start'
+                                              >
+                                                <Calendar
+                                                  mode='single'
+                                                  selected={
+                                                    new Date(schedule.date)
+                                                  }
+                                                  onSelect={(date) => {
+                                                    if (date) {
+                                                      const dateStr = format(
+                                                        date,
+                                                        "yyyy-MM-dd"
+                                                      );
+                                                      const updatedSchedule = {
+                                                        ...schedule,
+                                                        date: dateStr,
+                                                      };
+                                                      const updatedSchedules = [
+                                                        ...schedules,
+                                                      ];
+                                                      updatedSchedules[
+                                                        scheduleIndex
+                                                      ] = updatedSchedule;
+                                                      setPreviewSchedules(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          [classId]:
+                                                            updatedSchedules,
+                                                        })
+                                                      );
+                                                    }
+                                                  }}
+                                                  disabled={(date) => {
+                                                    const today = new Date();
+                                                    today.setHours(0, 0, 0, 0);
+                                                    return date <= today; // Disable today and past dates
+                                                  }}
+                                                  initialFocus
+                                                  locale={vi}
+                                                />
+                                              </PopoverContent>
+                                            </Popover>
+
+                                            {/* Action Buttons */}
+                                            <div className='flex gap-1'>
+                                              <Button
+                                                size='sm'
+                                                className='h-6 px-2 text-xs flex-1'
+                                                onClick={async () => {
+                                                  await handleEditSchedule(
+                                                    scheduleKey,
+                                                    schedule.instructor._id,
+                                                    schedule.date,
+                                                    schedule.slot._id
+                                                  );
+                                                }}
+                                              >
+                                                <CheckCircle2 className='h-3 w-3 mr-1' />
+                                                Xác nhận
+                                              </Button>
+                                              <Button
+                                                variant='outline'
+                                                size='sm'
+                                                className='h-6 px-2 text-xs'
+                                                onClick={() => {
+                                                  setEditingSchedules(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [scheduleKey]: false,
+                                                    })
+                                                  );
+                                                }}
+                                              >
+                                                Hủy
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {/* Pool Selection */}
+                                            <Popover
+                                              open={isOpen}
+                                              onOpenChange={(open) => {
+                                                if (open) {
+                                                  setOpenPoolPopover(
+                                                    scheduleKey
+                                                  );
+                                                } else {
+                                                  setOpenPoolPopover(null);
+                                                }
+                                              }}
+                                            >
+                                              <PopoverTrigger asChild>
+                                                <Button
+                                                  variant={
+                                                    selectedPoolId
+                                                      ? "outline"
+                                                      : "secondary"
+                                                  }
+                                                  size='sm'
+                                                  className={cn(
+                                                    "w-full justify-between text-xs h-8",
+                                                    !selectedPoolId &&
+                                                      "text-muted-foreground"
+                                                  )}
+                                                  disabled={isEditing}
+                                                >
+                                                  <span className='truncate'>
+                                                    {selectedPool
+                                                      ? `${selectedPool.title}`
+                                                      : isEditing
+                                                      ? "Đang chỉnh sửa..."
+                                                      : "Chọn hồ bơi..."}
+                                                  </span>
+                                                  {!isEditing && (
+                                                    <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
+                                                  )}
+                                                </Button>
+                                              </PopoverTrigger>
+                                              {!isEditing && (
+                                                <PopoverContent
+                                                  className='w-72 p-0'
+                                                  align='start'
+                                                >
+                                                  <div className='border-b p-3 bg-muted/50'>
+                                                    <h4 className='font-medium text-sm'>
+                                                      Chọn hồ bơi
+                                                    </h4>
+                                                    <p className='text-xs text-muted-foreground mt-1'>
+                                                      {format(
+                                                        new Date(schedule.date),
+                                                        "EEEE, dd/MM/yyyy",
+                                                        { locale: vi }
+                                                      )}{" "}
+                                                      • {schedule.slot?.title}
+                                                    </p>
+                                                  </div>
+                                                  <div className='max-h-[250px] overflow-y-auto p-2'>
+                                                    {pools.length === 0 ? (
+                                                      <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                        Không có hồ bơi khả dụng
+                                                      </div>
+                                                    ) : (
+                                                      <div className='space-y-1.5'>
+                                                        {pools.map((pool) => {
+                                                          const isPoolSelected =
+                                                            selectedPoolId ===
+                                                            pool._id;
+                                                          const poolHasWarnings =
+                                                            pool.hasAgeWarning ||
+                                                            pool.hasInstructorConflict;
+                                                          const noCapacity =
+                                                            pool.capacity_remain <=
+                                                            0;
+
+                                                          return (
+                                                            <button
+                                                              key={pool._id}
+                                                              type='button'
+                                                              onClick={() => {
+                                                                setSelectedPools(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    [scheduleKey]:
+                                                                      pool._id,
+                                                                  })
+                                                                );
+                                                                setOpenPoolPopover(
+                                                                  null
+                                                                );
+                                                              }}
+                                                              disabled={
+                                                                noCapacity
+                                                              }
                                                               className={cn(
-                                                                "font-semibold",
-                                                                pool.capacity_remain >
-                                                                  0
-                                                                  ? "text-green-600"
-                                                                  : "text-red-600"
+                                                                "w-full p-2 rounded border text-left text-xs transition-all",
+                                                                isPoolSelected
+                                                                  ? "border-primary bg-primary/10"
+                                                                  : "border-border hover:border-primary/50",
+                                                                poolHasWarnings &&
+                                                                  !isPoolSelected &&
+                                                                  "border-amber-300 bg-amber-50/50",
+                                                                noCapacity &&
+                                                                  "opacity-50 cursor-not-allowed"
                                                               )}
                                                             >
-                                                              {
-                                                                pool.capacity_remain
-                                                              }
-                                                            </div>
-                                                            <div className='text-muted-foreground'>
-                                                              còn
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                        {(pool.hasAgeWarning ||
-                                                          pool.hasInstructorConflict ||
-                                                          pool.hasCapacityWarning) && (
-                                                          <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
-                                                            {pool.hasAgeWarning && (
-                                                              <div className='text-amber-600 flex items-center gap-1'>
-                                                                <AlertCircle className='h-3 w-3' />
-                                                                Độ tuổi không
-                                                                phù hợp
+                                                              <div className='flex justify-between items-start'>
+                                                                <div className='flex-1'>
+                                                                  <div className='font-medium flex items-center gap-1'>
+                                                                    {pool.title}
+                                                                    {isPoolSelected && (
+                                                                      <CheckCircle2 className='h-3 w-3 text-primary' />
+                                                                    )}
+                                                                  </div>
+                                                                  <div className='text-muted-foreground mt-0.5'>
+                                                                    Sức chứa:{" "}
+                                                                    {
+                                                                      pool.capacity
+                                                                    }
+                                                                  </div>
+                                                                  {pool.current_usage !==
+                                                                    undefined && (
+                                                                    <div className='text-muted-foreground mt-0.5'>
+                                                                      Đang sử
+                                                                      dụng:{" "}
+                                                                      {
+                                                                        pool.current_usage
+                                                                      }
+                                                                      /
+                                                                      {
+                                                                        pool.capacity
+                                                                      }
+                                                                    </div>
+                                                                  )}
+                                                                </div>
+                                                                <div className='text-right'>
+                                                                  <div
+                                                                    className={cn(
+                                                                      "font-semibold",
+                                                                      pool.capacity_remain >
+                                                                        0
+                                                                        ? "text-green-600"
+                                                                        : "text-red-600"
+                                                                    )}
+                                                                  >
+                                                                    {
+                                                                      pool.capacity_remain
+                                                                    }
+                                                                  </div>
+                                                                  <div className='text-muted-foreground'>
+                                                                    còn
+                                                                  </div>
+                                                                </div>
                                                               </div>
-                                                            )}
-                                                            {pool.hasInstructorConflict && (
-                                                              <div className='text-red-600 flex items-center gap-1'>
-                                                                <AlertCircle className='h-3 w-3' />
-                                                                Huấn luyện viên
-                                                                trùng lịch
-                                                              </div>
-                                                            )}
-                                                            {pool.hasCapacityWarning && (
-                                                              <div className='text-amber-600 flex items-center gap-1'>
-                                                                <AlertCircle className='h-3 w-3' />
-                                                                Sức chứa hồ bơi
-                                                                (
-                                                                {
-                                                                  pool.capacity_remain
-                                                                }
-                                                                ) nhỏ hơn số học
-                                                                viên tối đa (
-                                                                {(
-                                                                  classItem?.course as any
-                                                                )?.max_member ||
-                                                                  0}
-                                                                )
-                                                              </div>
-                                                            )}
-                                                          </div>
-                                                        )}
-                                                      </button>
-                                                    );
-                                                  })}
-                                                </div>
+                                                              {(pool.hasAgeWarning ||
+                                                                pool.hasInstructorConflict ||
+                                                                pool.hasCapacityWarning) && (
+                                                                <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
+                                                                  {pool.hasAgeWarning && (
+                                                                    <div className='text-amber-600 flex items-center gap-1'>
+                                                                      <AlertCircle className='h-3 w-3' />
+                                                                      Độ tuổi
+                                                                      không phù
+                                                                      hợp
+                                                                    </div>
+                                                                  )}
+                                                                  {pool.hasInstructorConflict && (
+                                                                    <div className='text-red-600 flex items-center gap-1'>
+                                                                      <AlertCircle className='h-3 w-3' />
+                                                                      Huấn luyện
+                                                                      viên trùng
+                                                                      lịch
+                                                                    </div>
+                                                                  )}
+                                                                  {pool.hasCapacityWarning && (
+                                                                    <div className='text-amber-600 flex items-center gap-1'>
+                                                                      <AlertCircle className='h-3 w-3' />
+                                                                      Sức chứa
+                                                                      hồ bơi (
+                                                                      {
+                                                                        pool.capacity_remain
+                                                                      }
+                                                                      ) nhỏ hơn
+                                                                      số học
+                                                                      viên tối
+                                                                      đa (
+                                                                      {(
+                                                                        classItem?.course as any
+                                                                      )
+                                                                        ?.max_member ||
+                                                                        0}
+                                                                      )
+                                                                    </div>
+                                                                  )}
+                                                                </div>
+                                                              )}
+                                                            </button>
+                                                          );
+                                                        })}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </PopoverContent>
                                               )}
-                                            </div>
-                                          </PopoverContent>
-                                        </Popover>
+                                            </Popover>
 
-                                        {/* Warnings */}
-                                        {selectedPoolId &&
-                                          (hasWarning ||
-                                            hasConflict ||
-                                            selectedPool?.hasCapacityWarning) && (
-                                            <div className='mt-2 text-xs space-y-0.5'>
-                                              {hasWarning && (
-                                                <div className='text-amber-600 flex items-center gap-1'>
-                                                  <AlertCircle className='h-3 w-3' />
-                                                  Độ tuổi không phù hợp
+                                            {/* Warnings */}
+                                            {selectedPoolId &&
+                                              (hasWarning ||
+                                                hasConflict ||
+                                                selectedPool?.hasCapacityWarning) && (
+                                                <div className='mt-2 text-xs space-y-0.5'>
+                                                  {hasWarning && (
+                                                    <div className='text-amber-600 flex items-center gap-1'>
+                                                      <AlertCircle className='h-3 w-3' />
+                                                      Độ tuổi không phù hợp
+                                                    </div>
+                                                  )}
+                                                  {hasConflict && (
+                                                    <div className='text-red-600 flex items-center gap-1'>
+                                                      <AlertCircle className='h-3 w-3' />
+                                                      HLV trùng lịch
+                                                    </div>
+                                                  )}
+                                                  {selectedPool?.hasCapacityWarning && (
+                                                    <div className='text-amber-600 flex items-center gap-1'>
+                                                      <AlertCircle className='h-3 w-3' />
+                                                      Sức chứa hồ bơi nhỏ hơn số
+                                                      học viên tối đa
+                                                    </div>
+                                                  )}
                                                 </div>
                                               )}
-                                              {hasConflict && (
-                                                <div className='text-red-600 flex items-center gap-1'>
-                                                  <AlertCircle className='h-3 w-3' />
-                                                  HLV trùng lịch
-                                                </div>
-                                              )}
-                                              {selectedPool?.hasCapacityWarning && (
-                                                <div className='text-amber-600 flex items-center gap-1'>
-                                                  <AlertCircle className='h-3 w-3' />
-                                                  Sức chứa hồ bơi nhỏ hơn số học
-                                                  viên tối đa
-                                                </div>
-                                              )}
-                                            </div>
-                                          )}
+
+                                            {/* Edit prompt for cases that need editing */}
+                                            {requiresEditing && (
+                                              <div className='mt-2 text-xs text-orange-600 flex items-center gap-1'>
+                                                <AlertCircle className='h-3 w-3' />
+                                                {pools.length === 0
+                                                  ? "Không có hồ bơi khả dụng - cần chỉnh sửa"
+                                                  : "Huấn luyện viên trùng lịch - cần chỉnh sửa"}
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
                                       </div>
                                     );
                                   })}
@@ -2192,9 +2618,13 @@ export function SchedulePreviewModal({
                   (Object.keys(previewSchedules).length === 0 ||
                     Object.entries(previewSchedules).some(
                       ([classId, schedules]) =>
-                        schedules.some(
-                          (_, idx) => !selectedPools[`${classId}-${idx}`]
-                        )
+                        schedules.some((_, idx) => {
+                          const scheduleKey = `${classId}-${idx}`;
+                          const selectedPoolId = selectedPools[scheduleKey];
+                          const needsEdit = needsEditing(scheduleKey);
+                          // Allow proceeding if pool is selected OR schedule needs editing (will be handled)
+                          return !selectedPoolId && !needsEdit;
+                        })
                     ))) ||
                 isGeneratingPreview ||
                 isCalculatingCapacity ||
