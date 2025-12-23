@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchStaff } from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { createColumns, Staff } from "./components/columns";
@@ -64,23 +63,6 @@ export default function StaffPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Permission modal states
-  const [permissionModalOpen, setPermissionModalOpen] = useState(false);
-  const [selectedStaffForPermission, setSelectedStaffForPermission] =
-    useState<any>(null);
-
-  // Handler for edit permissions button click
-  const handleEditPermissions = (staff: Staff) => {
-    setSelectedStaffForPermission({
-      _id: staff.userId || staff.staffId || staff.id,
-      user: {
-        username: staff.name,
-        email: staff.email,
-      },
-    });
-    setPermissionModalOpen(true);
-  };
 
   // Extract load logic into separate function with optional search
   const loadStaff = async (searchValue?: string, isInitialLoad = false) => {
@@ -331,7 +313,7 @@ export default function StaffPage() {
         </CardHeader>
         <CardContent>
           <DataTable
-            columns={createColumns(handleEditPermissions)}
+            columns={createColumns(() => {})}
             data={staff}
             searchKey='name'
             searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
@@ -358,16 +340,6 @@ export default function StaffPage() {
           />
         </CardContent>
       </Card>
-
-      {/* Staff Permission Modal */}
-      <StaffPermissionModal
-        open={permissionModalOpen}
-        onOpenChange={setPermissionModalOpen}
-        staffData={selectedStaffForPermission}
-        onSuccess={() => {
-          // Staff permissions updated successfully
-        }}
-      />
     </>
   );
 }

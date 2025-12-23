@@ -191,28 +191,6 @@ export const createColumns = (
     enableSorting: true,
     enableHiding: true,
   },
-  {
-    id: "actions",
-    header: "Thao tác",
-    cell: ({ row }) => {
-      const staff = row.original;
-
-      return (
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={(e) => {
-            e.stopPropagation();
-            onEditPermissions(staff);
-          }}
-          className='h-8 w-8 p-0'
-          title='Chỉnh sửa quyền'
-        >
-          <Settings className='h-4 w-4' />
-        </Button>
-      );
-    },
-  },
 ];
 
 // Default columns export for backward compatibility
