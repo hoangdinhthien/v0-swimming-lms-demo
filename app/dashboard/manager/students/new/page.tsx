@@ -48,6 +48,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import PermissionGuard from "@/components/permission-guard";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -345,58 +346,45 @@ export default function NewStudentPage() {
   };
 
   return (
-    <div className='container mx-auto py-8 px-4'>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager/students'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách học viên
-        </Link>
-      </div>
+    <PermissionGuard
+      module='User'
+      action='POST'
+      redirectTo='/dashboard/manager/students'
+    >
+      <div className='container mx-auto py-8 px-4'>
+        <div className='mb-6'>
+          <Link
+            href='/dashboard/manager/students'
+            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          >
+            <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách học viên
+          </Link>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-2xl'>Thêm học viên mới</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className='space-y-6'
-            >
-              <div>
-                <h3 className='text-lg font-medium'>Thông tin học viên</h3>
-                <Separator className='my-4' />
-              </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-2xl'>Thêm học viên mới</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className='space-y-6'
+              >
+                <div>
+                  <h3 className='text-lg font-medium'>Thông tin học viên</h3>
+                  <Separator className='my-4' />
+                </div>
 
-              <FormField
-                control={form.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Họ và tên</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Nhập họ tên học viên'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                 <FormField
                   control={form.control}
-                  name='email'
+                  name='username'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Họ và tên</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder='Nhập email'
+                          placeholder='Nhập họ tên học viên'
                           {...field}
                         />
                       </FormControl>
@@ -405,223 +393,249 @@ export default function NewStudentPage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name='phone'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Số điện thoại</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='Nhập số điện thoại'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <FormField
-                  control={form.control}
-                  name='birthday'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Ngày sinh</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='date'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='address'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Địa chỉ</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder='Nhập địa chỉ'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div>
-                <h3 className='text-lg font-medium'>Thông tin phụ huynh</h3>
-                <FormDescription>
-                  Bắt buộc đối với học viên là trẻ em dưới 18 tuổi
-                </FormDescription>
-                <Separator className='my-4' />
-              </div>
-
-              <FormField
-                control={form.control}
-                name='parent_id'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col'>
-                    <FormLabel>Chọn phụ huynh</FormLabel>
-                    <Popover
-                      open={open}
-                      onOpenChange={setOpen}
-                    >
-                      <PopoverTrigger asChild>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <FormField
+                    control={form.control}
+                    name='email'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Button
-                            variant='outline'
-                            role='combobox'
-                            aria-expanded={open}
-                            className='w-full justify-between'
-                          >
-                            {field.value
-                              ? parents.find(
-                                  (parent) => parent.id === field.value
-                                )?.username
-                              : "Chọn phụ huynh..."}
-                            <Search className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                          </Button>
+                          <Input
+                            placeholder='Nhập email'
+                            {...field}
+                          />
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className='w-full p-0'>
-                        <Command>
-                          <CommandInput placeholder='Tìm kiếm phụ huynh...' />
-                          <CommandEmpty>Không tìm thấy phụ huynh</CommandEmpty>
-                          <CommandGroup className='max-h-60 overflow-auto'>
-                            {isLoadingParents ? (
-                              <div className='flex items-center justify-center p-4'>
-                                <Loader2 className='h-4 w-4 animate-spin' />
-                                <span className='ml-2'>Đang tải...</span>
-                              </div>
-                            ) : (
-                              parents.map((parent) => (
-                                <CommandItem
-                                  key={parent.id}
-                                  value={parent.username}
-                                  onSelect={() => {
-                                    form.setValue("parent_id", parent.id);
-                                    setOpen(false);
-                                  }}
-                                  className='flex items-center gap-3 p-3'
-                                >
-                                  <CheckIcon
-                                    className={cn(
-                                      "h-4 w-4 flex-shrink-0",
-                                      field.value === parent.id
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                  />
-                                  <Avatar className='h-8 w-8 flex-shrink-0'>
-                                    <AvatarImage
-                                      src={parent.avatar}
-                                      alt={parent.username}
-                                      className='object-cover'
-                                    />
-                                    <AvatarFallback className='bg-blue-100 text-blue-700 text-sm font-medium'>
-                                      {parent.username.charAt(0).toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className='flex flex-col flex-1 min-w-0'>
-                                    <span className='font-medium truncate'>
-                                      {parent.username}
-                                    </span>
-                                    <span className='text-xs text-muted-foreground truncate'>
-                                      {parent.email}{" "}
-                                      {parent.phone ? `• ${parent.phone}` : ""}
-                                    </span>
-                                  </div>
-                                </CommandItem>
-                              ))
-                            )}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      Chọn một thành viên hiện có làm phụ huynh cho học viên này
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <div>
-                <h3 className='text-lg font-medium'>Thông tin tài khoản</h3>
-                <Separator className='my-4' />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name='phone'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='Nhập số điện thoại'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <FormField
+                    control={form.control}
+                    name='birthday'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='date'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='address'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Địa chỉ</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder='Nhập địa chỉ'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <h3 className='text-lg font-medium'>Thông tin phụ huynh</h3>
+                  <FormDescription>
+                    Bắt buộc đối với học viên là trẻ em dưới 18 tuổi
+                  </FormDescription>
+                  <Separator className='my-4' />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name='password'
+                  name='parent_id'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mật khẩu</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Nhập mật khẩu'
-                          {...field}
-                        />
-                      </FormControl>
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>Chọn phụ huynh</FormLabel>
+                      <Popover
+                        open={open}
+                        onOpenChange={setOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant='outline'
+                              role='combobox'
+                              aria-expanded={open}
+                              className='w-full justify-between'
+                            >
+                              {field.value
+                                ? parents.find(
+                                    (parent) => parent.id === field.value
+                                  )?.username
+                                : "Chọn phụ huynh..."}
+                              <Search className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-full p-0'>
+                          <Command>
+                            <CommandInput placeholder='Tìm kiếm phụ huynh...' />
+                            <CommandEmpty>
+                              Không tìm thấy phụ huynh
+                            </CommandEmpty>
+                            <CommandGroup className='max-h-60 overflow-auto'>
+                              {isLoadingParents ? (
+                                <div className='flex items-center justify-center p-4'>
+                                  <Loader2 className='h-4 w-4 animate-spin' />
+                                  <span className='ml-2'>Đang tải...</span>
+                                </div>
+                              ) : (
+                                parents.map((parent) => (
+                                  <CommandItem
+                                    key={parent.id}
+                                    value={parent.username}
+                                    onSelect={() => {
+                                      form.setValue("parent_id", parent.id);
+                                      setOpen(false);
+                                    }}
+                                    className='flex items-center gap-3 p-3'
+                                  >
+                                    <CheckIcon
+                                      className={cn(
+                                        "h-4 w-4 flex-shrink-0",
+                                        field.value === parent.id
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    <Avatar className='h-8 w-8 flex-shrink-0'>
+                                      <AvatarImage
+                                        src={parent.avatar}
+                                        alt={parent.username}
+                                        className='object-cover'
+                                      />
+                                      <AvatarFallback className='bg-blue-100 text-blue-700 text-sm font-medium'>
+                                        {parent.username
+                                          .charAt(0)
+                                          .toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className='flex flex-col flex-1 min-w-0'>
+                                      <span className='font-medium truncate'>
+                                        {parent.username}
+                                      </span>
+                                      <span className='text-xs text-muted-foreground truncate'>
+                                        {parent.email}{" "}
+                                        {parent.phone
+                                          ? `• ${parent.phone}`
+                                          : ""}
+                                      </span>
+                                    </div>
+                                  </CommandItem>
+                                ))
+                              )}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormDescription>
-                        Mật khẩu phải có ít nhất 6 ký tự
+                        Chọn một thành viên hiện có làm phụ huynh cho học viên
+                        này
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name='confirmPassword'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Xác nhận mật khẩu</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='password'
-                          placeholder='Nhập lại mật khẩu'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                <div>
+                  <h3 className='text-lg font-medium'>Thông tin tài khoản</h3>
+                  <Separator className='my-4' />
+                </div>
 
-              <div className='flex justify-end'>
-                <Button
-                  type='submit'
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    "Thêm học viên"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <FormField
+                    control={form.control}
+                    name='password'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mật khẩu</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder='Nhập mật khẩu'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Mật khẩu phải có ít nhất 6 ký tự
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='confirmPassword'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Xác nhận mật khẩu</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='password'
+                            placeholder='Nhập lại mật khẩu'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className='flex justify-end'>
+                  <Button
+                    type='submit'
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      "Thêm học viên"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </PermissionGuard>
   );
 }

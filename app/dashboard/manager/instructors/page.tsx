@@ -37,6 +37,7 @@ import { User, Mail, Book, Calendar, Key, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createColumns, Instructor } from "./components/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import PermissionGuard from "@/components/permission-guard";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -465,12 +466,17 @@ export default function InstructorsPage() {
             />
             Làm mới
           </Button>
-          <Link href='/dashboard/manager/instructors/new'>
-            <Button>
-              <Plus className='mr-2 h-4 w-4' />
-              Thêm Huấn luyện viên
-            </Button>
-          </Link>
+          <PermissionGuard
+            module='User'
+            action='POST'
+          >
+            <Link href='/dashboard/manager/instructors/new'>
+              <Button>
+                <Plus className='mr-2 h-4 w-4' />
+                Thêm Huấn luyện viên
+              </Button>
+            </Link>
+          </PermissionGuard>
         </div>
       </div>
 

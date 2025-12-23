@@ -151,7 +151,7 @@ export const createColumns = (
     cell: ({ row }) => {
       const count = row.original.member?.length || 0;
       return count > 0 ? (
-        <span className='text-sm'>Có học viên</span>
+        <span className='text-sm font-medium'>{count} học viên</span>
       ) : (
         <span className='text-sm text-muted-foreground'>Chưa có học viên</span>
       );

@@ -182,7 +182,9 @@ export const columns: ColumnDef<Student>[] = [
           </span>
         </div>
       ) : (
-        <span className='text-sm text-muted-foreground italic'>Không có</span>
+        <span className='text-sm text-muted-foreground italic'>
+          Không có thông tin
+        </span>
       );
     },
     enableSorting: true,

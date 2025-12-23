@@ -43,6 +43,7 @@ import {
 } from "@/api/manager/course-categories";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 
 interface CourseCategoriesModalProps {
   open: boolean;
@@ -56,6 +57,7 @@ export default function CourseCategoriesModal({
   onCategoriesUpdated,
 }: CourseCategoriesModalProps) {
   const { toast } = useToast();
+  const { isManager } = useStaffPermissions();
 
   const [categories, setCategories] = useState<CourseCategory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -315,50 +317,52 @@ export default function CourseCategoriesModal({
           </DialogHeader>
 
           <div className='space-y-6'>
-            {/* Add new category form */}
-            <div className='mb-6 p-4 border rounded-lg bg-muted/50'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                <div>
-                  <Label htmlFor='new-category'>Tên danh mục</Label>
-                  <Input
-                    id='new-category'
-                    placeholder='Nhập tên danh mục...'
-                    value={newCategoryTitle}
-                    onChange={(e) => setNewCategoryTitle(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !creating) {
-                        handleCreateCategory();
-                      }
-                    }}
-                    disabled={creating}
-                  />
+            {/* Add new category form - Only for managers */}
+            {isManager && (
+              <div className='mb-6 p-4 border rounded-lg bg-muted/50'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <div>
+                    <Label htmlFor='new-category'>Tên danh mục</Label>
+                    <Input
+                      id='new-category'
+                      placeholder='Nhập tên danh mục...'
+                      value={newCategoryTitle}
+                      onChange={(e) => setNewCategoryTitle(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && !creating) {
+                          handleCreateCategory();
+                        }
+                      }}
+                      disabled={creating}
+                    />
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <Switch
+                      id='new-category-active'
+                      checked={newCategoryActive}
+                      onCheckedChange={setNewCategoryActive}
+                      disabled={creating}
+                    />
+                    <Label htmlFor='new-category-active'>
+                      Trạng thái hoạt động
+                    </Label>
+                  </div>
                 </div>
-                <div className='flex items-center space-x-2'>
-                  <Switch
-                    id='new-category-active'
-                    checked={newCategoryActive}
-                    onCheckedChange={setNewCategoryActive}
-                    disabled={creating}
-                  />
-                  <Label htmlFor='new-category-active'>
-                    Trạng thái hoạt động
-                  </Label>
+                <div className='flex justify-end'>
+                  <Button
+                    onClick={handleCreateCategory}
+                    disabled={creating || !newCategoryTitle.trim()}
+                  >
+                    {creating ? (
+                      <Loader2 className='h-4 w-4 animate-spin mr-2' />
+                    ) : (
+                      <Plus className='h-4 w-4 mr-2' />
+                    )}
+                    Thêm
+                  </Button>
                 </div>
               </div>
-              <div className='flex justify-end'>
-                <Button
-                  onClick={handleCreateCategory}
-                  disabled={creating || !newCategoryTitle.trim()}
-                >
-                  {creating ? (
-                    <Loader2 className='h-4 w-4 animate-spin mr-2' />
-                  ) : (
-                    <Plus className='h-4 w-4 mr-2' />
-                  )}
-                  Thêm
-                </Button>
-              </div>
-            </div>
+            )}
 
             {/* Categories table */}
             <div>
@@ -380,7 +384,9 @@ export default function CourseCategoriesModal({
                         <TableHead>Trạng thái</TableHead>
                         <TableHead>Ngày tạo</TableHead>
                         <TableHead>Người tạo</TableHead>
-                        <TableHead className='w-32'>Thao tác</TableHead>
+                        {isManager && (
+                          <TableHead className='w-32'>Thao tác</TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -443,54 +449,62 @@ export default function CourseCategoriesModal({
                             <TableCell>
                               {category.created_by?.username || "N/A"}
                             </TableCell>
-                            <TableCell>
-                              {editing === category._id ? (
-                                <div className='flex gap-1'>
-                                  <Button
-                                    size='sm'
-                                    variant='outline'
-                                    onClick={() => handleSaveEdit(category._id)}
-                                  >
-                                    <Save className='h-3 w-3' />
-                                  </Button>
-                                  <Button
-                                    size='sm'
-                                    variant='outline'
-                                    onClick={handleCancelEdit}
-                                  >
-                                    <X className='h-3 w-3' />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className='flex gap-1'>
-                                  <Button
-                                    size='sm'
-                                    variant='outline'
-                                    onClick={() => handleEditCategory(category)}
-                                  >
-                                    <Edit className='h-3 w-3' />
-                                  </Button>
-                                  <Button
-                                    size='sm'
-                                    variant='outline'
-                                    onClick={() => handleDeleteClick(category)}
-                                    disabled={deleting === category._id}
-                                  >
-                                    {deleting === category._id ? (
-                                      <Loader2 className='h-3 w-3 animate-spin' />
-                                    ) : (
-                                      <Trash2 className='h-3 w-3' />
-                                    )}
-                                  </Button>
-                                </div>
-                              )}
-                            </TableCell>
+                            {isManager && (
+                              <TableCell>
+                                {editing === category._id ? (
+                                  <div className='flex gap-1'>
+                                    <Button
+                                      size='sm'
+                                      variant='outline'
+                                      onClick={() =>
+                                        handleSaveEdit(category._id)
+                                      }
+                                    >
+                                      <Save className='h-3 w-3' />
+                                    </Button>
+                                    <Button
+                                      size='sm'
+                                      variant='outline'
+                                      onClick={handleCancelEdit}
+                                    >
+                                      <X className='h-3 w-3' />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className='flex gap-1'>
+                                    <Button
+                                      size='sm'
+                                      variant='outline'
+                                      onClick={() =>
+                                        handleEditCategory(category)
+                                      }
+                                    >
+                                      <Edit className='h-3 w-3' />
+                                    </Button>
+                                    <Button
+                                      size='sm'
+                                      variant='outline'
+                                      onClick={() =>
+                                        handleDeleteClick(category)
+                                      }
+                                      disabled={deleting === category._id}
+                                    >
+                                      {deleting === category._id ? (
+                                        <Loader2 className='h-3 w-3 animate-spin' />
+                                      ) : (
+                                        <Trash2 className='h-3 w-3' />
+                                      )}
+                                    </Button>
+                                  </div>
+                                )}
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={5}
+                            colSpan={isManager ? 5 : 4}
                             className='text-center py-8 text-muted-foreground'
                           >
                             Chưa có danh mục nào được tạo

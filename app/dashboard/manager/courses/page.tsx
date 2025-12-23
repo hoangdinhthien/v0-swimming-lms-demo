@@ -14,6 +14,7 @@ import CourseCategoriesModal from "@/components/manager/course-categories-modal"
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { columns, Course } from "./components/columns";
+import PermissionGuard from "@/components/permission-guard";
 
 export default function CoursesPage() {
   const router = useRouter();
@@ -182,19 +183,29 @@ export default function CoursesPage() {
               />
               Làm mới
             </Button>
-            <Button
-              variant='outline'
-              onClick={() => setCategoriesModalOpen(true)}
+            <PermissionGuard
+              module='Course'
+              action='GET'
             >
-              <Settings className='mr-2 h-4 w-4' />
-              Quản lý danh mục
-            </Button>
-            <Button
-              onClick={() => router.push("/dashboard/manager/courses/new")}
+              <Button
+                variant='outline'
+                onClick={() => setCategoriesModalOpen(true)}
+              >
+                <Settings className='mr-2 h-4 w-4' />
+                Quản lý danh mục
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard
+              module='Course'
+              action='POST'
             >
-              <Plus className='mr-2 h-4 w-4' />
-              Tạo khóa học mới
-            </Button>
+              <Button
+                onClick={() => router.push("/dashboard/manager/courses/new")}
+              >
+                <Plus className='mr-2 h-4 w-4' />
+                Thêm khóa học mới
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 

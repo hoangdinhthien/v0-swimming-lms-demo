@@ -29,6 +29,7 @@ import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import PermissionGuard from "@/components/permission-guard";
 
 // Form schema for validation
 const instructorFormSchema = z
@@ -184,193 +185,199 @@ export default function NewInstructorPage() {
   };
 
   return (
-    <div className='container mx-auto py-8 px-4'>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager/instructors'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách Huấn luyện
-          viên
-        </Link>
-      </div>
+    <PermissionGuard
+      module='User'
+      action='POST'
+      redirectTo='/dashboard/manager/instructors'
+    >
+      <div className='container mx-auto py-8 px-4'>
+        <div className='mb-6'>
+          <Link
+            href='/dashboard/manager/instructors'
+            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          >
+            <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách Huấn luyện
+            viên
+          </Link>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-2xl'>Thêm Huấn luyện viên mới</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className='space-y-6'
-            >
-              <FormField
-                control={form.control}
-                name='username'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên đăng nhập</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Nhập tên đăng nhập'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='email'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Nhập email'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='password'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mật khẩu</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='Nhập mật khẩu'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Mật khẩu phải có ít nhất 6 ký tự
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='confirmPassword'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Xác nhận mật khẩu</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='password'
-                        placeholder='Nhập lại mật khẩu'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='phone'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Số điện thoại</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Nhập số điện thoại'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='birthday'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ngày sinh</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='date'
-                        placeholder='Chọn ngày sinh'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='address'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Địa chỉ</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='Nhập địa chỉ'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='is_active'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4'>
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className='space-y-1 leading-none'>
-                      <FormLabel>Trạng thái hoạt động</FormLabel>
-                      <FormDescription>
-                        Chọn để đặt Huấn luyện viên ở trạng thái hoạt động
-                      </FormDescription>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className='flex justify-end'>
-                <Button
-                  type='submit'
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                      Đang tạo...
-                    </>
-                  ) : (
-                    "Thêm Huấn luyện viên"
+        <Card>
+          <CardHeader>
+            <CardTitle className='text-2xl'>Thêm Huấn luyện viên mới</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className='space-y-6'
+              >
+                <FormField
+                  control={form.control}
+                  name='username'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tên đăng nhập</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Nhập tên đăng nhập'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+                />
+
+                <FormField
+                  control={form.control}
+                  name='email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Nhập email'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='password'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mật khẩu</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder='Nhập mật khẩu'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Mật khẩu phải có ít nhất 6 ký tự
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='confirmPassword'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Xác nhận mật khẩu</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='password'
+                          placeholder='Nhập lại mật khẩu'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='phone'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Số điện thoại</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Nhập số điện thoại'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='birthday'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ngày sinh</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='date'
+                          placeholder='Chọn ngày sinh'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='address'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Địa chỉ</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='Nhập địa chỉ'
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='is_active'
+                  render={({ field }) => (
+                    <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4'>
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className='space-y-1 leading-none'>
+                        <FormLabel>Trạng thái hoạt động</FormLabel>
+                        <FormDescription>
+                          Chọn để đặt Huấn luyện viên ở trạng thái hoạt động
+                        </FormDescription>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className='flex justify-end'>
+                  <Button
+                    type='submit'
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Đang tạo...
+                      </>
+                    ) : (
+                      "Thêm Huấn luyện viên"
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </PermissionGuard>
   );
 }

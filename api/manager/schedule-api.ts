@@ -792,15 +792,22 @@ export const fetchUserSchedule = async (
     throw new Error("User ID is required");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users so staff frontend can call manager endpoints
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Schedule";
+  }
+
   const response = await fetch(
     `${config.API}/v1/workflow-process/manager/schedules?user=${userId}`,
     {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-tenant-id": finalTenantId,
-        Authorization: `Bearer ${finalToken}`,
-      },
+      headers,
     }
   );
 

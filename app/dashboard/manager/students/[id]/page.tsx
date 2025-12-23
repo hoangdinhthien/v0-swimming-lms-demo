@@ -48,6 +48,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import PermissionGuard from "@/components/permission-guard";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
@@ -960,20 +961,32 @@ export default function StudentDetailPage() {
 
               {/* Action Buttons */}
               <div className='flex flex-col gap-3 mt-6'>
-                <Button
-                  variant='outline'
-                  className='w-full border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300'
-                  onClick={() => setIsEditModalOpen(true)}
+                <PermissionGuard
+                  module='User'
+                  action='PUT'
+                  showLoading={false}
                 >
-                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa
-                </Button>
-                <Button
-                  size='sm'
-                  onClick={() => setIsScheduleModalOpen(true)}
-                  className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'
+                  <Button
+                    variant='outline'
+                    className='w-full border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300'
+                    onClick={() => setIsEditModalOpen(true)}
+                  >
+                    <User className='mr-2 h-4 w-4' /> Chỉnh sửa thông tin
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard
+                  module='Schedule'
+                  action='GET'
+                  showLoading={false}
                 >
-                  <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
-                </Button>
+                  <Button
+                    size='sm'
+                    onClick={() => setIsScheduleModalOpen(true)}
+                    className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'
+                  >
+                    <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
+                  </Button>
+                </PermissionGuard>
               </div>
             </div>
           </CardContent>
@@ -1124,7 +1137,7 @@ export default function StudentDetailPage() {
                   <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
                   Lớp học đang tham gia
                 </h3>
-                <Button
+                {/* <Button
                   size='sm'
                   variant='outline'
                   onClick={() => setIsScheduleModalOpen(true)}
@@ -1132,7 +1145,7 @@ export default function StudentDetailPage() {
                 >
                   <Calendar className='h-4 w-4' />
                   Xem lịch học
-                </Button>
+                </Button> */}
               </div>
               {detail.classesAsMember &&
               detail.classesAsMember.filter(
@@ -1262,13 +1275,13 @@ export default function StudentDetailPage() {
                   <p className='text-blue-700/70 dark:text-blue-300/70 text-sm mb-4'>
                     Học viên chưa tham gia lớp học nào
                   </p>
-                  <Button
+                  {/* <Button
                     size='sm'
                     variant='outline'
                     className='bg-background hover:bg-blue-50 dark:hover:bg-blue-900/40 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300'
                   >
                     <span className='mr-1'>+</span> Thêm vào lớp học
-                  </Button>
+                  </Button> */}
                 </div>
               )}
             </div>

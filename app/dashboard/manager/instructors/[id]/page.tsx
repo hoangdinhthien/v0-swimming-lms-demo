@@ -48,6 +48,7 @@ import InstructorSpecialistModal from "@/components/manager/instructor-specialis
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import PermissionGuard from "@/components/permission-guard";
 import {
   Dialog,
   DialogContent,
@@ -606,26 +607,44 @@ export default function InstructorDetailPage() {
 
               {/* Action Buttons */}
               <div className='flex flex-col gap-3 mt-6'>
-                <Button
-                  variant='outline'
-                  className='w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300'
-                  onClick={() => setOpen(true)}
+                <PermissionGuard
+                  module='User'
+                  action='PUT'
+                  showLoading={false}
                 >
-                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa thông tin
-                </Button>
-                <Button
-                  variant='outline'
-                  className='w-full border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/30 dark:hover:text-purple-300'
-                  onClick={() => setIsSpecialistModalOpen(true)}
+                  <Button
+                    variant='outline'
+                    className='w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300'
+                    onClick={() => setOpen(true)}
+                  >
+                    <User className='mr-2 h-4 w-4' /> Chỉnh sửa thông tin
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard
+                  module='User'
+                  action='PUT'
+                  showLoading={false}
                 >
-                  <Target className='mr-2 h-4 w-4' /> Quản lý chuyên môn
-                </Button>
-                <Button
-                  className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'
-                  onClick={() => setIsScheduleModalOpen(true)}
+                  <Button
+                    variant='outline'
+                    className='w-full border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/30 dark:hover:text-purple-300'
+                    onClick={() => setIsSpecialistModalOpen(true)}
+                  >
+                    <Target className='mr-2 h-4 w-4' /> Quản lý chuyên môn
+                  </Button>
+                </PermissionGuard>
+                <PermissionGuard
+                  module='Schedule'
+                  action='GET'
+                  showLoading={false}
                 >
-                  <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
-                </Button>
+                  <Button
+                    className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'
+                    onClick={() => setIsScheduleModalOpen(true)}
+                  >
+                    <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
+                  </Button>
+                </PermissionGuard>
               </div>
             </div>
           </CardContent>
