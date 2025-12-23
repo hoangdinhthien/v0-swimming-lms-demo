@@ -70,7 +70,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getVietnameseDayFromDate } from "@/utils/date-utils";
 
-// User Avatar Component with async image loading
+// User Avatar Component with simple fallback
 function UserAvatar({
   user,
   className = "h-6 w-6",
@@ -78,62 +78,16 @@ function UserAvatar({
   user: any;
   className?: string;
 }) {
-  const [avatarSrc, setAvatarSrc] = useState("/placeholder.svg");
-
-  useEffect(() => {
-    const loadAvatar = async () => {
-      // Handle different user data structures (user.user or direct user)
-      const userData = user?.user || user;
-      const featuredImage = userData?.featured_image;
-
-      if (featuredImage) {
-        let imagePath = null;
-
-        // Handle different featured_image structures
-        if (Array.isArray(featuredImage) && featuredImage.length > 0) {
-          // Case: [{"path": ["url"]}] or [{"path": "url"}] or ["media_id"]
-          const firstImage = featuredImage[0];
-          if (typeof firstImage === "string") {
-            // It's a media ID
-            imagePath = await getMediaDetails(firstImage);
-          } else if (firstImage?.path) {
-            if (Array.isArray(firstImage.path)) {
-              imagePath = firstImage.path[0]; // Get first URL from array
-            } else {
-              imagePath = firstImage.path; // Direct string URL
-            }
-          }
-        } else if (typeof featuredImage === "string") {
-          // Case: "media_id" or direct URL
-          if (featuredImage.startsWith("http")) {
-            imagePath = featuredImage;
-          } else {
-            // It's a media ID, fetch the path
-            imagePath = await getMediaDetails(featuredImage);
-          }
-        } else if (
-          featuredImage?.path &&
-          typeof featuredImage.path === "string"
-        ) {
-          // Case: {"path": "url"}
-          imagePath = featuredImage.path;
-        }
-
-        // If we found a valid image path, use it
-        if (imagePath && imagePath.startsWith("http")) {
-          setAvatarSrc(imagePath);
-        }
-      }
-    };
-    loadAvatar();
-  }, [user]);
+  // Get user display name
+  const getDisplayName = () => {
+    const userData = user?.user || user;
+    return userData?.username || userData?.email || "U";
+  };
 
   return (
     <Avatar className={className}>
-      <AvatarImage src={avatarSrc} />
       <AvatarFallback>
-        {(user?.user?.username || user?.username)?.charAt(0)?.toUpperCase() ||
-          "U"}
+        {getDisplayName().charAt(0)?.toUpperCase() || "U"}
       </AvatarFallback>
     </Avatar>
   );
@@ -1054,12 +1008,9 @@ export default function ClassDetailPage() {
                   >
                     <span className='text-sm font-medium flex items-center gap-2'>
                       <Users className='h-4 w-4' />
-                      Số học viên
+                      Học viên
                     </span>
                     <div className='flex items-center gap-2'>
-                      <span className='font-bold text-lg'>
-                        {classData.member?.length || 0}
-                      </span>
                       {showStudentsDropdown ? (
                         <ChevronUp className='h-4 w-4' />
                       ) : (
@@ -1306,8 +1257,7 @@ export default function ClassDetailPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Quick Actions */}
+            {/* Quick Actions
             <Card className='bg-card/80 backdrop-blur-sm border shadow-xl'>
               <CardHeader>
                 <CardTitle className='text-lg'>Thao tác nhanh</CardTitle>
@@ -1393,7 +1343,7 @@ export default function ClassDetailPage() {
                   Xem lịch học
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

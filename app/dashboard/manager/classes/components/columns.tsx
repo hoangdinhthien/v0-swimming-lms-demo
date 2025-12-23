@@ -145,12 +145,16 @@ export const createColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title='Sĩ số'
+        title='Học viên'
       />
     ),
     cell: ({ row }) => {
       const count = row.original.member?.length || 0;
-      return <span className='text-sm'>{count} học viên</span>;
+      return count > 0 ? (
+        <span className='text-sm'>Có học viên</span>
+      ) : (
+        <span className='text-sm text-muted-foreground'>Chưa có học viên</span>
+      );
     },
   },
   {
