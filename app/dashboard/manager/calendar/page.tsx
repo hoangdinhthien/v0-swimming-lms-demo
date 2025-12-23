@@ -2158,6 +2158,7 @@ export default function ImprovedAntdCalendarPage() {
                               pool: selectedPool,
                               instructor: selectedInstructor,
                             }}
+                            currentScheduleId={editingEvent?.scheduleId}
                             onSubmit={async (data) => {
                               await handleUpdateClass(data);
                             }}

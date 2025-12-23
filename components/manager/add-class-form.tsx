@@ -98,6 +98,7 @@ interface AddClassFormProps {
     pool?: string;
     instructor?: string;
   };
+  currentScheduleId?: string;
 }
 
 export function AddClassForm({
@@ -112,6 +113,7 @@ export function AddClassForm({
   loading = false,
   editMode = false,
   initialValues = {},
+  currentScheduleId,
 }: AddClassFormProps) {
   // Step 1: Slot + Classroom selection
   const [selectedSlot, setSelectedSlot] = useState<string>(
@@ -341,12 +343,14 @@ export function AddClassForm({
 
         // Extract busy instructor IDs from schedules
         const busyIds = (result.schedules || [])
+          .filter((s: any) => s._id !== currentScheduleId) // Exclude current schedule if provided
           .map((schedule: any) => schedule.instructor?._id)
           .filter(Boolean);
         setBusyInstructorIds(busyIds);
 
         // Extract busy classroom IDs from schedules
         const busyClassroomIds = (result.schedules || [])
+          .filter((s: any) => s._id !== currentScheduleId) // Exclude current schedule if provided
           .map((schedule: any) => schedule.classroom?._id)
           .filter(Boolean);
         setBusyClassroomIds(busyClassroomIds);
