@@ -1509,7 +1509,7 @@ export default function ClassDetailPage() {
                   }
                 />
                 <Label htmlFor='show_on_regist_course'>
-                  Trạng thái hoạt động
+                  Mở đăng ký khóa học
                 </Label>
               </div>
             </div>
