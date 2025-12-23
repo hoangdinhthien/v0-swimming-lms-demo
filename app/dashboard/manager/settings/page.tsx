@@ -110,50 +110,48 @@ export default function SettingsPage() {
       {loading && <LoadingScreen />}
 
       {error && (
-        <div className='mb-6 p-4 bg-destructive/15 border border-destructive/20 rounded-lg'>
-          <p className='text-destructive text-sm'>{error}</p>
+        <div className="mb-6 p-4 bg-destructive/15 border border-destructive/20 rounded-lg">
+          <p className="text-destructive text-sm">{error}</p>
         </div>
       )}
 
-      <div className='mb-6'>
+      <div className="mb-6">
         <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          href="/dashboard/manager"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className='mr-1 h-4 w-4' />
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Về Trang Chủ
         </Link>
       </div>
 
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className='text-3xl font-bold'>Cài Đặt</h1>
-          <p className='text-muted-foreground'>
+          <h1 className="text-3xl font-bold">Cài Đặt</h1>
+          <p className="text-muted-foreground">
             Quản lý tài khoản và cài đặt trung tâm bơi lội của bạn
           </p>
         </div>
       </div>
 
-      <Tabs
-        defaultValue='profile'
-        className='mt-8'
-      >
-        <TabsList className='grid w-full grid-cols-2'>
-          <TabsTrigger value='profile'>
-            <User className='mr-2 h-4 w-4' />
-            Thông Tin Cá Nhân
+      <Tabs defaultValue="profile" className="mt-8">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="profile">
+            <div className="flex items-center">
+              <User className="mr-2 h-4 w-4" />
+              Thông Tin Cá Nhân
+            </div>
           </TabsTrigger>
-          <TabsTrigger value='notifications'>
-            <Mail className='mr-2 h-4 w-4' />
-            Thông Báo
+          <TabsTrigger value="notifications">
+            <div className="flex items-center">
+              <Mail className="mr-2 h-4 w-4" />
+              Thông Báo
+            </div>
           </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
-        <TabsContent
-          value='profile'
-          className='space-y-4 mt-6'
-        >
+        <TabsContent value="profile" className="space-y-4 mt-6">
           {!loading && (
             <>
               <Card>
@@ -164,11 +162,11 @@ export default function SettingsPage() {
                       Cập nhật thông tin cá nhân và liên lạc của bạn
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className='space-y-4'>
+                  <CardContent className="space-y-4">
                     {/* Profile Image */}
                     {userProfile?.featured_image ? (
-                      <div className='flex items-center space-x-4'>
-                        <Avatar className='h-20 w-20'>
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-20 w-20">
                           <AvatarImage
                             src={userProfile.featured_image.path}
                             alt={userProfile.featured_image.alt || "Profile"}
@@ -179,45 +177,45 @@ export default function SettingsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className='text-lg font-medium'>
+                          <h3 className="text-lg font-medium">
                             {profileForm.username}
                           </h3>
-                          <p className='text-sm text-muted-foreground'>
+                          <p className="text-sm text-muted-foreground">
                             {profileForm.email}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className='flex items-center space-x-4'>
-                        <Avatar className='h-20 w-20'>
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-20 w-20">
                           <AvatarFallback>
                             {profileForm.username?.charAt(0)?.toUpperCase() ||
                               "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <h3 className='text-lg font-medium'>
+                          <h3 className="text-lg font-medium">
                             {profileForm.username}
                           </h3>
-                          <p className='text-sm text-muted-foreground'>
+                          <p className="text-sm text-muted-foreground">
                             {profileForm.email}
                           </p>
                         </div>
                       </div>
                     )}
 
-                    <div className='space-y-2'>
-                      <Label htmlFor='username'>Tên Đăng Nhập</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Tên Đăng Nhập</Label>
                       <Input
-                        id='username'
+                        id="username"
                         value={profileForm.username}
                         disabled
                       />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='name'>Tên Hiển Thị</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Tên Hiển Thị</Label>
                       <Input
-                        id='name'
+                        id="name"
                         value={profileForm.name}
                         onChange={(e) =>
                           setProfileForm({
@@ -227,19 +225,19 @@ export default function SettingsPage() {
                         }
                       />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='email'>Email</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
                       <Input
-                        id='email'
-                        type='email'
+                        id="email"
+                        type="email"
                         value={profileForm.email}
                         disabled
                       />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='phone'>Số Điện Thoại</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Số Điện Thoại</Label>
                       <Input
-                        id='phone'
+                        id="phone"
                         value={profileForm.phone}
                         onChange={(e) =>
                           setProfileForm({
@@ -249,10 +247,10 @@ export default function SettingsPage() {
                         }
                       />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='address'>Địa Chỉ</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="address">Địa Chỉ</Label>
                       <Input
-                        id='address'
+                        id="address"
                         value={profileForm.address}
                         onChange={(e) =>
                           setProfileForm({
@@ -262,17 +260,13 @@ export default function SettingsPage() {
                         }
                       />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='role'>Vai Trò</Label>
-                      <Input
-                        id='role'
-                        value={profileForm.role}
-                        disabled
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Vai Trò</Label>
+                      <Input id="role" value={profileForm.role} disabled />
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='status'>Trạng Thái</Label>
-                      <div className='flex items-center space-x-2'>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Trạng Thái</Label>
+                      <div className="flex items-center space-x-2">
                         <Badge
                           variant={
                             userProfile?.is_active ? "default" : "secondary"
@@ -283,15 +277,12 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter className='flex justify-between'>
-                    <Button
-                      type='button'
-                      variant='outline'
-                    >
+                  <CardFooter className="flex justify-between">
+                    <Button type="button" variant="outline">
                       Hủy
                     </Button>
-                    <Button type='submit'>
-                      <Save className='mr-2 h-4 w-4' />
+                    <Button type="submit">
+                      <Save className="mr-2 h-4 w-4" />
                       Lưu Thay Đổi
                     </Button>
                   </CardFooter>
@@ -305,34 +296,25 @@ export default function SettingsPage() {
                     Cập nhật mật khẩu tài khoản của bạn
                   </CardDescription>
                 </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='current-password'>Mật Khẩu Hiện Tại</Label>
-                    <Input
-                      id='current-password'
-                      type='password'
-                    />
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Mật Khẩu Hiện Tại</Label>
+                    <Input id="current-password" type="password" />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='new-password'>Mật Khẩu Mới</Label>
-                    <Input
-                      id='new-password'
-                      type='password'
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Mật Khẩu Mới</Label>
+                    <Input id="new-password" type="password" />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='confirm-password'>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">
                       Xác Nhận Mật Khẩu Mới
                     </Label>
-                    <Input
-                      id='confirm-password'
-                      type='password'
-                    />
+                    <Input id="confirm-password" type="password" />
                   </div>
                 </CardContent>
                 <CardFooter>
                   <Button>
-                    <Key className='mr-2 h-4 w-4' />
+                    <Key className="mr-2 h-4 w-4" />
                     Thay Đổi Mật Khẩu
                   </Button>
                 </CardFooter>
@@ -342,10 +324,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Notifications Tab */}
-        <TabsContent
-          value='notifications'
-          className='space-y-4 mt-6'
-        >
+        <TabsContent value="notifications" className="space-y-4 mt-6">
           <Card>
             <CardHeader>
               <CardTitle>Tùy Chọn Thông Báo</CardTitle>
@@ -353,64 +332,61 @@ export default function SettingsPage() {
                 Chọn cách thức bạn muốn nhận thông báo
               </CardDescription>
             </CardHeader>
-            <CardContent className='space-y-6'>
+            <CardContent className="space-y-6">
               <div>
-                <h3 className='text-lg font-medium mb-3'>Kênh Thông Báo</h3>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
+                <h3 className="text-lg font-medium mb-3">Kênh Thông Báo</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
                     <div>
                       <Label
-                        htmlFor='email-notifications'
-                        className='text-base'
+                        htmlFor="email-notifications"
+                        className="text-base"
                       >
                         Thông Báo Email
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Nhận thông báo qua email
                       </p>
                     </div>
                     <Switch
-                      id='email-notifications'
+                      id="email-notifications"
                       checked={notifications.email}
                       onCheckedChange={(checked) =>
                         setNotifications({ ...notifications, email: checked })
                       }
                     />
                   </div>
-                  <div className='flex items-center justify-between'>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label
-                        htmlFor='sms-notifications'
-                        className='text-base'
-                      >
+                      <Label htmlFor="sms-notifications" className="text-base">
                         Thông Báo SMS
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Nhận thông báo qua tin nhắn
                       </p>
                     </div>
                     <Switch
-                      id='sms-notifications'
+                      id="sms-notifications"
                       checked={notifications.sms}
                       onCheckedChange={(checked) =>
                         setNotifications({ ...notifications, sms: checked })
                       }
                     />
                   </div>
-                  <div className='flex items-center justify-between'>
+                  <div className="flex items-center justify-between">
                     <div>
                       <Label
-                        htmlFor='browser-notifications'
-                        className='text-base'
+                        htmlFor="browser-notifications"
+                        className="text-base"
                       >
                         Thông Báo Trình Duyệt
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Hiển thị thông báo trên trình duyệt
                       </p>
                     </div>
                     <Switch
-                      id='browser-notifications'
+                      id="browser-notifications"
                       checked={notifications.browser}
                       onCheckedChange={(checked) =>
                         setNotifications({ ...notifications, browser: checked })
@@ -421,22 +397,19 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <h3 className='text-lg font-medium mb-3'>Loại Thông Báo</h3>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
+                <h3 className="text-lg font-medium mb-3">Loại Thông Báo</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label
-                        htmlFor='new-student'
-                        className='text-base'
-                      >
+                      <Label htmlFor="new-student" className="text-base">
                         Đăng Ký Học Viên Mới
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Khi có học viên mới đăng ký khóa học
                       </p>
                     </div>
                     <Switch
-                      id='new-student'
+                      id="new-student"
                       checked={notifications.newStudent}
                       onCheckedChange={(checked) =>
                         setNotifications({
@@ -446,20 +419,17 @@ export default function SettingsPage() {
                       }
                     />
                   </div>
-                  <div className='flex items-center justify-between'>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label
-                        htmlFor='course-update'
-                        className='text-base'
-                      >
+                      <Label htmlFor="course-update" className="text-base">
                         Cập Nhật Khóa Học
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Khi khóa học được tạo, chỉnh sửa hoặc hủy bỏ
                       </p>
                     </div>
                     <Switch
-                      id='course-update'
+                      id="course-update"
                       checked={notifications.courseUpdate}
                       onCheckedChange={(checked) =>
                         setNotifications({
@@ -469,20 +439,17 @@ export default function SettingsPage() {
                       }
                     />
                   </div>
-                  <div className='flex items-center justify-between'>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <Label
-                        htmlFor='financial-alert'
-                        className='text-base'
-                      >
+                      <Label htmlFor="financial-alert" className="text-base">
                         Cảnh Báo Tài Chính
                       </Label>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className="text-sm text-muted-foreground">
                         Tóm tắt doanh thu hàng ngày và cảnh báo thanh toán
                       </p>
                     </div>
                     <Switch
-                      id='financial-alert'
+                      id="financial-alert"
                       checked={notifications.financialAlert}
                       onCheckedChange={(checked) =>
                         setNotifications({
