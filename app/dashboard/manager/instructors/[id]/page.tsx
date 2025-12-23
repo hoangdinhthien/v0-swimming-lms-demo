@@ -44,6 +44,7 @@ import { getTenantInfo } from "@/api/tenant-api";
 import { useToast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { ScheduleModal } from "@/components/manager/schedule-modal";
+import InstructorSpecialistModal from "@/components/manager/instructor-specialist-modal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -146,6 +147,7 @@ export default function InstructorDetailPage() {
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
   const [specialistInfo, setSpecialistInfo] = useState<any>(null);
+  const [isSpecialistModalOpen, setIsSpecialistModalOpen] = useState(false);
   const form = useForm<z.infer<typeof instructorFormSchema>>({
     resolver: zodResolver(instructorFormSchema),
     defaultValues: {
@@ -609,7 +611,14 @@ export default function InstructorDetailPage() {
                   className='w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300'
                   onClick={() => setOpen(true)}
                 >
-                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa
+                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa thông tin
+                </Button>
+                <Button
+                  variant='outline'
+                  className='w-full border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:border-purple-800 dark:hover:bg-purple-900/30 dark:hover:text-purple-300'
+                  onClick={() => setIsSpecialistModalOpen(true)}
+                >
+                  <Target className='mr-2 h-4 w-4' /> Quản lý chuyên môn
                 </Button>
                 <Button
                   className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'
@@ -1161,6 +1170,42 @@ export default function InstructorDetailPage() {
         userId={detail?.user?._id || instructorId}
         userName={detail?.user?.username || ""}
         userType='instructor'
+      />
+
+      {/* Specialist Modal */}
+      <InstructorSpecialistModal
+        open={isSpecialistModalOpen}
+        onOpenChange={setIsSpecialistModalOpen}
+        instructorData={
+          detail?.user
+            ? {
+                id: detail.user._id,
+                name: detail.user.username,
+                email: detail.user.email,
+              }
+            : null
+        }
+        onSuccess={async () => {
+          // Refresh specialist information
+          try {
+            const tenantId = getSelectedTenant();
+            const token = getAuthToken();
+            if (tenantId && token && detail?.user?._id) {
+              const specialistData = await fetchInstructorSpecialist({
+                searchParams: { "user._id:equal": detail.user._id },
+                tenantId,
+                token,
+              });
+              if (specialistData && specialistData.length > 0) {
+                setSpecialistInfo(specialistData[0]);
+              } else {
+                setSpecialistInfo(null);
+              }
+            }
+          } catch (specialistError) {
+            console.error("Error refreshing specialist info:", specialistError);
+          }
+        }}
       />
     </div>
   );

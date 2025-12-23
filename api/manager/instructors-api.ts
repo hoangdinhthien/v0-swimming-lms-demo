@@ -313,7 +313,7 @@ export async function fetchInstructorSpecialist({
   // Add find-common search parameters
   if (searchParams) {
     Object.entries(searchParams).forEach(([key, value]) => {
-      queryParams.append(key, value);
+      queryParams.append(`search[${key}]`, value);
     });
   }
 

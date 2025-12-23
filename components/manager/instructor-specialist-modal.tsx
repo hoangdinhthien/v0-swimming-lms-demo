@@ -131,7 +131,7 @@ export default function InstructorSpecialistModal({
       }
 
       const specialists = await fetchInstructorSpecialist({
-        searchParams: { "user._id": instructorData.id },
+        searchParams: { "user._id:equal": instructorData.id },
         tenantId,
         token,
       });
@@ -227,7 +227,7 @@ export default function InstructorSpecialistModal({
     >
       <DialogContent className='sm:max-w-2xl'>
         <DialogHeader>
-          <DialogTitle>Chỉnh sửa chuyên môn</DialogTitle>
+          <DialogTitle>Quản lý chuyên môn</DialogTitle>
           <DialogDescription>
             Cập nhật chuyên môn cho huấn luyện viên {instructorData?.name}
           </DialogDescription>
