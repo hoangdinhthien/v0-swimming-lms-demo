@@ -45,7 +45,14 @@ import {
   Circle,
   Edit2,
   Calendar as CalendarLucide,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { ClassItem } from "@/api/manager/class-api";
 import { fetchClasses, fetchClassesByIds } from "@/api/manager/class-api";
@@ -1276,6 +1283,27 @@ export function SchedulePreviewModal({
     }
   };
 
+  // Check that every preview schedule has a selected pool and no warnings
+  const allPreviewCardsGreen =
+    Object.keys(previewSchedules).length > 0 &&
+    Object.entries(previewSchedules).every(([classId, schedules]) =>
+      schedules.every((_, idx) => {
+        const scheduleKey = `${classId}-${idx}`;
+        const selectedPoolId = selectedPools[scheduleKey];
+        if (!selectedPoolId) return false;
+        const selectedPool = poolCapacities[scheduleKey]?.find(
+          (p) => p._id === selectedPoolId
+        );
+        if (!selectedPool) return false;
+        // No age warning, no instructor conflict, no capacity warning
+        return (
+          !selectedPool.hasAgeWarning &&
+          !selectedPool.hasInstructorConflict &&
+          !selectedPool.hasCapacityWarning
+        );
+      })
+    );
+
   return (
     <Dialog
       open={open}
@@ -1844,7 +1872,7 @@ export function SchedulePreviewModal({
                                 <div className='text-sm font-medium mb-3'>
                                   Xem trước lịch các buổi học:
                                 </div>
-                                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                                <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3'>
                                   {schedules.map((schedule, scheduleIndex) => {
                                     const scheduleKey = `${classId}-${scheduleIndex}`;
                                     const selectedPoolId =
@@ -1897,22 +1925,29 @@ export function SchedulePreviewModal({
                                           cardBgColor
                                         )}
                                       >
-                                        {/* Date & Slot */}
+                                        {/* Date & Slot with sequence number */}
                                         <div className='flex items-center justify-between mb-2'>
-                                          <div>
-                                            <div className='font-medium text-sm'>
-                                              {format(
-                                                new Date(schedule.date),
-                                                "EEEE",
-                                                { locale: vi }
-                                              )}
+                                          <div className='flex items-center'>
+                                            <div className='flex-shrink-0 mr-3'>
+                                              <div className='w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-medium text-sm'>
+                                                {scheduleIndex + 1}
+                                              </div>
                                             </div>
-                                            <div className='text-xs text-muted-foreground'>
-                                              {format(
-                                                new Date(schedule.date),
-                                                "dd/MM/yyyy",
-                                                { locale: vi }
-                                              )}
+                                            <div>
+                                              <div className='font-medium text-sm'>
+                                                {format(
+                                                  new Date(schedule.date),
+                                                  "EEEE",
+                                                  { locale: vi }
+                                                )}
+                                              </div>
+                                              <div className='text-xs text-muted-foreground'>
+                                                {format(
+                                                  new Date(schedule.date),
+                                                  "dd/MM/yyyy",
+                                                  { locale: vi }
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
                                           <div className='flex gap-1'>
@@ -1923,29 +1958,51 @@ export function SchedulePreviewModal({
                                               {schedule.slot?.title}
                                             </Badge>
                                             {!isEditing && (
-                                              <Button
-                                                variant='outline'
-                                                size='sm'
-                                                className='h-6 px-2 text-xs'
-                                                onClick={() => {
-                                                  loadAvailableInstructors();
-                                                  setEditingSchedules(
-                                                    (prev) => ({
-                                                      ...prev,
-                                                      [scheduleKey]: true,
-                                                    })
-                                                  );
-                                                }}
-                                              >
-                                                <Edit2 className='h-3 w-3' />
-                                              </Button>
+                                              <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                  <Button
+                                                    variant='ghost'
+                                                    size='sm'
+                                                    className='h-6 w-8 px-1 text-xs'
+                                                  >
+                                                    <MoreHorizontal className='h-4 w-4' />
+                                                  </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                  align='end'
+                                                  className='w-44'
+                                                >
+                                                  <DropdownMenuItem
+                                                    onClick={() => {
+                                                      loadAvailableInstructors();
+                                                      setEditingSchedules(
+                                                        (prev) => ({
+                                                          ...prev,
+                                                          [scheduleKey]: true,
+                                                        })
+                                                      );
+                                                    }}
+                                                  >
+                                                    Chỉnh sửa buổi học
+                                                  </DropdownMenuItem>
+                                                  <DropdownMenuItem
+                                                    onClick={() => {
+                                                      setOpenPoolPopover(
+                                                        scheduleKey
+                                                      );
+                                                    }}
+                                                  >
+                                                    Chọn hồ bơi
+                                                  </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                              </DropdownMenu>
                                             )}
                                           </div>
                                         </div>
 
                                         {/* Instructor */}
                                         <div className='text-xs text-muted-foreground mb-2'>
-                                          HLV:{" "}
+                                          Huấn luyện viên:{" "}
                                           {schedule.instructor?.username ||
                                             "N/A"}
                                         </div>
@@ -2203,9 +2260,7 @@ export function SchedulePreviewModal({
                                                       ? "Đang chỉnh sửa..."
                                                       : "Chọn hồ bơi..."}
                                                   </span>
-                                                  {!isEditing && (
-                                                    <Edit2 className='h-3 w-3 ml-1 flex-shrink-0' />
-                                                  )}
+                                                  {/* icon removed to avoid duplicate edit controls; use overflow menu */}
                                                 </Button>
                                               </PopoverTrigger>
                                               {!isEditing && (
@@ -2661,12 +2716,19 @@ export function SchedulePreviewModal({
             >
               {currentStep === 0 ? "Hủy" : "Quay lại"}
             </Button>
+            {/* Inline hint shown when user is blocked from proceeding */}
+            {currentStep === 1 && !allPreviewCardsGreen && (
+              <div className='text-xs text-amber-600 mr-3 flex items-center'>
+                Chưa thể tiếp tục — vui lòng xử lý các cảnh báo.
+              </div>
+            )}
+
             <Button
               onClick={() => {
                 if (currentStep === 0) {
-                  handleGeneratePreview(); // Auto-calculates pools too
+                  handleGeneratePreview(); // Auto-calculates pools
                 } else if (currentStep === 1) {
-                  // Go to confirm step (was step 4, now step 2)
+                  // Go to confirm step
                   setCurrentStep((prev) => prev + 1);
                 } else if (currentStep === 2) {
                   // Final submit - create schedules
@@ -2675,18 +2737,8 @@ export function SchedulePreviewModal({
               }}
               disabled={
                 (currentStep === 0 && !selectedClassId) ||
-                (currentStep === 1 &&
-                  (Object.keys(previewSchedules).length === 0 ||
-                    Object.entries(previewSchedules).some(
-                      ([classId, schedules]) =>
-                        schedules.some((_, idx) => {
-                          const scheduleKey = `${classId}-${idx}`;
-                          const selectedPoolId = selectedPools[scheduleKey];
-                          const needsEdit = needsEditing(scheduleKey);
-                          // Allow proceeding if pool is selected OR schedule needs editing (will be handled)
-                          return !selectedPoolId && !needsEdit;
-                        })
-                    ))) ||
+                // Only allow moving from step 1 -> 2 if all preview cards are green
+                (currentStep === 1 && !allPreviewCardsGreen) ||
                 isGeneratingPreview ||
                 isCalculatingCapacity ||
                 isCreatingSchedules
