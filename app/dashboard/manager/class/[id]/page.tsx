@@ -44,7 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
@@ -70,28 +70,7 @@ import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getVietnameseDayFromDate } from "@/utils/date-utils";
 
-// User Avatar Component with simple fallback
-function UserAvatar({
-  user,
-  className = "h-6 w-6",
-}: {
-  user: any;
-  className?: string;
-}) {
-  // Get user display name
-  const getDisplayName = () => {
-    const userData = user?.user || user;
-    return userData?.username || userData?.email || "U";
-  };
-
-  return (
-    <Avatar className={className}>
-      <AvatarFallback>
-        {getDisplayName().charAt(0)?.toUpperCase() || "U"}
-      </AvatarFallback>
-    </Avatar>
-  );
-}
+// Removed UserAvatar component as user images are no longer displayed
 
 export default function ClassDetailPage() {
   const params = useParams();
@@ -995,85 +974,6 @@ export default function ClassDetailPage() {
                 </CardTitle>
               </CardHeader>{" "}
               <CardContent className='space-y-4'>
-                {/* Students Section */}
-                <div
-                  className='space-y-2'
-                  data-section='students'
-                >
-                  <div
-                    className='flex justify-between items-center p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors'
-                    onClick={() =>
-                      setShowStudentsDropdown(!showStudentsDropdown)
-                    }
-                  >
-                    <span className='text-sm font-medium flex items-center gap-2'>
-                      <Users className='h-4 w-4' />
-                      Học viên
-                    </span>
-                    <div className='flex items-center gap-2'>
-                      {showStudentsDropdown ? (
-                        <ChevronUp className='h-4 w-4' />
-                      ) : (
-                        <ChevronDown className='h-4 w-4' />
-                      )}
-                    </div>
-                  </div>
-
-                  {showStudentsDropdown &&
-                    classData.member &&
-                    classData.member.length > 0 && (
-                      <div className='bg-background border rounded-xl p-4 space-y-3 max-h-80 overflow-y-auto shadow-sm'>
-                        {classData.member.map((student: any, index: number) => (
-                          <Link
-                            key={student._id || index}
-                            href={`/dashboard/manager/students/${student._id}`}
-                            className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
-                          >
-                            <UserAvatar
-                              user={student}
-                              className='h-12 w-12 ring-2 ring-background shadow-md'
-                            />
-                            <div className='flex-1 min-w-0 space-y-1'>
-                              <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
-                                {student.username}
-                              </p>
-                              <div className='flex flex-col gap-1'>
-                                {student.email && (
-                                  <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                                    <Mail className='h-3.5 w-3.5 flex-shrink-0' />
-                                    <span className='truncate'>
-                                      {student.email}
-                                    </span>
-                                  </div>
-                                )}
-                                {student.phone && (
-                                  <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                                    <Phone className='h-3.5 w-3.5 flex-shrink-0' />
-                                    <span>{student.phone}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className='flex flex-col items-end gap-2'>
-                              <div className='flex items-center gap-2'>
-                                <div
-                                  className={`h-2.5 w-2.5 rounded-full shadow-sm ${
-                                    student.is_active
-                                      ? "bg-green-500"
-                                      : "bg-gray-400"
-                                  }`}
-                                />
-                                <span className='text-xs font-medium text-muted-foreground'>
-                                  {student.is_active ? "Active" : "Inactive"}
-                                </span>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                </div>
-
                 {/* Instructor Section */}
                 <div
                   className='space-y-2'
@@ -1090,13 +990,6 @@ export default function ClassDetailPage() {
                       Huấn luyện viên
                     </span>
                     <div className='flex items-center gap-2'>
-                      <span className='font-bold text-lg'>
-                        {Array.isArray(classData.instructor)
-                          ? classData.instructor.length
-                          : classData.instructor
-                          ? 1
-                          : 0}
-                      </span>
                       {showInstructorsDropdown ? (
                         <ChevronUp className='h-4 w-4' />
                       ) : (
@@ -1115,10 +1008,6 @@ export default function ClassDetailPage() {
                               href={`/dashboard/manager/instructors/${instructor._id}`}
                               className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
                             >
-                              <UserAvatar
-                                user={instructor}
-                                className='h-12 w-12 ring-2 ring-background shadow-md'
-                              />
                               <div className='flex-1 min-w-0 space-y-1'>
                                 <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
                                   {instructor.username}
@@ -1166,10 +1055,6 @@ export default function ClassDetailPage() {
                           }`}
                           className='flex items-center gap-4 p-3 hover:bg-muted/50 rounded-xl transition-all duration-200 cursor-pointer group border border-transparent hover:border-muted'
                         >
-                          <UserAvatar
-                            user={classData.instructor}
-                            className='h-12 w-12 ring-2 ring-background shadow-md'
-                          />
                           <div className='flex-1 min-w-0 space-y-1'>
                             <p className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
                               {(classData.instructor as any).username}
@@ -1435,10 +1320,6 @@ export default function ClassDetailPage() {
                         value={instructor._id}
                       >
                         <div className='flex items-center gap-2'>
-                          <UserAvatar
-                            user={instructor}
-                            className='h-6 w-6'
-                          />
                           <span>{instructor.username}</span>
                           <span className='text-muted-foreground text-sm'>
                             ({instructor.email})
@@ -1961,10 +1842,6 @@ export default function ClassDetailPage() {
                               }
                             }}
                           />
-                          <UserAvatar
-                            user={student.user}
-                            className='h-10 w-10'
-                          />
                           <div className='flex-1 min-w-0'>
                             <p className='font-medium truncate'>
                               {student.user.username}
@@ -2049,10 +1926,6 @@ export default function ClassDetailPage() {
                               );
                             }
                           }}
-                        />
-                        <UserAvatar
-                          user={member}
-                          className='h-10 w-10'
                         />
                         <div className='flex-1 min-w-0'>
                           <p className='font-medium truncate'>
