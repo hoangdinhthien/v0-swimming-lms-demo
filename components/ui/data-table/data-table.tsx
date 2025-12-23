@@ -23,12 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 
@@ -105,7 +100,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className='space-y-4'>
+    <div className="space-y-4">
       <DataTableToolbar
         table={table}
         searchKey={searchKey}
@@ -114,17 +109,14 @@ export function DataTable<TData, TValue>({
         filterOptions={filterOptions}
         onServerSearch={onServerSearch}
       />
-      <div className='rounded-md border'>
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead
-                      key={header.id}
-                      colSpan={header.colSpan}
-                    >
+                    <TableHead key={header.id} colSpan={header.colSpan}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -161,30 +153,13 @@ export function DataTable<TData, TValue>({
                   </TableRow>
                 );
 
-                // Wrap with tooltip if hover is enabled
-                if (enableRowHover) {
-                  return (
-                    <TooltipProvider
-                      key={row.id}
-                      delayDuration={300}
-                    >
-                      <Tooltip>
-                        <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
-                        <TooltipContent>
-                          <p>Click vào tên để xem chi tiết</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  );
-                }
-
                 return rowContent;
               })
             ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className='h-24 text-center'
+                  className="h-24 text-center"
                 >
                   {emptyMessage}
                 </TableCell>

@@ -118,13 +118,13 @@ export default function CoursesPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải danh sách khóa học...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -134,12 +134,12 @@ export default function CoursesPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <div className='text-center space-y-4'>
-          <div className='text-red-500 text-lg font-semibold'>
+      <div className="flex flex-col items-center justify-center min-h-screen py-16">
+        <div className="text-center space-y-4">
+          <div className="text-red-500 text-lg font-semibold">
             Lỗi tải dữ liệu
           </div>
-          <p className='text-muted-foreground'>{error}</p>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
@@ -148,29 +148,29 @@ export default function CoursesPage() {
 
   return (
     <>
-      <div className='mb-6'>
+      <div className="mb-6">
         <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          href="/dashboard/manager"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className='mr-1 h-4 w-4' />
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Quay về Bảng điều khiển
         </Link>
       </div>
 
-      <div className='flex flex-col space-y-8'>
-        <div className='flex items-center justify-between'>
+      <div className="flex flex-col space-y-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className='text-3xl font-bold tracking-tight'>
+            <h1 className="text-3xl font-bold tracking-tight">
               Quản lý khóa học
             </h1>
-            <p className='text-muted-foreground'>
+            <p className="text-muted-foreground">
               Quản lý tất cả các khóa học bơi hiện có
             </p>
           </div>
-          <div className='flex gap-2'>
+          <div className="flex gap-2">
             <Button
-              variant='outline'
+              variant="outline"
               onClick={refreshCourses}
               disabled={refreshing}
             >
@@ -180,44 +180,44 @@ export default function CoursesPage() {
               Làm mới
             </Button>
             <Button
-              variant='outline'
+              variant="outline"
               onClick={() => setCategoriesModalOpen(true)}
             >
-              <Settings className='mr-2 h-4 w-4' />
+              <Settings className="mr-2 h-4 w-4" />
               Quản lý danh mục
             </Button>
             <Button
               onClick={() => router.push("/dashboard/manager/courses/new")}
             >
-              <Plus className='mr-2 h-4 w-4' />
+              <Plus className="mr-2 h-4 w-4" />
               Tạo khóa học mới
             </Button>
           </div>
         </div>
 
-        <div className='mt-8 grid gap-6 md:grid-cols-4'>
+        <div className="mt-8 grid gap-6 md:grid-cols-4">
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Khóa học đang hoạt động
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
+              <div className="text-2xl font-bold">
                 {allCourses.filter((c) => c.is_active).length}
               </div>
-              <p className='text-xs text-muted-foreground'>Đang diễn ra</p>
+              <p className="text-xs text-muted-foreground">Đang diễn ra</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Tổng số học viên
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
+              <div className="text-2xl font-bold">
                 {allCourses.reduce((sum, course) => {
                   const students =
                     typeof course.studentCount === "number"
@@ -226,34 +226,34 @@ export default function CoursesPage() {
                   return sum + students;
                 }, 0)}
               </div>
-              <p className='text-xs text-muted-foreground'>
+              <p className="text-xs text-muted-foreground">
                 Học viên đã đăng ký
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Khóa học sắp khai giảng
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
+              <div className="text-2xl font-bold">
                 {/* No upcoming info in API, so always 0 */}0
               </div>
-              <p className='text-xs text-muted-foreground'>Sắp bắt đầu</p>
+              <p className="text-xs text-muted-foreground">Sắp bắt đầu</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Sĩ số trung bình
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
+              <div className="text-2xl font-bold">
                 {allCourses.length > 0
                   ? Math.round(
                       allCourses.reduce((sum, course) => {
@@ -266,12 +266,12 @@ export default function CoursesPage() {
                     )
                   : 0}
               </div>
-              <p className='text-xs text-muted-foreground'>Học viên mỗi khóa</p>
+              <p className="text-xs text-muted-foreground">Học viên mỗi khóa</p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className='mt-8'>
+        <Card className="mt-8">
           <CardHeader>
             <CardTitle>Danh sách khóa học</CardTitle>
           </CardHeader>
@@ -279,8 +279,8 @@ export default function CoursesPage() {
             <DataTable
               columns={columns}
               data={courses}
-              searchKey='title'
-              searchPlaceholder='Tìm kiếm theo tên khóa học...'
+              searchKey="title"
+              searchPlaceholder="Tìm kiếm theo tên khóa học..."
               onServerSearch={handleServerSearch}
               filterOptions={[
                 {
@@ -300,7 +300,7 @@ export default function CoursesPage() {
                   ],
                 },
               ]}
-              emptyMessage='Không tìm thấy khóa học nào'
+              emptyMessage="Không tìm thấy khóa học nào"
             />
           </CardContent>
         </Card>

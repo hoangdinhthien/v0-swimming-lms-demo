@@ -40,36 +40,33 @@ export const createColumns = (
     accessorKey: "name",
     id: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Huấn luyện viên'
-      />
+      <DataTableColumnHeader column={column} title="Huấn luyện viên" />
     ),
     cell: ({ row }) => {
       const instructor = row.original;
 
       return (
-        <div className='flex items-center gap-3'>
-          <Avatar className='h-10 w-10 border-2 border-primary/10 shadow-sm'>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 border-2 border-primary/10 shadow-sm">
             <AvatarImage
               src={instructor.avatar}
               alt={instructor.name}
-              className='object-cover'
+              className="object-cover"
             />
-            <AvatarFallback className='bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-sm'>
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-sm">
               {getUserInitials(instructor.name)}
             </AvatarFallback>
           </Avatar>
-          <div className='min-w-0 flex-1'>
+          <div className="min-w-0 flex-1">
             <Link
               href={`/dashboard/manager/instructors/${instructor.id}`}
-              className='font-medium text-foreground truncate hover:text-primary hover:underline transition-colors block'
+              className="font-medium text-foreground truncate hover:text-primary hover:underline transition-colors block"
             >
               {instructor.name}
             </Link>
-            <div className='flex items-center gap-1 text-xs text-muted-foreground mt-1'>
-              <Mail className='h-3 w-3' />
-              <span className='truncate'>{instructor.email}</span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+              <Mail className="h-3 w-3" />
+              <span className="truncate">{instructor.email}</span>
             </div>
           </div>
         </div>
@@ -82,16 +79,13 @@ export const createColumns = (
     accessorKey: "phone",
     id: "phone",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Số điện thoại'
-      />
+      <DataTableColumnHeader column={column} title="Số điện thoại" />
     ),
     cell: ({ row }) => {
       const phone = row.getValue("phone") as string;
       return (
-        <div className='flex items-center gap-2'>
-          <Phone className='h-4 w-4 text-muted-foreground' />
+        <div className="flex items-center gap-2">
+          <Phone className="h-4 w-4 text-muted-foreground" />
           <span>{phone || "-"}</span>
         </div>
       );
@@ -103,34 +97,24 @@ export const createColumns = (
     accessorKey: "specialty",
     id: "specialty",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Chuyên môn'
-      />
+      <DataTableColumnHeader column={column} title="Chuyên môn" />
     ),
     cell: ({ row }) => {
       const specialty = row.getValue("specialty") as string[];
 
       if (!specialty || specialty.length === 0) {
-        return <span className='text-muted-foreground'>-</span>;
+        return <span className="text-muted-foreground">-</span>;
       }
 
       return (
-        <div className='flex flex-wrap gap-1'>
+        <div className="flex flex-wrap gap-1">
           {specialty.slice(0, 2).map((spec, index) => (
-            <Badge
-              key={index}
-              variant='outline'
-              className='text-xs'
-            >
+            <Badge key={index} variant="outline" className="text-xs">
               {spec}
             </Badge>
           ))}
           {specialty.length > 2 && (
-            <Badge
-              variant='secondary'
-              className='text-xs'
-            >
+            <Badge variant="secondary" className="text-xs">
               +{specialty.length - 2}
             </Badge>
           )}
@@ -148,10 +132,7 @@ export const createColumns = (
     accessorKey: "status",
     id: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Trạng thái'
-      />
+      <DataTableColumnHeader column={column} title="Trạng thái" />
     ),
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
@@ -159,7 +140,7 @@ export const createColumns = (
       return (
         <Badge
           variant={status === "Active" ? "default" : "secondary"}
-          className='font-medium'
+          className="font-medium"
         >
           {status === "Active" ? "Hoạt động" : "Ngừng"}
         </Badge>
@@ -175,14 +156,24 @@ export const createColumns = (
     accessorKey: "classes",
     id: "classes",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Số lớp'
-      />
+      <DataTableColumnHeader column={column} title="Số lớp" />
     ),
     cell: ({ row }) => {
       const classes = row.getValue("classes") as number;
-      return <div className='text-center font-medium'>{classes}</div>;
+      return <div className="text-center font-medium">{classes}</div>;
+    },
+    enableSorting: true,
+    enableHiding: true,
+  },
+  {
+    accessorKey: "students",
+    id: "students",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Số học viên" />
+    ),
+    cell: ({ row }) => {
+      const students = row.getValue("students") as number;
+      return <div className="text-center font-medium">{students}</div>;
     },
     enableSorting: true,
     enableHiding: true,
@@ -191,16 +182,13 @@ export const createColumns = (
     accessorKey: "joinDate",
     id: "joinDate",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Ngày tham gia'
-      />
+      <DataTableColumnHeader column={column} title="Ngày tham gia" />
     ),
     cell: ({ row }) => {
       const joinDate = row.getValue("joinDate") as string;
       return (
-        <div className='flex items-center gap-2 text-sm'>
-          <Calendar className='h-4 w-4 text-muted-foreground' />
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
           <span>{joinDate}</span>
         </div>
       );
@@ -216,16 +204,16 @@ export const createColumns = (
 
       return (
         <Button
-          variant='ghost'
-          size='sm'
+          variant="ghost"
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             onEditSpecialist(instructor);
           }}
-          className='h-8 w-8 p-0'
-          title='Chỉnh sửa chuyên môn'
+          className="h-8 w-8 p-0"
+          title="Chỉnh sửa chuyên môn"
         >
-          <Settings className='h-4 w-4' />
+          <Settings className="h-4 w-4" />
         </Button>
       );
     },

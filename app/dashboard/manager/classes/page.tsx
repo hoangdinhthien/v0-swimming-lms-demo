@@ -127,13 +127,13 @@ export default function ClassesPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải danh sách lớp học...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -143,12 +143,12 @@ export default function ClassesPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <div className='text-center space-y-4'>
-          <div className='text-red-500 text-lg font-semibold'>
+      <div className="flex flex-col items-center justify-center min-h-screen py-16">
+        <div className="text-center space-y-4">
+          <div className="text-red-500 text-lg font-semibold">
             Lỗi tải dữ liệu
           </div>
-          <p className='text-muted-foreground'>{error}</p>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
@@ -157,29 +157,29 @@ export default function ClassesPage() {
 
   return (
     <>
-      <div className='mb-6'>
+      <div className="mb-6">
         <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          href="/dashboard/manager"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className='mr-1 h-4 w-4' />
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Quay về Bảng điều khiển
         </Link>
       </div>
 
-      <div className='flex flex-col space-y-8'>
-        <div className='flex items-center justify-between'>
+      <div className="flex flex-col space-y-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className='text-3xl font-bold tracking-tight'>
+            <h1 className="text-3xl font-bold tracking-tight">
               Quản lý lớp học
             </h1>
-            <p className='text-muted-foreground'>
+            <p className="text-muted-foreground">
               Quản lý tất cả các lớp học hiện có
             </p>
           </div>
-          <div className='flex gap-2'>
+          <div className="flex gap-2">
             <Button
-              variant='outline'
+              variant="outline"
               onClick={handleRefresh}
               disabled={refreshing || loading}
             >
@@ -188,69 +188,69 @@ export default function ClassesPage() {
               />
               Làm mới
             </Button>
-            <Link href='/dashboard/manager/classes/create'>
+            <Link href="/dashboard/manager/classes/create">
               <Button>
-                <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+                <Plus className="mr-2 h-4 w-4" /> Thêm lớp học mới
               </Button>
             </Link>
           </div>
         </div>
 
-        <div className='mt-8 grid gap-6 md:grid-cols-4'>
+        <div className="mt-8 grid gap-6 md:grid-cols-4">
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Tổng số lớp học
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>{totalClasses}</div>
-              <p className='text-xs text-muted-foreground'>Tất cả lớp học</p>
+              <div className="text-2xl font-bold">{totalClasses}</div>
+              <p className="text-xs text-muted-foreground">Tất cả lớp học</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Lớp học đang hoạt động
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>{activeClasses}</div>
-              <p className='text-xs text-muted-foreground'>Đang diễn ra</p>
+              <div className="text-2xl font-bold">{activeClasses}</div>
+              <p className="text-xs text-muted-foreground">Đang diễn ra</p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Tổng số học viên
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>{totalStudents}</div>
-              <p className='text-xs text-muted-foreground'>
+              <div className="text-2xl font-bold">{totalStudents}</div>
+              <p className="text-xs text-muted-foreground">
                 Học viên đã đăng ký
               </p>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className='pb-2'>
-              <CardTitle className='text-sm font-medium'>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
                 Sĩ số trung bình
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='text-2xl font-bold'>
+              <div className="text-2xl font-bold">
                 {averageStudentsPerClass}
               </div>
-              <p className='text-xs text-muted-foreground'>Học viên mỗi lớp</p>
+              <p className="text-xs text-muted-foreground">Học viên mỗi lớp</p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className='mt-8'>
+        <Card className="mt-8">
           <CardHeader>
             <CardTitle>Danh sách lớp học</CardTitle>
           </CardHeader>
@@ -258,8 +258,8 @@ export default function ClassesPage() {
             <DataTable
               columns={createColumns(searchQuery)}
               data={allClasses}
-              searchKey='name'
-              searchPlaceholder='Tìm kiếm lớp học (tên, khóa học, huấn luyện viên)...'
+              searchKey="name"
+              searchPlaceholder="Tìm kiếm lớp học (tên, khóa học, huấn luyện viên)..."
               onServerSearch={handleServerSearch}
               filterOptions={[
                 {
@@ -271,7 +271,7 @@ export default function ClassesPage() {
                   ],
                 },
               ]}
-              emptyMessage='Không tìm thấy lớp học nào'
+              emptyMessage="Không tìm thấy lớp học nào"
             />
           </CardContent>
         </Card>

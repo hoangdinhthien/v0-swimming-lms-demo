@@ -1,5 +1,7 @@
 import config from "../config.json";
 import { getUserFrontendRole } from "../role-utils";
+import { getSelectedTenant } from "@/utils/tenant-utils";
+import { getAuthToken } from "@/api/auth-utils";
 
 export interface CreateInstructorData {
   username: string;
@@ -131,6 +133,7 @@ export async function fetchInstructors({
       instructorsData = instructorsData.map((item: any) => {
         if (item.user) {
           return {
+            ...item,
             _id: item.user._id,
             username: item.user.username,
             email: item.user.email,

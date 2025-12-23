@@ -27,21 +27,15 @@ export const createColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Tên lớp'
-      />
+      <DataTableColumnHeader column={column} title="Tên lớp" />
     ),
     cell: ({ row }) => {
       return (
         <Link
           href={`/dashboard/manager/class/${row.original._id}`}
-          className='font-medium hover:text-primary hover:underline transition-colors'
+          className="font-medium hover:text-primary hover:underline transition-colors"
         >
-          <HighlightText
-            text={row.original.name}
-            searchQuery={searchQuery}
-          />
+          <HighlightText text={row.original.name} searchQuery={searchQuery} />
         </Link>
       );
     },
@@ -49,10 +43,7 @@ export const createColumns = (
   {
     accessorKey: "course.title",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Khóa học'
-      />
+      <DataTableColumnHeader column={column} title="Khóa học" />
     ),
     cell: ({ row }) => {
       return (
@@ -71,14 +62,14 @@ export const createColumns = (
 
       if (!instructor) {
         return (
-          <span className='text-muted-foreground text-sm'>Chưa phân công</span>
+          <span className="text-muted-foreground text-sm">Chưa phân công</span>
         );
       }
 
       // Handle string (ID)
       if (typeof instructor === "string") {
         return (
-          <span className='text-muted-foreground text-sm'>
+          <span className="text-muted-foreground text-sm">
             Không có thông tin
           </span>
         );
@@ -88,19 +79,14 @@ export const createColumns = (
       if (typeof instructor === "object" && !Array.isArray(instructor)) {
         const displayName =
           instructor.username || instructor.email || "Không có thông tin";
-        return (
-          <HighlightText
-            text={displayName}
-            searchQuery={searchQuery}
-          />
-        );
+        return <HighlightText text={displayName} searchQuery={searchQuery} />;
       }
 
       // Handle array
       if (Array.isArray(instructor)) {
         if (instructor.length === 0) {
           return (
-            <span className='text-muted-foreground text-sm'>
+            <span className="text-muted-foreground text-sm">
               Chưa phân công
             </span>
           );
@@ -118,22 +104,19 @@ export const createColumns = (
 
         if (names.length === 0) {
           return (
-            <span className='text-muted-foreground text-sm'>
+            <span className="text-muted-foreground text-sm">
               Không có thông tin
             </span>
           );
         }
 
         return (
-          <HighlightText
-            text={names.join(", ")}
-            searchQuery={searchQuery}
-          />
+          <HighlightText text={names.join(", ")} searchQuery={searchQuery} />
         );
       }
 
       return (
-        <span className='text-muted-foreground text-sm'>
+        <span className="text-muted-foreground text-sm">
           Không có thông tin
         </span>
       );
@@ -142,23 +125,17 @@ export const createColumns = (
   {
     accessorKey: "member",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Sĩ số'
-      />
+      <DataTableColumnHeader column={column} title="Sĩ số" />
     ),
     cell: ({ row }) => {
       const count = row.original.member?.length || 0;
-      return <span className='text-sm'>{count} học viên</span>;
+      return <span className="text-sm">{count} học viên</span>;
     },
   },
   {
     id: "sessions",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title='Buổi học đã xếp'
-      />
+      <DataTableColumnHeader column={column} title="Buổi học đã xếp" />
     ),
     cell: ({ row }) => {
       const scheduledCount = row.original.schedules?.length || 0;
@@ -166,7 +143,7 @@ export const createColumns = (
 
       if (totalSessions === 0) {
         return (
-          <span className='text-muted-foreground text-sm'>Chưa xác định</span>
+          <span className="text-muted-foreground text-sm">Chưa xác định</span>
         );
       }
 
@@ -174,7 +151,7 @@ export const createColumns = (
       const remaining = totalSessions - scheduledCount;
 
       return (
-        <div className='flex flex-col'>
+        <div className="flex flex-col">
           <span
             className={`text-sm font-medium ${
               isComplete ? "text-green-600" : "text-orange-600"
@@ -183,11 +160,11 @@ export const createColumns = (
             {scheduledCount}/{totalSessions} buổi
           </span>
           {!isComplete && remaining > 0 && (
-            <span className='text-xs text-muted-foreground'>
+            <span className="text-xs text-muted-foreground">
               Còn thiếu {remaining} buổi
             </span>
           )}
-          {isComplete && <span className='text-xs text-green-600'>Đã đủ</span>}
+          {isComplete && <span className="text-xs text-green-600">Đã đủ</span>}
         </div>
       );
     },
@@ -201,9 +178,9 @@ export const createColumns = (
       return (
         <Badge
           variant={isActive ? "default" : "secondary"}
-          className={isActive ? "bg-green-500" : ""}
+          className={`whitespace-nowrap ${isActive ? "bg-green-500" : ""}`}
         >
-          {isActive ? "Đang hoạt động" : "Đã kết thúc"}
+          {isActive ? "Hoạt động" : "Kết thúc"}
         </Badge>
       );
     },

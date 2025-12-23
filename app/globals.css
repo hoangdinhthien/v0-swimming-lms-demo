@@ -487,3 +487,8 @@
     @apply ring-2 ring-primary/30 border-primary;
   }
 }
+
+input[type="text"]:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}

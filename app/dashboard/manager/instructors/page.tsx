@@ -20,6 +20,7 @@ import {
   fetchInstructorDetail,
   fetchInstructors,
 } from "@/api/manager/instructors-api";
+import { fetchClasses } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getMediaDetails } from "@/api/media-api";
@@ -134,13 +135,10 @@ function InstructorDetailModal({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={handleOpenChange}
-    >
-      <DialogContent className='sm:max-w-md md:max-w-lg'>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md md:max-w-lg">
         <DialogHeader>
-          <DialogTitle className='text-xl'>
+          <DialogTitle className="text-xl">
             Chi tiết huấn luyện viên
           </DialogTitle>
           <DialogDescription>
@@ -149,35 +147,35 @@ function InstructorDetailModal({
         </DialogHeader>
 
         {loading && (
-          <div className='flex justify-center items-center py-8'>
-            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
 
         {error && (
-          <div className='bg-destructive/10 text-destructive rounded-md p-4'>
+          <div className="bg-destructive/10 text-destructive rounded-md p-4">
             {error}
           </div>
         )}
 
         {detail && !loading && (
-          <div className='space-y-6'>
-            <div className='flex flex-col sm:flex-row gap-4 items-center'>
-              <Avatar className='h-16 w-16 border-2 border-primary/10'>
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <Avatar className="h-16 w-16 border-2 border-primary/10">
                 <AvatarImage
                   src={avatarUrl}
                   alt={detail.user?.username || "Instructor"}
                 />
-                <AvatarFallback className='bg-primary/10 text-primary'>
+                <AvatarFallback className="bg-primary/10 text-primary">
                   {getInitials(detail.user?.username || "IN")}
                 </AvatarFallback>
               </Avatar>
 
-              <div className='space-y-1 text-center sm:text-left'>
-                <h3 className='font-bold text-lg'>
+              <div className="space-y-1 text-center sm:text-left">
+                <h3 className="font-bold text-lg">
                   {detail.user?.username || "Unknown"}
                 </h3>
-                <p className='text-muted-foreground text-sm'>
+                <p className="text-muted-foreground text-sm">
                   {detail.user?.role_front?.join(", ") || "No specialty listed"}
                 </p>
               </div>
@@ -185,27 +183,27 @@ function InstructorDetailModal({
 
             <Separator />
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
-              <div className='flex items-center gap-2'>
-                <Mail className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Email:</span>
-                <span className='text-muted-foreground'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Email:</span>
+                <span className="text-muted-foreground">
                   {detail.user?.email || "N/A"}
                 </span>
               </div>
 
-              <div className='flex items-center gap-2'>
-                <Book className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Chuyên môn:</span>
-                <span className='text-muted-foreground'>
+              <div className="flex items-center gap-2">
+                <Book className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Chuyên môn:</span>
+                <span className="text-muted-foreground">
                   {detail.user?.role_front?.join(", ") || "N/A"}
                 </span>
               </div>
 
-              <div className='flex items-center gap-2'>
-                <Calendar className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Ngày tạo:</span>
-                <span className='text-muted-foreground'>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Ngày tạo:</span>
+                <span className="text-muted-foreground">
                   {detail.user?.created_at
                     ? new Date(detail.user.created_at).toLocaleDateString(
                         "vi-VN",
@@ -219,11 +217,11 @@ function InstructorDetailModal({
                 </span>
               </div>
 
-              <div className='flex items-center gap-2'>
-                <User className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Trạng thái:</span>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Trạng thái:</span>
                 <Badge
-                  variant='outline'
+                  variant="outline"
                   className={
                     detail.user?.is_active
                       ? "bg-green-50 text-green-700 border-green-200"
@@ -236,18 +234,18 @@ function InstructorDetailModal({
                 </Badge>
               </div>
 
-              <div className='flex items-center gap-2'>
-                <Key className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Mã huấn luyện viên:</span>
-                <span className='text-muted-foreground font-mono text-xs'>
+              <div className="flex items-center gap-2">
+                <Key className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Mã huấn luyện viên:</span>
+                <span className="text-muted-foreground font-mono text-xs">
                   {detail.user?._id || "N/A"}
                 </span>
               </div>
 
-              <div className='flex items-center gap-2'>
-                <Building className='h-4 w-4 text-muted-foreground' />
-                <span className='font-medium'>Mã tenant:</span>
-                <span className='text-muted-foreground font-mono text-xs'>
+              <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Mã tenant:</span>
+                <span className="text-muted-foreground font-mono text-xs">
                   {detail.user?.tenant_id || "N/A"}
                 </span>
               </div>
@@ -255,12 +253,12 @@ function InstructorDetailModal({
           </div>
         )}
 
-        <DialogFooter className='sm:justify-start'>
+        <DialogFooter className="sm:justify-start">
           <Button
-            variant='outline'
-            size='sm'
+            variant="outline"
+            size="sm"
             onClick={onClose}
-            className='mt-2 sm:mt-0'
+            className="mt-2 sm:mt-0"
           >
             Đóng
           </Button>
@@ -279,6 +277,7 @@ export default function InstructorsPage() {
   >(null);
   const [refreshing, setRefreshing] = useState(false);
   const [rawInstructors, setRawInstructors] = useState<any[]>([]);
+  const [allClasses, setAllClasses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -312,7 +311,11 @@ export default function InstructorsPage() {
         searchKey: searchValue?.trim(),
       });
 
+      // Also fetch all classes to aggregate stats
+      const classesResult = await fetchClasses(tenantId, token, 1, 1000);
+
       setRawInstructors(instructors || []);
+      setAllClasses(classesResult.data || []);
     } catch (err: any) {
       setError(err.message || "Failed to fetch instructors");
       setRawInstructors([]);
@@ -340,7 +343,21 @@ export default function InstructorsPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await fetchData(undefined, false);
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token) throw new Error("Missing tenant or token");
+
+      const instructors = await fetchInstructors({
+        tenantId,
+        token,
+        role: "instructor",
+      });
+
+      // Also fetch all classes to aggregate stats
+      const classesResult = await fetchClasses(tenantId, token, 1, 1000);
+
+      setRawInstructors(instructors || []);
+      setAllClasses(classesResult.data || []);
     } catch (err) {
       toast({
         title: "Lỗi",
@@ -365,28 +382,58 @@ export default function InstructorsPage() {
   const instructors = useMemo(() => {
     if (!rawInstructors) return [];
 
-    return rawInstructors.map((item: any) => ({
-      id: item._id,
-      name: item?.username || "-",
-      email: item?.email || "-",
-      phone: item?.phone || "-",
-      specialty: item?.role_front || [],
-      status: item?.is_active ? "Active" : "Inactive",
-      students: 0, // API does not provide
-      classes: 0, // API does not provide
-      joinDate: item?.created_at
-        ? new Date(item.created_at).toLocaleString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            timeZone: "UTC",
-          })
-        : "-",
-      rating: 0, // API does not provide
-      avatar: avatars[item._id] || "/placeholder.svg",
-      featuredImageData: item?.featured_image?.[0] || null,
-    }));
-  }, [rawInstructors, avatars]);
+    return rawInstructors.map((item: any) => {
+      // Find classes for this instructor
+      const instructorClasses = allClasses.filter((c: any) => {
+        if (!c.instructor) return false;
+
+        // Normalize instructor(s) to an array of IDs
+        const instructorIds: string[] = [];
+        if (typeof c.instructor === "string") {
+          instructorIds.push(c.instructor);
+        } else if (Array.isArray(c.instructor)) {
+          c.instructor.forEach((inst: any) => {
+            if (typeof inst === "string") instructorIds.push(inst);
+            else if (inst?._id) instructorIds.push(inst._id);
+            else if (inst?.id) instructorIds.push(inst.id);
+          });
+        } else if (typeof c.instructor === "object") {
+          if (c.instructor._id) instructorIds.push(c.instructor._id);
+          else if (c.instructor.id) instructorIds.push(c.instructor.id);
+        }
+
+        // Compare against the instructor's ID
+        return instructorIds.includes(item._id);
+      });
+
+      const studentCount = instructorClasses.reduce(
+        (acc: number, c: any) => acc + (c.member?.length || 0),
+        0
+      );
+
+      return {
+        id: item._id,
+        name: item?.username || "-",
+        email: item?.email || "-",
+        phone: item?.phone || "-",
+        specialty: item?.role_front || [],
+        status: item?.is_active ? "Active" : "Inactive",
+        students: studentCount,
+        classes: instructorClasses.length,
+        joinDate: item?.created_at
+          ? new Date(item.created_at).toLocaleString("vi-VN", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              timeZone: "UTC",
+            })
+          : "-",
+        rating: 0, // API does not provide
+        avatar: avatars[item._id] || "/placeholder.svg",
+        featuredImageData: item?.featured_image?.[0] || null,
+      };
+    });
+  }, [rawInstructors, avatars, allClasses]);
 
   // Calculate statistics
   const totalInstructors = instructors.length;
@@ -404,6 +451,10 @@ export default function InstructorsPage() {
     (sum, instructor) => sum + instructor.classes,
     0
   );
+  const totalStudents = instructors.reduce(
+    (sum, instructor) => sum + instructor.students,
+    0
+  );
 
   // Create initials for avatar fallback
   const getInitials = (name: string) => {
@@ -417,13 +468,13 @@ export default function InstructorsPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải danh sách huấn luyện viên...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -433,12 +484,12 @@ export default function InstructorsPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
-        <div className='text-center space-y-4'>
-          <div className='text-red-500 text-lg font-semibold'>
+      <div className="flex flex-col items-center justify-center min-h-screen py-16">
+        <div className="text-center space-y-4">
+          <div className="text-red-500 text-lg font-semibold">
             Lỗi tải dữ liệu
           </div>
-          <p className='text-muted-foreground'>{error}</p>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
@@ -452,26 +503,26 @@ export default function InstructorsPage() {
         onClose={() => setDetailModalOpen(false)}
         instructorId={selectedInstructorId}
       />
-      <div className='mb-6'>
+      <div className="mb-6">
         <Link
-          href='/dashboard/manager'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+          href="/dashboard/manager"
+          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className='mr-1 h-4 w-4' />
+          <ArrowLeft className="mr-1 h-4 w-4" />
           Quay về Bảng điều khiển
         </Link>
       </div>
 
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className='text-3xl font-bold'>Quản lý Huấn luyện viên</h1>
-          <p className='text-muted-foreground'>
+          <h1 className="text-3xl font-bold">Quản lý Huấn luyện viên</h1>
+          <p className="text-muted-foreground">
             Quản lý tất cả huấn luyện viên tại trung tâm bơi lội của bạn
           </p>
         </div>
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <Button
-            variant='outline'
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing || loading}
           >
@@ -480,43 +531,43 @@ export default function InstructorsPage() {
             />
             Làm mới
           </Button>
-          <Link href='/dashboard/manager/instructors/new'>
+          <Link href="/dashboard/manager/instructors/new">
             <Button>
-              <Plus className='mr-2 h-4 w-4' />
+              <Plus className="mr-2 h-4 w-4" />
               Thêm Huấn luyện viên
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className='mt-8 grid gap-6 md:grid-cols-4'>
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium flex items-center gap-2'>
-              <Users className='h-4 w-4 text-primary' />
+      <div className="mt-8 grid gap-6 md:grid-cols-4">
+        <Card className="bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
               Tổng số huấn luyện viên
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-foreground'>
+            <div className="text-2xl font-bold text-foreground">
               {totalInstructors}
             </div>
-            <p className='text-xs text-muted-foreground mt-1'>Đã đăng ký</p>
+            <p className="text-xs text-muted-foreground mt-1">Đã đăng ký</p>
           </CardContent>
         </Card>
 
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium flex items-center gap-2'>
-              <UserCheck className='h-4 w-4 text-green-600' />
+        <Card className="bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-green-600" />
               Đang hoạt động
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-green-600'>
+            <div className="text-2xl font-bold text-green-600">
               {activeInstructors}
             </div>
-            <p className='text-xs text-muted-foreground mt-1'>
+            <p className="text-xs text-muted-foreground mt-1">
               {totalInstructors > 0
                 ? Math.round((activeInstructors / totalInstructors) * 100)
                 : 0}
@@ -525,41 +576,41 @@ export default function InstructorsPage() {
           </CardContent>
         </Card>
 
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium flex items-center gap-2'>
-              <Star className='h-4 w-4 text-amber-500' />
-              Đánh giá trung bình
+        <Card className="bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4 text-blue-600" />
+              Tổng số học viên
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-amber-500'>
-              {averageRating}
+            <div className="text-2xl font-bold text-blue-600">
+              {totalStudents}
             </div>
-            <p className='text-xs text-amber-500 mt-1'>★★★★★</p>
+            <p className="text-xs text-muted-foreground mt-1">Đang theo học</p>
           </CardContent>
         </Card>
 
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300'>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium flex items-center gap-2'>
-              <GraduationCap className='h-4 w-4 text-blue-600' />
+        <Card className="bg-card/80 backdrop-blur-sm border shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <GraduationCap className="h-4 w-4 text-indigo-600" />
               Tổng số lớp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-blue-600'>
+            <div className="text-2xl font-bold text-indigo-600">
               {totalClasses}
             </div>
-            <p className='text-xs text-muted-foreground mt-1'>Lớp đang dạy</p>
+            <p className="text-xs text-muted-foreground mt-1">Lớp đang dạy</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className='mt-8 bg-card/80 backdrop-blur-sm border shadow-lg'>
+      <Card className="mt-8 bg-card/80 backdrop-blur-sm border shadow-lg">
         <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Users className='h-5 w-5 text-primary' />
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
             Danh sách Huấn luyện viên
           </CardTitle>
         </CardHeader>
@@ -567,8 +618,8 @@ export default function InstructorsPage() {
           <DataTable
             columns={createColumns(handleEditSpecialist)}
             data={instructors}
-            searchKey='name'
-            searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
+            searchKey="name"
+            searchPlaceholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
             onServerSearch={handleServerSearch}
             filterOptions={[
               {
@@ -588,7 +639,7 @@ export default function InstructorsPage() {
                 ],
               },
             ]}
-            emptyMessage='Không tìm thấy huấn luyện viên phù hợp.'
+            emptyMessage="Không tìm thấy huấn luyện viên phù hợp."
           />
         </CardContent>
       </Card>

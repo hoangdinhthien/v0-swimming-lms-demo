@@ -169,7 +169,7 @@ function ManagerDashboardPage() {
         const result = await fetchDateRangeSchedule(today, nextWeek);
 
         // Sort by date and time
-        const sortedEvents = result.events.sort((a, b) => {
+        const sortedEvents = result.events.sort((a: any, b: any) => {
           const dateComparison =
             new Date(a.date).getTime() - new Date(b.date).getTime();
           if (dateComparison !== 0) return dateComparison;
@@ -386,186 +386,186 @@ function ManagerDashboardPage() {
 
   return (
     <>
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className='text-3xl font-bold'>Bảng Điều Khiển Quản Lý</h1>
-          <p className='text-muted-foreground'>
+          <h1 className="text-3xl font-bold">Bảng Điều Khiển Quản Lý</h1>
+          <p className="text-muted-foreground">
             Chào mừng trở lại, {manager.name}!
           </p>
         </div>
-        <div className='flex gap-2'>
-          <Link href='/dashboard/manager/settings'>
-            <Button variant='outline'>
-              <Settings className='mr-2 h-4 w-4' />
+        <div className="flex gap-2">
+          <Link href="/dashboard/manager/settings">
+            <Button variant="outline">
+              <Settings className="mr-2 h-4 w-4" />
               Cài Đặt
             </Button>
           </Link>
         </div>
       </div>{" "}
-      <Tabs defaultValue='overview'>
-        <TabsList className='grid w-full grid-cols-2 md:w-auto'>
-          <TabsTrigger value='overview'>Tổng Quan</TabsTrigger>
-          <TabsTrigger value='calendar'>Lịch</TabsTrigger>
+      <Tabs defaultValue="overview">
+        <TabsList className="grid w-full grid-cols-2 md:w-auto">
+          <TabsTrigger value="overview">Tổng Quan</TabsTrigger>
+          <TabsTrigger value="calendar">Lịch</TabsTrigger>
         </TabsList>
-        <TabsContent value='overview'>
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+        <TabsContent value="overview">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
-              <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium'>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
                   Tổng Học Viên
                 </CardTitle>
-                <Users className='h-4 w-4 text-muted-foreground' />
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold'>
+                <div className="text-2xl font-bold">
                   {manager.centerStats.totalStudents}
                 </div>
-                <p className='text-xs text-muted-foreground'>
+                <p className="text-xs text-muted-foreground">
                   +{manager.centerStats.weeklyNewRegistrations} từ tuần trước
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium'>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
                   Huấn Luyện Viên Hoạt Động
                 </CardTitle>
-                <Users className='h-4 w-4 text-muted-foreground' />
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold'>
+                <div className="text-2xl font-bold">
                   {manager.centerStats.activeInstructors}
                 </div>
-                <p className='text-xs text-muted-foreground'>
+                <p className="text-xs text-muted-foreground">
                   Tất cả huấn luyện viên đang hoạt động
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium'>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
                   Tổng Doanh Thu
                 </CardTitle>
-                <DollarSign className='h-4 w-4 text-muted-foreground' />
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold'>
+                <div className="text-2xl font-bold">
                   {manager.centerStats.totalRevenue}
                 </div>
-                <p className='text-xs text-muted-foreground'>
+                <p className="text-xs text-muted-foreground">
                   +12% so với tháng trước
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-                <CardTitle className='text-sm font-medium'>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
                   Sử Dụng Hồ Bơi
                 </CardTitle>
-                <Waves className='h-4 w-4 text-muted-foreground' />
+                <Waves className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className='text-2xl font-bold'>
+                <div className="text-2xl font-bold">
                   {manager.centerStats.poolUtilization}
                 </div>
-                <p className='text-xs text-muted-foreground'>
+                <p className="text-xs text-muted-foreground">
                   +5% so với tháng trước
                 </p>
               </CardContent>
             </Card>
           </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
-            <Card className='lg:col-span-4'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <div className='flex items-center space-x-2'>
-                  <div className='p-2 bg-blue-100 dark:bg-blue-900 rounded-lg'>
-                    <FileText className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="lg:col-span-4">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>
+                    <CardTitle className="text-lg">
                       Tổng Quan Khóa Học
                     </CardTitle>
-                    <p className='text-sm text-muted-foreground'>
+                    <p className="text-sm text-muted-foreground">
                       Thông tin các khóa học đang hoạt động
                     </p>
                   </div>
                 </div>
                 {isLoadingCourses && (
-                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardHeader>
               <CardContent>
                 {isLoadingCourses ? (
-                  <div className='space-y-4'>
-                    <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
-                      <div className='flex items-center space-x-3'>
-                        <div className='w-10 h-10 bg-muted rounded-full animate-pulse'></div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-muted rounded-full animate-pulse"></div>
                         <div>
-                          <div className='h-4 w-24 bg-muted rounded animate-pulse mb-1'></div>
-                          <div className='h-3 w-16 bg-muted rounded animate-pulse'></div>
+                          <div className="h-4 w-24 bg-muted rounded animate-pulse mb-1"></div>
+                          <div className="h-3 w-16 bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
-                      <div className='h-6 w-16 bg-muted rounded animate-pulse'></div>
+                      <div className="h-6 w-16 bg-muted rounded animate-pulse"></div>
                     </div>
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className='flex items-center justify-between p-3 bg-muted/10 rounded-lg border'
+                        className="flex items-center justify-between p-3 bg-muted/10 rounded-lg border"
                       >
-                        <div className='flex items-center space-x-3'>
-                          <div className='w-8 h-8 bg-muted rounded-full animate-pulse'></div>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
                           <div>
-                            <div className='h-3 w-20 bg-muted rounded animate-pulse mb-1'></div>
-                            <div className='h-2 w-12 bg-muted rounded animate-pulse'></div>
+                            <div className="h-3 w-20 bg-muted rounded animate-pulse mb-1"></div>
+                            <div className="h-2 w-12 bg-muted rounded animate-pulse"></div>
                           </div>
                         </div>
-                        <div className='space-y-1'>
-                          <div className='h-3 w-12 bg-muted rounded animate-pulse'></div>
-                          <div className='h-2 w-8 bg-muted rounded animate-pulse'></div>
+                        <div className="space-y-1">
+                          <div className="h-3 w-12 bg-muted rounded animate-pulse"></div>
+                          <div className="h-2 w-8 bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : coursesError ? (
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
-                      <FileText className='h-6 w-6 text-red-600 dark:text-red-400' />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3">
+                      <FileText className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
-                    <p className='text-red-600 dark:text-red-400 font-medium mb-1'>
+                    <p className="text-red-600 dark:text-red-400 font-medium mb-1">
                       Lỗi tải dữ liệu
                     </p>
-                    <p className='text-sm text-muted-foreground'>
+                    <p className="text-sm text-muted-foreground">
                       {coursesError}
                     </p>
                   </div>
                 ) : courses.length > 0 ? (
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {/* Header Stats */}
-                    <div className='flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                    <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                       <div>
-                        <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           Khóa Học Đang Hoạt Động
                         </p>
-                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           Tổng số khóa học hiện tại
                         </p>
                       </div>
-                      <div className='text-right'>
-                        <div className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                           {courses.filter((c) => c.is_active).length}
                         </div>
-                        <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           khóa học
                         </p>
                       </div>
                     </div>
 
                     {/* Course List */}
-                    <div className='space-y-3 ml-4'>
+                    <div className="space-y-3 ml-4">
                       {courses.slice(0, 4).map((course: any, index: number) => (
                         <div
                           key={course._id}
-                          className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
+                          className="group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1"
                           onClick={() =>
                             router.push(
                               `/dashboard/manager/courses/${course._id}`
@@ -573,23 +573,23 @@ function ManagerDashboardPage() {
                           }
                         >
                           {/* Left side - Course info */}
-                          <div className='flex items-center space-x-3 flex-1 min-w-0'>
-                            <div className='flex-1 min-w-0'>
-                              <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                 {course.title}
                               </h4>
-                              <div className='flex items-center space-x-3 mt-1'>
-                                <span className='text-xs text-gray-500 dark:text-gray-400 flex items-center'>
-                                  <Users className='h-3 w-3 mr-1' />
+                              <div className="flex items-center space-x-3 mt-1">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                  <Users className="h-3 w-3 mr-1" />
                                   {typeof course.students === "number"
                                     ? course.students
                                     : 0}{" "}
                                   học viên
                                 </span>
-                                <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                   •
                                 </span>
-                                <span className='text-xs font-medium text-green-600 dark:text-green-400'>
+                                <span className="text-xs font-medium text-green-600 dark:text-green-400">
                                   {course.price
                                     ? course.price.toLocaleString() + "₫"
                                     : "Miễn phí"}
@@ -599,7 +599,7 @@ function ManagerDashboardPage() {
                           </div>
 
                           {/* Right side - Status and arrow */}
-                          <div className='flex items-center space-x-3'>
+                          <div className="flex items-center space-x-3">
                             <Badge
                               variant={
                                 course.is_active ? "default" : "secondary"
@@ -614,100 +614,100 @@ function ManagerDashboardPage() {
                                 ? "Đang hoạt động"
                                 : "Đã kết thúc"}
                             </Badge>
-                            <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-2 transition-all duration-300' />
+                            <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-2 transition-all duration-300" />
                           </div>
 
                           {/* Unified hover effect overlay */}
-                          <div className='absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-indigo-50/30 dark:from-blue-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none" />
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                      <FileText className='h-8 w-8 text-gray-400' />
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                      <FileText className="h-8 w-8 text-gray-400" />
                     </div>
-                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                       Chưa có khóa học nào
                     </h3>
-                    <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Bắt đầu bằng cách tạo khóa học đầu tiên của bạn
                     </p>
-                    <Link href='/dashboard/manager/courses/new'>
+                    <Link href="/dashboard/manager/courses/new">
                       <Button
-                        size='sm'
-                        className='bg-blue-600 hover:bg-blue-700'
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
                       >
-                        <Plus className='h-4 w-4 mr-1' />
+                        <Plus className="h-4 w-4 mr-1" />
                         Tạo khóa học
                       </Button>
                     </Link>
                   </div>
                 )}
-                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                  <Link href='/dashboard/manager/courses'>
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link href="/dashboard/manager/courses">
                     <Button
-                      variant='outline'
-                      className='w-full bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 dark:hover:border-blue-600'
+                      variant="outline"
+                      className="w-full bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 dark:hover:border-blue-600"
                     >
                       Xem Tất Cả Khóa Học
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
-            <Card className='lg:col-span-3'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <div className='flex items-center space-x-2'>
-                  <div className='p-2 bg-sky-100 dark:bg-sky-900 rounded-lg'>
-                    <Bell className='h-5 w-5 text-sky-600 dark:text-sky-400' />
+            <Card className="lg:col-span-3">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-sky-100 dark:bg-sky-900 rounded-lg">
+                    <Bell className="h-5 w-5 text-sky-600 dark:text-sky-400" />
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>Thông Báo</CardTitle>
-                    <p className='text-sm text-muted-foreground'>
+                    <CardTitle className="text-lg">Thông Báo</CardTitle>
+                    <p className="text-sm text-muted-foreground">
                       Cập nhật mới nhất từ hệ thống
                     </p>
                   </div>
                 </div>
                 {isLoadingNews && (
-                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardHeader>
               <CardContent>
                 {isLoadingNews ? (
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className='flex items-start space-x-3 p-3 bg-muted/20 rounded-lg animate-pulse'
+                        className="flex items-start space-x-3 p-3 bg-muted/20 rounded-lg animate-pulse"
                       >
-                        <div className='w-8 h-8 bg-muted rounded-full flex-shrink-0' />
-                        <div className='flex-1 space-y-2'>
-                          <div className='h-4 w-3/4 bg-muted rounded' />
-                          <div className='h-3 w-full bg-muted rounded' />
-                          <div className='h-3 w-1/3 bg-muted rounded' />
+                        <div className="w-8 h-8 bg-muted rounded-full flex-shrink-0" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-3/4 bg-muted rounded" />
+                          <div className="h-3 w-full bg-muted rounded" />
+                          <div className="h-3 w-1/3 bg-muted rounded" />
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : newsItems.length > 0 ? (
-                  <div className='space-y-4 ml-4'>
+                  <div className="space-y-4 ml-4">
                     {/* Show only the 3 most recent notifications */}
                     {newsItems.slice(0, 3).map((newsItem, index: number) => (
                       <Link
                         key={newsItem._id}
                         href={`/dashboard/manager/news/${newsItem._id}`}
-                        className='block group'
+                        className="block group"
                       >
-                        <div className='relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1'>
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-start justify-between mb-2'>
-                              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 pr-2'>
+                        <div className="relative flex items-start space-x-4 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:shadow-xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 group-hover:scale-[1.02] group-hover:-translate-y-1">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1 pr-2">
                                 {newsItem.title}
                               </h4>
-                              <div className='flex items-center space-x-2 flex-shrink-0'>
+                              <div className="flex items-center space-x-2 flex-shrink-0">
                                 <div
                                   className={`w-2 h-2 rounded-full ${
                                     index === 0
@@ -717,13 +717,13 @@ function ManagerDashboardPage() {
                                       : "bg-indigo-400"
                                   } animate-pulse`}
                                 />
-                                <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-2 transition-all duration-300' />
+                                <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-2 transition-all duration-300" />
                               </div>
                             </div>
-                            <p className='text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors'>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-3 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
                               {newsItem.content}
                             </p>
-                            <div className='flex items-center justify-between'>
+                            <div className="flex items-center justify-between">
                               <span
                                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
                                   index === 0
@@ -733,10 +733,10 @@ function ManagerDashboardPage() {
                                     : "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800"
                                 }`}
                               >
-                                <Calendar className='h-3 w-3 mr-1.5' />
+                                <Calendar className="h-3 w-3 mr-1.5" />
                                 {formatRelativeTime(newsItem.created_at)}
                               </span>
-                              <div className='text-xs text-gray-400 dark:text-gray-500 font-medium'>
+                              <div className="text-xs text-gray-400 dark:text-gray-500 font-medium">
                                 Mới
                               </div>
                             </div>
@@ -746,12 +746,12 @@ function ManagerDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className='space-y-4 ml-4'>
+                  <div className="space-y-4 ml-4">
                     {manager.notifications.map(
                       (notification, index: number) => (
                         <div
                           key={notification.id}
-                          className='relative flex items-start space-x-4 p-4 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-300'
+                          className="relative flex items-start space-x-4 p-4 bg-white/60 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg hover:border-amber-200 dark:hover:border-amber-700 transition-all duration-300"
                         >
                           <div
                             className={`relative p-3 rounded-xl flex-shrink-0 shadow-md ${
@@ -762,12 +762,12 @@ function ManagerDashboardPage() {
                                 : "bg-gradient-to-br from-rose-400 to-red-500"
                             }`}
                           >
-                            <Bell className='h-4 w-4 text-white' />
-                            <div className='absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-bounce border-2 border-white dark:border-gray-800' />
+                            <Bell className="h-4 w-4 text-white" />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-bounce border-2 border-white dark:border-gray-800" />
                           </div>
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-start justify-between mb-2'>
-                              <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                                 {notification.title}
                               </h4>
                               <div
@@ -780,10 +780,10 @@ function ManagerDashboardPage() {
                                 }`}
                               />
                             </div>
-                            <p className='text-xs text-gray-600 dark:text-gray-300 mb-3'>
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
                               {notification.description}
                             </p>
-                            <div className='flex items-center space-x-2'>
+                            <div className="flex items-center space-x-2">
                               <span
                                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium shadow-sm ${
                                   index === 0
@@ -793,13 +793,13 @@ function ManagerDashboardPage() {
                                     : "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800"
                                 }`}
                               >
-                                <Calendar className='h-3 w-3 mr-1.5' />
+                                <Calendar className="h-3 w-3 mr-1.5" />
                                 {notification.time}
                               </span>
                             </div>
                           </div>
                           {/* Subtle hover gradient */}
-                          <div className='absolute inset-0 bg-gradient-to-br from-amber-50/30 via-transparent to-orange-50/30 dark:from-amber-900/10 dark:to-orange-900/10 opacity-0 hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
+                          <div className="absolute inset-0 bg-gradient-to-br from-amber-50/30 via-transparent to-orange-50/30 dark:from-amber-900/10 dark:to-orange-900/10 opacity-0 hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none" />
                         </div>
                       )
                     )}
@@ -810,33 +810,33 @@ function ManagerDashboardPage() {
                 {!isLoadingNews &&
                   newsItems.length === 0 &&
                   manager.notifications.length === 0 && (
-                    <div className='flex flex-col items-center justify-center py-12 text-center relative'>
+                    <div className="flex flex-col items-center justify-center py-12 text-center relative">
                       {/* Background decorative elements */}
-                      <div className='absolute inset-0 flex items-center justify-center'>
-                        <div className='w-32 h-32 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 dark:from-indigo-900/20 dark:via-purple-900/10 dark:to-pink-900/20 rounded-full opacity-50' />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-32 h-32 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 dark:from-indigo-900/20 dark:via-purple-900/10 dark:to-pink-900/20 rounded-full opacity-50" />
                       </div>
-                      <div className='relative'>
-                        <div className='w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg rotate-3 hover:rotate-6 transition-transform duration-300'>
-                          <Bell className='h-8 w-8 text-white' />
-                          <div className='absolute inset-0 bg-white/20 rounded-2xl' />
+                      <div className="relative">
+                        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg rotate-3 hover:rotate-6 transition-transform duration-300">
+                          <Bell className="h-8 w-8 text-white" />
+                          <div className="absolute inset-0 bg-white/20 rounded-2xl" />
                         </div>
-                        <h3 className='text-base font-bold text-gray-900 dark:text-gray-100 mb-2'>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-2">
                           Chưa có thông báo nào
                         </h3>
-                        <p className='text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs'>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 max-w-xs">
                           Thông báo mới sẽ xuất hiện ở đây khi có cập nhật từ hệ
                           thống
                         </p>
 
                         {/* Animated notification preview cards */}
-                        <div className='flex justify-center space-x-2 opacity-30'>
-                          <div className='w-2 h-8 bg-gradient-to-t from-indigo-400 to-indigo-200 rounded-full animate-pulse' />
+                        <div className="flex justify-center space-x-2 opacity-30">
+                          <div className="w-2 h-8 bg-gradient-to-t from-indigo-400 to-indigo-200 rounded-full animate-pulse" />
                           <div
-                            className='w-2 h-6 bg-gradient-to-t from-purple-400 to-purple-200 rounded-full animate-pulse'
+                            className="w-2 h-6 bg-gradient-to-t from-purple-400 to-purple-200 rounded-full animate-pulse"
                             style={{ animationDelay: "0.2s" }}
                           />
                           <div
-                            className='w-2 h-10 bg-gradient-to-t from-pink-400 to-pink-200 rounded-full animate-pulse'
+                            className="w-2 h-10 bg-gradient-to-t from-pink-400 to-pink-200 rounded-full animate-pulse"
                             style={{ animationDelay: "0.4s" }}
                           />
                         </div>
@@ -844,97 +844,97 @@ function ManagerDashboardPage() {
                     </div>
                   )}
 
-                <div className='mt-8 pt-6 border-t border-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700 relative'>
+                <div className="mt-8 pt-6 border-t border-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700 relative">
                   {/* Decorative border gradient */}
-                  <div className='absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-700' />
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-700" />
 
-                  <Link href='/dashboard/manager/news'>
+                  <Link href="/dashboard/manager/news">
                     <Button
-                      variant='outline'
-                      className='w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-indigo-950 dark:to-blue-950 hover:from-indigo-50 hover:via-blue-50 hover:to-blue-100 dark:hover:from-indigo-950 dark:hover:via-blue-950 dark:hover:to-blue-900 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5'
+                      variant="outline"
+                      className="w-full group relative overflow-hidden bg-gradient-to-br from-white via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-indigo-950 dark:to-blue-950 hover:from-indigo-50 hover:via-blue-50 hover:to-blue-100 dark:hover:from-indigo-950 dark:hover:via-blue-950 dark:hover:to-blue-900 border-2 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-semibold py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5"
                     >
-                      <span className='relative z-10 flex items-center justify-center space-x-2'>
+                      <span className="relative z-10 flex items-center justify-center space-x-2">
                         <span>Xem Tất Cả Tin Tức</span>
-                        <ArrowRight className='ml-2 h-4 w-4 group-hover:translate-x-2 transition-transform duration-300' />
+                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-2 transition-transform duration-300" />
                       </span>
 
                       {/* Animated background effect */}
-                      <div className='absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                       {/* Shimmer effect */}
-                      <div className='absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12' />
+                      <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12" />
                     </Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
           </div>
-          <div className='mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7'>
-            <Card className='lg:col-span-4'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <div className='flex items-center space-x-2'>
-                  <div className='p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg'>
-                    <DollarSign className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
+          <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="lg:col-span-4">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>Giao Dịch Gần Đây</CardTitle>
-                    <p className='text-sm text-muted-foreground'>
+                    <CardTitle className="text-lg">Giao Dịch Gần Đây</CardTitle>
+                    <p className="text-sm text-muted-foreground">
                       Thanh toán và giao dịch mới nhất
                     </p>
                   </div>
                 </div>
                 {isLoadingOrders && (
-                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardHeader>
               <CardContent>
                 {isLoadingOrders ? (
-                  <div className='space-y-4'>
-                    <div className='flex items-center justify-between p-3 bg-muted/30 rounded-lg'>
-                      <div className='flex items-center space-x-3'>
-                        <div className='w-10 h-10 bg-muted rounded-full animate-pulse'></div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-muted rounded-full animate-pulse"></div>
                         <div>
-                          <div className='h-4 w-24 bg-muted rounded animate-pulse mb-1'></div>
-                          <div className='h-3 w-16 bg-muted rounded animate-pulse'></div>
+                          <div className="h-4 w-24 bg-muted rounded animate-pulse mb-1"></div>
+                          <div className="h-3 w-16 bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
-                      <div className='h-6 w-16 bg-muted rounded animate-pulse'></div>
+                      <div className="h-6 w-16 bg-muted rounded animate-pulse"></div>
                     </div>
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className='flex items-center justify-between p-3 bg-muted/10 rounded-lg border'
+                        className="flex items-center justify-between p-3 bg-muted/10 rounded-lg border"
                       >
-                        <div className='flex items-center space-x-3'>
-                          <div className='w-8 h-8 bg-muted rounded-full animate-pulse'></div>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-muted rounded-full animate-pulse"></div>
                           <div>
-                            <div className='h-3 w-20 bg-muted rounded animate-pulse mb-1'></div>
-                            <div className='h-2 w-12 bg-muted rounded animate-pulse'></div>
+                            <div className="h-3 w-20 bg-muted rounded animate-pulse mb-1"></div>
+                            <div className="h-2 w-12 bg-muted rounded animate-pulse"></div>
                           </div>
                         </div>
-                        <div className='space-y-1'>
-                          <div className='h-3 w-12 bg-muted rounded animate-pulse'></div>
-                          <div className='h-2 w-8 bg-muted rounded animate-pulse'></div>
+                        <div className="space-y-1">
+                          <div className="h-3 w-12 bg-muted rounded animate-pulse"></div>
+                          <div className="h-2 w-8 bg-muted rounded animate-pulse"></div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : ordersError ? (
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
-                      <DollarSign className='h-6 w-6 text-red-600 dark:text-red-400' />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3">
+                      <DollarSign className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
-                    <p className='text-red-600 dark:text-red-400 font-medium mb-1'>
+                    <p className="text-red-600 dark:text-red-400 font-medium mb-1">
                       Lỗi tải dữ liệu
                     </p>
-                    <p className='text-sm text-muted-foreground'>
+                    <p className="text-sm text-muted-foreground">
                       {ordersError}
                     </p>
                   </div>
                 ) : recentOrders.length > 0 ? (
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {/* Transaction List */}
-                    <div className='space-y-3'>
+                    <div className="space-y-3">
                       {recentOrders.map((order, index: number) => {
                         const orderDate = new Date(order.created_at);
                         const today = new Date();
@@ -964,7 +964,7 @@ function ManagerDashboardPage() {
                         return (
                           <div
                             key={order._id}
-                            className='group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-200 dark:hover:border-emerald-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
+                            className="group relative flex items-center justify-between p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-emerald-200 dark:hover:border-emerald-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1"
                             onClick={() =>
                               router.push(
                                 `/dashboard/manager/transactions/${order._id}`
@@ -972,7 +972,7 @@ function ManagerDashboardPage() {
                             }
                           >
                             {/* Left side - Transaction info */}
-                            <div className='flex items-center space-x-3 flex-1 min-w-0'>
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
                               <div
                                 className={`w-4 h-4 rounded-full ${
                                   index === 0
@@ -986,26 +986,26 @@ function ManagerDashboardPage() {
                                     : "bg-gray-400"
                                 }`}
                               ></div>
-                              <div className='flex-1 min-w-0'>
-                                <div className='flex items-center space-x-2 mb-1'>
-                                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors'>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                     {getOrderUserName(order)}
                                   </h4>
-                                  <span className='text-xs text-gray-400'>
+                                  <span className="text-xs text-gray-400">
                                     •
                                   </span>
-                                  <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
                                     {dateDisplay}
                                   </span>
                                 </div>
-                                <div className='flex items-center justify-between'>
+                                <div className="flex items-center justify-between">
                                   <div>
-                                    <p className='text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]'>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[150px]">
                                       {getOrderCourseTitle(order)}
                                     </p>
                                   </div>
-                                  <div className='flex items-center space-x-2'>
-                                    <span className='text-sm font-semibold text-emerald-600 dark:text-emerald-400'>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                                       {formatPrice(order.price)}
                                     </span>
                                   </div>
@@ -1014,9 +1014,9 @@ function ManagerDashboardPage() {
                             </div>
 
                             {/* Right side - Status and arrow */}
-                            <div className='flex items-center space-x-3 ml-4'>
+                            <div className="flex items-center space-x-3 ml-4">
                               <Badge
-                                variant='outline'
+                                variant="outline"
                                 className={`${
                                   statusColor === "emerald"
                                     ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
@@ -1027,158 +1027,158 @@ function ManagerDashboardPage() {
                               >
                                 {getStatusName(order.status)}
                               </Badge>
-                              <ArrowRight className='h-4 w-4 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-2 transition-all duration-300' />
+                              <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-2 transition-all duration-300" />
                             </div>
 
                             {/* Unified hover effect overlay */}
-                            <div className='absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-green-50/30 dark:from-emerald-900/10 dark:to-green-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-transparent to-green-50/30 dark:from-emerald-900/10 dark:to-green-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none" />
                           </div>
                         );
                       })}
                     </div>
                   </div>
                 ) : (
-                  <div className='flex flex-col items-center justify-center py-12 text-center'>
-                    <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                      <DollarSign className='h-8 w-8 text-gray-400' />
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                      <DollarSign className="h-8 w-8 text-gray-400" />
                     </div>
-                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                       Chưa có giao dịch nào
                     </h3>
-                    <p className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                       Các giao dịch mới sẽ xuất hiện ở đây
                     </p>
-                    <Link href='/dashboard/manager/transactions/new'>
+                    <Link href="/dashboard/manager/transactions/new">
                       <Button
-                        size='sm'
-                        className='bg-emerald-600 hover:bg-emerald-700'
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700"
                       >
-                        <Plus className='h-4 w-4 mr-1' />
+                        <Plus className="h-4 w-4 mr-1" />
                         Ghi nhận thanh toán
                       </Button>
                     </Link>
                   </div>
                 )}
-                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                  <Link href='/dashboard/manager/transactions'>
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link href="/dashboard/manager/transactions">
                     <Button
-                      variant='outline'
-                      className='w-full bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-600'
+                      variant="outline"
+                      className="w-full bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:border-emerald-300 dark:hover:border-emerald-600"
                     >
                       Xem Tất Cả Giao Dịch
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
-            <Card className='lg:col-span-3'>
-              <CardHeader className='flex flex-row items-center justify-between'>
-                <div className='flex items-center space-x-2'>
-                  <div className='p-2 bg-blue-100 dark:bg-blue-900 rounded-lg'>
-                    <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+            <Card className="lg:col-span-3">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>Lớp Học Sắp Tới</CardTitle>
-                    <p className='text-sm text-muted-foreground'>
+                    <CardTitle className="text-lg">Lớp Học Sắp Tới</CardTitle>
+                    <p className="text-sm text-muted-foreground">
                       Lịch học trong 7 ngày tới
                     </p>
                   </div>
                 </div>
                 {isLoadingSchedule && (
-                  <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardHeader>
               <CardContent>
                 {isLoadingSchedule ? (
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {[...Array(3)].map((_, i) => (
                       <div
                         key={i}
-                        className='flex flex-col gap-1 border-b pb-3 last:border-0 animate-pulse'
+                        className="flex flex-col gap-1 border-b pb-3 last:border-0 animate-pulse"
                       >
-                        <div className='flex justify-between'>
-                          <div className='h-4 w-32 bg-muted rounded'></div>
-                          <div className='h-4 w-16 bg-muted rounded'></div>
+                        <div className="flex justify-between">
+                          <div className="h-4 w-32 bg-muted rounded"></div>
+                          <div className="h-4 w-16 bg-muted rounded"></div>
                         </div>
-                        <div className='h-3 w-24 bg-muted rounded'></div>
-                        <div className='h-3 w-20 bg-muted rounded'></div>
+                        <div className="h-3 w-24 bg-muted rounded"></div>
+                        <div className="h-3 w-20 bg-muted rounded"></div>
                       </div>
                     ))}
                   </div>
                 ) : scheduleError ? (
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <div className='w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3'>
-                      <Calendar className='h-6 w-6 text-red-600 dark:text-red-400' />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-3">
+                      <Calendar className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
-                    <h3 className='text-sm font-medium text-red-900 dark:text-red-100 mb-1'>
+                    <h3 className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">
                       Lỗi tải lịch học
                     </h3>
-                    <p className='text-xs text-red-600 dark:text-red-400'>
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       {scheduleError}
                     </p>
                   </div>
                 ) : getUpcomingClasses().length > 0 ? (
-                  <div className='space-y-4 ml-4'>
+                  <div className="space-y-4 ml-4">
                     {getUpcomingClasses().map((class_) => (
                       <div
                         key={class_.id}
-                        className='group relative flex flex-col gap-3 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1'
+                        className="group relative flex flex-col gap-3 p-4 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 hover:border-purple-200 dark:hover:border-purple-700 hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1"
                       >
-                        <div className='flex justify-between items-start'>
-                          <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors'>
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                             {class_.title}
                           </h4>
                           <Badge
-                            variant='outline'
-                            className='bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800'
+                            variant="outline"
+                            className="bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800 whitespace-nowrap"
                           >
                             {class_.pool}
                           </Badge>
                         </div>
 
-                        <div className='flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400'>
-                          <Calendar className='h-3 w-3' />
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="h-3 w-3" />
                           <span>
                             {class_.time} • {class_.date}
                           </span>
                         </div>
 
-                        <div className='space-y-1'>
-                          <div className='text-xs text-gray-600 dark:text-gray-300'>
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
                             Huấn luyện viên: {class_.instructor}
                           </div>
-                          <div className='text-xs text-gray-600 dark:text-gray-300'>
+                          <div className="text-xs text-gray-600 dark:text-gray-300">
                             Học viên: {class_.students}
                           </div>
                         </div>
 
                         {/* Unified hover effect overlay */}
-                        <div className='absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-indigo-50/30 dark:from-purple-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none' />
+                        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-transparent to-indigo-50/30 dark:from-purple-900/10 dark:to-indigo-900/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity duration-300 pointer-events-none" />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <div className='w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3'>
-                      <Calendar className='h-6 w-6 text-gray-400' />
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                      <Calendar className="h-6 w-6 text-gray-400" />
                     </div>
-                    <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-1'>
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                       Chưa có lớp học nào
                     </h3>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Lịch học sẽ hiển thị ở đây khi có dữ liệu
                     </p>
                   </div>
                 )}
-                <div className='mt-6 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                  <Link href='/dashboard/manager/calendar'>
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link href="/dashboard/manager/calendar">
                     <Button
-                      variant='outline'
-                      className='w-full bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:border-purple-300 dark:hover:border-purple-600'
+                      variant="outline"
+                      className="w-full bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:border-purple-300 dark:hover:border-purple-600"
                     >
                       Xem Tất Cả Lịch Học
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -1186,57 +1186,57 @@ function ManagerDashboardPage() {
             </Card>
           </div>
         </TabsContent>{" "}
-        <TabsContent value='calendar'>
+        <TabsContent value="calendar">
           <Card>
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <div className='flex items-center space-x-2'>
-                <div className='p-2 bg-purple-100 dark:bg-purple-900 rounded-lg'>
-                  <Calendar className='h-5 w-5 text-purple-600 dark:text-purple-400' />
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <CardTitle className='text-lg'>Lịch Học và Sự Kiện</CardTitle>
-                  <p className='text-sm text-muted-foreground'>
+                  <CardTitle className="text-lg">Lịch Học và Sự Kiện</CardTitle>
+                  <p className="text-sm text-muted-foreground">
                     Tổng quan lịch học trong tuần tới
                   </p>
                 </div>
               </div>
               {isLoadingSchedule && (
-                <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </CardHeader>
             <CardContent>
-              <div className='space-y-6'>
+              <div className="space-y-6">
                 {/* Calendar Overview Section */}
-                <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-                  <div className='bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 rounded-xl p-4 border border-blue-200 dark:border-blue-800'>
-                    <div className='flex items-center justify-between'>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-950 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className='text-sm font-medium text-blue-600 dark:text-blue-400'>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
                           Tổng Lớp Học
                         </p>
-                        <p className='text-2xl font-bold text-blue-900 dark:text-blue-100'>
+                        <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                           {isLoadingSchedule ? (
-                            <span className='w-8 h-6 bg-blue-200 dark:bg-blue-800 animate-pulse rounded'></span>
+                            <span className="w-8 h-6 bg-blue-200 dark:bg-blue-800 animate-pulse rounded"></span>
                           ) : (
                             scheduleEvents.length
                           )}
                         </p>
                       </div>
-                      <div className='w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center'>
-                        <Calendar className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       </div>
                     </div>
                   </div>
 
-                  <div className='bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950 dark:to-green-950 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800'>
-                    <div className='flex items-center justify-between'>
+                  <div className="bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950 dark:to-green-950 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className='text-sm font-medium text-emerald-600 dark:text-emerald-400'>
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                           Hôm Nay
                         </p>
-                        <p className='text-2xl font-bold text-emerald-900 dark:text-emerald-100'>
+                        <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">
                           {isLoadingSchedule ? (
-                            <span className='w-8 h-6 bg-emerald-200 dark:bg-emerald-800 animate-pulse rounded'></span>
+                            <span className="w-8 h-6 bg-emerald-200 dark:bg-emerald-800 animate-pulse rounded"></span>
                           ) : (
                             scheduleEvents.filter((event) => {
                               const eventDate = new Date(event.date);
@@ -1249,21 +1249,21 @@ function ManagerDashboardPage() {
                           )}
                         </p>
                       </div>
-                      <div className='w-10 h-10 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center'>
-                        <Clock className='h-5 w-5 text-emerald-600 dark:text-emerald-400' />
+                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900 rounded-lg flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                     </div>
                   </div>
 
-                  <div className='bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-950 dark:to-yellow-950 rounded-xl p-4 border border-amber-200 dark:border-amber-800'>
-                    <div className='flex items-center justify-between'>
+                  <div className="bg-gradient-to-br from-amber-50 to-yellow-100 dark:from-amber-950 dark:to-yellow-950 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className='text-sm font-medium text-amber-600 dark:text-amber-400'>
+                        <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
                           Tuần Này
                         </p>
-                        <p className='text-2xl font-bold text-amber-900 dark:text-amber-100'>
+                        <p className="text-2xl font-bold text-amber-900 dark:text-amber-100">
                           {isLoadingSchedule ? (
-                            <span className='w-8 h-6 bg-amber-200 dark:bg-amber-800 animate-pulse rounded'></span>
+                            <span className="w-8 h-6 bg-amber-200 dark:bg-amber-800 animate-pulse rounded"></span>
                           ) : (
                             scheduleEvents.filter((event) => {
                               const eventDate = new Date(event.date);
@@ -1286,21 +1286,21 @@ function ManagerDashboardPage() {
                           )}
                         </p>
                       </div>
-                      <div className='w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center'>
-                        <Users className='h-5 w-5 text-amber-600 dark:text-amber-400' />
+                      <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-lg flex items-center justify-center">
+                        <Users className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                       </div>
                     </div>
                   </div>
 
-                  <div className='bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950 dark:to-pink-950 rounded-xl p-4 border border-rose-200 dark:border-rose-800'>
-                    <div className='flex items-center justify-between'>
+                  <div className="bg-gradient-to-br from-rose-50 to-pink-100 dark:from-rose-950 dark:to-pink-950 rounded-xl p-4 border border-rose-200 dark:border-rose-800">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className='text-sm font-medium text-rose-600 dark:text-rose-400'>
+                        <p className="text-sm font-medium text-rose-600 dark:text-rose-400">
                           Hồ Bơi Sử Dụng
                         </p>
-                        <p className='text-2xl font-bold text-rose-900 dark:text-rose-100'>
+                        <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">
                           {isLoadingSchedule ? (
-                            <span className='w-8 h-6 bg-rose-200 dark:bg-rose-800 animate-pulse rounded'></span>
+                            <span className="w-8 h-6 bg-rose-200 dark:bg-rose-800 animate-pulse rounded"></span>
                           ) : (
                             new Set(
                               scheduleEvents
@@ -1315,63 +1315,59 @@ function ManagerDashboardPage() {
                           )}
                         </p>
                       </div>
-                      <div className='w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-lg flex items-center justify-center'>
-                        <Waves className='h-5 w-5 text-rose-600 dark:text-rose-400' />
+                      <div className="w-10 h-10 bg-rose-100 dark:bg-rose-900 rounded-lg flex items-center justify-center">
+                        <Waves className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Schedule List Section */}
-                <div className='bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700'>
-                  <div className='flex items-center justify-between mb-4'>
-                    <h3 className='text-lg font-semibold text-slate-900 dark:text-slate-100'>
+                <div className="bg-gradient-to-br from-slate-50 to-gray-100 dark:from-slate-900 dark:to-gray-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                       Lịch Học Chi Tiết
                     </h3>
-                    <Link href='/dashboard/manager/calendar'>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        className='text-xs'
-                      >
+                    <Link href="/dashboard/manager/calendar">
+                      <Button size="sm" variant="outline" className="text-xs">
                         Xem Đầy Đủ
-                        <ArrowRight className='ml-1 h-3 w-3' />
+                        <ArrowRight className="ml-1 h-3 w-3" />
                       </Button>
                     </Link>
                   </div>
 
                   {isLoadingSchedule ? (
-                    <div className='space-y-3'>
+                    <div className="space-y-3">
                       {[...Array(4)].map((_, i) => (
                         <div
                           key={i}
-                          className='flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg animate-pulse'
+                          className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg animate-pulse"
                         >
-                          <div className='flex items-center space-x-3'>
-                            <div className='w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg'></div>
-                            <div className='space-y-1'>
-                              <div className='h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded'></div>
-                              <div className='h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                            <div className="space-y-1">
+                              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded"></div>
                             </div>
                           </div>
-                          <div className='h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded'></div>
+                          <div className="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
                         </div>
                       ))}
                     </div>
                   ) : scheduleError ? (
-                    <div className='text-center py-8'>
-                      <div className='w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Calendar className='h-8 w-8 text-red-600 dark:text-red-400' />
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="h-8 w-8 text-red-600 dark:text-red-400" />
                       </div>
-                      <h3 className='text-lg font-medium text-red-900 dark:text-red-100 mb-2'>
+                      <h3 className="text-lg font-medium text-red-900 dark:text-red-100 mb-2">
                         Lỗi tải lịch học
                       </h3>
-                      <p className='text-sm text-red-600 dark:text-red-400'>
+                      <p className="text-sm text-red-600 dark:text-red-400">
                         {scheduleError}
                       </p>
                     </div>
                   ) : scheduleEvents.length > 0 ? (
-                    <div className='space-y-3 max-h-96 overflow-y-auto'>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
                       {scheduleEvents.slice(0, 6).map((event, index) => {
                         const formattedEvent = formatScheduleEvent(event);
                         if (!formattedEvent) return null;
@@ -1379,9 +1375,9 @@ function ManagerDashboardPage() {
                         return (
                           <div
                             key={formattedEvent.id}
-                            className='flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow group'
+                            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 hover:shadow-md transition-shadow group"
                           >
-                            <div className='flex items-center space-x-4'>
+                            <div className="flex items-center space-x-4">
                               <div
                                 className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                                   index % 4 === 0
@@ -1393,13 +1389,13 @@ function ManagerDashboardPage() {
                                     : "bg-rose-100 dark:bg-rose-900 text-rose-600 dark:text-rose-400"
                                 }`}
                               >
-                                <Clock className='h-5 w-5' />
+                                <Clock className="h-5 w-5" />
                               </div>
-                              <div className='space-y-1'>
-                                <div className='font-medium text-slate-900 dark:text-slate-100'>
+                              <div className="space-y-1">
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
                                   {formattedEvent.title}
                                 </div>
-                                <div className='text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2'>
+                                <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
                                   <span>{formattedEvent.time}</span>
                                   <span>•</span>
                                   <span>{formattedEvent.date}</span>
@@ -1408,39 +1404,36 @@ function ManagerDashboardPage() {
                                 </div>
                               </div>
                             </div>
-                            <div className='flex items-center space-x-2'>
-                              <Badge
-                                variant='outline'
-                                className='text-xs'
-                              >
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs">
                                 {formattedEvent.date}
                               </Badge>
-                              <ArrowRight className='h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors' />
+                              <ArrowRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" />
                             </div>
                           </div>
                         );
                       })}
                       {scheduleEvents.length > 6 && (
-                        <div className='text-center py-3 text-sm text-slate-500 dark:text-slate-400'>
+                        <div className="text-center py-3 text-sm text-slate-500 dark:text-slate-400">
                           Còn {scheduleEvents.length - 6} lớp học khác...
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className='text-center py-12'>
-                      <div className='w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4'>
-                        <Calendar className='h-8 w-8 text-slate-400' />
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Calendar className="h-8 w-8 text-slate-400" />
                       </div>
-                      <h3 className='text-lg font-medium text-slate-900 dark:text-slate-100 mb-2'>
+                      <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
                         Chưa có lịch học nào
                       </h3>
-                      <p className='text-sm text-slate-500 dark:text-slate-400 mb-4'>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                         Lịch học sẽ hiển thị ở đây khi có dữ liệu từ hệ thống
                       </p>
-                      <Link href='/dashboard/manager/calendar'>
-                        <Button variant='outline'>
+                      <Link href="/dashboard/manager/calendar">
+                        <Button variant="outline">
                           Đi Tới Trang Lịch
-                          <ArrowRight className='ml-2 h-4 w-4' />
+                          <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                       </Link>
                     </div>
@@ -1448,12 +1441,12 @@ function ManagerDashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className='flex justify-center'>
-                  <Link href='/dashboard/manager/calendar'>
-                    <Button className='bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300'>
-                      <Calendar className='mr-2 h-4 w-4' />
+                <div className="flex justify-center">
+                  <Link href="/dashboard/manager/calendar">
+                    <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                      <Calendar className="mr-2 h-4 w-4" />
                       Mở Lịch Đầy Đủ
-                      <ArrowRight className='ml-2 h-4 w-4' />
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
