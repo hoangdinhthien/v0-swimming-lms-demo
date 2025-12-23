@@ -12,6 +12,7 @@ export type Course = {
   level: string;
   price?: number;
   studentCount?: number;
+  max_member?: number;
   is_active: boolean;
   description?: string;
   session_number?: number;
@@ -22,19 +23,22 @@ export const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "title",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tên khóa học" />
+      <DataTableColumnHeader
+        column={column}
+        title='Tên khóa học'
+      />
     ),
     cell: ({ row }) => {
       return (
-        <div className="flex flex-col">
+        <div className='flex flex-col'>
           <Link
             href={`/dashboard/manager/courses/${row.original._id}`}
-            className="font-medium hover:text-primary hover:underline transition-colors"
+            className='font-medium hover:text-primary hover:underline transition-colors'
           >
             {row.original.title}
           </Link>
           {row.original.description && (
-            <span className="text-xs text-muted-foreground line-clamp-1">
+            <span className='text-xs text-muted-foreground line-clamp-1'>
               {row.original.description}
             </span>
           )}
@@ -49,13 +53,17 @@ export const columns: ColumnDef<Course>[] = [
       const categories = row.original.category;
       if (!Array.isArray(categories) || categories.length === 0) {
         return (
-          <span className="text-muted-foreground text-sm">Chưa phân loại</span>
+          <span className='text-muted-foreground text-sm'>Chưa phân loại</span>
         );
       }
       return (
-        <div className="flex flex-wrap gap-1">
+        <div className='flex flex-wrap gap-1'>
           {categories.map((cat: any, index: number) => (
-            <Badge key={index} variant="outline" className="text-xs">
+            <Badge
+              key={index}
+              variant='outline'
+              className='text-xs'
+            >
               {cat.title || cat}
             </Badge>
           ))}
@@ -74,26 +82,32 @@ export const columns: ColumnDef<Course>[] = [
   {
     accessorKey: "price",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Học phí" />
+      <DataTableColumnHeader
+        column={column}
+        title='Học phí'
+      />
     ),
     cell: ({ row }) => {
       const price = row.original.price;
       if (price === undefined || price === null) {
-        return <span className="text-muted-foreground">Liên hệ</span>;
+        return <span className='text-muted-foreground'>Liên hệ</span>;
       }
       return (
-        <span className="font-medium">{price.toLocaleString("vi-VN")} VNĐ</span>
+        <span className='font-medium'>{price.toLocaleString("vi-VN")} VNĐ</span>
       );
     },
   },
   {
-    accessorKey: "studentCount",
+    accessorKey: "max_member",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Học viên" />
+      <DataTableColumnHeader
+        column={column}
+        title='Học viên tối đa'
+      />
     ),
     cell: ({ row }) => {
-      const count = row.original.studentCount || 0;
-      return <span className="text-sm">{count} học viên</span>;
+      const maxMember = row.original.max_member || 0;
+      return <span className='text-sm'>{maxMember} học viên</span>;
     },
   },
   {

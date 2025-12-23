@@ -130,16 +130,6 @@ export const columns: ColumnDef<Student>[] = [
     enableHiding: true,
   },
   {
-    accessorKey: "courses",
-    id: "courses",
-    header: "Khoá học đã đăng ký",
-    cell: () => {
-      return <span className='text-muted-foreground'>-</span>;
-    },
-    enableSorting: false,
-    enableHiding: true,
-  },
-  {
     accessorKey: "status",
     id: "status",
     accessorFn: (row) => (row.user?.is_active ? "active" : "inactive"),
