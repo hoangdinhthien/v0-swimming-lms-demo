@@ -179,6 +179,7 @@ export interface UpdateClassData {
   name: string; // class name
   instructor: string; // instructor id
   member?: string[]; // array of member ids (optional - use add-member/remove-member endpoints instead)
+  show_on_regist_course?: boolean; // show on registration course (optional)
 }
 
 /**

@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import {
   fetchClassDetails,
@@ -156,6 +156,7 @@ export default function ClassDetailPage() {
     name: "",
     instructor: "",
     member: [] as string[],
+    show_on_regist_course: false,
   });
 
   // Auto schedule modal state
@@ -315,6 +316,7 @@ export default function ClassDetailPage() {
               .map((m: any) => (typeof m === "string" ? m : m._id))
               .filter(Boolean)
           : [],
+        show_on_regist_course: classData.show_on_regist_course || false,
       });
       setIsEditModalOpen(true);
       await loadEditData();
@@ -356,6 +358,7 @@ export default function ClassDetailPage() {
         course: formData.course,
         name: formData.name,
         instructor: formData.instructor,
+        show_on_regist_course: formData.show_on_regist_course,
       };
 
       await updateClass(classroomId, updateData, tenantId, token);
@@ -1473,6 +1476,18 @@ export default function ClassDetailPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Show on Registration Course */}
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show_on_regist_course"
+                  checked={formData.show_on_regist_course}
+                  onCheckedChange={(checked) =>
+                    handleInputChange("show_on_regist_course", checked)
+                  }
+                />
+                <Label htmlFor="show_on_regist_course">Trạng thái hoạt động</Label>
               </div>
             </div>
           )}
