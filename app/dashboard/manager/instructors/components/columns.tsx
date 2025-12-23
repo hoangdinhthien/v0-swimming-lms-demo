@@ -3,8 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Mail, Phone, Calendar, Settings } from "lucide-react";
+import { Mail, Phone, Calendar } from "lucide-react";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import Link from "next/link";
 
@@ -31,9 +30,7 @@ export type Instructor = {
 };
 
 // Create columns factory that accepts callback
-export const createColumns = (
-  onEditSpecialist: (instructor: Instructor) => void
-): ColumnDef<Instructor>[] => [
+export const createColumns = (): ColumnDef<Instructor>[] => [
   {
     accessorKey: "name",
     id: "name",
@@ -189,28 +186,6 @@ export const createColumns = (
     },
     enableSorting: true,
     enableHiding: true,
-  },
-  {
-    id: "actions",
-    header: "Thao tác",
-    cell: ({ row }) => {
-      const instructor = row.original;
-
-      return (
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={(e) => {
-            e.stopPropagation();
-            onEditSpecialist(instructor);
-          }}
-          className='h-8 w-8 p-0'
-          title='Chỉnh sửa chuyên môn'
-        >
-          <Settings className='h-4 w-4' />
-        </Button>
-      );
-    },
   },
 ];
 

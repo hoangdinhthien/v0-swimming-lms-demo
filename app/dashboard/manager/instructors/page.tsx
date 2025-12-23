@@ -37,7 +37,6 @@ import { User, Mail, Book, Calendar, Key, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createColumns, Instructor } from "./components/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import InstructorSpecialistModal from "@/components/manager/instructor-specialist-modal";
 
 // Helper function to extract avatar URL from featured_image
 function extractAvatarUrl(featuredImage: any): string {
@@ -281,11 +280,6 @@ export default function InstructorsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Specialist modal states
-  const [specialistModalOpen, setSpecialistModalOpen] = useState(false);
-  const [selectedInstructorForSpecialist, setSelectedInstructorForSpecialist] =
-    useState<Instructor | null>(null);
-
   // Fetch instructors with optional search
   const fetchData = async (searchValue?: string, isInitialLoad = false) => {
     if (isInitialLoad) {
@@ -358,12 +352,6 @@ export default function InstructorsPage() {
     } finally {
       setRefreshing(false);
     }
-  };
-
-  // Handler for edit specialist button click
-  const handleEditSpecialist = (instructor: Instructor) => {
-    setSelectedInstructorForSpecialist(instructor);
-    setSpecialistModalOpen(true);
   };
 
   // Use optimized avatar loading
@@ -532,7 +520,7 @@ export default function InstructorsPage() {
         </CardHeader>
         <CardContent>
           <DataTable
-            columns={createColumns(handleEditSpecialist)}
+            columns={createColumns()}
             data={instructors}
             searchKey='name'
             searchPlaceholder='Tìm kiếm theo tên, email hoặc số điện thoại...'
@@ -559,25 +547,6 @@ export default function InstructorsPage() {
           />
         </CardContent>
       </Card>
-
-      {/* Instructor Specialist Modal */}
-      <InstructorSpecialistModal
-        open={specialistModalOpen}
-        onOpenChange={setSpecialistModalOpen}
-        instructorData={
-          selectedInstructorForSpecialist
-            ? {
-                id: selectedInstructorForSpecialist.id,
-                name: selectedInstructorForSpecialist.name,
-                email: selectedInstructorForSpecialist.email,
-              }
-            : null
-        }
-        onSuccess={() => {
-          // Refresh data after successful update
-          fetchData(undefined, false);
-        }}
-      />
     </>
   );
 }
