@@ -13,6 +13,7 @@ export interface Contact {
   message: string;
   name: string;
   created_at: string;
+  note?: string;
 }
 
 export interface ContactListResponse {
@@ -125,4 +126,45 @@ export const getGoogleMapsUrl = (location: [number, number]): string => {
 export const formatLocation = (location: [number, number]): string => {
   const [longitude, latitude] = location;
   return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+};
+
+/**
+ * Update contact note
+ * @param id - Contact ID
+ * @param note - New note content
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ */
+export const updateContactNote = async (
+  id: string,
+  note: string,
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/contact?id=${id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "x-tenant-id": finalTenantId,
+        Authorization: `Bearer ${finalToken}`,
+        ...(getUserFrontendRole() === "staff" && { service: "ContactForm" }),
+      },
+      body: JSON.stringify({ note }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update note: ${response.status}`);
+  }
+
+  return await response.json();
 };
