@@ -20,6 +20,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { createColumns, ClassItem } from "./components/columns";
+import PermissionGuard from "@/components/permission-guard";
 
 export default function ClassesPage() {
   const { toast } = useToast();
@@ -188,11 +189,16 @@ export default function ClassesPage() {
               />
               Làm mới
             </Button>
-            <Link href='/dashboard/manager/classes/create'>
-              <Button>
-                <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
-              </Button>
-            </Link>
+            <PermissionGuard
+              module='Class'
+              action='POST'
+            >
+              <Link href='/dashboard/manager/classes/create'>
+                <Button>
+                  <Plus className='mr-2 h-4 w-4' /> Thêm lớp học mới
+                </Button>
+              </Link>
+            </PermissionGuard>
           </div>
         </div>
 

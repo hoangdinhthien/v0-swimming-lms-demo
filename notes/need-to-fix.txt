@@ -7,7 +7,7 @@ stringify form judge lại rồi so sánh
 
 course: detail phải = với session number 
 chỉnh lại dashboard của staff
-không scroll chọn hồ bơiở step 2
+không scroll chọn hồ bơi ở step 2 đc
 
 show được trong slot này ngày hôm đó ==> có hồ bơi nào available hay ko, cho người ta coi luôn trước khi xác nhận (là phải validate lại riêng cho cái đó)
 sửa lại thanh search trong drawer
@@ -19,7 +19,7 @@ Lịch học (7 buổi) => click vào hiện popup show full thông tin của bu
 
 trang lịch ===> thêm search để xem lịch học của 1 lớp
 
-coi tiến trình học + ghi chú của học viên
+coi tiến trình học + ghi chú của học viên trong trang detail lớp học
 
 ở trang 'dashboard/manager/data-review', phần modal 'Chi tiết yêu cầu'
 tại sao khi tôi APPROVED cái data-review đó xong rồi sau đó tôi mở lại chính cái data-review đó thì tôi lại không xem được Không có thay đổi nào được phát hiện

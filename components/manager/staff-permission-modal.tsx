@@ -501,8 +501,9 @@ function getModuleDisplayName(module: string): string {
     Class: "Lớp học",
     User: "Người dùng",
     News: "Tin tức",
-    Blog: "Blog",
-    Application: "Đơn đăng ký",
+    Application: "Đơn từ",
+    ContactForm: "Liên hệ",
+    Schedule: "Lịch học",
   };
   return moduleNames[module] || module;
 }

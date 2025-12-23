@@ -697,6 +697,8 @@ export const autoScheduleClassPreview = async (
         "Content-Type": "application/json",
         "x-tenant-id": finalTenantId,
         Authorization: `Bearer ${finalToken}`,
+        // Add service header for staff users so staff frontend can call manager endpoints
+        ...(getUserFrontendRole() === "staff" ? { service: "Schedule" } : {}),
       },
       body: JSON.stringify(classesData), // Always send as array
     }

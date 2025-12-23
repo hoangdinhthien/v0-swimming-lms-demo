@@ -35,6 +35,7 @@ import { fetchClassNotes, type ClassNote } from "@/api/manager/class-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import type { ScheduleEvent } from "@/api/manager/schedule-api";
+import PermissionGuard from "@/components/permission-guard";
 
 // Set Vietnamese locale for dayjs
 dayjs.locale("vi");
@@ -649,20 +650,30 @@ export default function ClassDetailModal({
           >
             Đóng
           </Button>
-          <Button
-            variant='secondary'
-            onClick={handleEdit}
+          <PermissionGuard
+            module='Class'
+            action='PUT'
           >
-            <Edit className='h-4 w-4 mr-2' />
-            Chỉnh sửa
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={handleDelete}
+            <Button
+              variant='secondary'
+              onClick={handleEdit}
+            >
+              <Edit className='h-4 w-4 mr-2' />
+              Chỉnh sửa
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard
+            module='Class'
+            action='DELETE'
           >
-            <Trash2 className='h-4 w-4 mr-2' />
-            Xóa lớp học
-          </Button>
+            <Button
+              variant='destructive'
+              onClick={handleDelete}
+            >
+              <Trash2 className='h-4 w-4 mr-2' />
+              Xóa lớp học
+            </Button>
+          </PermissionGuard>
         </DialogFooter>
       </DialogContent>
     </Dialog>
