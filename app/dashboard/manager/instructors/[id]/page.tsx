@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   fetchInstructorDetail,
   updateInstructor,
+  fetchInstructorSpecialist,
 } from "@/api/manager/instructors-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import {
@@ -29,6 +30,7 @@ import {
   Image as ImageIcon,
   BookOpen,
   Eye,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { getAuthToken } from "@/api/auth-utils";
@@ -143,6 +145,7 @@ export default function InstructorDetailPage() {
   // New state to track avatar upload for form submission
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [specialistInfo, setSpecialistInfo] = useState<any>(null);
   const form = useForm<z.infer<typeof instructorFormSchema>>({
     resolver: zodResolver(instructorFormSchema),
     defaultValues: {
@@ -248,6 +251,21 @@ export default function InstructorDetailPage() {
           address: detailData.user?.address || "",
           is_active: detailData.user?.is_active ?? true, // Use nullish coalescing to preserve false values
         });
+
+        // Fetch specialist information
+        try {
+          const specialistData = await fetchInstructorSpecialist({
+            searchParams: { user: detailData.user?._id },
+            tenantId,
+            token,
+          });
+          if (specialistData && specialistData.length > 0) {
+            setSpecialistInfo(specialistData[0]);
+          }
+        } catch (specialistError) {
+          console.error("Error fetching specialist info:", specialistError);
+          // Don't set error state for specialist info, just log it
+        }
       } catch (e: any) {
         console.error("[DEBUG] Error fetching instructor detail:", e);
         // Check if it's a 404 error (instructor not found)
@@ -494,13 +512,13 @@ export default function InstructorDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
             Đang tải chi tiết Huấn luyện viên...
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className='text-sm text-muted-foreground mt-2'>
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -512,58 +530,58 @@ export default function InstructorDetailPage() {
   }
 
   if (error) {
-    return <div className="text-red-500 p-8">{error}</div>;
+    return <div className='text-red-500 p-8'>{error}</div>;
   }
   return (
-    <div className="container mx-auto py-8 px-4 animate-in fade-in duration-500">
+    <div className='container mx-auto py-8 px-4 animate-in fade-in duration-500'>
       {/* Back Button */}
-      <div className="mb-6">
+      <div className='mb-6'>
         <Link
-          href="/dashboard/manager/instructors"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30"
+          href='/dashboard/manager/instructors'
+          className='inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className='h-4 w-4' />
           Quay về danh sách
         </Link>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Hồ sơ Huấn luyện viên</h1>
-        <p className="text-muted-foreground mt-1">
+      <div className='mb-6'>
+        <h1 className='text-3xl font-bold'>Hồ sơ Huấn luyện viên</h1>
+        <p className='text-muted-foreground mt-1'>
           Thông tin chi tiết và lịch dạy của Huấn luyện viên
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
         {/* Profile Section */}
-        <Card className="md:col-span-1 overflow-hidden border-0 shadow-md">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-400 h-24 dark:from-indigo-600 dark:to-purple-500"></div>
-          <CardContent className="flex flex-col items-center text-center pt-0 relative pb-6">
-            <Avatar className="h-32 w-32 border-4 border-background shadow-md absolute -top-16">
+        <Card className='md:col-span-1 overflow-hidden border-0 shadow-md'>
+          <div className='bg-gradient-to-r from-indigo-500 to-purple-400 h-24 dark:from-indigo-600 dark:to-purple-500'></div>
+          <CardContent className='flex flex-col items-center text-center pt-0 relative pb-6'>
+            <Avatar className='h-32 w-32 border-4 border-background shadow-md absolute -top-16'>
               <AvatarImage
                 src={avatarUrl}
                 alt={detail.user?.username || "Instructor"}
-                className="object-cover"
+                className='object-cover'
               />
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+              <AvatarFallback className='text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white'>
                 {detail.user?.username?.charAt(0) || "G"}
               </AvatarFallback>
             </Avatar>
-            <div className="mt-16 w-full">
-              <h2 className="text-2xl font-bold mt-2">
+            <div className='mt-16 w-full'>
+              <h2 className='text-2xl font-bold mt-2'>
                 {detail.user?.username}
               </h2>
-              <p className="text-muted-foreground mb-3 italic">
+              <p className='text-muted-foreground mb-3 italic'>
                 {detail.user?.email}
               </p>
 
               {detail.user?.role_front?.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                <div className='flex flex-wrap gap-2 justify-center mb-4'>
                   {detail.user.role_front.map((role: string, index: number) => (
                     <Badge
                       key={index}
-                      variant="outline"
-                      className="py-1.5 px-3 bg-indigo-50/90 border-indigo-200 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300 dark:border-indigo-800"
+                      variant='outline'
+                      className='py-1.5 px-3 bg-indigo-50/90 border-indigo-200 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300 dark:border-indigo-800'
                     >
                       {role}
                     </Badge>
@@ -571,7 +589,7 @@ export default function InstructorDetailPage() {
                 </div>
               )}
 
-              <div className="mt-3">
+              <div className='mt-3'>
                 <Badge
                   variant={detail.user?.is_active ? "default" : "destructive"}
                   className={`py-1.5 px-4 ${
@@ -585,19 +603,19 @@ export default function InstructorDetailPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col gap-3 mt-6">
+              <div className='flex flex-col gap-3 mt-6'>
                 <Button
-                  variant="outline"
-                  className="w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300"
+                  variant='outline'
+                  className='w-full border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-indigo-800 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300'
                   onClick={() => setOpen(true)}
                 >
-                  <User className="mr-2 h-4 w-4" /> Chỉnh sửa
+                  <User className='mr-2 h-4 w-4' /> Chỉnh sửa
                 </Button>
                 <Button
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm"
+                  className='w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 shadow-sm'
                   onClick={() => setIsScheduleModalOpen(true)}
                 >
-                  <Calendar className="mr-2 h-4 w-4" /> Xem lịch dạy
+                  <Calendar className='mr-2 h-4 w-4' /> Xem lịch dạy
                 </Button>
               </div>
             </div>
@@ -605,50 +623,50 @@ export default function InstructorDetailPage() {
         </Card>
 
         {/* Details Section */}
-        <Card className="md:col-span-2 border-0 shadow-md">
-          <CardHeader className="bg-gradient-to-r from-muted/50 to-muted border-b">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <User className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />{" "}
+        <Card className='md:col-span-2 border-0 shadow-md'>
+          <CardHeader className='bg-gradient-to-r from-muted/50 to-muted border-b'>
+            <CardTitle className='text-xl flex items-center gap-2'>
+              <User className='h-5 w-5 text-indigo-600 dark:text-indigo-400' />{" "}
               Chi tiết Huấn luyện viên
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
-                <h3 className="text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-4 border-b pb-2">
+          <CardContent className='space-y-8 pt-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+              <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
+                <h3 className='text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-4 border-b pb-2'>
                   Thông tin cá nhân
                 </h3>
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <User className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <User className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Tên đăng nhập
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.username || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <Mail className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <Mail className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Email
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.email || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <Calendar className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <Calendar className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Ngày tạo
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.created_at
                         ? new Date(detail.user.created_at).toLocaleString(
                             "vi-VN"
@@ -658,25 +676,25 @@ export default function InstructorDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <Phone className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <Phone className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Số điện thoại
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.phone || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <CalendarDays className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <CalendarDays className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Ngày sinh
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.birthday
                         ? new Date(detail.user.birthday).toLocaleDateString(
                             "vi-VN"
@@ -686,45 +704,45 @@ export default function InstructorDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <MapPin className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <MapPin className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Địa chỉ
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.address || "-"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
-                <h3 className="text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-4 border-b pb-2">
+              <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
+                <h3 className='text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-4 border-b pb-2'>
                   Thông tin công việc
                 </h3>
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <GraduationCap className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <GraduationCap className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Chuyên môn
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {detail.user?.role_front?.join(", ") || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
-                  <Building className="h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
+                  <Building className='h-5 w-5 mt-0.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className='text-sm font-medium text-muted-foreground'>
                       Chi nhánh
                     </p>
-                    <p className="font-medium mt-0.5">
+                    <p className='font-medium mt-0.5'>
                       {isFetchingTenant ? (
-                        <span className="inline-flex items-center">
-                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                        <span className='inline-flex items-center'>
+                          <Loader2 className='h-3 w-3 mr-2 animate-spin' />
                           Đang tải...
                         </span>
                       ) : (
@@ -736,30 +754,91 @@ export default function InstructorDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-indigo-800 dark:text-indigo-300 flex items-center mb-4 border-b pb-2">
-                <Award className="h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400" />{" "}
+            {/* Specialist Information Section */}
+            <div className='space-y-6'>
+              <h3 className='text-lg font-semibold text-indigo-800 dark:text-indigo-300 flex items-center mb-4 border-b pb-2'>
+                <Target className='h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400' />
+                Thông tin chuyên môn
+              </h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-4 bg-muted/50 p-5 rounded-lg'>
+                  <h4 className='text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-3 border-b pb-2'>
+                    Danh mục khóa học
+                  </h4>
+                  {specialistInfo?.category &&
+                  specialistInfo.category.length > 0 ? (
+                    <div className='flex flex-wrap gap-2'>
+                      {specialistInfo.category.map(
+                        (cat: any, index: number) => (
+                          <Badge
+                            key={index}
+                            variant='secondary'
+                            className='bg-indigo-100 hover:bg-indigo-200 text-indigo-800 border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-800'
+                          >
+                            {typeof cat === "string" ? cat : cat.title || cat}
+                          </Badge>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p className='text-muted-foreground italic'>
+                      Chưa cập nhật
+                    </p>
+                  )}
+                </div>
+
+                <div className='space-y-4 bg-muted/50 p-5 rounded-lg'>
+                  <h4 className='text-md font-semibold text-indigo-800 dark:text-indigo-300 mb-3 border-b pb-2'>
+                    Độ tuổi
+                  </h4>
+                  {specialistInfo?.age_types &&
+                  specialistInfo.age_types.length > 0 ? (
+                    <div className='flex flex-wrap gap-2'>
+                      {specialistInfo.age_types.map(
+                        (age: any, index: number) => (
+                          <Badge
+                            key={index}
+                            variant='outline'
+                            className='border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950/30'
+                          >
+                            {typeof age === "string" ? age : age.title || age}
+                          </Badge>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p className='text-muted-foreground italic'>
+                      Chưa cập nhật
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className='space-y-6'>
+              <h3 className='text-lg font-semibold text-indigo-800 dark:text-indigo-300 flex items-center mb-4 border-b pb-2'>
+                <Award className='h-5 w-5 mr-2 text-indigo-600 dark:text-indigo-400' />{" "}
                 Lớp học đang giảng dạy
               </h3>
               {detail.classesAsInstructor &&
               detail.classesAsInstructor.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                   {detail.classesAsInstructor.map((classItem: any) => (
                     <Card
                       key={classItem._id}
-                      className="border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 hover:shadow-md transition-shadow"
+                      className='border border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 hover:shadow-md transition-shadow'
                     >
-                      <CardContent className="p-5">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="bg-indigo-100 dark:bg-indigo-900/50 rounded-full p-2">
-                              <GraduationCap className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                      <CardContent className='p-5'>
+                        <div className='flex items-start justify-between mb-3'>
+                          <div className='flex items-center gap-2'>
+                            <div className='bg-indigo-100 dark:bg-indigo-900/50 rounded-full p-2'>
+                              <GraduationCap className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
                             </div>
                             <div>
-                              <h4 className="font-semibold text-indigo-900 dark:text-indigo-200">
+                              <h4 className='font-semibold text-indigo-900 dark:text-indigo-200'>
                                 {classItem.title || classItem.name || "Lớp học"}
                               </h4>
-                              <p className="text-sm text-indigo-700 dark:text-indigo-400">
+                              <p className='text-sm text-indigo-700 dark:text-indigo-400'>
                                 ID:{" "}
                                 {classItem._id?.slice(-8) ||
                                   classItem.id?.slice(-8) ||
@@ -776,41 +855,41 @@ export default function InstructorDetailPage() {
                           </Badge> */}
                         </div>
 
-                        <div className="space-y-2 text-sm">
+                        <div className='space-y-2 text-sm'>
                           {classItem.description && (
-                            <p className="text-indigo-700/80 dark:text-indigo-300/80 mb-3">
+                            <p className='text-indigo-700/80 dark:text-indigo-300/80 mb-3'>
                               {classItem.description}
                             </p>
                           )}
 
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                            <span className="text-muted-foreground">
+                          <div className='flex items-center gap-2'>
+                            <Users className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                            <span className='text-muted-foreground'>
                               Học viên:
                             </span>
-                            <span className="font-medium">
+                            <span className='font-medium'>
                               {classItem.member?.length || 0} người
                             </span>
                           </div>
 
                           {classItem.max_members && (
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                              <span className="text-muted-foreground">
+                            <div className='flex items-center gap-2'>
+                              <Users className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
                                 Sĩ số tối đa:
                               </span>
-                              <span className="font-medium">
+                              <span className='font-medium'>
                                 {classItem.max_members} người
                               </span>
                             </div>
                           )}
 
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                            <span className="text-muted-foreground">
+                          <div className='flex items-center gap-2'>
+                            <Calendar className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                            <span className='text-muted-foreground'>
                               Ngày tạo:
                             </span>
-                            <span className="font-medium">
+                            <span className='font-medium'>
                               {classItem.created_at
                                 ? new Date(
                                     classItem.created_at
@@ -820,12 +899,12 @@ export default function InstructorDetailPage() {
                           </div>
 
                           {classItem.course && (
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                              <span className="text-muted-foreground">
+                            <div className='flex items-center gap-2'>
+                              <BookOpen className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
                                 Khóa học:
                               </span>
-                              <span className="font-medium">
+                              <span className='font-medium'>
                                 {typeof classItem.course === "object" &&
                                 classItem.course.title
                                   ? classItem.course.title
@@ -835,26 +914,26 @@ export default function InstructorDetailPage() {
                           )}
 
                           {classItem.level && (
-                            <div className="flex items-center gap-2">
-                              <Award className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
-                              <span className="text-muted-foreground">
+                            <div className='flex items-center gap-2'>
+                              <Award className='h-4 w-4 text-indigo-500 dark:text-indigo-400' />
+                              <span className='text-muted-foreground'>
                                 Trình độ:
                               </span>
-                              <span className="font-medium">
+                              <span className='font-medium'>
                                 {classItem.level}
                               </span>
                             </div>
                           )}
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-indigo-200 dark:border-indigo-800">
+                        <div className='mt-4 pt-3 border-t border-indigo-200 dark:border-indigo-800'>
                           <Link
                             href={`/dashboard/manager/class/${
                               classItem._id || classItem.id
                             }`}
-                            className="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors w-full justify-center"
+                            className='inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors w-full justify-center'
                           >
-                            <Eye className="mr-2 h-3 w-3" />
+                            <Eye className='mr-2 h-3 w-3' />
                             Xem chi tiết lớp học
                           </Link>
                         </div>
@@ -863,37 +942,40 @@ export default function InstructorDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="bg-indigo-50 border border-indigo-100 rounded-md p-6 text-center dark:bg-indigo-950/30 dark:border-indigo-800">
-                  <div className="bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm">
-                    <Users className="h-8 w-8 text-indigo-400" />
+                <div className='bg-indigo-50 border border-indigo-100 rounded-md p-6 text-center dark:bg-indigo-950/30 dark:border-indigo-800'>
+                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
+                    <Users className='h-8 w-8 text-indigo-400' />
                   </div>
-                  <p className="text-indigo-900 dark:text-indigo-200 font-medium mb-1">
+                  <p className='text-indigo-900 dark:text-indigo-200 font-medium mb-1'>
                     Chưa có lớp học nào được phân công
                   </p>
-                  <p className="text-indigo-700/70 dark:text-indigo-300/70 text-sm mb-4">
+                  <p className='text-indigo-700/70 dark:text-indigo-300/70 text-sm mb-4'>
                     Huấn luyện viên chưa được phân công giảng dạy lớp học nào
                   </p>
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="outline"
                     className="bg-background hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
                   >
                     <span className="mr-1">+</span> Phân công lớp học mới
-                  </Button>
+                  </Button> */}
                 </div>
               )}
             </div>
 
-            <Separator className="my-6" />
+            <Separator className='my-6' />
           </CardContent>
         </Card>
       </div>
 
       {/* Edit Instructor Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <DialogContent className='sm:max-w-[500px]'>
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className='text-lg font-semibold'>
               Chỉnh sửa thông tin Huấn luyện viên
             </DialogTitle>
             <DialogDescription>
@@ -901,16 +983,22 @@ export default function InstructorDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className='space-y-4'
+            >
+              <div className='grid grid-cols-1 gap-4'>
                 <FormField
                   control={form.control}
-                  name="username"
+                  name='username'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tên đăng nhập</FormLabel>
                       <FormControl>
-                        <Input placeholder="Tên đăng nhập" {...field} />
+                        <Input
+                          placeholder='Tên đăng nhập'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -918,12 +1006,15 @@ export default function InstructorDetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="email"
+                  name='email'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Email" {...field} />
+                        <Input
+                          placeholder='Email'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -931,12 +1022,15 @@ export default function InstructorDetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name='phone'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Số điện thoại</FormLabel>
                       <FormControl>
-                        <Input placeholder="Số điện thoại" {...field} />
+                        <Input
+                          placeholder='Số điện thoại'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -944,12 +1038,16 @@ export default function InstructorDetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="birthday"
+                  name='birthday'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ngày sinh</FormLabel>
                       <FormControl>
-                        <Input type="date" placeholder="Ngày sinh" {...field} />
+                        <Input
+                          type='date'
+                          placeholder='Ngày sinh'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -957,12 +1055,15 @@ export default function InstructorDetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="address"
+                  name='address'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Địa chỉ</FormLabel>
                       <FormControl>
-                        <Input placeholder="Địa chỉ" {...field} />
+                        <Input
+                          placeholder='Địa chỉ'
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -970,11 +1071,11 @@ export default function InstructorDetailPage() {
                 />{" "}
                 <FormField
                   control={form.control}
-                  name="is_active"
+                  name='is_active'
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base font-medium">
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base font-medium'>
                           Trạng thái hoạt động
                         </FormLabel>
                         <FormDescription>
@@ -987,7 +1088,7 @@ export default function InstructorDetailPage() {
                         <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
-                          aria-label="Toggle instructor active status"
+                          aria-label='Toggle instructor active status'
                         />
                       </FormControl>
                     </FormItem>
@@ -996,38 +1097,38 @@ export default function InstructorDetailPage() {
                 {/* Avatar Upload Field */}
                 <FormField
                   control={form.control}
-                  name="avatar"
+                  name='avatar'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ảnh đại diện</FormLabel>
                       <FormControl>
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-16 w-16 border-4 border-background shadow-md">
+                        <div className='flex items-center gap-4'>
+                          <Avatar className='h-16 w-16 border-4 border-background shadow-md'>
                             <AvatarImage
                               src={avatarUrl}
                               alt={detail.user?.username || "Instructor"}
-                              className="object-cover"
+                              className='object-cover'
                             />
-                            <AvatarFallback className="text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white">
+                            <AvatarFallback className='text-2xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white'>
                               {detail.user?.username?.charAt(0) || "G"}
                             </AvatarFallback>
                           </Avatar>
-                          <label className="flex-1">
+                          <label className='flex-1'>
                             <Button
-                              variant="outline"
-                              className="w-full"
-                              type="button"
+                              variant='outline'
+                              className='w-full'
+                              type='button'
                               asChild
                             >
-                              <span className="flex items-center justify-center">
-                                <Upload className="mr-2 h-4 w-4" /> Tải ảnh lên
+                              <span className='flex items-center justify-center'>
+                                <Upload className='mr-2 h-4 w-4' /> Tải ảnh lên
                               </span>
                             </Button>
                             <input
-                              type="file"
-                              accept="image/*"
+                              type='file'
+                              accept='image/*'
                               onChange={(e) => handleAvatarUpload(e)}
-                              className="hidden"
+                              className='hidden'
                             />
                           </label>
                         </div>
@@ -1040,13 +1141,13 @@ export default function InstructorDetailPage() {
 
               <DialogFooter>
                 <Button
-                  variant="outline"
-                  className="mr-2"
+                  variant='outline'
+                  className='mr-2'
                   onClick={() => setOpen(false)}
                 >
                   Huỷ
                 </Button>
-                <Button type="submit">Lưu thay đổi</Button>
+                <Button type='submit'>Lưu thay đổi</Button>
               </DialogFooter>
             </form>
           </Form>
@@ -1059,7 +1160,7 @@ export default function InstructorDetailPage() {
         onOpenChange={setIsScheduleModalOpen}
         userId={detail?.user?._id || instructorId}
         userName={detail?.user?.username || ""}
-        userType="instructor"
+        userType='instructor'
       />
     </div>
   );

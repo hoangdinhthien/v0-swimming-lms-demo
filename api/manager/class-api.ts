@@ -79,6 +79,7 @@ export interface ClassDetails {
   instructor: any[];
   sessions_exceeded: number;
   sessions_remaining: number;
+  show_on_regist_course?: boolean; // Add show_on_regist_course field
 }
 
 // New interfaces for classes list
