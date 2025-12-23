@@ -94,6 +94,7 @@ export interface ClassItem {
   updated_by: string;
   tenant_id: string;
   schedules?: Schedule[]; // Add schedules array
+  show_on_regist_course?: boolean; // Add show_on_regist_course field
 }
 
 // Interface for classrooms (from classrooms-api)

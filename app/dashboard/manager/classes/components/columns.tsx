@@ -18,6 +18,7 @@ export type ClassItem = {
   member?: string[];
   schedule?: string;
   schedules?: any[];
+  show_on_regist_course?: boolean;
 };
 
 // Create columns with search query for highlighting
@@ -27,15 +28,21 @@ export const createColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tên lớp" />
+      <DataTableColumnHeader
+        column={column}
+        title='Tên lớp'
+      />
     ),
     cell: ({ row }) => {
       return (
         <Link
           href={`/dashboard/manager/class/${row.original._id}`}
-          className="font-medium hover:text-primary hover:underline transition-colors"
+          className='font-medium hover:text-primary hover:underline transition-colors'
         >
-          <HighlightText text={row.original.name} searchQuery={searchQuery} />
+          <HighlightText
+            text={row.original.name}
+            searchQuery={searchQuery}
+          />
         </Link>
       );
     },
@@ -43,7 +50,10 @@ export const createColumns = (
   {
     accessorKey: "course.title",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Khóa học" />
+      <DataTableColumnHeader
+        column={column}
+        title='Khóa học'
+      />
     ),
     cell: ({ row }) => {
       return (
@@ -62,14 +72,14 @@ export const createColumns = (
 
       if (!instructor) {
         return (
-          <span className="text-muted-foreground text-sm">Chưa phân công</span>
+          <span className='text-muted-foreground text-sm'>Chưa phân công</span>
         );
       }
 
       // Handle string (ID)
       if (typeof instructor === "string") {
         return (
-          <span className="text-muted-foreground text-sm">
+          <span className='text-muted-foreground text-sm'>
             Không có thông tin
           </span>
         );
@@ -79,14 +89,19 @@ export const createColumns = (
       if (typeof instructor === "object" && !Array.isArray(instructor)) {
         const displayName =
           instructor.username || instructor.email || "Không có thông tin";
-        return <HighlightText text={displayName} searchQuery={searchQuery} />;
+        return (
+          <HighlightText
+            text={displayName}
+            searchQuery={searchQuery}
+          />
+        );
       }
 
       // Handle array
       if (Array.isArray(instructor)) {
         if (instructor.length === 0) {
           return (
-            <span className="text-muted-foreground text-sm">
+            <span className='text-muted-foreground text-sm'>
               Chưa phân công
             </span>
           );
@@ -104,19 +119,22 @@ export const createColumns = (
 
         if (names.length === 0) {
           return (
-            <span className="text-muted-foreground text-sm">
+            <span className='text-muted-foreground text-sm'>
               Không có thông tin
             </span>
           );
         }
 
         return (
-          <HighlightText text={names.join(", ")} searchQuery={searchQuery} />
+          <HighlightText
+            text={names.join(", ")}
+            searchQuery={searchQuery}
+          />
         );
       }
 
       return (
-        <span className="text-muted-foreground text-sm">
+        <span className='text-muted-foreground text-sm'>
           Không có thông tin
         </span>
       );
@@ -125,17 +143,23 @@ export const createColumns = (
   {
     accessorKey: "member",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Sĩ số" />
+      <DataTableColumnHeader
+        column={column}
+        title='Sĩ số'
+      />
     ),
     cell: ({ row }) => {
       const count = row.original.member?.length || 0;
-      return <span className="text-sm">{count} học viên</span>;
+      return <span className='text-sm'>{count} học viên</span>;
     },
   },
   {
     id: "sessions",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Buổi học đã xếp" />
+      <DataTableColumnHeader
+        column={column}
+        title='Buổi học đã xếp'
+      />
     ),
     cell: ({ row }) => {
       const scheduledCount = row.original.schedules?.length || 0;
@@ -143,7 +167,7 @@ export const createColumns = (
 
       if (totalSessions === 0) {
         return (
-          <span className="text-muted-foreground text-sm">Chưa xác định</span>
+          <span className='text-muted-foreground text-sm'>Chưa xác định</span>
         );
       }
 
@@ -151,7 +175,7 @@ export const createColumns = (
       const remaining = totalSessions - scheduledCount;
 
       return (
-        <div className="flex flex-col">
+        <div className='flex flex-col'>
           <span
             className={`text-sm font-medium ${
               isComplete ? "text-green-600" : "text-orange-600"
@@ -160,34 +184,36 @@ export const createColumns = (
             {scheduledCount}/{totalSessions} buổi
           </span>
           {!isComplete && remaining > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className='text-xs text-muted-foreground'>
               Còn thiếu {remaining} buổi
             </span>
           )}
-          {isComplete && <span className="text-xs text-green-600">Đã đủ</span>}
+          {isComplete && <span className='text-xs text-green-600'>Đã đủ</span>}
         </div>
       );
     },
   },
   {
     id: "status", // Use simple ID instead of nested accessor
-    accessorFn: (row) => row.course.is_active ?? true, // Use accessorFn for nested data
-    header: "Trạng thái",
+    accessorFn: (row) => row.show_on_regist_course ?? false, // Use accessorFn for show_on_regist_course
+    header: "Trạng thái đăng ký",
     cell: ({ row }) => {
-      const isActive = row.original.course.is_active ?? true;
+      const showOnRegist = row.original.show_on_regist_course ?? false;
       return (
         <Badge
-          variant={isActive ? "default" : "secondary"}
-          className={`whitespace-nowrap ${isActive ? "bg-green-500" : ""}`}
+          variant={showOnRegist ? "default" : "secondary"}
+          className={`whitespace-nowrap ${
+            showOnRegist ? "bg-blue-500" : "text-white"
+          }`}
         >
-          {isActive ? "Hoạt động" : "Kết thúc"}
+          {showOnRegist ? "Hiển thị" : "Ẩn"}
         </Badge>
       );
     },
     filterFn: (row, id, value) => {
-      const isActive = row.original.course.is_active ?? true;
-      if (value === "active") return isActive === true;
-      if (value === "inactive") return isActive === false;
+      const showOnRegist = row.original.show_on_regist_course ?? false;
+      if (value === "active") return showOnRegist === true;
+      if (value === "inactive") return showOnRegist === false;
       return true;
     },
   },
