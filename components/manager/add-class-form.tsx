@@ -1275,7 +1275,7 @@ export function AddClassForm({
           disabled={loading}
         >
           <X className='mr-2 h-4 w-4' />
-          Hủy cmm
+          Hủy
         </Button>
       </div>
 
