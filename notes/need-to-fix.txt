@@ -25,3 +25,5 @@ tại sao khi tôi APPROVED cái data-review đó xong rồi sau đó tôi mở 
 
 
 ====================================
+
+ở phần 'Chọn hồ bơi' ở step 2 trong modal 'xếp lịch lớp học' (schedule-preview-modal.tsx), tôi muốn nó có thể scroll dược, hiện tại đang không scroll được 

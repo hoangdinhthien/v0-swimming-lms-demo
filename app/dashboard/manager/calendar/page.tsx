@@ -632,7 +632,7 @@ export default function ImprovedAntdCalendarPage() {
             isPast ? "opacity-60" : ""
           } hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
         >
-          <div className="text-xs text-gray-400 dark:text-gray-600 text-center py-2">
+          <div className='text-xs text-gray-400 dark:text-gray-600 text-center py-2'>
             Chưa có lớp học
           </div>
         </div>
@@ -645,17 +645,20 @@ export default function ImprovedAntdCalendarPage() {
           isPast ? "opacity-60" : ""
         } hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors`}
       >
-        <ul className="events-list max-h-[135px] overflow-y-auto overflow-x-auto space-y-2 pr-1 pb-2">
+        <ul className='events-list max-h-[135px] overflow-y-auto overflow-x-auto space-y-2 pr-1 pb-2'>
           {events.map((event, index) => (
-            <li key={index} className="event-item">
+            <li
+              key={index}
+              className='event-item'
+            >
               <div
-                className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2 py-1.5 transition-colors text-xs whitespace-nowrap inline-block min-w-full"
+                className='cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded px-2 py-1.5 transition-colors text-xs whitespace-nowrap inline-block min-w-full'
                 style={{
                   backgroundColor: `${event.color}15`,
                   borderLeft: `3px solid ${event.color}`,
                 }}
               >
-                <span className="font-medium">{event.slotTitle}</span>
+                <span className='font-medium'>{event.slotTitle}</span>
                 {" - "}
                 <span>{event.className}</span>
               </div>
@@ -1530,21 +1533,21 @@ export default function ImprovedAntdCalendarPage() {
 
   if ((loading && isInitialLoading) || slotsLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-16">
-        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">Đang tải lịch học...</p>
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <Loader2 className='h-10 w-10 animate-spin text-muted-foreground mb-4' />
+        <p className='text-muted-foreground'>Đang tải lịch học...</p>
       </div>
     );
   }
 
   if (error || slotsError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-16">
-        <div className="text-center space-y-4">
-          <div className="text-red-500 text-lg font-semibold">
+      <div className='flex flex-col items-center justify-center min-h-screen py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-red-500 text-lg font-semibold'>
             Lỗi tải dữ liệu
           </div>
-          <p className="text-muted-foreground">{error || slotsError}</p>
+          <p className='text-muted-foreground'>{error || slotsError}</p>
           <Button onClick={() => window.location.reload()}>Thử lại</Button>
         </div>
       </div>
@@ -1553,22 +1556,22 @@ export default function ImprovedAntdCalendarPage() {
 
   return (
     <ConfigProvider locale={locale}>
-      <div className="container mx-auto py-8 space-y-6">
+      <div className='container mx-auto py-8 space-y-6'>
         {/* Header with Auto Schedule and Refresh Buttons */}
-        <div className="flex justify-between items-center mb-4">
+        <div className='flex justify-between items-center mb-4'>
           <div>
-            <h1 className="text-2xl font-bold">Lịch học</h1>
-            <p className="text-muted-foreground">
+            <h1 className='text-2xl font-bold'>Lịch học</h1>
+            <p className='text-muted-foreground'>
               Quản lý và xếp lịch học cho các lớp
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
               onClick={handleRefresh}
               disabled={refreshing}
-              size="lg"
-              variant="outline"
-              className="gap-2 h-12"
+              size='lg'
+              variant='outline'
+              className='gap-2 h-12'
             >
               <RefreshCw
                 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -1577,24 +1580,30 @@ export default function ImprovedAntdCalendarPage() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="lg" className="gap-2">
+                <Button
+                  size='lg'
+                  className='gap-2'
+                >
                   Quản lý lớp học
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent
+                align='end'
+                className='w-56'
+              >
                 <DropdownMenuItem
                   onClick={handleOpenCreateClassesModal}
-                  className="cursor-pointer"
+                  className='cursor-pointer'
                 >
-                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  <CalendarPlus className='mr-2 h-4 w-4' />
                   <span>Tạo lớp học</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleOpenSchedulePreviewModal}
-                  className="cursor-pointer"
+                  className='cursor-pointer'
                 >
-                  <Clock className="mr-2 h-4 w-4" />
+                  <Clock className='mr-2 h-4 w-4' />
                   <span>Xếp lịch cho lớp có sẵn</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -1602,10 +1611,10 @@ export default function ImprovedAntdCalendarPage() {
           </div>
         </div>
         {/* Filters Row - Advanced Multi-select */}
-        <div className="bg-white dark:bg-gray-900 p-4 rounded-2xl border-2 border-primary/10 shadow-lg mb-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-end">
-            <div className="space-y-3 flex-[2] w-full lg:w-auto min-w-0">
-              <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1">
+        <div className='bg-white dark:bg-gray-900 p-4 rounded-2xl border-2 border-primary/10 shadow-lg mb-6'>
+          <div className='flex flex-col lg:flex-row gap-4 items-end'>
+            <div className='space-y-3 flex-[2] w-full lg:w-auto min-w-0'>
+              <Label className='text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1'>
                 Lớp học
               </Label>
               <MultiSelect
@@ -1615,13 +1624,13 @@ export default function ImprovedAntdCalendarPage() {
                 }))}
                 value={pendingSearchClassroom}
                 onChange={setPendingSearchClassroom}
-                placeholder="Tất cả lớp học"
-                className="h-12 shadow-sm w-full"
+                placeholder='Tất cả lớp học'
+                className='h-12 shadow-sm w-full'
               />
             </div>
 
-            <div className="space-y-3 flex-[1.5] w-full lg:w-auto min-w-0">
-              <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1">
+            <div className='space-y-3 flex-[1.5] w-full lg:w-auto min-w-0'>
+              <Label className='text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1'>
                 Khung giờ
               </Label>
               <MultiSelect
@@ -1631,13 +1640,13 @@ export default function ImprovedAntdCalendarPage() {
                 }))}
                 value={pendingSearchSlot}
                 onChange={setPendingSearchSlot}
-                placeholder="Tất cả khung giờ"
-                className="h-12 shadow-sm w-full"
+                placeholder='Tất cả khung giờ'
+                className='h-12 shadow-sm w-full'
               />
             </div>
 
-            <div className="space-y-3 flex-[2] w-full lg:w-auto min-w-0">
-              <Label className="text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1">
+            <div className='space-y-3 flex-[2] w-full lg:w-auto min-w-0'>
+              <Label className='text-xs font-black uppercase tracking-[0.2em] text-primary/60 ml-1'>
                 Huấn luyện viên
               </Label>
               <MultiSelect
@@ -1647,60 +1656,67 @@ export default function ImprovedAntdCalendarPage() {
                 }))}
                 value={pendingSearchInstructor}
                 onChange={setPendingSearchInstructor}
-                placeholder="Tất cả HLV"
-                className="h-12 shadow-sm w-full"
+                placeholder='Tất cả HLV'
+                className='h-12 shadow-sm w-full'
               />
             </div>
 
-            <div className="flex gap-2 flex-none w-full lg:w-auto">
+            <div className='flex gap-2 flex-none w-full lg:w-auto'>
               <Button
                 onClick={handleApplySearch}
-                size="lg"
-                className="flex-1 lg:w-[140px] h-12 shadow-md hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px] transition-all duration-200 bg-primary text-primary-foreground font-bold"
+                size='lg'
+                className='flex-1 lg:w-[140px] h-12 shadow-md hover:shadow-lg hover:translate-y-[-2px] active:translate-y-[0px] transition-all duration-200 bg-primary text-primary-foreground font-bold'
                 disabled={loading && !isInitialLoading}
               >
                 {loading && !isInitialLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className='h-5 w-5 animate-spin' />
                 ) : (
-                  <Search className="h-5 w-5 mr-2" />
+                  <Search className='h-5 w-5 mr-2' />
                 )}
                 <span>Tìm kiếm</span>
               </Button>
               <Button
                 onClick={handleClearFilters}
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 shadow-sm border-2 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/30 transition-all duration-200 group flex-shrink-0"
-                title="Xóa bộ lọc"
+                variant='outline'
+                size='icon'
+                className='h-12 w-12 shadow-sm border-2 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/30 transition-all duration-200 group flex-shrink-0'
+                title='Xóa bộ lọc'
               >
-                <Eraser className="h-5 w-5 group-hover:rotate-[-10deg] transition-transform" />
+                <Eraser className='h-5 w-5 group-hover:rotate-[-10deg] transition-transform' />
               </Button>
             </div>
           </div>
         </div>
         {/* Pool Overflow Warning Alert */}
         {poolOverflowWarnings.length > 0 && (
-          <Accordion type="single" collapsible className="w-full mb-4">
-            <AccordionItem value="pool-warnings" className="border-0">
-              <AccordionTrigger className="px-6 py-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg hover:no-underline hover:bg-yellow-100 dark:hover:bg-yellow-900/30">
-                <div className="flex items-center gap-3 w-full">
-                  <div className="flex-1 text-left">
-                    <span className="font-semibold text-yellow-800 dark:text-yellow-200">
+          <Accordion
+            type='single'
+            collapsible
+            className='w-full mb-4'
+          >
+            <AccordionItem
+              value='pool-warnings'
+              className='border-0'
+            >
+              <AccordionTrigger className='px-6 py-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg hover:no-underline hover:bg-yellow-100 dark:hover:bg-yellow-900/30'>
+                <div className='flex items-center gap-3 w-full'>
+                  <div className='flex-1 text-left'>
+                    <span className='font-semibold text-yellow-800 dark:text-yellow-200'>
                       Cảnh báo: Hồ bơi vượt sức chứa
                     </span>
-                    <span className="text-sm text-yellow-700 dark:text-yellow-300 ml-2">
+                    <span className='text-sm text-yellow-700 dark:text-yellow-300 ml-2'>
                       ({poolOverflowWarnings.length} cảnh báo)
                     </span>
                   </div>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 pt-2 bg-yellow-50 dark:bg-yellow-900/20 border-x border-b border-yellow-200 dark:border-yellow-700 rounded-b-lg">
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+              <AccordionContent className='px-6 pb-4 pt-2 bg-yellow-50 dark:bg-yellow-900/20 border-x border-b border-yellow-200 dark:border-yellow-700 rounded-b-lg'>
+                <p className='text-sm text-yellow-700 dark:text-yellow-300 mb-4'>
                   Các hồ bơi sau đang vượt quá sức chứa. Vui lòng xem xét điều
                   chỉnh lịch học:
                 </p>
 
-                <div className="space-y-2">
+                <div className='space-y-2'>
                   {(() => {
                     // Group warnings by pool ID with details
                     const uniquePools = new Map<
@@ -1749,40 +1765,43 @@ export default function ImprovedAntdCalendarPage() {
                       (poolData, index) => (
                         <div
                           key={poolData.pool._id}
-                          className="border rounded-lg overflow-hidden bg-white dark:bg-gray-800"
+                          className='border rounded-lg overflow-hidden bg-white dark:bg-gray-800'
                         >
-                          <div className="px-4 py-3 bg-yellow-100 dark:bg-yellow-900/30">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <span className="font-semibold text-yellow-900 dark:text-yellow-100">
+                          <div className='px-4 py-3 bg-yellow-100 dark:bg-yellow-900/30'>
+                            <div className='flex items-center justify-between'>
+                              <div className='flex-1'>
+                                <span className='font-semibold text-yellow-900 dark:text-yellow-100'>
                                   {poolData.pool.title}
                                 </span>
-                                <span className="text-sm text-yellow-700 dark:text-yellow-300 ml-2">
+                                <span className='text-sm text-yellow-700 dark:text-yellow-300 ml-2'>
                                   - Sức chứa: {poolData.poolCapacity}, Đang sử
                                   dụng: {poolData.totalMembers}
                                 </span>
-                                <span className="text-red-600 dark:text-red-400 font-semibold ml-2">
+                                <span className='text-red-600 dark:text-red-400 font-semibold ml-2'>
                                   (Vượt {poolData.maxOverCapacity})
                                 </span>
                               </div>
-                              <Tag color="orange" className="ml-2">
+                              <Tag
+                                color='orange'
+                                className='ml-2'
+                              >
                                 {poolData.details.length} khung giờ
                               </Tag>
                             </div>
                           </div>
-                          <div className="px-4 py-3 bg-white dark:bg-gray-900">
-                            <div className="space-y-2">
+                          <div className='px-4 py-3 bg-white dark:bg-gray-900'>
+                            <div className='space-y-2'>
                               {poolData.details.map((detail, idx) => (
                                 <div
                                   key={idx}
-                                  className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 py-2 px-3 rounded bg-gray-50 dark:bg-gray-800"
+                                  className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 py-2 px-3 rounded bg-gray-50 dark:bg-gray-800'
                                 >
-                                  <span className="font-medium">
+                                  <span className='font-medium'>
                                     {dayjs(detail.date).format(
                                       "DD/MM/YYYY (dddd)"
                                     )}
                                   </span>
-                                  <span className="text-gray-400">-</span>
+                                  <span className='text-gray-400'>-</span>
                                   <span>
                                     {detail.slot.title} (
                                     {Math.floor(detail.slot.start_time)
@@ -1818,14 +1837,17 @@ export default function ImprovedAntdCalendarPage() {
         {/* Statistics Cards */}
         {scheduleEvents.length > 0 && (
           <Row gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Card className="text-center">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center">
-                    <div className="text-2xl font-bold mb-1">
+            <Col
+              xs={24}
+              sm={8}
+            >
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
                       {stats.totalEvents}
                     </div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
                       <TeamOutlined /> Tổng lớp học
                     </p>
                   </div>
@@ -1833,14 +1855,17 @@ export default function ImprovedAntdCalendarPage() {
               </Card>
             </Col>
 
-            <Col xs={24} sm={8}>
-              <Card className="text-center">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center">
-                    <div className="text-2xl font-bold mb-1">
+            <Col
+              xs={24}
+              sm={8}
+            >
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
                       {stats.totalSlots}
                     </div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
                       <ClockCircleOutlined /> Tổng khung giờ
                     </p>
                   </div>
@@ -1848,14 +1873,17 @@ export default function ImprovedAntdCalendarPage() {
               </Card>
             </Col>
 
-            <Col xs={24} sm={8}>
-              <Card className="text-center">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center">
-                    <div className="text-2xl font-bold mb-1">
+            <Col
+              xs={24}
+              sm={8}
+            >
+              <Card className='text-center'>
+                <CardContent className='pt-6'>
+                  <div className='flex flex-col items-center'>
+                    <div className='text-2xl font-bold mb-1'>
                       {stats.uniquePools}
                     </div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <p className='text-sm text-muted-foreground flex items-center gap-1'>
                       <EnvironmentOutlined /> Hồ bơi sử dụng
                     </p>
                   </div>
@@ -1865,15 +1893,15 @@ export default function ImprovedAntdCalendarPage() {
           </Row>
         )}
         {/* Main Calendar */}
-        <Card className="shadow-lg relative overflow-hidden">
+        <Card className='shadow-lg relative overflow-hidden'>
           {loading && !isInitialLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 backdrop-blur-[2px] transition-all duration-300">
-              <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-primary/20">
-                <div className="relative">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                  <div className="absolute inset-0 blur-lg bg-primary/20 animate-pulse rounded-full" />
+            <div className='absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 backdrop-blur-[2px] transition-all duration-300'>
+              <div className='flex flex-col items-center gap-4 p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-primary/20'>
+                <div className='relative'>
+                  <Loader2 className='h-12 w-12 animate-spin text-primary' />
+                  <div className='absolute inset-0 blur-lg bg-primary/20 animate-pulse rounded-full' />
                 </div>
-                <p className="text-sm font-bold tracking-widest text-primary animate-pulse">
+                <p className='text-sm font-bold tracking-widest text-primary animate-pulse'>
                   ĐANG CẬP NHẬT LỊCH HỌC...
                 </p>
               </div>
@@ -1896,24 +1924,24 @@ export default function ImprovedAntdCalendarPage() {
 
               if (events.length === 0) {
                 return (
-                  <div className="text-xs text-muted-foreground text-center py-2">
+                  <div className='text-xs text-muted-foreground text-center py-2'>
                     Chưa có lớp học
                   </div>
                 );
               }
 
               return (
-                <ul className="space-y-1 max-h-[80px] overflow-y-auto">
+                <ul className='space-y-1 max-h-[80px] overflow-y-auto'>
                   {events.map((event, index) => (
                     <li key={index}>
                       <div
-                        className="text-xs px-2 py-1 rounded truncate hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors"
+                        className='text-xs px-2 py-1 rounded truncate hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition-colors'
                         style={{
                           backgroundColor: `${event.color}15`,
                           borderLeft: `3px solid ${event.color}`,
                         }}
                       >
-                        <span className="font-medium">{event.slotTitle}</span>
+                        <span className='font-medium'>{event.slotTitle}</span>
                         {" - "}
                         <span>{event.className}</span>
                       </div>
@@ -1937,15 +1965,15 @@ export default function ImprovedAntdCalendarPage() {
           }}
         >
           <SheetContent
-            side="right"
-            className="w-[480px] sm:max-w-[480px] overflow-y-auto"
+            side='right'
+            className='w-[480px] sm:max-w-[480px] overflow-y-auto'
           >
             <SheetHeader>
-              <SheetTitle className="flex items-center gap-3">
-                <CalendarOutlined className="text-blue-500" />
+              <SheetTitle className='flex items-center gap-3'>
+                <CalendarOutlined className='text-blue-500' />
                 <span>Danh sách lớp học</span>
                 {drawerDate && (
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                  <span className='text-sm font-normal text-muted-foreground ml-2'>
                     {drawerDate.format("DD/MM/YYYY")}
                   </span>
                 )}
@@ -1962,11 +1990,11 @@ export default function ImprovedAntdCalendarPage() {
               </SheetDescription>
             </SheetHeader>
 
-            <div className="mt-6">
+            <div className='mt-6'>
               {drawerLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                  <p className="text-muted-foreground">Đang tải chi tiết...</p>
+                <div className='flex flex-col items-center justify-center py-20'>
+                  <Loader2 className='h-10 w-10 animate-spin text-primary mb-4' />
+                  <p className='text-muted-foreground'>Đang tải chi tiết...</p>
                 </div>
               ) : (
                 drawerDate && (
@@ -1979,33 +2007,36 @@ export default function ImprovedAntdCalendarPage() {
                         loadClassManagementData(false);
                       }
                     }}
-                    className="w-full"
+                    className='w-full'
                   >
-                    <TabsList className="grid w-full grid-cols-3 mb-6">
-                      <TabsTrigger value="view">Xem lịch học</TabsTrigger>
+                    <TabsList className='grid w-full grid-cols-3 mb-6'>
+                      <TabsTrigger value='view'>Xem lịch học</TabsTrigger>
                       {!drawerDate!.isBefore(dayjs(), "day") && (
-                        <TabsTrigger value="add">Thêm lớp học</TabsTrigger>
+                        <TabsTrigger value='add'>Thêm lớp học</TabsTrigger>
                       )}
                       {editingEvent && (
-                        <TabsTrigger value="edit">Sửa buổi học</TabsTrigger>
+                        <TabsTrigger value='edit'>Sửa buổi học</TabsTrigger>
                       )}
                     </TabsList>
 
-                    <TabsContent value="view" className="space-y-4">
+                    <TabsContent
+                      value='view'
+                      className='space-y-4'
+                    >
                       {getEventsForDate(drawerDate!).length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border/50">
-                          <CalendarOutlined className="text-4xl mb-4 opacity-20" />
-                          <p className="font-medium text-lg">
+                        <div className='flex flex-col items-center justify-center py-20 text-muted-foreground bg-muted/20 rounded-2xl border-2 border-dashed border-border/50'>
+                          <CalendarOutlined className='text-4xl mb-4 opacity-20' />
+                          <p className='font-medium text-lg'>
                             Không có lớp học nào
                           </p>
-                          <p className="text-sm">
+                          <p className='text-sm'>
                             Chọn ngày khác hoặc thêm lớp mới
                           </p>
                           {!drawerDate!.isBefore(dayjs(), "day") && (
                             <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-4"
+                              variant='outline'
+                              size='sm'
+                              className='mt-4'
                               onClick={() => {
                                 setClassManagementMode("add");
                                 loadClassManagementData(false);
@@ -2016,19 +2047,19 @@ export default function ImprovedAntdCalendarPage() {
                           )}
                         </div>
                       ) : (
-                        <div className="space-y-4">
+                        <div className='space-y-4'>
                           {/* Search Bar for Classes in drawer */}
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <div className='relative'>
+                            <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                             <Input
-                              placeholder="Lọc lớp, HLV, hồ bơi..."
+                              placeholder='Lọc lớp, HLV, hồ bơi...'
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className="pl-10 h-10"
+                              className='pl-10 h-10'
                             />
                           </div>
 
-                          <div className="space-y-4">
+                          <div className='space-y-4'>
                             {(() => {
                               const dayEvents = getEventsForDate(drawerDate!);
                               const filtered = filterEvents(dayEvents);
@@ -2036,7 +2067,7 @@ export default function ImprovedAntdCalendarPage() {
 
                               if (filtered.length === 0) {
                                 return (
-                                  <div className="text-center py-10 text-muted-foreground">
+                                  <div className='text-center py-10 text-muted-foreground'>
                                     Không tìm thấy lớp học nào phù hợp
                                   </div>
                                 );
@@ -2044,121 +2075,118 @@ export default function ImprovedAntdCalendarPage() {
 
                               return (
                                 <Accordion
-                                  type="multiple"
+                                  type='multiple'
                                   defaultValue={grouped.map(
                                     (_, i) => `slot-${i}`
                                   )}
-                                  className="space-y-3"
+                                  className='space-y-3'
                                 >
                                   {grouped.map(([slotTitle, slotEvents], i) => (
                                     <AccordionItem
                                       key={slotTitle}
                                       value={`slot-${i}`}
-                                      className="border rounded-xl overflow-hidden shadow-sm"
+                                      className='border rounded-xl overflow-hidden shadow-sm'
                                     >
-                                      <AccordionTrigger className="px-4 py-3 bg-muted/30 hover:bg-muted/50 hover:no-underline hover:px-5 transition-all">
-                                        <div className="flex items-center gap-3 w-full">
-                                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                            <Clock className="h-4 w-4" />
+                                      <AccordionTrigger className='px-4 py-3 bg-muted/30 hover:bg-muted/50 hover:no-underline hover:px-5 transition-all'>
+                                        <div className='flex items-center gap-3 w-full'>
+                                          <div className='h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary'>
+                                            <Clock className='h-4 w-4' />
                                           </div>
-                                          <div className="flex-1 text-left">
-                                            <span className="font-bold text-sm block">
+                                          <div className='flex-1 text-left'>
+                                            <span className='font-bold text-sm block'>
                                               {slotTitle}
                                             </span>
-                                            <span className="text-xs text-muted-foreground">
+                                            <span className='text-xs text-muted-foreground'>
                                               {slotEvents[0]?.slotTime} •{" "}
                                               {slotEvents.length} lớp học
                                             </span>
                                           </div>
                                         </div>
                                       </AccordionTrigger>
-                                      <AccordionContent className="p-3 space-y-3 bg-white dark:bg-gray-900 border-t">
+                                      <AccordionContent className='p-3 space-y-3 bg-white dark:bg-gray-900 border-t'>
                                         {slotEvents.map((event, eventIndex) => (
                                           <Card
                                             key={eventIndex}
-                                            className="border-2 border-primary/5 hover:border-primary/20 transition-all group h-[150px] flex flex-col justify-between"
+                                            className='border-2 border-primary/5 hover:border-primary/20 transition-all group h-[150px] flex flex-col justify-between relative'
                                           >
-                                            <CardContent className="p-4 h-full relative overflow-hidden">
+                                            <CardContent className='p-4 h-full relative overflow-hidden'>
                                               {/* Visual Accent */}
                                               <div
-                                                className="absolute top-0 left-0 w-1 h-full"
+                                                className='absolute top-0 left-0 w-1 h-full'
                                                 style={{
                                                   backgroundColor: event.color,
                                                 }}
                                               />
 
-                                              <div className="flex justify-between items-start h-full">
-                                                <div className="flex flex-col h-full flex-1">
-                                                  <div className="flex items-center gap-2 mb-2">
-                                                    <span className="font-bold text-lg leading-tight truncate">
-                                                      {event.className}
-                                                    </span>
-                                                  </div>
-                                                  <div className="flex flex-wrap gap-2 mb-3">
-                                                    <Badge
-                                                      variant="outline"
-                                                      className="text-[10px] uppercase font-bold tracking-wider py-0 px-2"
-                                                      style={{
-                                                        borderColor: `${event.color}40`,
-                                                        color: event.color,
-                                                        backgroundColor: `${event.color}10`,
-                                                      }}
-                                                    >
-                                                      {event.course}
-                                                    </Badge>
-                                                  </div>
-
-                                                  <div className="space-y-1 mt-auto">
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                      <EnvironmentOutlined className="h-3 w-3" />
-                                                      <span className="font-medium">
-                                                        {event.poolTitle}
-                                                      </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                      <UserOutlined className="h-3 w-3" />
-                                                      <span className="font-medium">
-                                                        {event.instructorName}
-                                                      </span>
-                                                    </div>
-                                                  </div>
+                                              <div className='flex flex-col h-full'>
+                                                <div className='flex items-center gap-2 mb-2'>
+                                                  <span className='font-bold text-lg leading-tight truncate'>
+                                                    {event.className}
+                                                  </span>
                                                 </div>
-
-                                                <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                  <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-lg shadow-sm"
-                                                    onClick={() =>
-                                                      handleOpenDetailModal(
-                                                        event
-                                                      )
-                                                    }
-                                                  >
-                                                    <Eye className="h-4 w-4" />
-                                                  </Button>
-                                                  <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-8 w-8 rounded-lg shadow-sm text-destructive hover:bg-destructive/10"
-                                                    onClick={() => {
-                                                      setScheduleToDelete({
-                                                        scheduleId:
-                                                          event.scheduleId,
-                                                        className:
-                                                          event.className,
-                                                        date: drawerDate!.format(
-                                                          "YYYY-MM-DD"
-                                                        ),
-                                                        slotTitle:
-                                                          event.slotTitle,
-                                                      });
-                                                      setDeleteDialogOpen(true);
+                                                <div className='flex flex-wrap gap-2 mb-3'>
+                                                  <Badge
+                                                    variant='outline'
+                                                    className='text-[10px] uppercase font-bold tracking-wider py-0 px-2'
+                                                    style={{
+                                                      borderColor: `${event.color}40`,
+                                                      color: event.color,
+                                                      backgroundColor: `${event.color}10`,
                                                     }}
                                                   >
-                                                    <Trash2 className="h-4 w-4" />
-                                                  </Button>
+                                                    {event.course}
+                                                  </Badge>
                                                 </div>
+
+                                                <div className='space-y-1 mt-auto'>
+                                                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                                                    <EnvironmentOutlined className='h-3 w-3' />
+                                                    <span className='font-medium'>
+                                                      {event.poolTitle}
+                                                    </span>
+                                                  </div>
+                                                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+                                                    <UserOutlined className='h-3 w-3' />
+                                                    <span className='font-medium'>
+                                                      {event.instructorName}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Action Buttons - Bottom Right Corner */}
+                                              <div className='absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+                                                <Button
+                                                  variant='outline'
+                                                  size='icon'
+                                                  className='h-8 w-8 rounded-lg shadow-sm bg-white/90 backdrop-blur-sm'
+                                                  onClick={() =>
+                                                    handleOpenDetailModal(event)
+                                                  }
+                                                >
+                                                  <Eye className='h-4 w-4' />
+                                                </Button>
+                                                <Button
+                                                  variant='outline'
+                                                  size='icon'
+                                                  className='h-8 w-8 rounded-lg shadow-sm text-destructive hover:bg-destructive/10 bg-white/90 backdrop-blur-sm'
+                                                  onClick={() => {
+                                                    setScheduleToDelete({
+                                                      scheduleId:
+                                                        event.scheduleId,
+                                                      className:
+                                                        event.className,
+                                                      date: drawerDate!.format(
+                                                        "YYYY-MM-DD"
+                                                      ),
+                                                      slotTitle:
+                                                        event.slotTitle,
+                                                    });
+                                                    setDeleteDialogOpen(true);
+                                                  }}
+                                                >
+                                                  <Trash2 className='h-4 w-4' />
+                                                </Button>
                                               </div>
                                             </CardContent>
                                           </Card>
@@ -2174,11 +2202,11 @@ export default function ImprovedAntdCalendarPage() {
                       )}
                     </TabsContent>
 
-                    <TabsContent value="add">
+                    <TabsContent value='add'>
                       {classManagementLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                          <p className="text-xs text-muted-foreground">
+                        <div className='flex flex-col items-center justify-center py-20'>
+                          <Loader2 className='h-8 w-8 animate-spin text-primary mb-2' />
+                          <p className='text-xs text-muted-foreground'>
                             Đang tải dữ liệu HLV & Phòng...
                           </p>
                         </div>
@@ -2199,11 +2227,11 @@ export default function ImprovedAntdCalendarPage() {
                       )}
                     </TabsContent>
 
-                    <TabsContent value="edit">
+                    <TabsContent value='edit'>
                       {classManagementLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                          <p className="text-xs text-muted-foreground">
+                        <div className='flex flex-col items-center justify-center py-20'>
+                          <Loader2 className='h-8 w-8 animate-spin text-primary mb-2' />
+                          <p className='text-xs text-muted-foreground'>
                             Đang tải dữ liệu...
                           </p>
                         </div>
@@ -2238,51 +2266,54 @@ export default function ImprovedAntdCalendarPage() {
           </SheetContent>
         </Sheet>
         {/* Delete Confirmation AlertDialog */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <DeleteOutlined className="text-red-500" />
+              <AlertDialogTitle className='flex items-center gap-2'>
+                <DeleteOutlined className='text-red-500' />
                 Xác nhận xóa lớp học
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {scheduleToDelete && (
-                  <div className="space-y-4">
+                  <div className='space-y-4'>
                     <Alert
-                      message="Bạn đang xóa lớp học khỏi lịch"
-                      type="warning"
+                      message='Bạn đang xóa lớp học khỏi lịch'
+                      type='warning'
                       showIcon
-                      className="mb-4"
+                      className='mb-4'
                     />
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Lớp học:</span>
-                        <span className="font-semibold">
+                    <div className='space-y-2 text-sm'>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Lớp học:</span>
+                        <span className='font-semibold'>
                           {scheduleToDelete.className}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Ngày:</span>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Ngày:</span>
                         <span>
                           {dayjs(scheduleToDelete.date).format(
                             "DD/MM/YYYY dddd"
                           )}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>
                           Khung giờ:
                         </span>
-                        <Badge variant="outline">
+                        <Badge variant='outline'>
                           {scheduleToDelete.slotTitle}
                         </Badge>
                       </div>
                     </div>
                     <Alert
-                      message="Lưu ý: Hành động này không thể hoàn tác!"
-                      type="error"
+                      message='Lưu ý: Hành động này không thể hoàn tác!'
+                      type='error'
                       showIcon
-                      className="mt-4"
+                      className='mt-4'
                     />
                   </div>
                 )}
@@ -2291,7 +2322,7 @@ export default function ImprovedAntdCalendarPage() {
             <AlertDialogFooter>
               <AlertDialogCancel>Hủy</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 disabled={isDeleting}
                 onClick={(e) => {
                   e.preventDefault();
@@ -2300,7 +2331,7 @@ export default function ImprovedAntdCalendarPage() {
               >
                 {isDeleting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                     Đang xóa...
                   </>
                 ) : (
