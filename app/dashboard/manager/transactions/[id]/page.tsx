@@ -15,6 +15,8 @@ import {
   X,
   UserPlus,
   UserCheck,
+  UserMinus,
+  AlertTriangle,
   Search,
   Loader2,
   Trash2,
@@ -80,6 +82,7 @@ import {
   fetchClassroomsByCourseAndSchedule,
   addUserToClass,
   removeMemberFromClass,
+  fetchClassDetails,
 } from "@/api/manager/class-api";
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import { fetchFirstSlotByClassId } from "@/api/manager/schedule-api";
@@ -136,6 +139,14 @@ export default function TransactionDetailPage() {
   const [canRefund, setCanRefund] = useState<boolean>(false);
   const [checkingRefundEligibility, setCheckingRefundEligibility] =
     useState<boolean>(false);
+
+  // Remove member from class dialog state
+  const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
+
+  // Check if member is still in class after refund
+  const [isMemberInClass, setIsMemberInClass] = useState<boolean>(false);
+  const [checkingMemberStatus, setCheckingMemberStatus] = useState(false);
 
   // Check if order can be refunded
   const checkRefundEligibility = async (orderData: Order) => {
@@ -258,6 +269,21 @@ export default function TransactionDetailPage() {
   useEffect(() => {
     if (order && token && tenantId) {
       checkRefundEligibility(order);
+    }
+  }, [order, token, tenantId]);
+
+  // Check if member is still in class when order is refunded and has a class
+  useEffect(() => {
+    if (
+      order &&
+      order.status?.includes("refunded") &&
+      order.class &&
+      token &&
+      tenantId
+    ) {
+      checkMemberInClass();
+    } else {
+      setIsMemberInClass(false);
     }
   }, [order, token, tenantId]);
 
@@ -418,7 +444,89 @@ export default function TransactionDetailPage() {
     }
   };
 
-  // Handle refund order
+  // Handle removing member from class after refund
+  const handleRemoveMemberFromClass = async () => {
+    if (!order || !token || !tenantId) return;
+
+    try {
+      setIsRemovingMember(true);
+
+      const classId =
+        typeof order.class === "string" ? order.class : order.class._id;
+      // Ensure userId is a string
+      const userId = Array.isArray(order.user)
+        ? order.user[0]?._id || order.user[0]
+        : order.user?._id || order.user;
+
+      await removeMemberFromClass(classId, userId, tenantId, token, order._id);
+
+      toast({
+        title: "Thành công",
+        description: "Đã xóa học viên khỏi lớp học",
+      });
+
+      // Refresh order data to reflect changes
+      const updatedOrder = await fetchOrderById({
+        orderId: order._id,
+        tenantId,
+        token,
+      });
+      setOrder(updatedOrder);
+
+      // Update member status since they were just removed
+      setIsMemberInClass(false);
+    } catch (error) {
+      console.error("Error removing member from class:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Không thể xóa học viên khỏi lớp học. Vui lòng thử lại.",
+      });
+    } finally {
+      setIsRemovingMember(false);
+      setShowRemoveMemberDialog(false);
+    }
+  };
+
+  // Check if member is still in the class
+  const checkMemberInClass = async () => {
+    if (!order || !order.class || !token || !tenantId) {
+      setIsMemberInClass(false);
+      return;
+    }
+
+    try {
+      setCheckingMemberStatus(true);
+
+      const classId =
+        typeof order.class === "string" ? order.class : order.class._id;
+      const userId = Array.isArray(order.user)
+        ? order.user[0]?._id || order.user[0]
+        : order.user?._id || order.user;
+
+      // Fetch class details to check members
+      const classDetails = await fetchClassDetails(classId, tenantId, token);
+
+      if (classDetails && classDetails.member) {
+        // Check if userId is in the member array
+        const memberIds = classDetails.member.map((member: any) =>
+          typeof member === "string" ? member : member._id
+        );
+        setIsMemberInClass(memberIds.includes(userId));
+      } else {
+        setIsMemberInClass(false);
+      }
+    } catch (error) {
+      console.error("Error checking member status:", error);
+      setIsMemberInClass(false);
+    } finally {
+      setCheckingMemberStatus(false);
+    }
+  };
+
   const handleRefundOrder = async () => {
     if (!order || !token || !tenantId) return;
 
@@ -436,44 +544,15 @@ export default function TransactionDetailPage() {
         token,
       });
 
-      // If order has a class assigned, remove the member from the class
-      if (order.class) {
-        try {
-          const classId =
-            typeof order.class === "string" ? order.class : order.class._id;
-          // Ensure userId is a string
-          const userId = Array.isArray(order.user)
-            ? order.user[0]?._id || order.user[0]
-            : order.user?._id || order.user;
-
-          await removeMemberFromClass(
-            classId,
-            userId,
-            tenantId,
-            token,
-            order._id
-          );
-
-          toast({
-            title: "Thông báo",
-            description: "Đã remove học viên khỏi lớp học",
-          });
-        } catch (removeError) {
-          console.error("Error removing member from class:", removeError);
-          // Don't fail the entire refund process if removing from class fails
-          toast({
-            variant: "destructive",
-            title: "Cảnh báo",
-            description:
-              "Hoàn tiền thành công nhưng không thể remove khỏi lớp. Vui lòng kiểm tra thủ công.",
-          });
-        }
-      }
-
       toast({
         title: "Thành công",
         description: "Đã hoàn tiền thành công",
       });
+
+      // If order has a class assigned, ask user if they want to remove the member
+      if (order.class) {
+        setShowRemoveMemberDialog(true);
+      }
 
       // Refresh order data
       const updatedOrder = await fetchOrderById({
@@ -849,6 +928,24 @@ export default function TransactionDetailPage() {
                   Hoàn tiền
                 </Button>
               </>
+            )}
+
+          {order?.status?.includes("refunded") &&
+            order.class &&
+            isMemberInClass && (
+              <Button
+                variant='outline'
+                className='text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300'
+                onClick={() => setShowRemoveMemberDialog(true)}
+                disabled={checkingMemberStatus}
+              >
+                {checkingMemberStatus ? (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                ) : (
+                  <UserMinus className='mr-2 h-4 w-4' />
+                )}
+                Xóa khỏi lớp học
+              </Button>
             )}
 
           <Button
@@ -1717,6 +1814,63 @@ export default function TransactionDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Member from Class Dialog */}
+      <AlertDialog
+        open={showRemoveMemberDialog}
+        onOpenChange={setShowRemoveMemberDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='flex items-center gap-2'>
+              <UserMinus className='h-5 w-5 text-orange-500' />
+              Xóa học viên khỏi lớp học
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Giao dịch đã được hoàn tiền thành công. Bạn có muốn xóa học viên
+              khỏi lớp học không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className='p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700'>
+            <div className='space-y-2'>
+              <p className='font-medium text-blue-900 dark:text-blue-100'>
+                Thông tin học viên
+              </p>
+              <p className='text-sm text-blue-700 dark:text-blue-300'>
+                Tên: {getOrderUserName(order!)}
+                <br />
+                Lớp học:{" "}
+                {order?.class && typeof order.class === "object"
+                  ? order.class.name
+                  : "N/A"}
+                <br />
+                Khóa học: {getOrderCourseTitle(order!)}
+              </p>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRemovingMember}>
+              Giữ lại trong lớp
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              disabled={isRemovingMember}
+              onClick={handleRemoveMemberFromClass}
+            >
+              {isRemovingMember ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang xóa...
+                </>
+              ) : (
+                "Xóa khỏi lớp"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

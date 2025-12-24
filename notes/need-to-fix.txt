@@ -19,19 +19,9 @@ tại sao khi tôi APPROVED cái data-review đó xong rồi sau đó tôi mở 
 
 =================
 
+- ở trang '/dashboard/manager/news', nếu như staff đó chỉ có quyền xem list các Tin tức (News) thôi mà không có quyền tạo mới hay chỉnh sửa hay xoá ({"module": ["News"],"action": ["GET"],"noReview": false}). Thì không được show lên UI button 'Tạo tin tức' và icon thùng rác ở cột thao tác. Và cũng không được hiện button ‘Chỉnh sửa’ và button 'Xóa' ở trong trang ‘dashboard/manager/news/[id]’ luôn
 
-- ở trang ‘/dashboard/manager/classes’, nếu như staff đó chỉ có quyền xem list các Lớp học (Classes) thôi mà không có quyền tạo mới hay chỉnh sửa hay xoá ({"module": ["Class"],"action": ["GET"],"noReview": false}). Thì không được show lên UI button ‘Thêm lớp học mới’. Và cũng không được hiện button ‘Chỉnh sửa’ ở trong trang ‘dashboard/manager/class/[id]’ luôn, và cũng phải chặn lại không cho họ truy cập được vào trang ‘/dashboard/manager/classes/create’ nếu họ cố tình truy bằng url trên thanh search của trình duyệt nếu như họ vẫn có tình nhập ở trên search bar của trình duyệt
-
-- ở trang 'dashboard/manager/class/[id]'; chỉ được hiện button 'Xếp lịch lớp học' chỉ khi staff có quyền tạo, xóa, sửa của module Class và quyền tạo, xóa, sửa của module Schedule
-({"module": ["Class"],"action": ["GET","POST","PUT","DELETE"],"noReview": true},)
-({"module": ["Schedule"],"action": ["GET","POST","PUT","DELETE"],"noReview": true},)
-- nếu như staff đó không có quyền của cả 1 trong 2 module này thì không hiện button 'Xếp lịch lớp học'
-- nếu như staff đó chỉ có quyền truy cập module class và schedule như thế này:
-({"module": ["Class"],"action": ["GET"],"noReview": true},)
-({"module": ["Schedule"],"action": ["GET"],"noReview": true},)
-THÌ CŨNG KHÔNG ĐƯỢC HIỆN BUTTON 'Xếp lịch lớp học'
+- ở trang '/dashboard/manager/transactions', nếu như staff đó chỉ có quyền xem list các Giao dịch (News) thôi mà không có quyền tạo mới hay chỉnh sửa hay xoá ({"module": ["Order"],"action": ["GET"],"noReview": false}). Thì không được show lên UI button 'Tạo giao dịch mới' và icon thùng rác ở cột thao tác. Và cũng không được hiện button ‘Chỉnh sửa’ và button 'Xóa giao dịch' ở trong trang ‘dashboard/manager/transactions/[id]’ luôn
 
 
 ====================================
-
-- ở trang lịch '/dashboard/manager/calendar', tôi muốn thêm 1 thanh search, search theo lớp học và slot để chỉ hiện trên lịch đúng các buổi học của lớp đó thôi. bạn có thể sử dụng lại api này fetchScheduleData để search như thế này: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedules?startDate=2025-12-01&endDate=2026-01-04&classroom=694aa723a553ad05f27b42c1&slot=681f0d630e90714dae7a5def

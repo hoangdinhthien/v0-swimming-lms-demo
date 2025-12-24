@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import "../../../../styles/calendar-dark-mode.css";
@@ -373,9 +373,7 @@ export default function ImprovedAntdCalendarPage() {
           end,
           undefined,
           undefined,
-          isStaff ? "Schedule" : undefined,
-          searchClassroom || undefined,
-          searchSlot || undefined
+          isStaff ? "Schedule" : undefined
         );
 
         setScheduleEvents(result.events);
@@ -400,7 +398,7 @@ export default function ImprovedAntdCalendarPage() {
     };
 
     loadScheduleData();
-  }, [currentDate, searchClassroom, searchSlot]);
+  }, [currentDate]);
 
   // Get events for a specific date
   const getEventsForDate = (date: Dayjs): CalendarEvent[] => {
@@ -413,47 +411,6 @@ export default function ImprovedAntdCalendarPage() {
     return dayEvents.map(formatScheduleEvent);
   };
 
-  // Get all calendar events (for ScheduleCalendar component)
-  const getAllCalendarEvents = (): ScheduleCalendarEvent[] => {
-    return scheduleEvents.map((scheduleEvent) => {
-      const slot = scheduleEvent.slot;
-      const classroom = scheduleEvent.classroom;
-      const pool = scheduleEvent.pool;
-      const instructor = scheduleEvent.instructor;
-      const eventDate = dayjs(scheduleEvent.date.split("T")[0]);
-      const course = classroom?.course;
-
-      return {
-        scheduleId: scheduleEvent._id,
-        classroomId: classroom?._id || "",
-        className: classroom?.name || "Không xác định",
-        slotId: slot?._id || "",
-        slotTitle: slot?.title || "Không xác định",
-        slotTime: `${eventDate.format("DD/MM/YYYY")} - ${
-          slot
-            ? `${Math.floor(slot.start_time)
-                .toString()
-                .padStart(2, "0")}:${slot.start_minute
-                .toString()
-                .padStart(2, "0")} - ${Math.floor(slot.end_time)
-                .toString()
-                .padStart(2, "0")}:${slot.end_minute
-                .toString()
-                .padStart(2, "0")}`
-            : ""
-        }`,
-        date: eventDate.format("YYYY-MM-DD"), // Add date field for easier filtering
-        course: getCourseName(course),
-        courseId: typeof course === "object" && course?._id ? course._id : "",
-        poolId: pool?._id || "",
-        poolTitle: pool?.title || "Không xác định",
-        instructorId: instructor?._id || "",
-        instructorName: instructor?.username || "Không xác định",
-        color: getEventColor(course),
-      };
-    });
-  };
-
   // Get course name from course object
   const getCourseName = (course: any): string => {
     if (course && typeof course === "object" && course.title) {
@@ -463,39 +420,6 @@ export default function ImprovedAntdCalendarPage() {
       return course; // Fallback for old format
     }
     return "Không xác định";
-  };
-
-  // Transform schedule event to display format
-  const formatScheduleEvent = (scheduleEvent: ScheduleEvent): CalendarEvent => {
-    const slot = scheduleEvent.slot;
-    const classroom = scheduleEvent.classroom;
-    const pool = scheduleEvent.pool;
-    const instructor = scheduleEvent.instructor; // Get instructor object directly
-
-    return {
-      id: scheduleEvent._id,
-      className: classroom?.name || "Không xác định",
-      slotTitle: slot?.title || "Không xác định",
-      slotTime: slot
-        ? `${Math.floor(slot.start_time)
-            .toString()
-            .padStart(2, "0")}:${slot.start_minute
-            .toString()
-            .padStart(2, "0")} - ${Math.floor(slot.end_time)
-            .toString()
-            .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
-        : "",
-      course: getCourseName(classroom?.course), // Resolve course name
-      poolTitle: pool?.title || "Không xác định",
-      poolId: pool?._id || "",
-      classroomId: classroom?._id || "", // Add classroom ID for editing
-      instructorId: instructor?._id || "",
-      instructorName: instructor?.username || "Không xác định",
-      scheduleId: scheduleEvent._id,
-      slotId: slot?._id || "",
-      type: "class",
-      color: getEventColor(classroom?.course),
-    };
   };
 
   // Get color for event based on course type
@@ -535,6 +459,93 @@ export default function ImprovedAntdCalendarPage() {
       return a & a;
     }, 0);
     return colors[Math.abs(hash) % colors.length];
+  };
+
+  // Get all calendar events (for ScheduleCalendar component) - filtered by search criteria
+  const calendarEvents = useMemo(() => {
+    // Filter events based on search criteria
+    let filteredEvents = scheduleEvents;
+    if (searchClassroom) {
+      filteredEvents = filteredEvents.filter(
+        (event) => event.classroom?._id === searchClassroom
+      );
+    }
+    if (searchSlot) {
+      filteredEvents = filteredEvents.filter(
+        (event) => event.slot?._id === searchSlot
+      );
+    }
+
+    return filteredEvents.map((scheduleEvent) => {
+      const slot = scheduleEvent.slot;
+      const classroom = scheduleEvent.classroom;
+      const pool = scheduleEvent.pool;
+      const instructor = scheduleEvent.instructor;
+      const eventDate = dayjs(scheduleEvent.date.split("T")[0]);
+      const course = classroom?.course;
+
+      return {
+        scheduleId: scheduleEvent._id,
+        classroomId: classroom?._id || "",
+        className: classroom?.name || "Không xác định",
+        slotId: slot?._id || "",
+        slotTitle: slot?.title || "Không xác định",
+        slotTime: `${eventDate.format("DD/MM/YYYY")} - ${
+          slot
+            ? `${Math.floor(slot.start_time)
+                .toString()
+                .padStart(2, "0")}:${slot.start_minute
+                .toString()
+                .padStart(2, "0")} - ${Math.floor(slot.end_time)
+                .toString()
+                .padStart(2, "0")}:${slot.end_minute
+                .toString()
+                .padStart(2, "0")}`
+            : ""
+        }`,
+        date: eventDate.format("YYYY-MM-DD"), // Add date field for easier filtering
+        course: getCourseName(course),
+        courseId: typeof course === "object" && course?._id ? course._id : "",
+        poolId: pool?._id || "",
+        poolTitle: pool?.title || "Không xác định",
+        instructorId: instructor?._id || "",
+        instructorName: instructor?.username || "Không xác định",
+        color: getEventColor(course),
+      };
+    });
+  }, [scheduleEvents, searchClassroom, searchSlot]);
+
+  // Transform schedule event to display format
+  const formatScheduleEvent = (scheduleEvent: ScheduleEvent): CalendarEvent => {
+    const slot = scheduleEvent.slot;
+    const classroom = scheduleEvent.classroom;
+    const pool = scheduleEvent.pool;
+    const instructor = scheduleEvent.instructor; // Get instructor object directly
+
+    return {
+      id: scheduleEvent._id,
+      className: classroom?.name || "Không xác định",
+      slotTitle: slot?.title || "Không xác định",
+      slotTime: slot
+        ? `${Math.floor(slot.start_time)
+            .toString()
+            .padStart(2, "0")}:${slot.start_minute
+            .toString()
+            .padStart(2, "0")} - ${Math.floor(slot.end_time)
+            .toString()
+            .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
+        : "",
+      course: getCourseName(classroom?.course), // Resolve course name
+      poolTitle: pool?.title || "Không xác định",
+      poolId: pool?._id || "",
+      classroomId: classroom?._id || "", // Add classroom ID for editing
+      instructorId: instructor?._id || "",
+      instructorName: instructor?.username || "Không xác định",
+      scheduleId: scheduleEvent._id,
+      slotId: slot?._id || "",
+      type: "class",
+      color: getEventColor(classroom?.course),
+    };
   };
 
   // Find original ScheduleEvent by schedule ID
@@ -1955,7 +1966,7 @@ export default function ImprovedAntdCalendarPage() {
           <ScheduleCalendar
             currentDate={currentDate}
             selectedDate={selectedDate || undefined}
-            events={getAllCalendarEvents()}
+            events={calendarEvents}
             onDateSelect={onSelect}
             onMonthChange={(date) => {
               // Only update if it's a genuine month change
