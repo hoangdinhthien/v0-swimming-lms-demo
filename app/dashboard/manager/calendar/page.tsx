@@ -427,8 +427,6 @@ export default function ImprovedAntdCalendarPage() {
     return "Không xác định";
   };
 
-<<<<<<< HEAD
-=======
   // Transform schedule event to display format
   const formatScheduleEvent = (scheduleEvent: ScheduleEvent): CalendarEvent => {
     const slot = scheduleEvent.slot;
@@ -463,7 +461,6 @@ export default function ImprovedAntdCalendarPage() {
     };
   };
 
->>>>>>> c8e6618c5be1334926549cb92689d2fd8cc773c7
   // Get color for event based on course type
   const getEventColor = (course: any): string => {
     const courseName = getCourseName(course);
@@ -556,39 +553,6 @@ export default function ImprovedAntdCalendarPage() {
       };
     });
   }, [scheduleEvents, searchClassroom, searchSlot]);
-
-  // Transform schedule event to display format
-  const formatScheduleEvent = (scheduleEvent: ScheduleEvent): CalendarEvent => {
-    const slot = scheduleEvent.slot;
-    const classroom = scheduleEvent.classroom;
-    const pool = scheduleEvent.pool;
-    const instructor = scheduleEvent.instructor; // Get instructor object directly
-
-    return {
-      id: scheduleEvent._id,
-      className: classroom?.name || "Không xác định",
-      slotTitle: slot?.title || "Không xác định",
-      slotTime: slot
-        ? `${Math.floor(slot.start_time)
-            .toString()
-            .padStart(2, "0")}:${slot.start_minute
-            .toString()
-            .padStart(2, "0")} - ${Math.floor(slot.end_time)
-            .toString()
-            .padStart(2, "0")}:${slot.end_minute.toString().padStart(2, "0")}`
-        : "",
-      course: getCourseName(classroom?.course), // Resolve course name
-      poolTitle: pool?.title || "Không xác định",
-      poolId: pool?._id || "",
-      classroomId: classroom?._id || "", // Add classroom ID for editing
-      instructorId: instructor?._id || "",
-      instructorName: instructor?.username || "Không xác định",
-      scheduleId: scheduleEvent._id,
-      slotId: slot?._id || "",
-      type: "class",
-      color: getEventColor(classroom?.course),
-    };
-  };
 
   // Find original ScheduleEvent by schedule ID
   const findScheduleEventById = (scheduleId: string): ScheduleEvent | null => {
