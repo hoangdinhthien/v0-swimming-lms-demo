@@ -82,7 +82,6 @@ import {
   fetchClassroomsByCourseAndSchedule,
   addUserToClass,
   removeMemberFromClass,
-  fetchClassDetails,
 } from "@/api/manager/class-api";
 import { fetchInstructorDetail } from "@/api/manager/instructors-api";
 import { fetchFirstSlotByClassId } from "@/api/manager/schedule-api";
@@ -120,10 +119,6 @@ export default function TransactionDetailPage() {
 
   // New state for create student modal
   const [showCreateStudentModal, setShowCreateStudentModal] = useState(false);
-
-  // State for assigned class details
-  const [assignedClassDetails, setAssignedClassDetails] = useState<any>(null);
-  const [loadingClassDetails, setLoadingClassDetails] = useState(false);
 
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -373,46 +368,6 @@ export default function TransactionDetailPage() {
     }
   }, [order, toast, token, tenantId]); // Depend on order so this runs after order is loaded
 
-  // Fetch assigned class details when order has a class field
-  useEffect(() => {
-    async function fetchAssignedClassDetails() {
-      if (!order?.class || !token || !tenantId || !courseDetails) return;
-
-      try {
-        setLoadingClassDetails(true);
-        const courseId = getOrderCourseId(order);
-        if (courseId) {
-          // Use fetchClassroomsByCourseAndSchedule to get all classes for this course
-          const classroomsData = await fetchClassroomsByCourseAndSchedule(
-            courseId,
-            false, // don't filter by schedule
-            "", // no search key
-            tenantId,
-            token
-          );
-
-          // Find the specific class that matches the order's class ID
-          const classId =
-            typeof order.class === "string" ? order.class : order.class?._id;
-          const assignedClass = classroomsData.find(
-            (classroom: any) => classroom._id === classId
-          );
-
-          if (assignedClass) {
-            setAssignedClassDetails(assignedClass);
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching assigned class details:", err);
-        // Don't show error to user, just log it
-      } finally {
-        setLoadingClassDetails(false);
-      }
-    }
-
-    fetchAssignedClassDetails();
-  }, [order?.class, token, tenantId, courseDetails, order]);
-
   // Handle delete order
   const handleDeleteOrder = async () => {
     if (!order || !token || !tenantId) return;
@@ -493,7 +448,7 @@ export default function TransactionDetailPage() {
 
   // Check if member is still in the class
   const checkMemberInClass = async () => {
-    if (!order || !order.class || !token || !tenantId) {
+    if (!order || !order.class) {
       setIsMemberInClass(false);
       return;
     }
@@ -501,18 +456,18 @@ export default function TransactionDetailPage() {
     try {
       setCheckingMemberStatus(true);
 
-      const classId =
-        typeof order.class === "string" ? order.class : order.class._id;
       const userId = Array.isArray(order.user)
         ? order.user[0]?._id || order.user[0]
         : order.user?._id || order.user;
 
-      // Fetch class details to check members
-      const classDetails = await fetchClassDetails(classId, tenantId, token);
-
-      if (classDetails && classDetails.member) {
+      // Use member array directly from the class in the order response
+      if (
+        order.class &&
+        typeof order.class === "object" &&
+        order.class.member
+      ) {
         // Check if userId is in the member array
-        const memberIds = classDetails.member.map((member: any) =>
+        const memberIds = order.class.member.map((member: any) =>
           typeof member === "string" ? member : member._id
         );
         setIsMemberInClass(memberIds.includes(userId));
@@ -843,13 +798,13 @@ export default function TransactionDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
             Đang tải thông tin giao dịch...
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className='text-sm text-muted-foreground mt-2'>
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -863,12 +818,15 @@ export default function TransactionDetailPage() {
 
   if (error || !order) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-red-500">
+      <div className='flex flex-col items-center justify-center h-64'>
+        <p className='text-red-500'>
           {error || "Không thể tải thông tin giao dịch"}
         </p>
-        <div className="flex gap-4 mt-4">
-          <Button variant="outline" onClick={() => router.refresh()}>
+        <div className='flex gap-4 mt-4'>
+          <Button
+            variant='outline'
+            onClick={() => router.refresh()}
+          >
             Thử lại
           </Button>
           <Button
@@ -888,24 +846,27 @@ export default function TransactionDetailPage() {
 
   return (
     <>
-      <div className="mb-6">
+      <div className='mb-6'>
         <Link
-          href="/dashboard/manager/transactions"
-          className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
+          href='/dashboard/manager/transactions'
+          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
         >
-          <ArrowLeft className="mr-1 h-4 w-4" />
+          <ArrowLeft className='mr-1 h-4 w-4' />
           Quay lại danh sách giao dịch
         </Link>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8'>
         <div>
-          <h1 className="text-3xl font-bold">Chi tiết giao dịch</h1>
-          <p className="text-muted-foreground">Mã giao dịch: {order._id}</p>
+          <h1 className='text-3xl font-bold'>Chi tiết giao dịch</h1>
+          <p className='text-muted-foreground'>Mã giao dịch: {order._id}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setEditModalOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" />
+        <div className='flex gap-2'>
+          <Button
+            variant='outline'
+            onClick={() => setEditModalOpen(true)}
+          >
+            <Pencil className='mr-2 h-4 w-4' />
             Chỉnh sửa
           </Button>
           {order?.payment?.zp_trans_id &&
@@ -913,7 +874,7 @@ export default function TransactionDetailPage() {
             canRefund && (
               <>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => {
                     setRefundDescription(`Hoàn tiền cho đơn ${order._id}`);
                     setShowRefundModal(true);
@@ -943,111 +904,111 @@ export default function TransactionDetailPage() {
             )}
 
           <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
+            variant='outline'
+            className='text-destructive hover:text-destructive'
             onClick={() => setDeleteDialogOpen(true)}
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className='mr-2 h-4 w-4' />
             Xóa giao dịch
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        <div className='md:col-span-2'>
           <Card>
             <CardHeader>
               <CardTitle>Thông tin giao dịch</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <div className='space-y-1'>
+                  <div className='text-sm text-muted-foreground'>
                     Mã giao dịch
                   </div>
-                  <div className="font-medium">{order._id}</div>
+                  <div className='font-medium'>{order._id}</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">
+                <div className='space-y-1'>
+                  <div className='text-sm text-muted-foreground'>
                     Trạng thái
                   </div>
                   <div>
                     <Badge
-                      variant="outline"
+                      variant='outline'
                       className={getStatusClass(order.status)}
                     >
                       {getStatusName(order.status)}
                     </Badge>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Thời gian</div>
-                  <div className="font-medium flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className='space-y-1'>
+                  <div className='text-sm text-muted-foreground'>Thời gian</div>
+                  <div className='font-medium flex items-center gap-1'>
+                    <CalendarDays className='h-3.5 w-3.5 text-muted-foreground' />
                     {formattedDate}
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">Số tiền</div>
-                  <div className="font-medium">{formatPrice(order.price)}</div>
+                <div className='space-y-1'>
+                  <div className='text-sm text-muted-foreground'>Số tiền</div>
+                  <div className='font-medium'>{formatPrice(order.price)}</div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-sm text-muted-foreground">
+                <div className='space-y-1'>
+                  <div className='text-sm text-muted-foreground'>
                     Loại giao dịch
                   </div>
-                  <div className="font-medium">
+                  <div className='font-medium'>
                     {getOrderTypeDisplayName(order)}
                   </div>
                 </div>
               </div>
 
-              <Separator className="my-6" />
+              <Separator className='my-6' />
 
               {/* Payment Information */}
               {order.payment && (
-                <div className="space-y-6">
+                <div className='space-y-6'>
                   <div>
-                    <h3 className="text-lg font-medium mb-4">
+                    <h3 className='text-lg font-medium mb-4'>
                       Thông tin thanh toán
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
                           Phương thức
                         </div>
-                        <div className="font-medium flex items-center gap-1">
-                          <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                        <div className='font-medium flex items-center gap-1'>
+                          <CreditCard className='h-3.5 w-3.5 text-muted-foreground' />
                           {order.payment.zp_trans_id
                             ? "ZaloPay"
                             : "Chưa xác định"}
                         </div>
                       </div>
                       {order.payment.app_trans_id && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
                             Mã giao dịch ứng dụng
                           </div>
-                          <div className="font-medium font-mono text-sm">
+                          <div className='font-medium font-mono text-sm'>
                             {order.payment.app_trans_id}
                           </div>
                         </div>
                       )}
                       {order.payment.zp_trans_id && (
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
                             Mã giao dịch ZaloPay
                           </div>
-                          <div className="font-medium font-mono text-sm">
+                          <div className='font-medium font-mono text-sm'>
                             {order.payment.zp_trans_id}
                           </div>
                         </div>
                       )}
                       {order.payment.url && (
-                        <div className="space-y-1 sm:col-span-2">
-                          <div className="text-sm text-muted-foreground">
+                        <div className='space-y-1 sm:col-span-2'>
+                          <div className='text-sm text-muted-foreground'>
                             Link thanh toán
                           </div>
-                          <div className="font-medium text-blue-600 text-sm break-all">
+                          <div className='font-medium text-blue-600 text-sm break-all'>
                             {order.payment.url}
                           </div>
                         </div>
@@ -1058,64 +1019,210 @@ export default function TransactionDetailPage() {
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className='space-y-6'>
                 <div>
-                  <h3 className="text-lg font-medium mb-4">
+                  <h3 className='text-lg font-medium mb-4'>
                     Thông tin khóa học
                   </h3>
                   {courseDetails ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
                           Khóa học
                         </div>
-                        <div className="font-medium">{courseDetails.title}</div>
+                        <div className='font-medium'>{courseDetails.title}</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
                           Giá gốc
                         </div>
-                        <div className="font-medium">
+                        <div className='font-medium'>
                           {formatPrice(courseDetails.price || 0)}
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
                           Số buổi học
                         </div>
-                        <div className="font-medium">
+                        <div className='font-medium'>
                           {courseDetails.session_number || "N/A"}
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
+                      <div className='space-y-1'>
+                        <div className='text-sm text-muted-foreground'>
                           Thời lượng mỗi buổi
                         </div>
-                        <div className="font-medium">
+                        <div className='font-medium'>
                           {courseDetails.session_number_duration || "N/A"}
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">
+                    <p className='text-muted-foreground'>
                       Không thể tải thông tin khóa học
                     </p>
                   )}
                 </div>
 
+                {/* Class Information */}
+                {(order.class_choosed || order.class) && (
+                  <>
+                    <Separator />
+
+                    <div>
+                      <h3 className='text-lg font-medium mb-4'>
+                        Thông tin lớp học
+                      </h3>
+
+                      {/* Class Choosed - Lớp học đã chọn */}
+                      {order.class_choosed && (
+                        <div className='mb-6'>
+                          <h4 className='text-md font-medium mb-3 text-blue-700'>
+                            Lớp học đã chọn
+                          </h4>
+                          <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-blue-600'>
+                                  Tên lớp học
+                                </div>
+                                <div className='font-medium text-blue-900'>
+                                  {order.class_choosed.name}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-blue-600'>
+                                  Mã lớp học
+                                </div>
+                                <div className='font-mono text-sm text-blue-900'>
+                                  {order.class_choosed._id}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-blue-600'>
+                                  Khóa học
+                                </div>
+                                <div className='font-medium text-blue-900'>
+                                  {typeof order.class_choosed.course ===
+                                  "string"
+                                    ? order.class_choosed.course
+                                    : order.class_choosed.course || "N/A"}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-blue-600'>
+                                  Ngày tạo
+                                </div>
+                                <div className='font-medium text-blue-900'>
+                                  {new Date(
+                                    order.class_choosed.created_at
+                                  ).toLocaleDateString("vi-VN")}
+                                </div>
+                              </div>
+                            </div>
+                            <div className='mt-3 text-xs text-blue-600'>
+                              * Đây là lớp học mà học viên đã chọn khi đăng ký
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Class - Lớp học đang tham gia */}
+                      {order.class && (
+                        <div className='mb-6'>
+                          <h4 className='text-md font-medium mb-3 text-green-700'>
+                            Lớp học đang tham gia
+                          </h4>
+                          <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
+                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-green-600'>
+                                  Tên lớp học
+                                </div>
+                                <div className='font-medium text-green-900'>
+                                  {typeof order.class === "object"
+                                    ? order.class.name
+                                    : "N/A"}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-green-600'>
+                                  Mã lớp học
+                                </div>
+                                <div className='font-mono text-sm text-green-900'>
+                                  {typeof order.class === "string"
+                                    ? order.class
+                                    : order.class._id}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-green-600'>
+                                  Khóa học
+                                </div>
+                                <div className='font-medium text-green-900'>
+                                  {typeof order.class === "object" &&
+                                  typeof order.class.course === "string"
+                                    ? order.class.course
+                                    : "N/A"}
+                                </div>
+                              </div>
+                              <div className='space-y-1'>
+                                <div className='text-sm text-green-600'>
+                                  Số học viên
+                                </div>
+                                <div className='font-medium text-green-900'>
+                                  {typeof order.class === "object" &&
+                                  order.class.member
+                                    ? order.class.member.length
+                                    : "N/A"}{" "}
+                                  học viên
+                                </div>
+                              </div>
+                            </div>
+                            <div className='mt-3 text-xs text-green-600'>
+                              * Đây là lớp học mà học viên đang tham gia và học
+                              tập
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Comparison if both exist and are different */}
+                      {/* {order.class_choosed && order.class && (
+                        <div className='mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg'>
+                          <div className='text-sm text-gray-600'>
+                            {(() => {
+                              const choosedId = order.class_choosed._id;
+                              const classId =
+                                typeof order.class === "string"
+                                  ? order.class
+                                  : order.class._id;
+                              if (choosedId === classId) {
+                                return " Học viên đang học đúng lớp đã chọn";
+                              } else {
+                                return " Học viên đã được chuyển sang lớp học khác";
+                              }
+                            })()}
+                          </div>
+                        </div>
+                      )} */}
+                    </div>
+                  </>
+                )}
+
                 <Separator />
 
                 <div>
-                  <h3 className="text-lg font-medium mb-4">
+                  <h3 className='text-lg font-medium mb-4'>
                     Thông tin học viên
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <div className="text-sm text-muted-foreground">
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                    <div className='space-y-1'>
+                      <div className='text-sm text-muted-foreground'>
                         Tên học viên
                       </div>
-                      <div className="font-medium flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      <div className='font-medium flex items-center gap-1'>
+                        <User className='h-3.5 w-3.5 text-muted-foreground' />
                         {userName}
                       </div>
                     </div>
@@ -1134,21 +1241,21 @@ export default function TransactionDetailPage() {
                     {order.guest && (
                       <>
                         {order.guest.email && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
                               Email (Khách)
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {order.guest.email}
                             </div>
                           </div>
                         )}
                         {order.guest.phone && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
                               Điện thoại (Khách)
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {order.guest.phone}
                             </div>
                           </div>
@@ -1159,40 +1266,40 @@ export default function TransactionDetailPage() {
                     {/* Member Information */}
                     {order.user && (
                       <>
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
+                        <div className='space-y-1'>
+                          <div className='text-sm text-muted-foreground'>
                             ID Thành viên
                           </div>
-                          <div className="font-medium font-mono text-sm">
+                          <div className='font-medium font-mono text-sm'>
                             {order.user._id}
                           </div>
                         </div>
                         {order.user.email && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
                               Email (Thành viên)
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {order.user.email}
                             </div>
                           </div>
                         )}
                         {order.user.phone && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
                               Điện thoại (Thành viên)
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {order.user.phone}
                             </div>
                           </div>
                         )}
                         {order.user.birthday && (
-                          <div className="space-y-1">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1'>
+                            <div className='text-sm text-muted-foreground'>
                               Ngày sinh
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {format(
                                 new Date(order.user.birthday),
                                 "dd/MM/yyyy"
@@ -1201,22 +1308,22 @@ export default function TransactionDetailPage() {
                           </div>
                         )}
                         {order.user.address && (
-                          <div className="space-y-1 sm:col-span-2">
-                            <div className="text-sm text-muted-foreground">
+                          <div className='space-y-1 sm:col-span-2'>
+                            <div className='text-sm text-muted-foreground'>
                               Địa chỉ
                             </div>
-                            <div className="font-medium">
+                            <div className='font-medium'>
                               {order.user.address}
                             </div>
                           </div>
                         )}
                         {order.user.parent_id &&
                           order.user.parent_id.length > 0 && (
-                            <div className="space-y-1">
-                              <div className="text-sm text-muted-foreground">
+                            <div className='space-y-1'>
+                              <div className='text-sm text-muted-foreground'>
                                 ID Phụ huynh
                               </div>
-                              <div className="font-medium font-mono text-sm">
+                              <div className='font-medium font-mono text-sm'>
                                 {order.user.parent_id.join(", ")}
                               </div>
                             </div>
@@ -1228,45 +1335,48 @@ export default function TransactionDetailPage() {
 
                 {/* Already Assigned to Class Scenario */}
                 {isAlreadyAssignedToClass() && (
-                  <div className="mt-6">
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-gray-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-gray-800">
+                  <div className='mt-6'>
+                    <div className='bg-gray-50 border border-gray-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <Check className='h-5 w-5 text-gray-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-gray-800'>
                             Đã được thêm vào lớp học
                           </h4>
-                          <p className="text-sm text-gray-700 mt-1">
+                          <p className='text-sm text-gray-700 mt-1'>
                             Học viên {userName} đã được thêm vào lớp học cho
                             khóa học{" "}
                             <b>
                               <u>{courseDetails?.title}.</u>
                             </b>
                           </p>
-                          {loadingClassDetails ? (
-                            <div className="mt-2 text-sm text-gray-600">
-                              <span className="animate-pulse">
-                                Đang tải thông tin lớp học...
-                              </span>
-                            </div>
-                          ) : assignedClassDetails ? (
-                            <div className="mt-2 space-y-1">
-                              <div className="text-sm text-gray-600">
-                                <span className="font-medium">
+                          {typeof order.class === "object" ? (
+                            <div className='mt-2 space-y-1'>
+                              <div className='text-sm text-gray-600'>
+                                <span className='font-medium'>
                                   Tên lớp học:
                                 </span>{" "}
-                                <span className="font-medium">
-                                  {assignedClassDetails.name}
+                                <span className='font-medium'>
+                                  {order.class.name}
+                                </span>
+                              </div>
+                              <div className='text-sm text-gray-600'>
+                                <span className='font-medium'>
+                                  Số học viên:
+                                </span>{" "}
+                                <span className='font-medium'>
+                                  {order.class.member
+                                    ? order.class.member.length
+                                    : 0}{" "}
+                                  học viên
                                 </span>
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-2 text-sm text-gray-600">
+                            <div className='mt-2 text-sm text-gray-600'>
                               Mã lớp học:{" "}
-                              <span className="font-mono">
-                                {typeof order.class === "string"
-                                  ? order.class
-                                  : order.class?._id || "N/A"}
+                              <span className='font-mono'>
+                                {order.class || "N/A"}
                               </span>
                             </div>
                           )}
@@ -1278,15 +1388,15 @@ export default function TransactionDetailPage() {
 
                 {/* Paid Member Order Scenario */}
                 {false && isPaidMemberOrder() && (
-                  <div className="mt-6">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <UserCheck className="h-5 w-5 text-green-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-green-800">
+                  <div className='mt-6'>
+                    <div className='bg-green-50 border border-green-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <UserCheck className='h-5 w-5 text-green-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-green-800'>
                             Thành viên đã thanh toán
                           </h4>
-                          <p className="text-sm text-green-700 mt-1">
+                          <p className='text-sm text-green-700 mt-1'>
                             Học viên {userName} đã thanh toán thành công cho
                             khóa học{" "}
                             <b>
@@ -1294,13 +1404,13 @@ export default function TransactionDetailPage() {
                             </b>{" "}
                             Bạn có thể thêm học viên vào lớp học.
                           </p>
-                          <div className="mt-3">
+                          <div className='mt-3'>
                             <Button
-                              size="sm"
+                              size='sm'
                               onClick={handleShowClassModal}
-                              className="bg-green-600 hover:bg-green-700"
+                              className='bg-green-600 hover:bg-green-700'
                             >
-                              <UserPlus className="mr-2 h-4 w-4" />
+                              <UserPlus className='mr-2 h-4 w-4' />
                               Thêm vào lớp học
                             </Button>
                           </div>
@@ -1312,15 +1422,15 @@ export default function TransactionDetailPage() {
 
                 {/* Paid Guest Order Scenario */}
                 {isPaidGuestOrder() && (
-                  <div className="mt-6">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <User className="h-5 w-5 text-blue-600 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-blue-800">
+                  <div className='mt-6'>
+                    <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                      <div className='flex items-start gap-3'>
+                        <User className='h-5 w-5 text-blue-600 mt-0.5' />
+                        <div className='flex-1'>
+                          <h4 className='text-sm font-medium text-blue-800'>
                             Khách hàng đã thanh toán
                           </h4>
-                          <p className="text-sm text-blue-700 mt-1">
+                          <p className='text-sm text-blue-700 mt-1'>
                             Khách hàng {order.guest?.username || "Không rõ tên"}{" "}
                             đã thanh toán thành công cho khóa học{" "}
                             <u>
@@ -1328,13 +1438,13 @@ export default function TransactionDetailPage() {
                             </u>{" "}
                             Cần tạo tài khoản để thêm vào lớp học.
                           </p>
-                          <div className="mt-3">
+                          <div className='mt-3'>
                             <Button
-                              size="sm"
+                              size='sm'
                               onClick={handleCreateStudentAccount}
-                              className="bg-blue-600 hover:bg-blue-700"
+                              className='bg-blue-600 hover:bg-blue-700'
                             >
-                              <UserPlus className="mr-2 h-4 w-4" />
+                              <UserPlus className='mr-2 h-4 w-4' />
                               Tạo tài khoản
                             </Button>
                           </div>
@@ -1399,18 +1509,18 @@ export default function TransactionDetailPage() {
           </Card> */}
 
           {/* Transaction Timeline */}
-          <Card className="mt-4">
+          <Card className='mt-4'>
             <CardHeader>
               <CardTitle>Lịch sử hoạt động</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-2">
-                  <div className="h-2 w-2 mt-1.5 rounded-full bg-green-500" />
-                  <div className="flex-1">
-                    <p className="font-medium">Tạo giao dịch</p>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="mr-1 h-3.5 w-3.5" />
+              <div className='space-y-4'>
+                <div className='flex items-start gap-2'>
+                  <div className='h-2 w-2 mt-1.5 rounded-full bg-green-500' />
+                  <div className='flex-1'>
+                    <p className='font-medium'>Tạo giao dịch</p>
+                    <div className='flex items-center text-sm text-muted-foreground'>
+                      <Clock className='mr-1 h-3.5 w-3.5' />
                       <time dateTime={order.created_at}>
                         {format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}
                       </time>
@@ -1424,12 +1534,12 @@ export default function TransactionDetailPage() {
                 </div>
 
                 {order.updated_at && order.updated_at !== order.created_at && (
-                  <div className="flex items-start gap-2">
-                    <div className="h-2 w-2 mt-1.5 rounded-full bg-blue-500" />
-                    <div className="flex-1">
-                      <p className="font-medium">Cập nhật gần nhất</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Clock className="mr-1 h-3.5 w-3.5" />
+                  <div className='flex items-start gap-2'>
+                    <div className='h-2 w-2 mt-1.5 rounded-full bg-blue-500' />
+                    <div className='flex-1'>
+                      <p className='font-medium'>Cập nhật gần nhất</p>
+                      <div className='flex items-center text-sm text-muted-foreground'>
+                        <Clock className='mr-1 h-3.5 w-3.5' />
                         <time dateTime={order.updated_at}>
                           {format(
                             new Date(order.updated_at),
@@ -1438,7 +1548,7 @@ export default function TransactionDetailPage() {
                         </time>
                       </div>
                       {order.updated_by && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className='text-xs text-muted-foreground mt-1'>
                           Cập nhật bởi: {order.updated_by}
                         </p>
                       )}
@@ -1446,7 +1556,7 @@ export default function TransactionDetailPage() {
                   </div>
                 )}
 
-                <div className="flex items-start gap-2">
+                <div className='flex items-start gap-2'>
                   <div
                     className={`h-2 w-2 mt-1.5 rounded-full ${
                       order.status[0] === "paid"
@@ -1458,12 +1568,12 @@ export default function TransactionDetailPage() {
                         : "bg-gray-500"
                     }`}
                   />
-                  <div className="flex-1">
-                    <p className="font-medium">
+                  <div className='flex-1'>
+                    <p className='font-medium'>
                       Trạng thái: {getStatusName(order.status)}
                     </p>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="mr-1 h-3.5 w-3.5" />
+                    <div className='flex items-center text-sm text-muted-foreground'>
+                      <Clock className='mr-1 h-3.5 w-3.5' />
                       <time dateTime={order.updated_at || order.created_at}>
                         {format(
                           new Date(order.updated_at || order.created_at),
@@ -1475,11 +1585,11 @@ export default function TransactionDetailPage() {
                 </div>
 
                 {order.payment?.zp_trans_id && (
-                  <div className="flex items-start gap-2">
-                    <div className="h-2 w-2 mt-1.5 rounded-full bg-purple-500" />
-                    <div className="flex-1">
-                      <p className="font-medium">Thanh toán ZaloPay</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                  <div className='flex items-start gap-2'>
+                    <div className='h-2 w-2 mt-1.5 rounded-full bg-purple-500' />
+                    <div className='flex-1'>
+                      <p className='font-medium'>Thanh toán ZaloPay</p>
+                      <p className='text-xs text-muted-foreground mt-1'>
                         Mã GD: {order.payment.zp_trans_id}
                       </p>
                     </div>
@@ -1501,7 +1611,7 @@ export default function TransactionDetailPage() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-[625px]">
+          <DialogContent className='sm:max-w-[625px]'>
             <DialogHeader>
               <DialogTitle>Chọn lớp học</DialogTitle>
               <DialogDescription>
@@ -1512,26 +1622,26 @@ export default function TransactionDetailPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {/* Search Controls */}
-              <div className="space-y-4 p-4 bg-muted/30 rounded-lg border">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
+              <div className='space-y-4 p-4 bg-muted/30 rounded-lg border'>
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium'>
                     Tìm kiếm lớp học:
                   </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <div className='relative'>
+                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
                     <Input
-                      placeholder="Nhập tên lớp học..."
+                      placeholder='Nhập tên lớp học...'
                       value={searchKey}
                       onChange={(e) => setSearchKey(e.target.value)}
-                      className="pl-10"
+                      className='pl-10'
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium'>
                     Lọc theo lịch học:
                   </label>
                   <Select
@@ -1539,23 +1649,23 @@ export default function TransactionDetailPage() {
                     onValueChange={(value) => setHaveSchedule(value === "true")}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn loại lớp học" />
+                      <SelectValue placeholder='Chọn loại lớp học' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="true">Có lịch học</SelectItem>
-                      <SelectItem value="false">Chưa có lịch học</SelectItem>
+                      <SelectItem value='true'>Có lịch học</SelectItem>
+                      <SelectItem value='false'>Chưa có lịch học</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               {loadingClassrooms ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className='flex justify-center py-8'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
                 </div>
               ) : classrooms.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
+                <div className='text-center py-8'>
+                  <p className='text-muted-foreground'>
                     {searchKey
                       ? `Không tìm thấy lớp học nào với từ khóa "${searchKey}"`
                       : "Chưa có lớp học nào cho khóa học này"}
@@ -1563,11 +1673,11 @@ export default function TransactionDetailPage() {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">
+                  <div className='space-y-3'>
+                    <label className='text-sm font-medium'>
                       Danh sách lớp học:
                     </label>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className='space-y-2 max-h-64 overflow-y-auto'>
                       {classrooms.map((classroom) => (
                         <div
                           key={classroom._id}
@@ -1578,9 +1688,9 @@ export default function TransactionDetailPage() {
                           }`}
                           onClick={() => setSelectedClassId(classroom._id)}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
+                          <div className='flex items-center justify-between'>
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2'>
                                 <div
                                   className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                                     selectedClassId === classroom._id
@@ -1589,15 +1699,15 @@ export default function TransactionDetailPage() {
                                   }`}
                                 >
                                   {selectedClassId === classroom._id && (
-                                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                                    <div className='w-2 h-2 rounded-full bg-white'></div>
                                   )}
                                 </div>
-                                <span className="font-medium text-base">
+                                <span className='font-medium text-base'>
                                   {classroom.name}
                                 </span>
                               </div>
-                              <div className="mt-1 ml-6 space-y-1">
-                                <div className="text-sm text-muted-foreground">
+                              <div className='mt-1 ml-6 space-y-1'>
+                                <div className='text-sm text-muted-foreground'>
                                   Huấn luyện viên:{" "}
                                   {(() => {
                                     if (
@@ -1625,12 +1735,12 @@ export default function TransactionDetailPage() {
                                 </div>
                                 {classroom.schedules &&
                                 classroom.schedules.length > 0 ? (
-                                  <div className="text-xs text-green-600 font-medium">
+                                  <div className='text-xs text-green-600 font-medium'>
                                     ✓ {classroom.schedules.length} lịch học đã
                                     có
                                   </div>
                                 ) : (
-                                  <div className="text-xs text-orange-600 font-medium">
+                                  <div className='text-xs text-orange-600 font-medium'>
                                     Chưa có lịch học
                                   </div>
                                 )}
@@ -1642,9 +1752,9 @@ export default function TransactionDetailPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-4">
+                  <div className='flex justify-end gap-2 pt-4'>
                     <Button
-                      variant="outline"
+                      variant='outline'
                       onClick={handleCloseClassModal}
                       disabled={addingToClass}
                     >
@@ -1673,13 +1783,16 @@ export default function TransactionDetailPage() {
       />
 
       {/* Delete Order Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa giao dịch</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc chắn muốn xóa giao dịch{" "}
-              <span className="font-semibold">
+              <span className='font-semibold'>
                 {order?._id.substring(0, 8)}...
               </span>{" "}
               không? Hành động này không thể hoàn tác và sẽ xóa tất cả dữ liệu
@@ -1691,7 +1804,7 @@ export default function TransactionDetailPage() {
             <AlertDialogAction
               onClick={handleDeleteOrder}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
               {isDeleting ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
@@ -1734,7 +1847,10 @@ export default function TransactionDetailPage() {
       />
 
       {/* Refund Order Modal */}
-      <Dialog open={showRefundModal} onOpenChange={setShowRefundModal}>
+      <Dialog
+        open={showRefundModal}
+        onOpenChange={setShowRefundModal}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Hoàn tiền giao dịch</DialogTitle>
@@ -1744,10 +1860,10 @@ export default function TransactionDetailPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="p-4 bg-muted rounded-lg">
-              <h4 className="font-semibold mb-2">Thông tin giao dịch:</h4>
-              <div className="space-y-1 text-sm">
+          <div className='space-y-4'>
+            <div className='p-4 bg-muted rounded-lg'>
+              <h4 className='font-semibold mb-2'>Thông tin giao dịch:</h4>
+              <div className='space-y-1 text-sm'>
                 <p>
                   <strong>Mã giao dịch:</strong> {order?._id}
                 </p>
@@ -1763,13 +1879,13 @@ export default function TransactionDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="refund-description">
+            <div className='space-y-2'>
+              <Label htmlFor='refund-description'>
                 Lý do hoàn tiền (tùy chọn)
               </Label>
               <Textarea
-                id="refund-description"
-                placeholder="Nhập lý do hoàn tiền..."
+                id='refund-description'
+                placeholder='Nhập lý do hoàn tiền...'
                 value={refundDescription}
                 onChange={(e) => setRefundDescription(e.target.value)}
                 rows={3}
@@ -1779,20 +1895,20 @@ export default function TransactionDetailPage() {
 
           <DialogFooter>
             <Button
-              variant="outline"
+              variant='outline'
               onClick={() => setShowRefundModal(false)}
               disabled={isRefunding}
             >
               Hủy
             </Button>
             <Button
-              variant="destructive"
+              variant='destructive'
               onClick={handleRefundOrder}
               disabled={isRefunding}
             >
               {isRefunding ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                   Đang xử lý...
                 </>
               ) : (

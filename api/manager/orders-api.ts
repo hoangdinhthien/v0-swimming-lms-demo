@@ -55,11 +55,15 @@ export interface OrderClass {
   _id: string;
   name: string;
   course: string;
+  instructor?: string;
   created_at: string;
   created_by: string;
   updated_at: string;
   updated_by: string;
   tenant_id: string;
+  show_on_regist_course?: boolean;
+  member?: string[];
+  order?: string[];
 }
 
 export interface Order {
@@ -77,6 +81,7 @@ export interface Order {
   updated_at?: string; // Added optional updated_at field
   updated_by?: string; // Added optional updated_by field
   class?: OrderClass; // Added optional class field from API response
+  class_choosed?: OrderClass; // Added optional class_choosed field from API response
 }
 
 export interface OrdersResponse {
