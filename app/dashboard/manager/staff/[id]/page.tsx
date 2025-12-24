@@ -778,12 +778,11 @@ export default function StaffDetailPage() {
                                         Class: "Quản lý lớp học",
                                         Order: "Quản lý Giao dịch",
                                         Course: "Quản lý khóa học",
-                                        Student: "Quản lý học viên",
-                                        Instructor: "Quản lý Huấn luyện viên",
+                                        User: "Quản lý người dùng",
                                         Schedule: "Quản lý lịch học",
-                                        Pool: "Quản lý hồ bơi",
                                         News: "Quản lý tin tức",
-                                        Media: "Quản lý media",
+                                        Application: "Quản lý đơn từ",
+                                        ContactForm: "Quản lý liên hệ",
                                       };
                                       return (
                                         moduleTranslations[module] || module

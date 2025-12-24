@@ -13,7 +13,6 @@ show được trong slot này ngày hôm đó ==> có hồ bơi nào available h
 sửa lại thanh search trong drawer
 xóa thao tác nhanh trong khóa học
 
-tab sĩ số học viên và tab 
 
 Lịch học (7 buổi) => click vào hiện popup show full thông tin của buổi học đó
 

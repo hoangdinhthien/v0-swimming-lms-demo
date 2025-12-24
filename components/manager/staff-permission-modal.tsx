@@ -320,9 +320,9 @@ export default function StaffPermissionModal({
                             >
                               {getModuleDisplayName(moduleName)}
                             </Label>
-                            <div className='text-xs text-gray-500'>
+                            {/* <div className='text-xs text-gray-500'>
                               ({modulePermission.action.join(", ")})
-                            </div>
+                            </div> */}
                           </div>
                         </CardHeader>
 

@@ -52,51 +52,54 @@ import PermissionGuard from "@/components/permission-guard";
 import * as z from "zod";
 
 // Form schema for validation
-const courseFormSchema = z.object({
-  title: z.string().min(1, " Tên khóa học không được để trống"),
-  description: z.string().min(1, " Mô tả khóa học không được để trống"),
-  session_number: z.coerce
-    .number({
-      required_error: " Vui lòng nhập số buổi học",
-      invalid_type_error: " Số buổi học phải là số nguyên dương",
-    })
-    .int(" Số buổi học phải là số nguyên")
-    .positive(" Số buổi học phải lớn hơn 0"),
-  session_number_duration: z
-    .string()
-    .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
-  detail: z
-    .array(
+const courseFormSchema = z
+  .object({
+    title: z.string().min(1, " Tên khóa học không được để trống"),
+    description: z.string().min(1, " Mô tả khóa học không được để trống"),
+    session_number: z.coerce
+      .number({
+        required_error: " Vui lòng nhập số buổi học",
+        invalid_type_error: " Số buổi học phải là số nguyên dương",
+      })
+      .int(" Số buổi học phải là số nguyên")
+      .positive(" Số buổi học phải lớn hơn 0"),
+    session_number_duration: z
+      .string()
+      .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
+    detail: z.array(
       z.object({
         title: z.string().min(1, " Tiêu đề nội dung không được để trống"),
         description: z.string().min(1, " Mô tả nội dung không được để trống"),
       })
-    )
-    .min(1, " Vui lòng thêm ít nhất 1 nội dung chi tiết cho khóa học"),
-  category: z
-    .array(z.string())
-    .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
-  type: z.enum(["global", "custom"]),
-  type_of_age: z
-    .array(z.string())
-    .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
-  is_active: z.boolean().default(false),
-  price: z.coerce
-    .number({
-      required_error: " Vui lòng nhập giá khóa học",
-      invalid_type_error: " Giá khóa học phải là số",
-    })
-    .int(" Giá khóa học phải là số nguyên")
-    .nonnegative(" Giá khóa học không được là số âm"),
-  max_member: z.coerce
-    .number({
-      required_error: " Vui lòng nhập số học viên tối đa",
-      invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
-    })
-    .int(" Số học viên tối đa phải là số nguyên")
-    .positive(" Số học viên tối đa phải lớn hơn 0"),
-  media: z.array(z.string()).optional(),
-});
+    ),
+    category: z
+      .array(z.string())
+      .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
+    type: z.enum(["global", "custom"]),
+    type_of_age: z
+      .array(z.string())
+      .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
+    is_active: z.boolean().default(false),
+    price: z.coerce
+      .number({
+        required_error: " Vui lòng nhập giá khóa học",
+        invalid_type_error: " Giá khóa học phải là số",
+      })
+      .int(" Giá khóa học phải là số nguyên")
+      .nonnegative(" Giá khóa học không được là số âm"),
+    max_member: z.coerce
+      .number({
+        required_error: " Vui lòng nhập số học viên tối đa",
+        invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
+      })
+      .int(" Số học viên tối đa phải là số nguyên")
+      .positive(" Số học viên tối đa phải lớn hơn 0"),
+    media: z.array(z.string()).optional(),
+  })
+  .refine((data) => data.detail.length === data.session_number, {
+    message: "Số lượng nội dung chi tiết phải bằng với số buổi học",
+    path: ["detail"],
+  });
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
 
@@ -182,6 +185,40 @@ export default function NewCoursePage() {
     fetchCategories();
     fetchAgeRulesData();
   }, [toast]); // Empty dependency array - only fetch once on mount
+
+  // Sync detail array with session_number
+  useEffect(() => {
+    const currentSessionNumber = form.watch("session_number");
+    const currentDetails = form.getValues("detail") || [];
+
+    if (
+      currentSessionNumber &&
+      currentSessionNumber !== currentDetails.length
+    ) {
+      if (currentSessionNumber > currentDetails.length) {
+        // Add missing detail items
+        const newDetails = [...currentDetails];
+        while (newDetails.length < currentSessionNumber) {
+          newDetails.push({ title: "", description: "" });
+        }
+        form.setValue("detail", newDetails);
+      } else if (currentSessionNumber < currentDetails.length) {
+        // Remove excess detail items
+        const newDetails = currentDetails.slice(0, currentSessionNumber);
+        form.setValue("detail", newDetails);
+
+        // Also clean up form judges for removed items
+        const newFormJudges = { ...detailFormJudges };
+        Object.keys(newFormJudges).forEach((key) => {
+          const index = parseInt(key);
+          if (index >= currentSessionNumber) {
+            delete newFormJudges[index];
+          }
+        });
+        setDetailFormJudges(newFormJudges);
+      }
+    }
+  }, [form.watch("session_number")]); // Re-run when session_number changes
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -680,6 +717,10 @@ export default function NewCoursePage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Nội dung chi tiết</CardTitle>
+                  <p className='text-sm text-muted-foreground'>
+                    Số lượng nội dung chi tiết sẽ tự động khớp với số buổi học
+                    bạn đã chọn.
+                  </p>
                 </CardHeader>
                 <CardContent className='space-y-6'>
                   <Accordion
@@ -693,35 +734,20 @@ export default function NewCoursePage() {
                         className='border rounded-lg mb-4'
                       >
                         <AccordionTrigger className='px-4 py-3 hover:no-underline'>
-                          <div className='flex items-center justify-between w-full mr-4'>
-                            <div className='flex items-center gap-3'>
-                              <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
-                                {index + 1}
-                              </div>
-                              <div className='text-left'>
-                                <h4 className='font-semibold text-foreground'>
-                                  Nội dung {index + 1}
-                                </h4>
-                                {form.watch(`detail.${index}.title`) && (
-                                  <p className='text-sm text-muted-foreground'>
-                                    {form.watch(`detail.${index}.title`)}
-                                  </p>
-                                )}
-                              </div>
+                          <div className='flex items-center gap-3'>
+                            <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
+                              {index + 1}
                             </div>
-                            <Button
-                              type='button'
-                              variant='outline'
-                              size='icon'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeDetail(index);
-                              }}
-                              disabled={form.watch("detail")?.length <= 1}
-                              className='h-8 w-8'
-                            >
-                              <Trash2 className='h-4 w-4' />
-                            </Button>
+                            <div className='text-left'>
+                              <h4 className='font-semibold text-foreground'>
+                                Nội dung {index + 1}
+                              </h4>
+                              {form.watch(`detail.${index}.title`) && (
+                                <p className='text-sm text-muted-foreground'>
+                                  {form.watch(`detail.${index}.title`)}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className='px-4 pb-4'>
@@ -778,13 +804,13 @@ export default function NewCoursePage() {
                     ))}
                   </Accordion>
 
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={addDetail}
-                  >
-                    <Plus className='mr-2 h-4 w-4' /> Thêm nội dung
-                  </Button>
+                  <div className='flex items-center gap-2 p-4 bg-muted/50 rounded-lg'>
+                    <div className='text-sm text-muted-foreground'>
+                      Số lượng nội dung chi tiết sẽ tự động điều chỉnh theo số
+                      buổi học. Hiện tại có {form.watch("detail")?.length || 0}{" "}
+                      nội dung cho {form.watch("session_number") || 0} buổi học.
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
