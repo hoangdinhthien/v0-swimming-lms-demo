@@ -2281,13 +2281,14 @@ export function SchedulePreviewModal({
                                                       • {schedule.slot?.title}
                                                     </p>
                                                   </div>
-                                                  <div className='max-h-[250px] overflow-y-auto p-2'>
-                                                    {pools.length === 0 ? (
-                                                      <div className='text-center py-4 text-sm text-muted-foreground'>
-                                                        Không có hồ bơi khả dụng
-                                                      </div>
-                                                    ) : (
-                                                      <div className='space-y-1.5'>
+                                                  <ScrollArea className='h-[400px]'>
+                                                    <div className='p-2'>
+                                                      {pools.length === 0 ? (
+                                                        <div className='text-center py-4 text-sm text-muted-foreground'>
+                                                          Không có hồ bơi khả dụng
+                                                        </div>
+                                                      ) : (
+                                                        <div className='space-y-1.5'>
                                                         {pools.map((pool) => {
                                                           const isPoolSelected =
                                                             selectedPoolId ===
@@ -2425,7 +2426,8 @@ export function SchedulePreviewModal({
                                                         })}
                                                       </div>
                                                     )}
-                                                  </div>
+                                                    </div>
+                                                  </ScrollArea>
                                                 </PopoverContent>
                                               )}
                                             </Popover>
