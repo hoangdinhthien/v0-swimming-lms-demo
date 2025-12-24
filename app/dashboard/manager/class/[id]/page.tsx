@@ -608,7 +608,12 @@ export default function ClassDetailPage() {
       // Reset selections
       setSelectedMembersToAdd([]);
       setSelectedMembersToRemove([]);
-      setSelectedGraduates(classData.member_passed || []);
+
+      // Handle member_passed which might be populated
+      const passedMembers = (classData.member_passed || [])
+        .map((m: any) => (typeof m === "string" ? m : m._id))
+        .filter(Boolean);
+      setSelectedGraduates(passedMembers);
     } catch (error) {
       console.error("Error loading students:", error);
       toast({
@@ -691,7 +696,8 @@ export default function ClassDetailPage() {
         title: "Thành công",
         description: "Đã cập nhật trạng thái tốt nghiệp",
       });
-      setIsMemberModalOpen(false);
+      // Keep modal open so user can see the updated status
+      // setIsMemberModalOpen(false);
     } catch (error: any) {
       console.error("Error updating graduates:", error);
       toast({
@@ -1876,7 +1882,7 @@ export default function ClassDetailPage() {
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="add">Học viên có thể thêm</TabsTrigger>
                 <TabsTrigger value="remove">Học viên trong lớp</TabsTrigger>
-                <TabsTrigger value="graduates">Cập nhật tốt nghiệp</TabsTrigger>
+                <TabsTrigger value="graduates">Xét tốt nghiệp</TabsTrigger>
               </TabsList>
               <TabsContent value="add" className="flex-1 overflow-hidden mt-4">
                 <div className="flex flex-col border rounded-lg overflow-hidden h-full">
@@ -2097,10 +2103,10 @@ export default function ClassDetailPage() {
                       <div>
                         <h3 className="font-semibold flex items-center gap-2">
                           <GraduationCap className="h-4 w-4" />
-                          Danh sách tốt nghiệp
+                          Xét duyệt tốt nghiệp
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Chọn học viên đã hoàn thành khóa học
+                          Đánh dấu chọn học viên đã hoàn thành khóa học
                         </p>
                       </div>
                       {classData?.member && classData.member.length > 0 && (
@@ -2129,45 +2135,62 @@ export default function ClassDetailPage() {
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {classData?.member && classData.member.length > 0 ? (
-                      classData.member.map((member: any) => (
-                        <div
-                          key={member._id}
-                          className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border"
-                        >
-                          <Checkbox
-                            id={`grad-${member._id}`}
-                            checked={selectedGraduates.includes(member._id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedGraduates((prev) => [
-                                  ...prev,
-                                  member._id,
-                                ]);
-                              } else {
-                                setSelectedGraduates((prev) =>
-                                  prev.filter((id) => id !== member._id)
-                                );
-                              }
-                            }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {member.username}
-                            </p>
-                            <p className="text-sm text-muted-foreground truncate">
-                              {member.email}
-                            </p>
+                      classData.member.map((member: any) => {
+                        // Calculate saved status from classData
+                        const isSavedGraduated = (
+                          classData.member_passed || []
+                        ).some(
+                          (m: any) =>
+                            (typeof m === "string" ? m : m._id) === member._id
+                        );
+
+                        return (
+                          <div
+                            key={member._id}
+                            className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border"
+                          >
+                            <Checkbox
+                              id={`grad-${member._id}`}
+                              checked={selectedGraduates.includes(member._id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedGraduates((prev) => [
+                                    ...prev,
+                                    member._id,
+                                  ]);
+                                } else {
+                                  setSelectedGraduates((prev) =>
+                                    prev.filter((id) => id !== member._id)
+                                  );
+                                }
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">
+                                {member.username}
+                              </p>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {member.email}
+                              </p>
+                            </div>
+                            {isSavedGraduated ? (
+                              <Badge
+                                variant="secondary"
+                                className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"
+                              >
+                                Đã tốt nghiệp
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="bg-gray-100 text-gray-500 hover:bg-gray-100 border-gray-200"
+                              >
+                                Chưa tốt nghiệp
+                              </Badge>
+                            )}
                           </div>
-                          {selectedGraduates.includes(member._id) && (
-                            <Badge
-                              variant="secondary"
-                              className="bg-green-100 text-green-700 hover:bg-green-100"
-                            >
-                              Đã tốt nghiệp
-                            </Badge>
-                          )}
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
                         Chưa có học viên nào trong lớp
