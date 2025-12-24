@@ -63,6 +63,7 @@ import {
   removeMemberFromClass,
   type ClassDetails,
   type UpdateClassData,
+  updateClassGraduates,
 } from "@/api/manager/class-api";
 import { fetchCourses } from "@/api/manager/courses-api";
 import { fetchInstructors } from "@/api/manager/instructors-api";
@@ -132,6 +133,8 @@ export default function ClassDetailPage() {
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     string[]
   >([]);
+  const [selectedGraduates, setSelectedGraduates] = useState<string[]>([]);
+  const [isUpdatingGraduates, setIsUpdatingGraduates] = useState(false);
 
   // Active tab for member management modal
   const [activeTab, setActiveTab] = useState("add");
@@ -605,6 +608,7 @@ export default function ClassDetailPage() {
       // Reset selections
       setSelectedMembersToAdd([]);
       setSelectedMembersToRemove([]);
+      setSelectedGraduates(classData.member_passed || []);
     } catch (error) {
       console.error("Error loading students:", error);
       toast({
@@ -654,6 +658,50 @@ export default function ClassDetailPage() {
       });
     } finally {
       setIsManagingMembers(false);
+    }
+  };
+
+  // Handle updating graduates
+  const handleUpdateGraduates = async () => {
+    setIsUpdatingGraduates(true);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+
+      if (!tenantId || !token || !classroomId) {
+        throw new Error("Thiếu thông tin xác thực");
+      }
+
+      await updateClassGraduates(
+        classroomId,
+        selectedGraduates,
+        tenantId,
+        token
+      );
+
+      // Refresh class data
+      const updatedClass = await fetchClassDetails(
+        classroomId,
+        tenantId,
+        token
+      );
+      setClassData(updatedClass);
+
+      toast({
+        title: "Thành công",
+        description: "Đã cập nhật trạng thái tốt nghiệp",
+      });
+      setIsMemberModalOpen(false);
+    } catch (error: any) {
+      console.error("Error updating graduates:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description:
+          error.message || "Không thể cập nhật trạng thái tốt nghiệp",
+      });
+    } finally {
+      setIsUpdatingGraduates(false);
     }
   };
 
@@ -1825,9 +1873,10 @@ export default function ClassDetailPage() {
               onValueChange={setActiveTab}
               className="flex-1 overflow-hidden"
             >
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="add">Học viên có thể thêm</TabsTrigger>
                 <TabsTrigger value="remove">Học viên trong lớp</TabsTrigger>
+                <TabsTrigger value="graduates">Cập nhật tốt nghiệp</TabsTrigger>
               </TabsList>
               <TabsContent value="add" className="flex-1 overflow-hidden mt-4">
                 <div className="flex flex-col border rounded-lg overflow-hidden h-full">
@@ -2038,6 +2087,101 @@ export default function ClassDetailPage() {
                   )}
                 </div>
               </TabsContent>
+              <TabsContent
+                value="graduates"
+                className="flex-1 overflow-hidden mt-4"
+              >
+                <div className="flex flex-col border rounded-lg overflow-hidden h-full">
+                  <div className="bg-muted/50 px-4 py-3 border-b">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4" />
+                          Danh sách tốt nghiệp
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Chọn học viên đã hoàn thành khóa học
+                        </p>
+                      </div>
+                      {classData?.member && classData.member.length > 0 && (
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedGraduates(
+                                classData.member.map((m: any) => m._id)
+                              );
+                            }}
+                          >
+                            Chọn tất cả
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedGraduates([])}
+                          >
+                            Bỏ chọn
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                    {classData?.member && classData.member.length > 0 ? (
+                      classData.member.map((member: any) => (
+                        <div
+                          key={member._id}
+                          className="flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border"
+                        >
+                          <Checkbox
+                            id={`grad-${member._id}`}
+                            checked={selectedGraduates.includes(member._id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGraduates((prev) => [
+                                  ...prev,
+                                  member._id,
+                                ]);
+                              } else {
+                                setSelectedGraduates((prev) =>
+                                  prev.filter((id) => id !== member._id)
+                                );
+                              }
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">
+                              {member.username}
+                            </p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {member.email}
+                            </p>
+                          </div>
+                          {selectedGraduates.includes(member._id) && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-green-100 text-green-700 hover:bg-green-100"
+                            >
+                              Đã tốt nghiệp
+                            </Badge>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Chưa có học viên nào trong lớp
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-muted/30 px-4 py-2 border-t">
+                    <p className="text-sm font-medium">
+                      Đã chọn {selectedGraduates.length} /{" "}
+                      {classData?.member?.length || 0} học viên tốt nghiệp
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           )}
 
@@ -2054,8 +2198,11 @@ export default function ClassDetailPage() {
               disabled={
                 isManagingMembers ||
                 (activeTab === "add" && selectedMembersToAdd.length === 0) ||
-                (activeTab === "remove" && selectedMembersToRemove.length === 0)
+                (activeTab === "remove" &&
+                  selectedMembersToRemove.length === 0) ||
+                activeTab === "graduates" // Hide apply member button on graduates tab
               }
+              className={activeTab === "graduates" ? "hidden" : ""}
             >
               {isManagingMembers ? (
                 <>
@@ -2071,6 +2218,25 @@ export default function ClassDetailPage() {
                 </>
               )}
             </Button>
+            {activeTab === "graduates" && (
+              <Button
+                onClick={handleUpdateGraduates}
+                disabled={isUpdatingGraduates}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {isUpdatingGraduates ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang cập nhật...
+                  </>
+                ) : (
+                  <>
+                    <GraduationCap className="h-4 w-4 mr-2" />
+                    Cập nhật trạng thái
+                  </>
+                )}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

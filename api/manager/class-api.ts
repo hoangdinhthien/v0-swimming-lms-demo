@@ -80,6 +80,7 @@ export interface ClassDetails {
   sessions_exceeded: number;
   sessions_remaining: number;
   show_on_regist_course?: boolean; // Add show_on_regist_course field
+  member_passed?: string[]; // Add member_passed field
 }
 
 // New interfaces for classes list
@@ -505,6 +506,64 @@ export const updateClass = async (
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`Failed to update class: ${response.status} ${errorText}`);
+  }
+
+  return await response.json();
+};
+
+/**
+ * Update class graduates (member_passed status)
+ * @param classId - The ID of the class to update
+ * @param memberPassed - Array of member IDs who have passed
+ * @param tenantId - Optional tenant ID
+ * @param token - Optional auth token
+ * @returns Promise with updated class data
+ */
+export const updateClassGraduates = async (
+  classId: string,
+  memberPassed: string[],
+  tenantId?: string,
+  token?: string
+): Promise<any> => {
+  // Use provided tenant and token, or get from utils
+  const finalTenantId = tenantId || getSelectedTenant();
+  const finalToken = token || getAuthToken();
+
+  if (!finalTenantId || !finalToken) {
+    throw new Error("Missing authentication or tenant information");
+  }
+
+  if (!classId) {
+    throw new Error("Class ID is required");
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": finalTenantId,
+    Authorization: `Bearer ${finalToken}`,
+  };
+
+  // Add service header for staff users
+  if (getUserFrontendRole() === "staff") {
+    headers["service"] = "Class";
+  }
+
+  const response = await fetch(
+    `${config.API}/v1/workflow-process/manager/class?id=${classId}`,
+    {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        member_passed: memberPassed,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Failed to update class graduates: ${response.status} ${errorText}`
+    );
   }
 
   return await response.json();
