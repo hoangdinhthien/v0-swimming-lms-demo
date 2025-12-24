@@ -193,7 +193,7 @@ export const fetchScheduleData = async (
   params: FetchScheduleParams
 ): Promise<ScheduleDataResult> => {
   const { startDate, endDate, tenantId, token } = params;
-  const { service } = params;
+  let { service } = params;
 
   // Use provided tenant and token, or get from utils
   const finalTenantId = tenantId || getSelectedTenant();
@@ -201,6 +201,11 @@ export const fetchScheduleData = async (
 
   if (!finalTenantId || !finalToken) {
     throw new Error("Missing authentication or tenant information");
+  }
+
+  // Automatically add service header for staff users if not provided
+  if (!service && getUserFrontendRole() === "staff") {
+    service = "Schedule";
   }
 
   // Format dates as YYYY-MM-DD for the API using local date components
@@ -301,12 +306,15 @@ export const fetchDateRangeSchedule = async (
   token?: string,
   service?: string
 ): Promise<ScheduleDataResult> => {
+  // Automatically add service header for staff users if not provided
+  const finalService = service || (getUserFrontendRole() === "staff" ? "Schedule" : undefined);
+  
   return fetchScheduleData({
     startDate,
     endDate,
     tenantId,
     token,
-    service,
+    service: finalService,
   });
 };
 

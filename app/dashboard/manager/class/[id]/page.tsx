@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useInstructorValidation } from "@/hooks/use-instructor-validation";
+import PermissionGuard from "@/components/permission-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
@@ -70,6 +73,7 @@ import { getMediaDetails } from "@/api/media-api";
 //   type AutoScheduleRequest,
 // } from "@/api/manager/schedule-api";
 import { SchedulePreviewModal } from "@/components/manager/schedule-preview-modal";
+import ScheduleDetailModal from "@/components/manager/schedule-detail-modal";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
 import { getVietnameseDayFromDate } from "@/utils/date-utils";
@@ -107,6 +111,13 @@ export default function ClassDetailPage() {
     array_number_in_week: [] as number[],
   });
 
+  // Schedule detail modal state
+  const [isScheduleDetailModalOpen, setIsScheduleDetailModalOpen] =
+    useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    null
+  );
+
   // Schedule preview modal state
   const [isSchedulePreviewModalOpen, setIsSchedulePreviewModalOpen] =
     useState(false);
@@ -120,6 +131,9 @@ export default function ClassDetailPage() {
   const [selectedMembersToRemove, setSelectedMembersToRemove] = useState<
     string[]
   >([]);
+
+  // Active tab for member management modal
+  const [activeTab, setActiveTab] = useState("add");
 
   // Dropdown data
   const [courses, setCourses] = useState<any[]>([]);
@@ -558,6 +572,7 @@ export default function ClassDetailPage() {
 
     if (!tenantId || !token || !classData) return;
 
+    setActiveTab("add");
     setIsMemberModalOpen(true);
     setLoadingData(true);
 
@@ -585,17 +600,19 @@ export default function ClassDetailPage() {
     }
   };
 
+  // Handle opening schedule detail modal
+  const handleScheduleClick = (scheduleId: string) => {
+    setSelectedScheduleId(scheduleId);
+    setIsScheduleDetailModalOpen(true);
+  };
+
   // Handle applying member changes
   const handleApplyMemberChanges = async () => {
     setIsManagingMembers(true);
     try {
-      // Add members if any selected
-      if (selectedMembersToAdd.length > 0) {
+      if (activeTab === "add" && selectedMembersToAdd.length > 0) {
         await handleAddMembers(selectedMembersToAdd);
-      }
-
-      // Remove members if any selected
-      if (selectedMembersToRemove.length > 0) {
+      } else if (activeTab === "remove" && selectedMembersToRemove.length > 0) {
         await handleRemoveMembers(selectedMembersToRemove);
       }
 
@@ -606,7 +623,10 @@ export default function ClassDetailPage() {
 
       toast({
         title: "Thành công",
-        description: "Đã cập nhật danh sách học viên",
+        description:
+          activeTab === "add"
+            ? "Đã thêm học viên vào lớp"
+            : "Đã xóa học viên khỏi lớp",
       });
     } catch (error: any) {
       console.error("Error managing members:", error);
@@ -803,14 +823,19 @@ export default function ClassDetailPage() {
             </div>
 
             <div className='flex flex-wrap items-center gap-3 self-center md:self-start'>
-              <Button
-                onClick={handleEditClick}
-                variant='outline'
-                className='inline-flex items-center gap-2 h-10 px-4 rounded-xl font-medium border-primary/10 text-primary hover:bg-primary/5 hover:text-primary hover:border-primary/20 hover:-translate-y-0.5 active:scale-95 transition-all duration-200'
+              <PermissionGuard
+                module='Class'
+                action='PUT'
               >
-                <Edit2 className='h-4 w-4' />
-                Chỉnh sửa
-              </Button>
+                <Button
+                  onClick={handleEditClick}
+                  variant='outline'
+                  className='inline-flex items-center gap-2 h-10 px-4 rounded-xl font-medium border-primary/10 text-primary hover:bg-primary/5 hover:text-primary hover:border-primary/20 hover:-translate-y-0.5 active:scale-95 transition-all duration-200'
+                >
+                  <Edit2 className='h-4 w-4' />
+                  Chỉnh sửa
+                </Button>
+              </PermissionGuard>
               <Button
                 onClick={handleOpenMemberModal}
                 variant='outline'
@@ -924,7 +949,8 @@ export default function ClassDetailPage() {
                       {classData.schedules.map((schedule) => (
                         <div
                           key={schedule._id}
-                          className='flex items-center justify-between p-3 bg-muted/50 rounded-lg border'
+                          className='flex items-center justify-between p-3 bg-muted/50 rounded-lg border cursor-pointer hover:bg-muted/70 transition-colors'
+                          onClick={() => handleScheduleClick(schedule._id)}
                         >
                           <div className='flex items-center gap-3'>
                             <div className='p-2 bg-primary/10 rounded-lg'>
@@ -1815,211 +1841,228 @@ export default function ClassDetailPage() {
               <span className='ml-2'>Đang tải danh sách học viên...</span>
             </div>
           ) : (
-            <div className='grid grid-cols-2 gap-4 flex-1 overflow-hidden'>
-              {/* Students to Add */}
-              <div className='flex flex-col border rounded-lg overflow-hidden'>
-                <div className='bg-muted/50 px-4 py-3 border-b'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h3 className='font-semibold flex items-center gap-2'>
-                        <Users className='h-4 w-4' />
-                        Học viên có thể thêm (
-                        {
-                          students.filter(
-                            (s) =>
-                              !classData?.member?.find(
-                                (m: any) => m._id === s.user._id
-                              )
-                          ).length
-                        }
-                        )
-                      </h3>
-                      <p className='text-sm text-muted-foreground mt-1'>
-                        Đã thanh toán khóa học, chưa có trong lớp
-                      </p>
-                    </div>
-                    {students.filter(
-                      (s) =>
-                        !classData?.member?.find(
-                          (m: any) => m._id === s.user._id
-                        )
-                    ).length > 0 && (
-                      <div className='flex gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => {
-                            const availableStudents = students.filter(
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className='flex-1 overflow-hidden'
+            >
+              <TabsList className='grid w-full grid-cols-2'>
+                <TabsTrigger value='add'>Học viên có thể thêm</TabsTrigger>
+                <TabsTrigger value='remove'>Học viên trong lớp</TabsTrigger>
+              </TabsList>
+              <TabsContent
+                value='add'
+                className='flex-1 overflow-hidden mt-4'
+              >
+                <div className='flex flex-col border rounded-lg overflow-hidden h-full'>
+                  <div className='bg-muted/50 px-4 py-3 border-b'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h3 className='font-semibold flex items-center gap-2'>
+                          <Users className='h-4 w-4' />
+                          Học viên có thể thêm (
+                          {
+                            students.filter(
                               (s) =>
                                 !classData?.member?.find(
                                   (m: any) => m._id === s.user._id
                                 )
-                            );
-                            setSelectedMembersToAdd(
-                              availableStudents.map((s) => s.user._id)
-                            );
-                          }}
-                        >
-                          Chọn tất cả
-                        </Button>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => setSelectedMembersToAdd([])}
-                        >
-                          Bỏ chọn
-                        </Button>
+                            ).length
+                          }
+                          )
+                        </h3>
+                        <p className='text-sm text-muted-foreground mt-1'>
+                          Đã thanh toán khóa học, chưa có trong lớp
+                        </p>
                       </div>
+                      {students.filter(
+                        (s) =>
+                          !classData?.member?.find(
+                            (m: any) => m._id === s.user._id
+                          )
+                      ).length > 0 && (
+                        <div className='flex gap-2'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => {
+                              const availableStudents = students.filter(
+                                (s) =>
+                                  !classData?.member?.find(
+                                    (m: any) => m._id === s.user._id
+                                  )
+                              );
+                              setSelectedMembersToAdd(
+                                availableStudents.map((s) => s.user._id)
+                              );
+                            }}
+                          >
+                            Chọn tất cả
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => setSelectedMembersToAdd([])}
+                          >
+                            Bỏ chọn
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className='flex-1 overflow-y-auto p-4 space-y-2'>
+                    {students.filter(
+                      (student) =>
+                        !classData?.member?.find(
+                          (m: any) => m._id === student.user._id
+                        )
+                    ).length > 0 ? (
+                      students
+                        .filter(
+                          (student) =>
+                            !classData?.member?.find(
+                              (m: any) => m._id === student.user._id
+                            )
+                        )
+                        .map((student) => (
+                          <div
+                            key={student.user._id}
+                            className='flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border'
+                          >
+                            <Checkbox
+                              id={`add-${student.user._id}`}
+                              checked={selectedMembersToAdd.includes(
+                                student.user._id
+                              )}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedMembersToAdd((prev) => [
+                                    ...prev,
+                                    student.user._id,
+                                  ]);
+                                } else {
+                                  setSelectedMembersToAdd((prev) =>
+                                    prev.filter((id) => id !== student.user._id)
+                                  );
+                                }
+                              }}
+                            />
+                            <div className='flex-1 min-w-0'>
+                              <p className='font-medium truncate'>
+                                {student.user.username}
+                              </p>
+                              <p className='text-sm text-muted-foreground truncate'>
+                                {student.user.email}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                    ) : (
+                      <p className='text-muted-foreground text-center py-8'>
+                        Tất cả học viên đã thanh toán đều đã có trong lớp
+                      </p>
                     )}
                   </div>
+                  {selectedMembersToAdd.length > 0 && (
+                    <div className='bg-green-50 dark:bg-green-900/20 px-4 py-2 border-t'>
+                      <p className='text-sm font-medium text-green-700 dark:text-green-300'>
+                        Đã chọn {selectedMembersToAdd.length} học viên để thêm
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div className='flex-1 overflow-y-auto p-4 space-y-2'>
-                  {students.filter(
-                    (student) =>
-                      !classData?.member?.find(
-                        (m: any) => m._id === student.user._id
-                      )
-                  ).length > 0 ? (
-                    students
-                      .filter(
-                        (student) =>
-                          !classData?.member?.find(
-                            (m: any) => m._id === student.user._id
-                          )
-                      )
-                      .map((student) => (
+              </TabsContent>
+              <TabsContent
+                value='remove'
+                className='flex-1 overflow-hidden mt-4'
+              >
+                <div className='flex flex-col border rounded-lg overflow-hidden h-full'>
+                  <div className='bg-muted/50 px-4 py-3 border-b'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h3 className='font-semibold flex items-center gap-2'>
+                          <Users className='h-4 w-4' />
+                          Học viên trong lớp ({classData?.member?.length || 0})
+                        </h3>
+                        <p className='text-sm text-muted-foreground mt-1'>
+                          Chọn để xóa khỏi lớp học
+                        </p>
+                      </div>
+                      {classData?.member && classData.member.length > 0 && (
+                        <div className='flex gap-2'>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => {
+                              setSelectedMembersToRemove(
+                                classData.member.map((m: any) => m._id)
+                              );
+                            }}
+                          >
+                            Chọn tất cả
+                          </Button>
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => setSelectedMembersToRemove([])}
+                          >
+                            Bỏ chọn
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className='flex-1 overflow-y-auto p-4 space-y-2'>
+                    {classData?.member && classData.member.length > 0 ? (
+                      classData.member.map((member: any) => (
                         <div
-                          key={student.user._id}
+                          key={member._id}
                           className='flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border'
                         >
                           <Checkbox
-                            id={`add-${student.user._id}`}
-                            checked={selectedMembersToAdd.includes(
-                              student.user._id
+                            id={`remove-${member._id}`}
+                            checked={selectedMembersToRemove.includes(
+                              member._id
                             )}
                             onCheckedChange={(checked) => {
                               if (checked) {
-                                setSelectedMembersToAdd((prev) => [
+                                setSelectedMembersToRemove((prev) => [
                                   ...prev,
-                                  student.user._id,
+                                  member._id,
                                 ]);
                               } else {
-                                setSelectedMembersToAdd((prev) =>
-                                  prev.filter((id) => id !== student.user._id)
+                                setSelectedMembersToRemove((prev) =>
+                                  prev.filter((id) => id !== member._id)
                                 );
                               }
                             }}
                           />
                           <div className='flex-1 min-w-0'>
                             <p className='font-medium truncate'>
-                              {student.user.username}
+                              {member.username}
                             </p>
                             <p className='text-sm text-muted-foreground truncate'>
-                              {student.user.email}
+                              {member.email}
                             </p>
                           </div>
                         </div>
                       ))
-                  ) : (
-                    <p className='text-muted-foreground text-center py-8'>
-                      Tất cả học viên đã thanh toán đều đã có trong lớp
-                    </p>
-                  )}
-                </div>
-                {selectedMembersToAdd.length > 0 && (
-                  <div className='bg-green-50 dark:bg-green-900/20 px-4 py-2 border-t'>
-                    <p className='text-sm font-medium text-green-700 dark:text-green-300'>
-                      Đã chọn {selectedMembersToAdd.length} học viên để thêm
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Students to Remove */}
-              <div className='flex flex-col border rounded-lg overflow-hidden'>
-                <div className='bg-muted/50 px-4 py-3 border-b'>
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h3 className='font-semibold flex items-center gap-2'>
-                        <Users className='h-4 w-4' />
-                        Học viên trong lớp ({classData?.member?.length || 0})
-                      </h3>
-                      <p className='text-sm text-muted-foreground mt-1'>
-                        Chọn để xóa khỏi lớp học
+                    ) : (
+                      <p className='text-muted-foreground text-center py-8'>
+                        Chưa có học viên nào trong lớp
                       </p>
-                    </div>
-                    {classData?.member && classData.member.length > 0 && (
-                      <div className='flex gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => {
-                            setSelectedMembersToRemove(
-                              classData.member.map((m: any) => m._id)
-                            );
-                          }}
-                        >
-                          Chọn tất cả
-                        </Button>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => setSelectedMembersToRemove([])}
-                        >
-                          Bỏ chọn
-                        </Button>
-                      </div>
                     )}
                   </div>
-                </div>
-                <div className='flex-1 overflow-y-auto p-4 space-y-2'>
-                  {classData?.member && classData.member.length > 0 ? (
-                    classData.member.map((member: any) => (
-                      <div
-                        key={member._id}
-                        className='flex items-center space-x-3 p-3 hover:bg-muted/50 rounded-lg border'
-                      >
-                        <Checkbox
-                          id={`remove-${member._id}`}
-                          checked={selectedMembersToRemove.includes(member._id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedMembersToRemove((prev) => [
-                                ...prev,
-                                member._id,
-                              ]);
-                            } else {
-                              setSelectedMembersToRemove((prev) =>
-                                prev.filter((id) => id !== member._id)
-                              );
-                            }
-                          }}
-                        />
-                        <div className='flex-1 min-w-0'>
-                          <p className='font-medium truncate'>
-                            {member.username}
-                          </p>
-                          <p className='text-sm text-muted-foreground truncate'>
-                            {member.email}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className='text-muted-foreground text-center py-8'>
-                      Chưa có học viên nào trong lớp
-                    </p>
+                  {selectedMembersToRemove.length > 0 && (
+                    <div className='bg-red-50 dark:bg-red-900/20 px-4 py-2 border-t'>
+                      <p className='text-sm font-medium text-red-700 dark:text-red-300'>
+                        Đã chọn {selectedMembersToRemove.length} học viên để xóa
+                      </p>
+                    </div>
                   )}
                 </div>
-                {selectedMembersToRemove.length > 0 && (
-                  <div className='bg-red-50 dark:bg-red-900/20 px-4 py-2 border-t'>
-                    <p className='text-sm font-medium text-red-700 dark:text-red-300'>
-                      Đã chọn {selectedMembersToRemove.length} học viên để xóa
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
 
           <DialogFooter>
@@ -2034,8 +2077,8 @@ export default function ClassDetailPage() {
               onClick={handleApplyMemberChanges}
               disabled={
                 isManagingMembers ||
-                (selectedMembersToAdd.length === 0 &&
-                  selectedMembersToRemove.length === 0)
+                (activeTab === "add" && selectedMembersToAdd.length === 0) ||
+                (activeTab === "remove" && selectedMembersToRemove.length === 0)
               }
             >
               {isManagingMembers ? (
@@ -2046,7 +2089,9 @@ export default function ClassDetailPage() {
               ) : (
                 <>
                   <CheckCircle2 className='h-4 w-4 mr-2' />
-                  Áp dụng thay đổi
+                  {activeTab === "add"
+                    ? "Thêm vào lớp học"
+                    : "Xóa khỏi lớp học"}
                 </>
               )}
             </Button>
@@ -2072,6 +2117,21 @@ export default function ClassDetailPage() {
             }
           }
           setIsSchedulePreviewModalOpen(false);
+        }}
+      />
+
+      {/* Schedule Detail Modal */}
+      <ScheduleDetailModal
+        open={isScheduleDetailModalOpen}
+        onClose={() => setIsScheduleDetailModalOpen(false)}
+        scheduleId={selectedScheduleId}
+        onEdit={(schedule) => {
+          // Handle edit schedule - you can implement this later
+          console.log("Edit schedule:", schedule);
+        }}
+        onDelete={(schedule) => {
+          // Handle delete schedule - you can implement this later
+          console.log("Delete schedule:", schedule);
         }}
       />
     </div>
