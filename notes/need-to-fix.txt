@@ -33,4 +33,11 @@ thêm validate khi create edit lớp học
 
 - ở trang ‘/dashboard/manager/classes’, nếu như staff đó chỉ có quyền xem list các Lớp học (Classes) thôi mà không có quyền tạo mới hay chỉnh sửa hay xoá ({"module": ["Class"],"action": ["GET"],"noReview": false}). Thì không được show lên UI button ‘Thêm lớp học mới’. Và cũng không được hiện button ‘Chỉnh sửa’ ở trong trang ‘dashboard/manager/class/[id]’ luôn, và cũng phải chặn lại không cho họ truy cập được vào trang ‘/dashboard/manager/classes/create’ nếu họ cố tình truy bằng url trên thanh search của trình duyệt nếu như họ vẫn có tình nhập ở trên search bar của trình duyệt
 
-- ở trang 'dashboard/manager/class/[id]'; tôi muốn chỉnh sửa UI ở phần {/* Schedule Information */}, manager/staff có thể click vào từng buổi học thì sẽ hiện lên modal show các thông tin chi tiết của buổi học đó, bằng cách lấy id trong field schedule của fetchClassDetails để gọi api fetchScheduleById
+- ở trang 'dashboard/manager/class/[id]'; chỉ được hiện button 'Xếp lịch lớp học' chỉ khi staff có quyền tạo, xóa, sửa của module Class và quyền tạo, xóa, sửa của module Schedule
+({"module": ["Class"],"action": ["GET","POST","PUT","DELETE"],"noReview": true},)
+({"module": ["Schedule"],"action": ["GET","POST","PUT","DELETE"],"noReview": true},)
+- nếu như staff đó không có quyền của cả 1 trong 2 module này thì không hiện button 'Xếp lịch lớp học'
+- nếu như staff đó chỉ có quyền truy cập module class và schedule như thế này:
+({"module": ["Class"],"action": ["GET"],"noReview": true},)
+({"module": ["Schedule"],"action": ["GET"],"noReview": true},)
+THÌ CŨNG KHÔNG ĐƯỢC HIỆN BUTTON 'Xếp lịch lớp học'

@@ -26,6 +26,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { useInstructorValidation } from "@/hooks/use-instructor-validation";
 import PermissionGuard from "@/components/permission-guard";
 import { Button } from "@/components/ui/button";
@@ -150,7 +151,22 @@ export default function ClassDetailPage() {
   const [tenantId, setTenantId] = useState<string>("");
   const [token, setToken] = useState<string>("");
 
+  const { hasPermission, isManager } = useStaffPermissions();
   const { toast } = useToast();
+
+  // Check if user has full CRUD permissions for both Class and Schedule modules
+  const hasFullSchedulePermissions = () => {
+    if (isManager) return true;
+
+    const classPermissions = ["GET", "POST", "PUT", "DELETE"].every((action) =>
+      hasPermission("Class", action)
+    );
+    const schedulePermissions = ["GET", "POST", "PUT", "DELETE"].every(
+      (action) => hasPermission("Schedule", action)
+    );
+
+    return classPermissions && schedulePermissions;
+  };
 
   // Determine the back link and text based on 'from' parameter
   const getBackLink = () => {
@@ -543,16 +559,17 @@ export default function ClassDetailPage() {
         "autoScheduleClass API đã bị deprecated. Vui lòng sử dụng flow mới: Tạo lớp hàng loạt > Xếp lịch"
       );
 
-      toast({
-        title: "Thành công",
-        description: "Đã tự động xếp lịch học cho lớp thành công",
-      });
+      // UNREACHABLE CODE REMOVED:
+      // toast({
+      //   title: "Thành công",
+      //   description: "Đã tự động xếp lịch học cho lớp thành công",
+      // });
 
-      // Refresh class data to show new schedules
-      const updatedClass = await fetchClassDetails(classroomId);
-      setClassData(updatedClass);
+      // // Refresh class data to show new schedules
+      // const updatedClass = await fetchClassDetails(classroomId);
+      // setClassData(updatedClass);
 
-      setIsAutoScheduleModalOpen(false);
+      // setIsAutoScheduleModalOpen(false);
     } catch (error: any) {
       console.error("Error auto scheduling class:", error);
       toast({
@@ -844,18 +861,19 @@ export default function ClassDetailPage() {
                 <Users className='h-4 w-4' />
                 Quản lý Học viên
               </Button>
-              {/* Auto Schedule Button - Show if class has missing sessions or no schedules */}
+              {/* Auto Schedule Button - Show if class has missing sessions or no schedules AND user has full permissions */}
               {((classData.sessions_remaining &&
                 classData.sessions_remaining > 0) ||
-                (classData.schedules && classData.schedules.length === 0)) && (
-                <Button
-                  onClick={() => setIsSchedulePreviewModalOpen(true)}
-                  className='inline-flex items-center gap-2 h-10 px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95 rounded-xl font-semibold transition-all duration-200'
-                >
-                  <CalendarPlus className='h-4 w-4' />
-                  Xếp lịch lớp học
-                </Button>
-              )}
+                (classData.schedules && classData.schedules.length === 0)) &&
+                hasFullSchedulePermissions() && (
+                  <Button
+                    onClick={() => setIsSchedulePreviewModalOpen(true)}
+                    className='inline-flex items-center gap-2 h-10 px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5 active:scale-95 rounded-xl font-semibold transition-all duration-200'
+                  >
+                    <CalendarPlus className='h-4 w-4' />
+                    Xếp lịch lớp học
+                  </Button>
+                )}
             </div>
           </div>
         </div>

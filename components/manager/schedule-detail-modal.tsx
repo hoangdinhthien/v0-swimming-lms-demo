@@ -559,7 +559,7 @@ export default function ScheduleDetailModal({
           </div>
         )}
 
-        <DialogFooter className='gap-2'>
+        {/* <DialogFooter className='gap-2'>
           <Button
             variant='outline'
             onClick={onClose}
@@ -590,7 +590,7 @@ export default function ScheduleDetailModal({
               Xóa lịch học
             </Button>
           </PermissionGuard>
-        </DialogFooter>
+        </DialogFooter> */}
       </DialogContent>
     </Dialog>
   );
