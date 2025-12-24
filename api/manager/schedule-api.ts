@@ -182,8 +182,14 @@ export interface FetchScheduleParams {
   tenantId?: string;
   token?: string;
   service?: string;
-  classroom?: string;
-  slot?: string;
+  classroom?: string | string[];
+  slot?: string | string[];
+  instructor?: string | string[];
+}
+
+export interface ScheduleDataResult {
+  events: ScheduleEvent[];
+  poolOverflowWarnings: PoolOverflowWarning[];
 }
 
 /**
@@ -229,8 +235,29 @@ export const fetchScheduleData = async (
     endDate: endDateStr,
   });
 
-  if (classroom) queryParams.append("classroom", classroom);
-  if (slot) queryParams.append("slot", slot);
+  if (classroom) {
+    if (Array.isArray(classroom)) {
+      classroom.forEach((id) => queryParams.append("classroom", id));
+    } else {
+      queryParams.append("classroom", classroom);
+    }
+  }
+
+  if (slot) {
+    if (Array.isArray(slot)) {
+      slot.forEach((id) => queryParams.append("slot", id));
+    } else {
+      queryParams.append("slot", slot);
+    }
+  }
+
+  if (params.instructor) {
+    if (Array.isArray(params.instructor)) {
+      params.instructor.forEach((id) => queryParams.append("instructor", id));
+    } else {
+      queryParams.append("instructor", params.instructor);
+    }
+  }
 
   const response = await fetch(
     `${
@@ -318,8 +345,9 @@ export const fetchDateRangeSchedule = async (
   tenantId?: string,
   token?: string,
   service?: string,
-  classroom?: string,
-  slot?: string
+  classroom?: string | string[],
+  slot?: string | string[],
+  instructor?: string | string[]
 ): Promise<ScheduleDataResult> => {
   // Automatically add service header for staff users if not provided
   const finalService =
@@ -333,6 +361,7 @@ export const fetchDateRangeSchedule = async (
     service: finalService,
     classroom,
     slot,
+    instructor,
   });
 };
 

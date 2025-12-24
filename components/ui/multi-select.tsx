@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { Check, X, ChevronDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type Option = {
   id: string;
@@ -31,11 +33,51 @@ export default function MultiSelect({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedOptions = options.filter((o) => value.includes(o.id));
-  const filtered = options.filter(
-    (o) =>
-      !value.includes(o.id) &&
-      o.label?.toLowerCase().includes(input.toLowerCase())
+  const filtered = options.filter((o) =>
+    o.label?.toLowerCase().includes(input.toLowerCase())
   );
+
+  // Dynamic calculation of visible items based on width
+  const [maxVisible, setMaxVisible] = useState(selectedOptions.length);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const calculateVisible = () => {
+      if (!containerRef.current) return;
+
+      // Get container usable width (subtract padding and placeholders)
+      const containerWidth = containerRef.current.offsetWidth - 60; // ~60px buffer for +N badge, padding, and X icons
+
+      let currentWidth = 0;
+      let count = 0;
+
+      // Approximate width calculation (safest without complex DOM measuring loop)
+      // Base: 24px (icon+padding) + ~7px per character
+      for (const opt of selectedOptions) {
+        const labelLength = opt.label?.length || 0;
+        const itemEstimatedWidth = 24 + labelLength * 7.5;
+
+        if (currentWidth + itemEstimatedWidth > containerWidth && count > 0) {
+          break;
+        }
+
+        currentWidth += itemEstimatedWidth;
+        count++;
+      }
+
+      // If none fit (super long first item), show 1 and let it truncate
+      setMaxVisible(Math.max(1, count));
+    };
+
+    calculateVisible();
+
+    // Recalculate on resize
+    window.addEventListener("resize", calculateVisible);
+    return () => window.removeEventListener("resize", calculateVisible);
+  }, [selectedOptions, value]); // content changes
+
+  const visibleOptions = selectedOptions.slice(0, maxVisible);
+  const remainingCount = selectedOptions.length - maxVisible;
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -50,16 +92,19 @@ export default function MultiSelect({
 
   useEffect(() => setHighlight(0), [input, open]);
 
-  const add = (id: string) => {
-    if (value.includes(id)) return;
-    onChange([...value, id]);
+  const toggle = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (value.includes(id)) {
+      onChange(value.filter((v) => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
     setInput("");
-    setOpen(false);
-    // focus input after select
-    requestAnimationFrame(() => inputRef.current?.focus());
+    // Keep open for multi-selection
   };
 
-  const remove = (id: string) => {
+  const remove = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     onChange(value.filter((v) => v !== id));
   };
 
@@ -84,7 +129,7 @@ export default function MultiSelect({
       } else if (e.key === "Enter") {
         e.preventDefault();
         const opt = filtered[highlight];
-        if (opt) add(opt.id);
+        if (opt) toggle(opt.id);
       } else if (e.key === "Escape") {
         setOpen(false);
       }
@@ -92,75 +137,105 @@ export default function MultiSelect({
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`relative ${className}`}
-    >
+    <div ref={rootRef} className={`relative ${className}`}>
       <div
-        className={`min-h-[44px] w-full rounded-md border-2 bg-background px-3 py-2 flex items-center gap-2 flex-wrap transition-all duration-200 ${
+        className={`h-12 w-full rounded-md border-2 bg-background px-3 flex items-center gap-2 transition-all duration-200 ${
           disabled
             ? "opacity-50 cursor-not-allowed"
             : "cursor-text hover:border-primary/50"
         } ${open ? "border-primary ring-2 ring-primary/20" : "border-input"}`}
         onClick={() => {
           if (!disabled) {
-            setOpen(true);
+            setOpen(!open);
             inputRef.current?.focus();
           }
         }}
       >
-        {selectedOptions.map((opt) => (
-          <span
-            key={opt.id}
-            className='inline-flex items-center gap-1.5 bg-primary/10 border border-primary/30 text-sm px-3 py-1 rounded-md font-medium'
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className='max-w-[10rem] truncate'>{opt.label}</span>
-            <button
-              type='button'
-              onClick={() => remove(opt.id)}
-              className='inline-flex items-center justify-center h-4 w-4 rounded-full hover:bg-primary/20 text-xs transition-colors'
-              aria-label={`Remove ${opt.label}`}
+        <div
+          ref={containerRef}
+          className="flex-1 flex items-center gap-1.5 overflow-hidden"
+        >
+          {visibleOptions.map((opt) => (
+            <Badge
+              key={opt.id}
+              variant="secondary"
+              className="rounded-sm px-1.5 py-0.5 text-xs font-medium flex items-center gap-1 shrink-0 max-w-[150px]"
             >
-              ×
-            </button>
-          </span>
-        ))}
-
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            setOpen(true);
-          }}
-          onKeyDown={onKeyDown}
-          placeholder={selectedOptions.length === 0 ? placeholder : ""}
-          className='min-w-[120px] flex-1 border-0 outline-none bg-transparent text-sm py-1 placeholder:text-muted-foreground'
-          disabled={disabled}
-        />
+              <span className="truncate">{opt.label}</span>
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-destructive shrink-0"
+                onClick={(e) => remove(opt.id, e)}
+              />
+            </Badge>
+          ))}
+          {remainingCount > 0 && (
+            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm whitespace-nowrap flex-shrink-0">
+              +{remainingCount}
+            </span>
+          )}
+          {selectedOptions.length === 0 && !input && (
+            <span className="text-sm text-muted-foreground truncate">
+              {placeholder}
+            </span>
+          )}
+          <input
+            ref={inputRef}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setOpen(true);
+            }}
+            onKeyDown={onKeyDown}
+            className="flex-1 border-0 outline-none bg-transparent text-sm py-1 min-w-[50px] shrink-1"
+            disabled={disabled}
+          />
+        </div>
+        <div className="flex items-center gap-1 opacity-50 flex-shrink-0">
+          {selectedOptions.length > 0 && (
+            <X
+              className="h-4 w-4 cursor-pointer hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange([]);
+              }}
+            />
+          )}
+          <ChevronDown className="h-4 w-4" />
+        </div>
       </div>
 
       {open && filtered.length > 0 && (
-        <div className='absolute z-50 mt-2 w-full rounded-md border-2 border-primary/30 bg-popover text-popover-foreground shadow-lg max-h-60 overflow-auto'>
-          <ul className='py-1'>
-            {filtered.map((opt, idx) => (
-              <li
-                key={opt.id}
-                className={`px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors flex justify-between items-center ${
-                  idx === highlight
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-accent hover:text-accent-foreground"
-                }`}
-                onMouseEnter={() => setHighlight(idx)}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => add(opt.id)}
-                role='option'
-                aria-selected={idx === highlight}
-              >
-                <span className='truncate'>{opt.label}</span>
-              </li>
-            ))}
+        <div className="absolute z-50 mt-2 w-full rounded-md border-2 border-primary/30 bg-popover text-popover-foreground shadow-lg max-h-60 overflow-auto">
+          <ul className="py-1">
+            {filtered.map((opt, idx) => {
+              const isSelected = value.includes(opt.id);
+              return (
+                <li
+                  key={opt.id}
+                  className={`px-3 py-2 cursor-pointer text-sm font-medium transition-colors flex justify-between items-center ${
+                    idx === highlight
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onMouseEnter={() => setHighlight(idx)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => toggle(opt.id)}
+                  role="option"
+                  aria-selected={idx === highlight}
+                >
+                  <span className="truncate mr-2">{opt.label}</span>
+                  {isSelected && (
+                    <Check
+                      className={`h-4 w-4 ${
+                        idx === highlight
+                          ? "text-primary-foreground"
+                          : "text-primary"
+                      }`}
+                    />
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
