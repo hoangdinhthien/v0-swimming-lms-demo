@@ -56,6 +56,7 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../../../../../hooks/use-auth";
 import {
@@ -134,6 +135,20 @@ export default function TransactionDetailPage() {
   const [canRefund, setCanRefund] = useState<boolean>(false);
   const [checkingRefundEligibility, setCheckingRefundEligibility] =
     useState<boolean>(false);
+
+  // Refund modal slot information
+  const [firstSlotInfo, setFirstSlotInfo] = useState<{
+    date: Date | null;
+    hasStarted: boolean;
+    loading: boolean;
+  }>({
+    date: null,
+    hasStarted: false,
+    loading: false,
+  });
+
+  // Confirm refund dialog for started classes
+  const [showConfirmRefundDialog, setShowConfirmRefundDialog] = useState(false);
 
   // Remove member from class dialog state
   const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
@@ -485,6 +500,19 @@ export default function TransactionDetailPage() {
   const handleRefundOrder = async () => {
     if (!order || !token || !tenantId) return;
 
+    // If class has started, show confirmation dialog
+    if (firstSlotInfo.hasStarted) {
+      setShowConfirmRefundDialog(true);
+      return;
+    }
+
+    // Proceed with refund for classes that haven't started
+    await performRefund();
+  };
+
+  const performRefund = async () => {
+    if (!order || !token || !tenantId) return;
+
     try {
       setIsRefunding(true);
 
@@ -522,6 +550,7 @@ export default function TransactionDetailPage() {
 
       // Close modal and reset
       setShowRefundModal(false);
+      setShowConfirmRefundDialog(false);
       setRefundDescription("");
     } catch (error) {
       console.error("Error refunding order:", error);
@@ -724,6 +753,54 @@ export default function TransactionDetailPage() {
     }
   }, [searchKey, haveSchedule, showClassModal]);
 
+  // Check first slot information when refund modal opens
+  useEffect(() => {
+    const checkFirstSlotForRefund = async () => {
+      if (!showRefundModal || !order || !token || !tenantId) {
+        setFirstSlotInfo({ date: null, hasStarted: false, loading: false });
+        return;
+      }
+
+      // If no class assigned, no need to check slots
+      if (!order.class) {
+        setFirstSlotInfo({ date: null, hasStarted: false, loading: false });
+        return;
+      }
+
+      setFirstSlotInfo((prev) => ({ ...prev, loading: true }));
+
+      try {
+        const classId =
+          typeof order.class === "string" ? order.class : order.class._id;
+
+        const firstSlot = await fetchFirstSlotByClassId(
+          classId,
+          tenantId,
+          token
+        );
+
+        if (firstSlot) {
+          const firstSlotDate = new Date(firstSlot.date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to start of day
+
+          setFirstSlotInfo({
+            date: firstSlotDate,
+            hasStarted: firstSlotDate <= today,
+            loading: false,
+          });
+        } else {
+          setFirstSlotInfo({ date: null, hasStarted: false, loading: false });
+        }
+      } catch (error) {
+        console.error("Error checking first slot for refund:", error);
+        setFirstSlotInfo({ date: null, hasStarted: false, loading: false });
+      }
+    };
+
+    checkFirstSlotForRefund();
+  }, [showRefundModal, order, token, tenantId]);
+
   // Handle showing class selection modal
   const handleShowClassModal = () => {
     setShowClassModal(true);
@@ -870,19 +947,16 @@ export default function TransactionDetailPage() {
             Chỉnh sửa
           </Button>
           {order?.payment?.zp_trans_id &&
-            !order.status?.includes("refunded") &&
-            canRefund && (
-              <>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setRefundDescription(`Hoàn tiền cho đơn ${order._id}`);
-                    setShowRefundModal(true);
-                  }}
-                >
-                  Hoàn tiền
-                </Button>
-              </>
+            !order.status?.includes("refunded") && (
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setRefundDescription(`Hoàn tiền cho đơn ${order._id}`);
+                  setShowRefundModal(true);
+                }}
+              >
+                Hoàn tiền
+              </Button>
             )}
 
           {order?.status?.includes("refunded") &&
@@ -1098,7 +1172,7 @@ export default function TransactionDetailPage() {
                                   {order.class_choosed._id}
                                 </div>
                               </div>
-                              <div className='space-y-1'>
+                              {/* <div className='space-y-1'>
                                 <div className='text-sm text-blue-600'>
                                   Khóa học
                                 </div>
@@ -1108,7 +1182,7 @@ export default function TransactionDetailPage() {
                                     ? order.class_choosed.course
                                     : order.class_choosed.course || "N/A"}
                                 </div>
-                              </div>
+                              </div> */}
                               <div className='space-y-1'>
                                 <div className='text-sm text-blue-600'>
                                   Ngày tạo
@@ -1155,7 +1229,7 @@ export default function TransactionDetailPage() {
                                     : order.class._id}
                                 </div>
                               </div>
-                              <div className='space-y-1'>
+                              {/* <div className='space-y-1'>
                                 <div className='text-sm text-green-600'>
                                   Khóa học
                                 </div>
@@ -1165,8 +1239,8 @@ export default function TransactionDetailPage() {
                                     ? order.class.course
                                     : "N/A"}
                                 </div>
-                              </div>
-                              <div className='space-y-1'>
+                              </div> */}
+                              {/* <div className='space-y-1'>
                                 <div className='text-sm text-green-600'>
                                   Số học viên
                                 </div>
@@ -1177,7 +1251,7 @@ export default function TransactionDetailPage() {
                                     : "N/A"}{" "}
                                   học viên
                                 </div>
-                              </div>
+                              </div> */}
                             </div>
                             <div className='mt-3 text-xs text-green-600'>
                               * Đây là lớp học mà học viên đang tham gia và học
@@ -1879,6 +1953,53 @@ export default function TransactionDetailPage() {
               </div>
             </div>
 
+            {/* Class Session Warning */}
+            {order?.class && (
+              <div
+                className={`p-4 rounded-lg ${
+                  firstSlotInfo.hasStarted
+                    ? "bg-yellow-50 border border-yellow-200"
+                    : "bg-blue-50 border border-blue-200"
+                }`}
+              >
+                <div className='flex-1'>
+                  <h4
+                    className={`font-semibold text-sm ${
+                      firstSlotInfo.hasStarted
+                        ? "text-yellow-800"
+                        : "text-blue-800"
+                    }`}
+                  >
+                    {firstSlotInfo.loading
+                      ? "Đang kiểm tra thông tin buổi học..."
+                      : firstSlotInfo.hasStarted
+                      ? "Lớp học đã bắt đầu, bạn có muốn hoàn tiền không?"
+                      : "Lớp học chưa bắt đầu"}
+                  </h4>
+                  {!firstSlotInfo.loading && firstSlotInfo.date && (
+                    <p
+                      className={`text-xs mt-1 ${
+                        firstSlotInfo.hasStarted
+                          ? "text-yellow-700"
+                          : "text-blue-700"
+                      }`}
+                    >
+                      Buổi học đầu tiên:{" "}
+                      {format(firstSlotInfo.date, "dd/MM/yyyy", {
+                        locale: vi,
+                      })}
+                      {firstSlotInfo.hasStarted && (
+                        <span className='block mt-1 font-medium'>
+                          Học viên đã tham gia ít nhất một buổi học. Việc hoàn
+                          tiền có thể ảnh hưởng đến tiến độ học tập.
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className='space-y-2'>
               <Label htmlFor='refund-description'>
                 Lý do hoàn tiền (tùy chọn)
@@ -1970,6 +2091,61 @@ export default function TransactionDetailPage() {
                 </>
               ) : (
                 "Xóa khỏi lớp"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Refund Dialog for Started Classes */}
+      <AlertDialog
+        open={showConfirmRefundDialog}
+        onOpenChange={setShowConfirmRefundDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className='flex items-center gap-2'>
+              <AlertTriangle className='h-5 w-5 text-yellow-500' />
+              Xác nhận hoàn tiền
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Lớp học đã bắt đầu và học viên có thể đã tham gia một số buổi học.
+              Bạn có chắc chắn muốn hoàn tiền không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className='p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700'>
+            <div className='space-y-2'>
+              <p className='font-medium text-yellow-900 dark:text-yellow-100'>
+                Thông tin quan trọng
+              </p>
+              <p className='text-sm text-yellow-700 dark:text-yellow-300'>
+                Học viên đã tham gia ít nhất một buổi học. Việc hoàn tiền có thể
+                ảnh hưởng đến tiến độ học tập và động lực của học viên.
+              </p>
+              {firstSlotInfo.date && (
+                <p className='text-sm text-yellow-700 dark:text-yellow-300'>
+                  Buổi học đầu tiên:{" "}
+                  {format(firstSlotInfo.date, "dd/MM/yyyy", { locale: vi })}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRefunding}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              disabled={isRefunding}
+              onClick={performRefund}
+            >
+              {isRefunding ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Xác nhận hoàn tiền"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
