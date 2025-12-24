@@ -2285,147 +2285,152 @@ export function SchedulePreviewModal({
                                                     <div className='p-2'>
                                                       {pools.length === 0 ? (
                                                         <div className='text-center py-4 text-sm text-muted-foreground'>
-                                                          Không có hồ bơi khả dụng
+                                                          Không có hồ bơi khả
+                                                          dụng
                                                         </div>
                                                       ) : (
                                                         <div className='space-y-1.5'>
-                                                        {pools.map((pool) => {
-                                                          const isPoolSelected =
-                                                            selectedPoolId ===
-                                                            pool._id;
-                                                          const poolHasWarnings =
-                                                            pool.hasAgeWarning ||
-                                                            pool.hasInstructorConflict;
-                                                          const noCapacity =
-                                                            pool.capacity_remain <=
-                                                            0;
+                                                          {pools.map((pool) => {
+                                                            const isPoolSelected =
+                                                              selectedPoolId ===
+                                                              pool._id;
+                                                            const poolHasWarnings =
+                                                              pool.hasAgeWarning ||
+                                                              pool.hasInstructorConflict;
+                                                            const noCapacity =
+                                                              pool.capacity_remain <=
+                                                              0;
 
-                                                          return (
-                                                            <button
-                                                              key={pool._id}
-                                                              type='button'
-                                                              onClick={() => {
-                                                                setSelectedPools(
-                                                                  (prev) => ({
-                                                                    ...prev,
-                                                                    [scheduleKey]:
-                                                                      pool._id,
-                                                                  })
-                                                                );
-                                                                setOpenPoolPopover(
-                                                                  null
-                                                                );
-                                                              }}
-                                                              disabled={
-                                                                noCapacity
-                                                              }
-                                                              className={cn(
-                                                                "w-full p-2 rounded border text-left text-xs transition-all",
-                                                                isPoolSelected
-                                                                  ? "border-primary bg-primary/10"
-                                                                  : "border-border hover:border-primary/50",
-                                                                poolHasWarnings &&
-                                                                  !isPoolSelected &&
-                                                                  "border-amber-300 bg-amber-50/50",
-                                                                noCapacity &&
-                                                                  "opacity-50 cursor-not-allowed"
-                                                              )}
-                                                            >
-                                                              <div className='flex justify-between items-start'>
-                                                                <div className='flex-1'>
-                                                                  <div className='font-medium flex items-center gap-1'>
-                                                                    {pool.title}
-                                                                    {isPoolSelected && (
-                                                                      <CheckCircle2 className='h-3 w-3 text-primary' />
-                                                                    )}
-                                                                  </div>
-                                                                  <div className='text-muted-foreground mt-0.5'>
-                                                                    Sức chứa:{" "}
-                                                                    {
-                                                                      pool.capacity
-                                                                    }
-                                                                  </div>
-                                                                  {pool.current_usage !==
-                                                                    undefined && (
-                                                                    <div className='text-muted-foreground mt-0.5'>
-                                                                      Đang sử
-                                                                      dụng:{" "}
+                                                            return (
+                                                              <button
+                                                                key={pool._id}
+                                                                type='button'
+                                                                onClick={() => {
+                                                                  setSelectedPools(
+                                                                    (prev) => ({
+                                                                      ...prev,
+                                                                      [scheduleKey]:
+                                                                        pool._id,
+                                                                    })
+                                                                  );
+                                                                  setOpenPoolPopover(
+                                                                    null
+                                                                  );
+                                                                }}
+                                                                disabled={
+                                                                  noCapacity
+                                                                }
+                                                                className={cn(
+                                                                  "w-full p-2 rounded border text-left text-xs transition-all",
+                                                                  isPoolSelected
+                                                                    ? "border-primary bg-primary/10"
+                                                                    : "border-border hover:border-primary/50",
+                                                                  poolHasWarnings &&
+                                                                    !isPoolSelected &&
+                                                                    "border-amber-300 bg-amber-50/50",
+                                                                  noCapacity &&
+                                                                    "opacity-50 cursor-not-allowed"
+                                                                )}
+                                                              >
+                                                                <div className='flex justify-between items-start'>
+                                                                  <div className='flex-1'>
+                                                                    <div className='font-medium flex items-center gap-1'>
                                                                       {
-                                                                        pool.current_usage
+                                                                        pool.title
                                                                       }
-                                                                      /
+                                                                      {isPoolSelected && (
+                                                                        <CheckCircle2 className='h-3 w-3 text-primary' />
+                                                                      )}
+                                                                    </div>
+                                                                    <div className='text-muted-foreground mt-0.5'>
+                                                                      Sức chứa:{" "}
                                                                       {
                                                                         pool.capacity
                                                                       }
                                                                     </div>
-                                                                  )}
-                                                                </div>
-                                                                <div className='text-right'>
-                                                                  <div
-                                                                    className={cn(
-                                                                      "font-semibold",
-                                                                      pool.capacity_remain >
-                                                                        0
-                                                                        ? "text-green-600"
-                                                                        : "text-red-600"
+                                                                    {pool.current_usage !==
+                                                                      undefined && (
+                                                                      <div className='text-muted-foreground mt-0.5'>
+                                                                        Đang sử
+                                                                        dụng:{" "}
+                                                                        {
+                                                                          pool.current_usage
+                                                                        }
+                                                                        /
+                                                                        {
+                                                                          pool.capacity
+                                                                        }
+                                                                      </div>
                                                                     )}
-                                                                  >
-                                                                    {
-                                                                      pool.capacity_remain
-                                                                    }
                                                                   </div>
-                                                                  <div className='text-muted-foreground'>
-                                                                    còn
-                                                                  </div>
-                                                                </div>
-                                                              </div>
-                                                              {(pool.hasAgeWarning ||
-                                                                pool.hasInstructorConflict ||
-                                                                pool.hasCapacityWarning) && (
-                                                                <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
-                                                                  {pool.hasAgeWarning && (
-                                                                    <div className='text-amber-600 flex items-center gap-1'>
-                                                                      <AlertCircle className='h-3 w-3' />
-                                                                      Độ tuổi
-                                                                      không phù
-                                                                      hợp
-                                                                    </div>
-                                                                  )}
-                                                                  {pool.hasInstructorConflict && (
-                                                                    <div className='text-red-600 flex items-center gap-1'>
-                                                                      <AlertCircle className='h-3 w-3' />
-                                                                      Huấn luyện
-                                                                      viên trùng
-                                                                      lịch
-                                                                    </div>
-                                                                  )}
-                                                                  {pool.hasCapacityWarning && (
-                                                                    <div className='text-amber-600 flex items-center gap-1'>
-                                                                      <AlertCircle className='h-3 w-3' />
-                                                                      Sức chứa
-                                                                      hồ bơi (
+                                                                  <div className='text-right'>
+                                                                    <div
+                                                                      className={cn(
+                                                                        "font-semibold",
+                                                                        pool.capacity_remain >
+                                                                          0
+                                                                          ? "text-green-600"
+                                                                          : "text-red-600"
+                                                                      )}
+                                                                    >
                                                                       {
                                                                         pool.capacity_remain
                                                                       }
-                                                                      ) nhỏ hơn
-                                                                      số học
-                                                                      viên tối
-                                                                      đa (
-                                                                      {(
-                                                                        classItem?.course as any
-                                                                      )
-                                                                        ?.max_member ||
-                                                                        0}
-                                                                      )
                                                                     </div>
-                                                                  )}
+                                                                    <div className='text-muted-foreground'>
+                                                                      còn
+                                                                    </div>
+                                                                  </div>
                                                                 </div>
-                                                              )}
-                                                            </button>
-                                                          );
-                                                        })}
-                                                      </div>
-                                                    )}
+                                                                {(pool.hasAgeWarning ||
+                                                                  pool.hasInstructorConflict ||
+                                                                  pool.hasCapacityWarning) && (
+                                                                  <div className='mt-1.5 pt-1.5 border-t space-y-0.5'>
+                                                                    {pool.hasAgeWarning && (
+                                                                      <div className='text-amber-600 flex items-center gap-1'>
+                                                                        <AlertCircle className='h-3 w-3' />
+                                                                        Độ tuổi
+                                                                        không
+                                                                        phù hợp
+                                                                      </div>
+                                                                    )}
+                                                                    {pool.hasInstructorConflict && (
+                                                                      <div className='text-red-600 flex items-center gap-1'>
+                                                                        <AlertCircle className='h-3 w-3' />
+                                                                        Huấn
+                                                                        luyện
+                                                                        viên
+                                                                        trùng
+                                                                        lịch
+                                                                      </div>
+                                                                    )}
+                                                                    {pool.hasCapacityWarning && (
+                                                                      <div className='text-amber-600 flex items-center gap-1'>
+                                                                        <AlertCircle className='h-3 w-3' />
+                                                                        Sức chứa
+                                                                        hồ bơi (
+                                                                        {
+                                                                          pool.capacity_remain
+                                                                        }
+                                                                        ) nhỏ
+                                                                        hơn số
+                                                                        học viên
+                                                                        tối đa (
+                                                                        {(
+                                                                          classItem?.course as any
+                                                                        )
+                                                                          ?.max_member ||
+                                                                          0}
+                                                                        )
+                                                                      </div>
+                                                                    )}
+                                                                  </div>
+                                                                )}
+                                                              </button>
+                                                            );
+                                                          })}
+                                                        </div>
+                                                      )}
                                                     </div>
                                                   </ScrollArea>
                                                 </PopoverContent>
