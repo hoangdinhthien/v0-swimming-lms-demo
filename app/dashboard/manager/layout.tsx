@@ -9,7 +9,7 @@ export default function ManagerDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <RoleGuard allowedRoles={["manager"]}>
+    <RoleGuard allowedRoles={["manager", "staff"]}>
       <DashboardLayout>{children}</DashboardLayout>
     </RoleGuard>
   );
