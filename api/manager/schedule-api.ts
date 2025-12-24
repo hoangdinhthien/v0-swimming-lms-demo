@@ -307,8 +307,9 @@ export const fetchDateRangeSchedule = async (
   service?: string
 ): Promise<ScheduleDataResult> => {
   // Automatically add service header for staff users if not provided
-  const finalService = service || (getUserFrontendRole() === "staff" ? "Schedule" : undefined);
-  
+  const finalService =
+    service || (getUserFrontendRole() === "staff" ? "Schedule" : undefined);
+
   return fetchScheduleData({
     startDate,
     endDate,
