@@ -392,8 +392,35 @@ export function AddClassForm({
     selectedClassDetails,
     isStep1Complete,
     mappingsLoaded,
-    busyInstructorIds,
   ]);
+
+  // Validate schedule conflict when instructor or busy ids change
+  useEffect(() => {
+    if (selectedInstructor && selectedSlot) {
+      const currentBusyInstructorIds = busyInstructorIds;
+      const hasScheduleConflict =
+        currentBusyInstructorIds.includes(selectedInstructor);
+      const existingWarnings = validationWarnings.filter(
+        (w) =>
+          w.instructorId === selectedInstructor &&
+          w.type !== "schedule_conflict"
+      );
+
+      if (hasScheduleConflict) {
+        const conflictWarning = {
+          instructorId: selectedInstructor,
+          type: "schedule_conflict" as const,
+          severity: "error" as const,
+          message: "Huấn luyện viên đã bận trong khung giờ này",
+          details: "Vui lòng chọn Huấn luyện viên khác hoặc khung giờ khác",
+        };
+        setValidationWarnings([...existingWarnings, conflictWarning]);
+      } else {
+        // Remove schedule conflict warning if no longer conflict
+        setValidationWarnings(existingWarnings);
+      }
+    }
+  }, [selectedInstructor, busyInstructorIds, selectedSlot]);
 
   const validateInstructorSpecialist = async (
     instructorId: string,
@@ -426,9 +453,12 @@ export function AddClassForm({
         });
       }
 
-      // Clear previous warnings for this instructor
+      // Clear previous warnings for this instructor (exclude schedule_conflict)
       setValidationWarnings((prev) =>
-        prev.filter((w) => w.instructorId !== instructorId)
+        prev.filter(
+          (w) =>
+            w.instructorId !== instructorId || w.type === "schedule_conflict"
+        )
       );
 
       const warnings: ValidationWarning[] = [];
@@ -513,19 +543,6 @@ export function AddClassForm({
           severity: "warning",
           message: "Độ tuổi không phù hợp",
           details: `Khóa học: [${courseAgeTypeTitles}] ≠ Huấn luyện viên: [${specialistAgeTypeTitles}]`,
-        });
-      }
-
-      // Check schedule conflict
-      const busyIdsToCheck = currentBusyInstructorIds || busyInstructorIds;
-      const hasScheduleConflict = busyIdsToCheck.includes(instructorId);
-      if (hasScheduleConflict) {
-        warnings.push({
-          instructorId,
-          type: "schedule_conflict",
-          severity: "error",
-          message: "Huấn luyện viên đã bận trong khung giờ này",
-          details: "Vui lòng chọn Huấn luyện viên khác hoặc khung giờ khác",
         });
       }
 
@@ -905,6 +922,25 @@ export function AddClassForm({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Show schedule conflict warning for selected instructor */}
+          {selectedInstructor &&
+            busyInstructorIds.includes(selectedInstructor) && (
+              <Alert
+                variant='destructive'
+                className='mt-2'
+              >
+                <AlertCircle className='h-4 w-4' />
+                <AlertDescription className='text-sm'>
+                  <div className='font-medium'>
+                    Huấn luyện viên đã bận trong khung giờ này
+                  </div>
+                  <div className='text-xs opacity-80'>
+                    Vui lòng chọn Huấn luyện viên khác hoặc khung giờ khác
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
         </div>
 
         <Separator className='my-4' />
