@@ -273,15 +273,15 @@ export default function ClassDetailPage() {
         instructorId =
           typeof firstInstructor === "string"
             ? firstInstructor
-            : firstInstructor._id || firstInstructor.user?._id || "";
+            : firstInstructor.user?._id || firstInstructor._id || "";
       } else if (
         classData.instructor &&
         typeof classData.instructor === "object"
       ) {
         // If it's a single instructor object, get the user ID
         instructorId =
-          (classData.instructor as any)._id ||
           (classData.instructor as any).user?._id ||
+          (classData.instructor as any)._id ||
           "";
       }
 

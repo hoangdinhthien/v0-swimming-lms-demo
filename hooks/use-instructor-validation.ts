@@ -100,7 +100,7 @@ export function useInstructorValidation({
       // Fetch specialist info
       const specialistsResponse = await fetchInstructorSpecialist({
         searchParams: {
-          "search[user._id:in]": instructorId,
+          user: instructorId,
         },
         tenantId,
         token,
