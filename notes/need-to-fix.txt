@@ -2,30 +2,20 @@ không có quyền tạo + edit => không hiện button
 
 them thông báo cho staff khi update
 
-
 stringify form judge lại rồi so sánh
 
-course: detail phải = với session number 
-chỉnh lại dashboard của staff
+
 không scroll chọn hồ bơi ở step 2 đc
-
 show được trong slot này ngày hôm đó ==> có hồ bơi nào available hay ko, cho người ta coi luôn trước khi xác nhận (là phải validate lại riêng cho cái đó)
+
 sửa lại thanh search trong drawer
-xóa thao tác nhanh trong khóa học
 
-
-Lịch học (7 buổi) => click vào hiện popup show full thông tin của buổi học đó
-
-trang lịch ===> thêm search để xem lịch học của 1 lớp
-
-coi tiến trình học + ghi chú của học viên trong trang detail lớp học
+- chỉnh lại dashboard của staff
+- coi tiến trình học + ghi chú của học viên trong trang detail lớp học
 
 ở trang 'dashboard/manager/data-review', phần modal 'Chi tiết yêu cầu'
 tại sao khi tôi APPROVED cái data-review đó xong rồi sau đó tôi mở lại chính cái data-review đó thì tôi lại không xem được Không có thay đổi nào được phát hiện
 
-xóa cột thao tác củauser 
-
-thêm validate khi create edit lớp học 
 
 =================
 
@@ -40,3 +30,8 @@ thêm validate khi create edit lớp học
 ({"module": ["Class"],"action": ["GET"],"noReview": true},)
 ({"module": ["Schedule"],"action": ["GET"],"noReview": true},)
 THÌ CŨNG KHÔNG ĐƯỢC HIỆN BUTTON 'Xếp lịch lớp học'
+
+
+====================================
+
+- ở trang lịch '/dashboard/manager/calendar', tôi muốn thêm 1 thanh search, search theo lớp học và slot để chỉ hiện trên lịch đúng các buổi học của lớp đó thôi. bạn có thể sử dụng lại api này fetchScheduleData để search như thế này: https://n4romoz0b1.execute-api.ap-southeast-1.amazonaws.com/dev/api/v1/workflow-process/manager/schedules?startDate=2025-12-01&endDate=2026-01-04&classroom=694aa723a553ad05f27b42c1&slot=681f0d630e90714dae7a5def

@@ -182,6 +182,8 @@ export interface FetchScheduleParams {
   tenantId?: string;
   token?: string;
   service?: string;
+  classroom?: string;
+  slot?: string;
 }
 
 /**
@@ -192,7 +194,7 @@ export interface FetchScheduleParams {
 export const fetchScheduleData = async (
   params: FetchScheduleParams
 ): Promise<ScheduleDataResult> => {
-  const { startDate, endDate, tenantId, token } = params;
+  const { startDate, endDate, tenantId, token, classroom, slot } = params;
   let { service } = params;
 
   // Use provided tenant and token, or get from utils
@@ -221,8 +223,19 @@ export const fetchScheduleData = async (
   const startDateStr = formatDate(startDate);
   const endDateStr = formatDate(endDate);
 
+  // Build query parameters
+  const queryParams = new URLSearchParams({
+    startDate: startDateStr,
+    endDate: endDateStr,
+  });
+
+  if (classroom) queryParams.append("classroom", classroom);
+  if (slot) queryParams.append("slot", slot);
+
   const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/schedules?startDate=${startDateStr}&endDate=${endDateStr}`,
+    `${
+      config.API
+    }/v1/workflow-process/manager/schedules?${queryParams.toString()}`,
     {
       method: "GET",
       headers: {
@@ -304,7 +317,9 @@ export const fetchDateRangeSchedule = async (
   endDate: Date,
   tenantId?: string,
   token?: string,
-  service?: string
+  service?: string,
+  classroom?: string,
+  slot?: string
 ): Promise<ScheduleDataResult> => {
   // Automatically add service header for staff users if not provided
   const finalService =
@@ -316,6 +331,8 @@ export const fetchDateRangeSchedule = async (
     tenantId,
     token,
     service: finalService,
+    classroom,
+    slot,
   });
 };
 
