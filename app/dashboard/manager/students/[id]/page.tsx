@@ -578,13 +578,13 @@ export default function StudentDetailPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải thông tin học viên...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -597,18 +597,15 @@ export default function StudentDetailPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
-        <div className='text-center space-y-4'>
-          <div className='text-lg font-medium text-foreground mb-2'>
+      <div className="flex flex-col items-center justify-center min-h-96 py-16">
+        <div className="text-center space-y-4">
+          <div className="text-lg font-medium text-foreground mb-2">
             Có lỗi xảy ra
           </div>
-          <div className='text-sm text-muted-foreground mb-4'>{error}</div>
-          <Button
-            asChild
-            variant='outline'
-          >
-            <Link href='/dashboard/manager/students'>
-              <ArrowLeft className='mr-2 h-4 w-4' />
+          <div className="text-sm text-muted-foreground mb-4">{error}</div>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/manager/students">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Quay về danh sách học viên
             </Link>
           </Button>
@@ -618,31 +615,28 @@ export default function StudentDetailPage() {
   }
 
   return (
-    <div className='container mx-auto py-8 px-4 animate-in fade-in duration-500'>
+    <div className="container mx-auto py-8 px-4 animate-in fade-in duration-500">
       {/* Back Button */}
-      <div className='mb-6'>
+      <div className="mb-6">
         <Link
-          href='/dashboard/manager/students'
-          className='inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
+          href="/dashboard/manager/students"
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30"
         >
-          <ArrowLeft className='h-4 w-4' />
+          <ArrowLeft className="h-4 w-4" />
           Quay về danh sách
         </Link>
       </div>
 
-      <div className='mb-6'>
-        <h1 className='text-3xl font-bold'>Hồ sơ học viên</h1>
-        <p className='text-muted-foreground mt-1'>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Hồ sơ học viên</h1>
+        <p className="text-muted-foreground mt-1">
           Thông tin chi tiết và lịch sử học tập của học viên
         </p>
       </div>
 
       {/* Student Edit Modal */}
-      <Dialog
-        open={isEditModalOpen}
-        onOpenChange={setIsEditModalOpen}
-      >
-        <DialogContent className='sm:max-w-[600px]'>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Chỉnh sửa thông tin học viên</DialogTitle>
@@ -651,18 +645,15 @@ export default function StudentDetailPage() {
                 trống mật khẩu nếu không muốn thay đổi.
               </DialogDescription>
             </DialogHeader>
-            <div className='grid gap-6 py-4'>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='username'
-                  className='text-right'
-                >
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="username" className="text-right">
                   Tên đăng nhập
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='username'
-                    name='username'
+                    id="username"
+                    name="username"
                     value={formData.username}
                     onChange={handleInputChange}
                     className={
@@ -673,23 +664,20 @@ export default function StudentDetailPage() {
                     required
                   />
                   {formErrors.username && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.username}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='email'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
                   Email
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='email'
-                    name='email'
+                    id="email"
+                    name="email"
                     value={formData.email}
                     onChange={handleInputChange}
                     className={
@@ -700,23 +688,20 @@ export default function StudentDetailPage() {
                     required
                   />
                   {formErrors.email && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.email}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='phone'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
                   Số điện thoại
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='phone'
-                    name='phone'
+                    id="phone"
+                    name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
                     className={
@@ -726,23 +711,20 @@ export default function StudentDetailPage() {
                     }
                   />
                   {formErrors.phone && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.phone}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='address'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="address" className="text-right">
                   Địa chỉ
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='address'
-                    name='address'
+                    id="address"
+                    name="address"
                     value={formData.address}
                     onChange={handleInputChange}
                     className={
@@ -752,47 +734,41 @@ export default function StudentDetailPage() {
                     }
                   />
                   {formErrors.address && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.address}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='birthday'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="birthday" className="text-right">
                   Ngày sinh
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='birthday'
-                    name='birthday'
-                    type='date'
+                    id="birthday"
+                    name="birthday"
+                    type="date"
                     value={formData.birthday}
                     onChange={handleInputChange}
                     className={formErrors.birthday ? "border-red-500" : ""}
                   />
                   {formErrors.birthday && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.birthday}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='password'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">
                   Mật khẩu mới
                 </Label>
-                <div className='col-span-3'>
+                <div className="col-span-3">
                   <Input
-                    id='password'
-                    name='password'
-                    type='password'
+                    id="password"
+                    name="password"
+                    type="password"
                     value={formData.password}
                     onChange={handleInputChange}
                     className={
@@ -800,78 +776,72 @@ export default function StudentDetailPage() {
                         ? "col-span-3 border-red-500"
                         : "col-span-3"
                     }
-                    placeholder='Để trống nếu không thay đổi'
+                    placeholder="Để trống nếu không thay đổi"
                   />
                   {formErrors.password && (
-                    <p className='text-red-500 text-sm mt-1'>
+                    <p className="text-red-500 text-sm mt-1">
                       {formErrors.password}
                     </p>
                   )}
                 </div>
               </div>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label
-                  htmlFor='is_active'
-                  className='text-right'
-                >
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="is_active" className="text-right">
                   Trạng thái hoạt động
                 </Label>
-                <div className='flex items-center space-x-2 col-span-3'>
+                <div className="flex items-center space-x-2 col-span-3">
                   <Switch
-                    id='is_active'
-                    name='is_active'
+                    id="is_active"
+                    name="is_active"
                     checked={formData.is_active}
                     onCheckedChange={handleSwitchChange}
                   />
-                  <Label
-                    htmlFor='is_active'
-                    className='cursor-pointer'
-                  >
+                  <Label htmlFor="is_active" className="cursor-pointer">
                     {formData.is_active ? "Đang hoạt động" : "Không hoạt động"}
                   </Label>
                 </div>
               </div>
 
               {/* Avatar Upload Field */}
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label className='text-right'>Ảnh đại diện</Label>
-                <div className='flex items-center gap-4 col-span-3'>
-                  <Avatar className='h-16 w-16 border-4 border-background shadow-md'>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Ảnh đại diện</Label>
+                <div className="flex items-center gap-4 col-span-3">
+                  <Avatar className="h-16 w-16 border-4 border-background shadow-md">
                     <AvatarImage
                       src={avatarUrl}
                       alt={detail.user?.username || "Student"}
-                      className='object-cover'
+                      className="object-cover"
                     />
-                    <AvatarFallback className='text-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white'>
+                    <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
                       {detail.user?.username?.charAt(0) || "S"}
                     </AvatarFallback>
                   </Avatar>
-                  <label className='flex-1'>
+                  <label className="flex-1">
                     <Button
-                      variant='outline'
-                      className='w-full'
-                      type='button'
+                      variant="outline"
+                      className="w-full"
+                      type="button"
                       asChild
                       disabled={isAvatarUploading}
                     >
-                      <span className='flex items-center justify-center'>
+                      <span className="flex items-center justify-center">
                         {isAvatarUploading ? (
                           <>
-                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Đang tải...
                           </>
                         ) : (
                           <>
-                            <Upload className='mr-2 h-4 w-4' /> Tải ảnh lên
+                            <Upload className="mr-2 h-4 w-4" /> Tải ảnh lên
                           </>
                         )}
                       </span>
                     </Button>
                     <input
-                      type='file'
-                      accept='image/*'
+                      type="file"
+                      accept="image/*"
                       onChange={(e) => handleAvatarUpload(e)}
-                      className='hidden'
+                      className="hidden"
                       disabled={isAvatarUploading}
                     />
                   </label>
@@ -880,26 +850,26 @@ export default function StudentDetailPage() {
             </div>
             <DialogFooter>
               <Button
-                type='button'
-                variant='outline'
+                type="button"
+                variant="outline"
                 onClick={() => setIsEditModalOpen(false)}
                 disabled={isSubmitting}
               >
                 Hủy
               </Button>
               <Button
-                type='submit'
+                type="submit"
                 disabled={isSubmitting}
-                className='bg-blue-600 hover:bg-blue-700'
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Đang lưu...
                   </>
                 ) : (
                   <>
-                    <Save className='mr-2 h-4 w-4' />
+                    <Save className="mr-2 h-4 w-4" />
                     Lưu thay đổi
                   </>
                 )}
@@ -909,36 +879,36 @@ export default function StudentDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Profile Section */}
-        <Card className='md:col-span-1 overflow-hidden border-0 shadow-md'>
-          <div className='bg-gradient-to-r from-blue-500 to-cyan-400 h-24 dark:from-blue-600 dark:to-cyan-500'></div>
-          <CardContent className='flex flex-col items-center text-center pt-0 relative pb-6'>
-            <Avatar className='h-32 w-32 border-4 border-background shadow-md absolute -top-16'>
+        <Card className="md:col-span-1 overflow-hidden border-0 shadow-md">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-400 h-24 dark:from-blue-600 dark:to-cyan-500"></div>
+          <CardContent className="flex flex-col items-center text-center pt-0 relative pb-6">
+            <Avatar className="h-32 w-32 border-4 border-background shadow-md absolute -top-16">
               <AvatarImage
                 src={avatarUrl}
                 alt={detail.user?.username || "Student"}
-                className='object-cover'
+                className="object-cover"
               />
-              <AvatarFallback className='text-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white'>
+              <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
                 {detail.user?.username?.charAt(0) || "S"}
               </AvatarFallback>
             </Avatar>
-            <div className='mt-16 w-full'>
-              <h2 className='text-2xl font-bold mt-2'>
+            <div className="mt-16 w-full">
+              <h2 className="text-2xl font-bold mt-2">
                 {detail.user?.username}
               </h2>
-              <p className='text-muted-foreground mb-3 italic'>
+              <p className="text-muted-foreground mb-3 italic">
                 {detail.user?.email}
               </p>
 
               {detail.user?.role_front?.length > 0 && (
-                <div className='flex flex-wrap gap-2 justify-center mb-4'>
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
                   {detail.user.role_front.map((role: string, index: number) => (
                     <Badge
                       key={index}
-                      variant='outline'
-                      className='py-1.5 px-3 bg-blue-50/90 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800'
+                      variant="outline"
+                      className="py-1.5 px-3 bg-blue-50/90 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800"
                     >
                       {role}
                     </Badge>
@@ -946,7 +916,7 @@ export default function StudentDetailPage() {
                 </div>
               )}
 
-              <div className='mt-3'>
+              <div className="mt-3">
                 <Badge
                   variant={detail.user?.is_active ? "default" : "destructive"}
                   className={`py-1.5 px-4 ${
@@ -960,31 +930,27 @@ export default function StudentDetailPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className='flex flex-col gap-3 mt-6'>
-                <PermissionGuard
-                  module='User'
-                  action='PUT'
-                  showLoading={false}
-                >
+              <div className="flex flex-col gap-3 mt-6">
+                <PermissionGuard module="User" action="PUT" showLoading={false}>
                   <Button
-                    variant='outline'
-                    className='w-full border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300'
+                    variant="outline"
+                    className="w-full border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                     onClick={() => setIsEditModalOpen(true)}
                   >
-                    <User className='mr-2 h-4 w-4' /> Chỉnh sửa thông tin
+                    <User className="mr-2 h-4 w-4" /> Chỉnh sửa thông tin
                   </Button>
                 </PermissionGuard>
                 <PermissionGuard
-                  module='Schedule'
-                  action='GET'
+                  module="Schedule"
+                  action="GET"
                   showLoading={false}
                 >
                   <Button
-                    size='sm'
+                    size="sm"
                     onClick={() => setIsScheduleModalOpen(true)}
-                    className='w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm'
+                    className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 shadow-sm"
                   >
-                    <Calendar className='mr-2 h-4 w-4' /> Xem lịch học
+                    <Calendar className="mr-2 h-4 w-4" /> Xem lịch học
                   </Button>
                 </PermissionGuard>
               </div>
@@ -993,50 +959,50 @@ export default function StudentDetailPage() {
         </Card>
 
         {/* Details Section */}
-        <Card className='md:col-span-2 border-0 shadow-md'>
-          <CardHeader className='bg-gradient-to-r from-muted/50 to-muted border-b'>
-            <CardTitle className='text-xl flex items-center gap-2'>
-              <User className='h-5 w-5 text-blue-600 dark:text-blue-400' /> Chi
+        <Card className="md:col-span-2 border-0 shadow-md">
+          <CardHeader className="bg-gradient-to-r from-muted/50 to-muted border-b">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-600 dark:text-blue-400" /> Chi
               tiết học viên
             </CardTitle>
           </CardHeader>
-          <CardContent className='space-y-8 pt-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
-              <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
-                <h3 className='text-md font-semibold text-blue-800 dark:text-blue-300 mb-4 border-b pb-2'>
+          <CardContent className="space-y-8 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
+                <h3 className="text-md font-semibold text-blue-800 dark:text-blue-300 mb-4 border-b pb-2">
                   Thông tin cá nhân
                 </h3>
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <User className='h-5 w-5 mt-0.5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <User className="h-5 w-5 mt-0.5 text-blue-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Tên đăng nhập
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.username || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Mail className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Mail className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Email
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.email || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Calendar className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Calendar className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Ngày đăng ký
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.created_at
                         ? new Date(detail.user.created_at).toLocaleString()
                         : "-"}
@@ -1044,13 +1010,13 @@ export default function StudentDetailPage() {
                   </div>
                 </div>
 
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Calendar className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Calendar className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Ngày sinh
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.birthday
                         ? new Date(detail.user.birthday).toLocaleDateString(
                             "vi-VN"
@@ -1060,57 +1026,57 @@ export default function StudentDetailPage() {
                   </div>
                 </div>
 
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Phone className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Phone className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Số điện thoại
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.phone || "-"}
                     </p>
                   </div>
                 </div>
 
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Building className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Building className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Địa chỉ
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.address || "-"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
+              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
                 {" "}
-                <h3 className='text-md font-semibold text-blue-800 dark:text-blue-300 mb-4 border-b pb-2'>
+                <h3 className="text-md font-semibold text-blue-800 dark:text-blue-300 mb-4 border-b pb-2">
                   Thông tin học tập
                 </h3>
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <GraduationCap className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <GraduationCap className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Loại tài khoản
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {detail.user?.role_front?.join(", ") || "-"}
                     </p>
                   </div>
                 </div>
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <Building className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <Building className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Chi nhánh
                     </p>
-                    <p className='font-medium mt-0.5'>
+                    <p className="font-medium mt-0.5">
                       {isFetchingTenant ? (
-                        <span className='inline-flex items-center'>
-                          <Loader2 className='h-3 w-3 mr-2 animate-spin' />
+                        <span className="inline-flex items-center">
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
                           Đang tải...
                         </span>
                       ) : (
@@ -1119,22 +1085,22 @@ export default function StudentDetailPage() {
                     </p>
                   </div>{" "}
                 </div>
-                <div className='flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md'>
-                  <CreditCard className='h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform' />
+                <div className="flex items-start gap-3 group transition-all hover:bg-background hover:shadow-sm p-2 rounded-md">
+                  <CreditCard className="h-5 w-5 mt-0.5 text-blue-500 dark:text-blue-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
                   <div>
-                    <p className='text-sm font-medium text-muted-foreground'>
+                    <p className="text-sm font-medium text-muted-foreground">
                       Trạng thái thanh toán
                     </p>
-                    <p className='font-medium mt-0.5'>Đã thanh toán</p>
+                    <p className="font-medium mt-0.5">Đã thanh toán</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className='space-y-6'>
-              <div className='flex items-center justify-between mb-4 border-b pb-2'>
-                <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center'>
-                  <Award className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-4 border-b pb-2">
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center">
+                  <Award className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />{" "}
                   Lớp học đang tham gia
                 </h3>
                 {/* <Button
@@ -1151,7 +1117,7 @@ export default function StudentDetailPage() {
               detail.classesAsMember.filter(
                 (classItem: any) => classItem.status === "attending"
               ).length > 0 ? (
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {detail.classesAsMember
                     .filter(
                       (classItem: any) => classItem.status === "attending"
@@ -1208,21 +1174,21 @@ export default function StudentDetailPage() {
                       return (
                         <div
                           key={index}
-                          className='bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-750 dark:border-slate-600'
+                          className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-slate-800 dark:to-slate-750 dark:border-slate-600"
                         >
-                          <div className='flex items-start justify-between mb-3'>
-                            <div className='flex-1'>
-                              <h4 className='font-semibold text-blue-900 dark:text-slate-100 mb-1'>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-blue-900 dark:text-slate-100 mb-1">
                                 {classItem.name || "Lớp học"}
                               </h4>
                               {classItem.description && (
-                                <p className='text-sm text-blue-700/80 dark:text-slate-300 mb-2'>
+                                <p className="text-sm text-blue-700/80 dark:text-slate-300 mb-2">
                                   {classItem.description}
                                 </p>
                               )}
                             </div>
                             <Badge
-                              variant='outline'
+                              variant="outline"
                               className={statusBadge.className}
                             >
                               {statusBadge.text}
@@ -1230,16 +1196,16 @@ export default function StudentDetailPage() {
                           </div>
 
                           {/* Progress Section */}
-                          <div className='mb-3'>
-                            <div className='flex items-center justify-between mb-2'>
-                              <span className='text-sm font-medium text-blue-700 dark:text-slate-300'>
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-blue-700 dark:text-slate-300">
                                 Tiến độ học tập
                               </span>
-                              <span className='text-sm font-bold text-blue-800 dark:text-slate-200'>
+                              <span className="text-sm font-bold text-blue-800 dark:text-slate-200">
                                 {progressPercentage}%
                               </span>
                             </div>
-                            <div className='w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700'>
+                            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
                               <div
                                 className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(
                                   classItem.progress || 0
@@ -1249,15 +1215,15 @@ export default function StudentDetailPage() {
                             </div>
                           </div>
 
-                          <div className='mt-3 pt-3 border-t border-blue-200 dark:border-slate-600'>
+                          <div className="mt-3 pt-3 border-t border-blue-200 dark:border-slate-600">
                             <Link
                               href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
-                              className='inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors'
+                              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 dark:text-slate-300 dark:hover:text-slate-100 font-medium transition-colors"
                             >
                               Xem chi tiết lớp học
-                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                              <ArrowLeft className="h-3 w-3 ml-1 rotate-180" />
                             </Link>
                           </div>
                         </div>
@@ -1265,14 +1231,14 @@ export default function StudentDetailPage() {
                     })}
                 </div>
               ) : (
-                <div className='bg-blue-50 border border-blue-100 rounded-md p-6 text-center dark:bg-blue-950/30 dark:border-blue-800'>
-                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
-                    <Book className='h-8 w-8 text-blue-400' />
+                <div className="bg-blue-50 border border-blue-100 rounded-md p-6 text-center dark:bg-blue-950/30 dark:border-blue-800">
+                  <div className="bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm">
+                    <Book className="h-8 w-8 text-blue-400" />
                   </div>
-                  <p className='text-blue-900 dark:text-blue-200 font-medium mb-1'>
+                  <p className="text-blue-900 dark:text-blue-200 font-medium mb-1">
                     Chưa tham gia lớp học nào
                   </p>
-                  <p className='text-blue-700/70 dark:text-blue-300/70 text-sm mb-4'>
+                  <p className="text-blue-700/70 dark:text-blue-300/70 text-sm mb-4">
                     Học viên chưa tham gia lớp học nào
                   </p>
                   {/* <Button
@@ -1287,62 +1253,62 @@ export default function StudentDetailPage() {
             </div>
 
             {/* Upcoming Classes Section */}
-            <div className='space-y-6'>
-              <h3 className='text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center mb-4 border-b pb-2'>
-                <Calendar className='h-5 w-5 mr-2 text-yellow-600 dark:text-yellow-400' />{" "}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center mb-4 border-b pb-2">
+                <Calendar className="h-5 w-5 mr-2 text-yellow-600 dark:text-yellow-400" />{" "}
                 Lớp học sắp diễn ra
               </h3>
               {detail.classesAsMember &&
               detail.classesAsMember.filter(
                 (classItem: any) => classItem.status === "upcoming"
               ).length > 0 ? (
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {detail.classesAsMember
                     .filter((classItem: any) => classItem.status === "upcoming")
                     .map((classItem: any, index: number) => {
                       return (
                         <div
                           key={index}
-                          className='bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-800'
+                          className="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-800"
                         >
-                          <div className='flex items-start justify-between mb-3'>
-                            <div className='flex-1'>
-                              <h4 className='font-semibold text-yellow-900 dark:text-yellow-100 mb-1'>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
                                 {classItem.name || "Lớp học"}
                               </h4>
                               {classItem.description && (
-                                <p className='text-sm text-yellow-700/80 dark:text-yellow-300 mb-2'>
+                                <p className="text-sm text-yellow-700/80 dark:text-yellow-300 mb-2">
                                   {classItem.description}
                                 </p>
                               )}
                             </div>
                             <Badge
-                              variant='outline'
-                              className='bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800'
+                              variant="outline"
+                              className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-800"
                             >
                               Sắp diễn ra
                             </Badge>
                           </div>
 
                           {/* Status Info */}
-                          <div className='mb-3 p-3 bg-yellow-100/50 dark:bg-yellow-900/30 rounded-md border border-yellow-200 dark:border-yellow-800'>
-                            <div className='flex items-center gap-2 mb-2'>
-                              <Calendar className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
-                              <span className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
+                          <div className="mb-3 p-3 bg-yellow-100/50 dark:bg-yellow-900/30 rounded-md border border-yellow-200 dark:border-yellow-800">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Calendar className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                              <span className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                                 Trạng thái
                               </span>
                             </div>
-                            <p className='text-sm text-yellow-700 dark:text-yellow-300'>
+                            <p className="text-sm text-yellow-700 dark:text-yellow-300">
                               Đã được thêm vào lớp nhưng lịch học chưa được tạo
                             </p>
                           </div>
 
                           {/* Registration Date */}
                           {classItem.created_at && (
-                            <div className='mb-3'>
-                              <div className='flex items-center gap-2'>
-                                <User className='h-4 w-4 text-yellow-600 dark:text-yellow-400' />
-                                <span className='text-sm text-yellow-700 dark:text-yellow-300'>
+                            <div className="mb-3">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                                <span className="text-sm text-yellow-700 dark:text-yellow-300">
                                   Đăng ký:{" "}
                                   {new Date(
                                     classItem.created_at
@@ -1352,15 +1318,15 @@ export default function StudentDetailPage() {
                             </div>
                           )}
 
-                          <div className='mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800'>
+                          <div className="mt-3 pt-3 border-t border-yellow-200 dark:border-yellow-800">
                             <Link
                               href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
-                              className='inline-flex items-center text-sm text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100 font-medium transition-colors'
+                              className="inline-flex items-center text-sm text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100 font-medium transition-colors"
                             >
                               Xem chi tiết lớp học
-                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                              <ArrowLeft className="h-3 w-3 ml-1 rotate-180" />
                             </Link>
                           </div>
                         </div>
@@ -1368,14 +1334,14 @@ export default function StudentDetailPage() {
                     })}
                 </div>
               ) : (
-                <div className='bg-yellow-50 border border-yellow-100 rounded-md p-6 text-center dark:bg-yellow-950/30 dark:border-yellow-800'>
-                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
-                    <Calendar className='h-8 w-8 text-yellow-400' />
+                <div className="bg-yellow-50 border border-yellow-100 rounded-md p-6 text-center dark:bg-yellow-950/30 dark:border-yellow-800">
+                  <div className="bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm">
+                    <Calendar className="h-8 w-8 text-yellow-400" />
                   </div>
-                  <p className='text-yellow-900 dark:text-yellow-200 font-medium mb-1'>
+                  <p className="text-yellow-900 dark:text-yellow-200 font-medium mb-1">
                     Không có lớp học sắp diễn ra
                   </p>
-                  <p className='text-yellow-700/70 dark:text-yellow-300/70 text-sm'>
+                  <p className="text-yellow-700/70 dark:text-yellow-300/70 text-sm">
                     Học viên chưa đăng ký lớp học nào chưa có lịch
                   </p>
                 </div>
@@ -1383,16 +1349,16 @@ export default function StudentDetailPage() {
             </div>
 
             {/* Classes Attended Section */}
-            <div className='space-y-6'>
-              <h3 className='text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2'>
-                <GraduationCap className='h-5 w-5 mr-2 text-green-600 dark:text-green-400' />{" "}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2">
+                <GraduationCap className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />{" "}
                 Lớp học đã tham gia
               </h3>
               {detail.classesAsMember &&
               detail.classesAsMember.filter(
                 (classItem: any) => classItem.status === "attended"
               ).length > 0 ? (
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {detail.classesAsMember
                     .filter((classItem: any) => classItem.status === "attended")
                     .map((classItem: any, index: number) => {
@@ -1416,38 +1382,38 @@ export default function StudentDetailPage() {
                       return (
                         <div
                           key={index}
-                          className='bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800'
+                          className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gradient-to-r dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800"
                         >
-                          <div className='flex items-start justify-between mb-3'>
-                            <div className='flex-1'>
-                              <h4 className='font-semibold text-green-900 dark:text-green-100 mb-1'>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-green-900 dark:text-green-100 mb-1">
                                 {classItem.name || "Lớp học"}
                               </h4>
                               {classItem.description && (
-                                <p className='text-sm text-green-700/80 dark:text-green-300 mb-2'>
+                                <p className="text-sm text-green-700/80 dark:text-green-300 mb-2">
                                   {classItem.description}
                                 </p>
                               )}
                             </div>
                             <Badge
-                              variant='outline'
-                              className='bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800'
+                              variant="outline"
+                              className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800"
                             >
                               Đã hoàn thành
                             </Badge>
                           </div>
 
                           {/* Progress Section */}
-                          <div className='mb-3'>
-                            <div className='flex items-center justify-between mb-2'>
-                              <span className='text-sm font-medium text-green-700 dark:text-green-300'>
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-green-700 dark:text-green-300">
                                 Kết quả học tập
                               </span>
-                              <span className='text-sm font-bold text-green-800 dark:text-green-200'>
+                              <span className="text-sm font-bold text-green-800 dark:text-green-200">
                                 {progressPercentage}%
                               </span>
                             </div>
-                            <div className='w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700'>
+                            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
                               <div
                                 className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(
                                   classItem.progress || 0
@@ -1459,10 +1425,10 @@ export default function StudentDetailPage() {
 
                           {/* Completion Date */}
                           {classItem.updated_at && (
-                            <div className='mb-3'>
-                              <div className='flex items-center gap-2'>
-                                <Calendar className='h-4 w-4 text-green-600 dark:text-green-400' />
-                                <span className='text-sm text-green-700 dark:text-green-300'>
+                            <div className="mb-3">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <span className="text-sm text-green-700 dark:text-green-300">
                                   Hoàn thành:{" "}
                                   {new Date(
                                     classItem.updated_at
@@ -1472,15 +1438,15 @@ export default function StudentDetailPage() {
                             </div>
                           )}
 
-                          <div className='mt-3 pt-3 border-t border-green-200 dark:border-green-800'>
+                          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                             <Link
                               href={`/dashboard/manager/class/${
                                 classItem._id || classItem.id
                               }`}
-                              className='inline-flex items-center text-sm text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-green-100 font-medium transition-colors'
+                              className="inline-flex items-center text-sm text-green-600 hover:text-green-800 dark:text-green-300 dark:hover:text-green-100 font-medium transition-colors"
                             >
                               Xem chi tiết lớp học
-                              <ArrowLeft className='h-3 w-3 ml-1 rotate-180' />
+                              <ArrowLeft className="h-3 w-3 ml-1 rotate-180" />
                             </Link>
                           </div>
                         </div>
@@ -1488,14 +1454,14 @@ export default function StudentDetailPage() {
                     })}
                 </div>
               ) : (
-                <div className='bg-green-50 border border-green-100 rounded-md p-6 text-center dark:bg-green-950/30 dark:border-green-800'>
-                  <div className='bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm'>
-                    <GraduationCap className='h-8 w-8 text-green-400' />
+                <div className="bg-green-50 border border-green-100 rounded-md p-6 text-center dark:bg-green-950/30 dark:border-green-800">
+                  <div className="bg-background rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center shadow-sm">
+                    <GraduationCap className="h-8 w-8 text-green-400" />
                   </div>
-                  <p className='text-green-900 dark:text-green-200 font-medium mb-1'>
+                  <p className="text-green-900 dark:text-green-200 font-medium mb-1">
                     Chưa hoàn thành lớp học nào
                   </p>
-                  <p className='text-green-700/70 dark:text-green-300/70 text-sm'>
+                  <p className="text-green-700/70 dark:text-green-300/70 text-sm">
                     Học viên chưa hoàn thành lớp học nào
                   </p>
                 </div>
@@ -1504,54 +1470,54 @@ export default function StudentDetailPage() {
 
             {/* Parent Information Section - Show only when parent_id exists */}
             {parentInfo && (
-              <div className='mt-6'>
-                <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2'>
-                  <Users className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />{" "}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2">
+                  <Users className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />{" "}
                   Thông tin phụ huynh
                 </h3>
-                <div className='bg-amber-50 border border-amber-100 rounded-md p-5 dark:bg-amber-950/30 dark:border-amber-900/60'>
-                  <div className='flex items-center gap-4 mb-4'>
-                    <Avatar className='h-14 w-14 border-2 border-background shadow-sm'>
-                      <AvatarFallback className='bg-gradient-to-br from-amber-500 to-orange-400 text-white'>
+                <div className="bg-amber-50 border border-amber-100 rounded-md p-5 dark:bg-amber-950/30 dark:border-amber-900/60">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Avatar className="h-14 w-14 border-2 border-background shadow-sm">
+                      <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-400 text-white">
                         {parentInfo.user?.username?.charAt(0) || "P"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className='font-medium text-lg'>
+                      <p className="font-medium text-lg">
                         {parentInfo.user?.username}
                       </p>
-                      <p className='text-sm text-amber-700/80 dark:text-amber-400/80'>
+                      <p className="text-sm text-amber-700/80 dark:text-amber-400/80">
                         {parentInfo.user?.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 bg-background p-3 rounded-md'>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 bg-background p-3 rounded-md">
                     {parentInfo.user?.phone && (
-                      <div className='flex items-center gap-2'>
-                        <Phone className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                         <span>{parentInfo.user.phone}</span>
                       </div>
                     )}
 
                     {parentInfo.user?.address && (
-                      <div className='flex items-center gap-2'>
-                        <Building className='h-4 w-4 text-amber-600 dark:text-amber-400' />
+                      <div className="flex items-center gap-2">
+                        <Building className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                         <span>{parentInfo.user.address}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className='mt-4 flex justify-end'>
+                  <div className="mt-4 flex justify-end">
                     <Link
                       href={`/dashboard/manager/students/${parentInfo.user?._id}`}
                     >
                       <Button
-                        variant='outline'
-                        size='sm'
-                        className='bg-background hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                        variant="outline"
+                        size="sm"
+                        className="bg-background hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                       >
-                        <User className='mr-2 h-4 w-4' />
+                        <User className="mr-2 h-4 w-4" />
                         Xem hồ sơ phụ huynh
                       </Button>
                     </Link>
@@ -1560,7 +1526,7 @@ export default function StudentDetailPage() {
               </div>
             )}
 
-            <Separator className='my-6' />
+            <Separator className="my-6" />
           </CardContent>
         </Card>
       </div>
@@ -1571,7 +1537,7 @@ export default function StudentDetailPage() {
         onOpenChange={setIsScheduleModalOpen}
         userId={detail?.user?._id || studentId}
         userName={detail?.user?.username || ""}
-        userType='student'
+        userType="student"
       />
     </div>
   );
