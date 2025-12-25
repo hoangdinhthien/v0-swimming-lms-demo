@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Search } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Loader2, Search, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,8 +24,12 @@ import {
   createStudent,
   type CreateStudentData,
   fetchUsersWithoutParent,
+  fetchStudents,
+  sendAccountCreatedEmail,
 } from "@/api/manager/students-api";
+import { fetchContacts, type Contact } from "@/api/manager/contact-api";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
+import { reverseGeocode } from "@/utils/geocoding";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -90,13 +94,20 @@ const defaultValues: Partial<StudentFormValues> = {
   confirmPassword: "",
 };
 
-export default function NewStudentPage() {
+function NewStudentForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const contactId = searchParams.get("contactId");
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [parents, setParents] = useState<any[]>([]);
   const [isLoadingParents, setIsLoadingParents] = useState(false);
   const [open, setOpen] = useState(false);
+
+  // Contact state
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [existingEmails, setExistingEmails] = useState<Set<string>>(new Set());
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -131,7 +142,104 @@ export default function NewStudentPage() {
 
     // Fetch existing parents when the component mounts
     fetchExistingParents();
+    fetchContactsData();
+    checkExistingEmails();
   }, []);
+
+  const checkExistingEmails = async () => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (tenantId && token) {
+        const students = await fetchStudents({ tenantId, token });
+        const emails = new Set<string>(
+          students
+            .map((s: any) => s.user?.email || s.email)
+            .filter(
+              (e: any): e is string => typeof e === "string" && e.length > 0
+            )
+        );
+        setExistingEmails(emails);
+      }
+    } catch (error) {
+      console.error("Failed to fetch existing emails", error);
+    }
+  };
+
+  // Handle auto-select contact from URL
+  useEffect(() => {
+    if (contactId && contacts.length > 0) {
+      const contact = contacts.find((c) => c._id === contactId);
+      if (contact) {
+        handleSelectContact(contact);
+      }
+    }
+  }, [contactId, contacts]);
+
+  const fetchContactsData = async () => {
+    setIsLoadingContacts(true);
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (tenantId && token) {
+        const data = await fetchContacts(tenantId, token);
+        setContacts(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch contacts", error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  };
+
+  const handleSelectContact = async (contact: Contact) => {
+    form.setValue("username", contact.name);
+    form.setValue("email", contact.email);
+    form.setValue("phone", contact.phone);
+    if (contact.birthday) {
+      // Handle "DD-MM-YYYY" format from API
+      let formattedBirthday = contact.birthday;
+      if (contact.birthday.includes("-")) {
+        const parts = contact.birthday.split("-");
+        // If it looks like DD-MM-YYYY (parts[0] is day, parts[2] is year)
+        if (parts.length === 3) {
+          if (parts[0].length === 2 && parts[2].length === 4) {
+            // Convert DD-MM-YYYY to YYYY-MM-DD
+            formattedBirthday = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          } else if (parts[0].length === 4 && parts[2].length === 2) {
+            // Already YYYY-MM-DD or YYYY-MM-DD? standard is YYYY-MM-DD
+            // Just keep it if it fits YYYY-MM-DD
+          }
+        }
+      }
+      form.setValue("birthday", formattedBirthday);
+    }
+
+    toast({
+      title: "Đã điền thông tin",
+      description: `Đã điền thông tin từ liên hệ: ${contact.name}`,
+    });
+
+    // Geocoding if address is empty and location exists
+    if (contact.location && !form.getValues("address")) {
+      try {
+        // location is [lng, lat]
+        const address = await reverseGeocode(
+          contact.location[1],
+          contact.location[0]
+        );
+        if (address) {
+          form.setValue("address", address);
+          toast({
+            title: "Đã tìm thấy địa chỉ",
+            description: "Đã tự động điền địa chỉ từ vị trí",
+          });
+        }
+      } catch (error) {
+        console.error("Geocoding failed", error);
+      }
+    }
+  };
 
   const fetchExistingParents = async () => {
     setIsLoadingParents(true);
@@ -247,10 +355,19 @@ export default function NewStudentPage() {
         token,
       });
 
+      // Send account created email (fire and forget)
+      // Call the test endpoint to send welcome email
+      sendAccountCreatedEmail({
+        email: studentData.email,
+        password: studentData.password,
+        tenantId,
+        token,
+      });
+
       // Show success message
       toast({
         title: "Thành công",
-        description: "Đã thêm học viên mới",
+        description: "Đã thêm học viên và gửi email thông báo",
       });
 
       // Check if there's a return URL from guest order flow
@@ -332,6 +449,51 @@ export default function NewStudentPage() {
             <CardTitle className="text-2xl">Thêm học viên mới</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Contact Selection */}
+            <div className="mb-8 p-4 border rounded-lg bg-muted/40">
+              <div className="flex items-center gap-2 mb-2">
+                <UserPlus className="h-5 w-5 text-blue-600" />
+                <h3 className="font-medium">Điền từ Liên hệ</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Chọn liên hệ để tự động điền thông tin học viên
+              </p>
+              <Select
+                onValueChange={(value) => {
+                  const contact = contacts.find((c) => c._id === value);
+                  if (contact) handleSelectContact(contact);
+                }}
+                defaultValue={contactId || undefined}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Chọn liên hệ..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingContacts ? (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      Đang tải danh sách...
+                    </div>
+                  ) : contacts.length === 0 ? (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      Không có liên hệ nào
+                    </div>
+                  ) : (
+                    contacts.map((contact) => (
+                      <SelectItem
+                        key={contact._id}
+                        value={contact._id}
+                        disabled={existingEmails.has(contact.email)}
+                      >
+                        {contact.name} - {contact.email || contact.phone}{" "}
+                        {existingEmails.has(contact.email) &&
+                          "(Đã có tài khoản)"}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
@@ -582,5 +744,19 @@ export default function NewStudentPage() {
         </Card>
       </div>
     </PermissionGuard>
+  );
+}
+
+export default function NewStudentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <NewStudentForm />
+    </Suspense>
   );
 }

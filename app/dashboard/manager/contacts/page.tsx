@@ -12,7 +12,11 @@ import {
   Pencil,
   Search,
   ArrowUpDown,
+  UserPlus,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,14 +48,27 @@ import {
   formatLocation,
   type Contact,
 } from "@/api/manager/contact-api";
+import { fetchStudents } from "@/api/manager/students-api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function ContactsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [existingEmails, setExistingEmails] = useState<Set<string>>(new Set());
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Map Modal State
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+  const [mapLocation, setMapLocation] = useState<[number, number] | null>(null);
 
   // Search & Sort state
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +111,28 @@ export default function ContactsPage() {
 
   useEffect(() => {
     loadContacts();
+    checkExistingEmails();
   }, []);
+
+  const checkExistingEmails = async () => {
+    try {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (tenantId && token) {
+        const students = await fetchStudents({ tenantId, token });
+        const emails = new Set<string>(
+          students
+            .map((s: any) => s.user?.email || s.email)
+            .filter(
+              (e: any): e is string => typeof e === "string" && e.length > 0
+            )
+        );
+        setExistingEmails(emails);
+      }
+    } catch (error) {
+      console.error("Failed to fetch existing emails", error);
+    }
+  };
 
   // Handle view contact details
   const handleViewDetails = (contact: Contact) => {
@@ -104,7 +142,13 @@ export default function ContactsPage() {
 
   // Open location in Google Maps
   const handleOpenMap = (location: [number, number]) => {
-    window.open(getGoogleMapsUrl(location), "_blank");
+    setMapLocation(location);
+    setIsMapModalOpen(true);
+  };
+
+  // Handle Create Account from Contact
+  const handleCreateAccount = (contact: Contact) => {
+    router.push(`/dashboard/manager/students/new?contactId=${contact._id}`);
   };
 
   // Filter and Sort contacts
@@ -225,6 +269,7 @@ export default function ContactsPage() {
                     <TableHead>Số điện thoại</TableHead>
                     <TableHead>Tin nhắn</TableHead>
                     <TableHead>Ghi chú</TableHead>
+                    <TableHead>Ngày sinh</TableHead>
                     <TableHead>
                       <Button
                         variant="ghost"
@@ -277,6 +322,11 @@ export default function ContactsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <span className="text-sm text-foreground">
+                          {contact.birthday || "---"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3" />
                           {formatContactDate(contact.created_at)}
@@ -288,8 +338,9 @@ export default function ContactsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewDetails(contact)}
+                            title="Xem chi tiết"
                           >
-                            Xem chi tiết
+                            <Info className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -298,6 +349,39 @@ export default function ContactsPage() {
                           >
                             <MapPin className="h-4 w-4" />
                           </Button>
+                          {existingEmails.has(contact.email) ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className="cursor-not-allowed"
+                                    tabIndex={0}
+                                  >
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-yellow-500 hover:text-yellow-600 pointer-events-none"
+                                      disabled
+                                    >
+                                      <AlertTriangle className="h-4 w-4" />
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Email đã tồn tại trong hệ thống</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCreateAccount(contact)}
+                              title="Tạo tài khoản"
+                            >
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -348,6 +432,22 @@ export default function ContactsPage() {
                     </a>
                   </div>
                 </div>
+
+                {selectedContact.birthday && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Calendar className="h-5 w-5 text-orange-500 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Ngày sinh
+                      </p>
+                      <p className="text-base font-semibold">
+                        {new Date(selectedContact.birthday).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                   <Phone className="h-5 w-5 text-green-500 mt-0.5" />
@@ -440,6 +540,36 @@ export default function ContactsPage() {
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               )}
               Lưu thay đổi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Map Modal */}
+      <Dialog open={isMapModalOpen} onOpenChange={setIsMapModalOpen}>
+        <DialogContent className="sm:max-w-[800px] h-[80vh] flex flex-col p-0 gap-0">
+          <div className="p-6 pb-2">
+            <DialogHeader>
+              <DialogTitle>Vị trí trên bản đồ</DialogTitle>
+              <DialogDescription>
+                Xem vị trí của liên hệ trên Google Maps
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="flex-1 w-full bg-muted/20 p-6 pt-2">
+            {mapLocation && (
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0, borderRadius: "0.5rem" }}
+                loading="lazy"
+                allowFullScreen
+                src={`https://maps.google.com/maps?q=${mapLocation[1]},${mapLocation[0]}&hl=vi&z=14&output=embed`}
+              ></iframe>
+            )}
+          </div>
+          <div className="p-6 pt-2 flex justify-end">
+            <Button variant="outline" onClick={() => setIsMapModalOpen(false)}>
+              Đóng
             </Button>
           </div>
         </DialogContent>

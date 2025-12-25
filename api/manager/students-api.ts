@@ -491,3 +491,47 @@ export async function updateStudent({
 
   return await response.json();
 }
+
+export async function sendAccountCreatedEmail({
+  email,
+  password,
+  tenantId,
+  token,
+}: {
+  email: string;
+  password?: string;
+  tenantId: string;
+  token: string;
+}) {
+  if (!tenantId || !token) {
+    console.error("Missing tenantId or token for sending email");
+    return;
+  }
+
+  const url = `${config.API}/v1/workflow-process/test/email`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-tenant-id": tenantId,
+    Authorization: `Bearer ${token}`,
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Failed to send account created email",
+        await response.text()
+      );
+    }
+  } catch (error) {
+    console.error("Error sending account created email", error);
+  }
+}

@@ -14,6 +14,7 @@ export interface Contact {
   name: string;
   created_at: string;
   note?: string;
+  birthday?: string;
 }
 
 export interface ContactListResponse {
