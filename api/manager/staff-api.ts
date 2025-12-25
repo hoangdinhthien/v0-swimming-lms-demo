@@ -86,12 +86,14 @@ export interface CreateStaffRequest {
   email: string;
   password: string;
   phone?: string;
+  birthday?: string;
+  address?: string;
+  featured_image?: string[];
   departments?: string[];
   position?: string;
   start_date?: string;
   bio?: string;
   emergency_contact?: string;
-  address?: string;
   is_active?: boolean;
   avatar?: string[]; // Base64 image data
 }
@@ -380,7 +382,7 @@ export async function createStaff({
     const requestBody = {
       ...staffData,
       tenant_id: tenantId,
-      role: "staff", // Ensure role is set to staff
+      role: ["staff"], // Ensure role is set to staff as array
     };
 
     // Create headers with both token and tenant ID
