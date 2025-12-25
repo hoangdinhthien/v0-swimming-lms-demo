@@ -3,7 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, Loader2, ImagePlus } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Loader2,
+  ImagePlus,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +55,7 @@ import { fetchAllCourseCategories } from "@/api/manager/course-categories";
 import { fetchAgeRules, type AgeRule } from "@/api/manager/age-types";
 import { uploadMedia } from "@/api/media-api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import PermissionGuard from "@/components/permission-guard";
 import * as z from "zod";
 
@@ -62,7 +70,8 @@ const courseFormSchema = z
         invalid_type_error: " Số buổi học phải là số nguyên dương",
       })
       .int(" Số buổi học phải là số nguyên")
-      .positive(" Số buổi học phải lớn hơn 0"),
+      .min(1, " Số buổi học phải từ 1 đến 100")
+      .max(100, " Số buổi học không được vượt quá 100"),
     session_number_duration: z
       .string()
       .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
@@ -86,15 +95,19 @@ const courseFormSchema = z
         invalid_type_error: " Giá khóa học phải là số",
       })
       .int(" Giá khóa học phải là số nguyên")
-      .nonnegative(" Giá khóa học không được là số âm"),
+      .min(0, " Giá khóa học không được là số âm")
+      .max(1000000000, " Giá khóa học không được vượt quá 1 tỷ VNĐ"),
     max_member: z.coerce
       .number({
         required_error: " Vui lòng nhập số học viên tối đa",
         invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
       })
       .int(" Số học viên tối đa phải là số nguyên")
-      .positive(" Số học viên tối đa phải lớn hơn 0"),
-    media: z.array(z.string()).optional(),
+      .min(1, " Số học viên tối đa phải từ 1 đến 30")
+      .max(30, " Số học viên tối đa không được vượt quá 30"),
+    media: z
+      .array(z.string())
+      .min(1, " Vui lòng tải lên ít nhất 1 hình ảnh khóa học"),
   })
   .refine((data) => data.detail.length === data.session_number, {
     message: "Số lượng nội dung chi tiết phải bằng với số buổi học",
@@ -144,6 +157,11 @@ export default function NewCoursePage() {
     defaultValues,
   });
 
+  const { fields, replace, remove } = useFieldArray({
+    control: form.control,
+    name: "detail",
+  });
+
   // Fetch course categories and age rules on component mount
   useEffect(() => {
     async function fetchCategories() {
@@ -186,39 +204,48 @@ export default function NewCoursePage() {
     fetchAgeRulesData();
   }, [toast]); // Empty dependency array - only fetch once on mount
 
-  // Sync detail array with session_number
+  // Sync detail array with session_number with debounce
   useEffect(() => {
-    const currentSessionNumber = form.watch("session_number");
-    const currentDetails = form.getValues("detail") || [];
+    const sessionNum = form.watch("session_number");
+    const timer = setTimeout(() => {
+      const currentSessionNumber =
+        typeof sessionNum === "string" ? parseInt(sessionNum) : sessionNum;
+      const currentDetails = form.getValues("detail") || [];
 
-    if (
-      currentSessionNumber &&
-      currentSessionNumber !== currentDetails.length
-    ) {
-      if (currentSessionNumber > currentDetails.length) {
-        // Add missing detail items
-        const newDetails = [...currentDetails];
-        while (newDetails.length < currentSessionNumber) {
-          newDetails.push({ title: "", description: "" });
-        }
-        form.setValue("detail", newDetails);
-      } else if (currentSessionNumber < currentDetails.length) {
-        // Remove excess detail items
-        const newDetails = currentDetails.slice(0, currentSessionNumber);
-        form.setValue("detail", newDetails);
-
-        // Also clean up form judges for removed items
-        const newFormJudges = { ...detailFormJudges };
-        Object.keys(newFormJudges).forEach((key) => {
-          const index = parseInt(key);
-          if (index >= currentSessionNumber) {
-            delete newFormJudges[index];
+      // Sanity check: only sync if it's a reasonable number (1-100)
+      if (
+        currentSessionNumber &&
+        currentSessionNumber > 0 &&
+        currentSessionNumber <= 100 &&
+        currentSessionNumber !== currentDetails.length
+      ) {
+        if (currentSessionNumber > currentDetails.length) {
+          // Add missing detail items
+          const newDetails = [...currentDetails];
+          while (newDetails.length < currentSessionNumber) {
+            newDetails.push({ title: "", description: "" });
           }
-        });
-        setDetailFormJudges(newFormJudges);
+          replace(newDetails);
+        } else if (currentSessionNumber < currentDetails.length) {
+          // Remove excess detail items
+          const newDetails = currentDetails.slice(0, currentSessionNumber);
+          replace(newDetails);
+
+          // Also clean up form judges for removed items
+          const newFormJudges = { ...detailFormJudges };
+          Object.keys(newFormJudges).forEach((key) => {
+            const index = parseInt(key);
+            if (index >= currentSessionNumber) {
+              delete newFormJudges[index];
+            }
+          });
+          setDetailFormJudges(newFormJudges);
+        }
       }
-    }
-  }, [form.watch("session_number")]); // Re-run when session_number changes
+    }, 400); // Debounce to prevent lag while typing
+
+    return () => clearTimeout(timer);
+  }, [form.watch("session_number"), replace, detailFormJudges]); // Re-run when session_number changes
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,54 +412,59 @@ export default function NewCoursePage() {
 
   return (
     <PermissionGuard
-      module='Course'
-      action='POST'
-      redirectTo='/dashboard/manager/courses'
+      module="Course"
+      action="POST"
+      redirectTo="/dashboard/manager/courses"
     >
       <>
-        <div className='mb-6'>
+        <div className="mb-6">
           <Link
-            href='/dashboard/manager/courses'
-            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+            href="/dashboard/manager/courses"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className='mr-1 h-4 w-4' />
+            <ArrowLeft className="mr-1 h-4 w-4" />
             Quay về Danh sách khóa học
           </Link>
         </div>
 
-        <div className='flex flex-col space-y-8'>
+        <div className="flex flex-col space-y-8">
           <div>
-            <h1 className='text-3xl font-bold tracking-tight'>
+            <h1 className="text-3xl font-bold tracking-tight">
               Thêm khóa học mới
             </h1>
-            <p className='text-muted-foreground'>
+            <p className="text-muted-foreground">
               Điền thông tin chi tiết để tạo một khóa học mới
             </p>
           </div>
 
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className='space-y-8'
+              onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                console.error("Form validation errors:", errors);
+                toast({
+                  title: "Lỗi nhập liệu",
+                  description:
+                    "Vui lòng kiểm tra lại các trường thông tin còn thiếu hoặc sai định dạng",
+                  variant: "destructive",
+                });
+              })}
+              className="space-y-8"
             >
               <Card>
                 <CardHeader>
                   <CardTitle>Thông tin cơ bản</CardTitle>
                 </CardHeader>
-                <CardContent className='space-y-6'>
+                <CardContent className="space-y-6">
                   <FormField
                     control={form.control}
-                    name='title'
+                    name="title"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Tên khóa học <span className='text-red-500'>*</span>
+                          Tên khóa học <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder='Nhập tên khóa học'
-                            {...field}
-                          />
+                          <Input placeholder="Nhập tên khóa học" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -441,16 +473,16 @@ export default function NewCoursePage() {
 
                   <FormField
                     control={form.control}
-                    name='description'
+                    name="description"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Mô tả khóa học <span className='text-red-500'>*</span>
+                          Mô tả khóa học <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder='Nhập mô tả chi tiết về khóa học'
-                            className='resize-none min-h-[120px]'
+                            placeholder="Nhập mô tả chi tiết về khóa học"
+                            className="resize-none min-h-[120px]"
                             {...field}
                           />
                         </FormControl>
@@ -459,22 +491,39 @@ export default function NewCoursePage() {
                     )}
                   />
 
-                  <div className='grid gap-4 md:grid-cols-2'>
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name='session_number'
+                      name="session_number"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Số buổi học <span className='text-red-500'>*</span>
+                            Số buổi học <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type='number'
-                              placeholder='Nhập số buổi học'
+                              type="number"
+                              placeholder="Nhập số buổi học"
                               {...field}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "") {
+                                  field.onChange(undefined);
+                                  return;
+                                }
+                                const num = parseInt(val);
+                                if (!isNaN(num)) {
+                                  // Block at 100
+                                  if (num > 100) {
+                                    field.onChange(100);
+                                  } else {
+                                    field.onChange(num);
+                                  }
+                                }
+                              }}
                             />
                           </FormControl>
+                          <FormDescription>Tối đa 100 buổi</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -482,46 +531,74 @@ export default function NewCoursePage() {
 
                     <FormField
                       control={form.control}
-                      name='session_number_duration'
+                      name="session_number_duration"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Thời lượng mỗi buổi{" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder='Ví dụ: 45 phút'
-                              {...field}
-                            />
+                            <div className="relative">
+                              <Input
+                                placeholder="Ví dụ: 45"
+                                {...field}
+                                onChange={(e) => {
+                                  const valString = e.target.value.replace(
+                                    /\D/g,
+                                    ""
+                                  );
+                                  let num = valString ? parseInt(valString) : 0;
+                                  // Cap at 300 minutes (5 hours)
+                                  if (num > 300) {
+                                    num = 300;
+                                  }
+                                  field.onChange(
+                                    num === 0 ? "" : num.toString()
+                                  );
+                                }}
+                              />
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                                phút
+                              </div>
+                            </div>
                           </FormControl>
+                          <FormDescription>Tối đa 300 phút</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
-                  <div className='grid gap-4 md:grid-cols-2'>
+                  <div className="grid gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
-                      name='price'
+                      name="price"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Giá khóa học (VNĐ){" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type='text'
-                              placeholder='Nhập giá khóa học'
+                              type="text"
+                              placeholder="Nhập giá khóa học"
                               value={
                                 field.value
                                   ? field.value.toLocaleString("vi-VN")
                                   : ""
                               }
                               onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, "");
-                                field.onChange(value ? parseInt(value) : 0);
+                                let valString = e.target.value.replace(
+                                  /\D/g,
+                                  ""
+                                );
+                                let num = valString ? parseInt(valString) : 0;
+                                // Block at 1 billion
+                                if (num > 1000000000) {
+                                  num = 1000000000;
+                                }
+                                field.onChange(num);
                               }}
                             />
                           </FormControl>
@@ -532,42 +609,78 @@ export default function NewCoursePage() {
 
                     <FormField
                       control={form.control}
-                      name='max_member'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Số học viên tối đa{" "}
-                            <span className='text-red-500'>*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type='number'
-                              placeholder='Nhập số học viên tối đa'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      name="max_member"
+                      render={({ field }) => {
+                        const selectedAgeRuleIds =
+                          form.watch("type_of_age") || [];
+                        const hasChildrenUnder10 = selectedAgeRuleIds.some(
+                          (id: string) => {
+                            const rule = ageRules.find((r) => r._id === id);
+                            if (!rule) return false;
+                            const ageRange = Array.isArray(rule.age_range)
+                              ? rule.age_range
+                              : undefined;
+                            const max = ageRange ? ageRange[1] : rule.max_age;
+                            return max != null && max <= 10;
+                          }
+                        );
+                        const maxLimit = hasChildrenUnder10 ? 20 : 30;
+
+                        return (
+                          <FormItem>
+                            <FormLabel>
+                              Số học viên tối đa{" "}
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder={`Nhập số học viên tối đa (mặc định ${maxLimit})`}
+                                {...field}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "") {
+                                    field.onChange("");
+                                    return;
+                                  }
+                                  let num = parseInt(val);
+                                  if (!isNaN(num)) {
+                                    if (num > maxLimit) {
+                                      num = maxLimit;
+                                    }
+                                    field.onChange(num);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Tối đa {maxLimit} học viên{" "}
+                              {hasChildrenUnder10 &&
+                                "(Giới hạn 20 người cho trẻ dưới 10 tuổi)"}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
 
                   <FormField
                     control={form.control}
-                    name='category'
+                    name="category"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
                           Danh mục khóa học{" "}
-                          <span className='text-red-500'>*</span>
+                          <span className="text-red-500">*</span>
                         </FormLabel>
                         {loadingCategories ? (
-                          <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
-                            <Loader2 className='h-4 w-4 animate-spin' />
+                          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md">
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             Đang tải danh mục...
                           </div>
                         ) : categories.length === 0 ? (
-                          <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          <div className="px-3 py-2 text-sm text-muted-foreground border rounded-md">
                             Không có danh mục nào
                           </div>
                         ) : (
@@ -593,31 +706,25 @@ export default function NewCoursePage() {
 
                   <FormField
                     control={form.control}
-                    name='type'
+                    name="type"
                     render={({ field }) => (
-                      <FormItem className='space-y-3'>
+                      <FormItem className="space-y-3">
                         <FormLabel>
-                          Loại khóa học <span className='text-red-500'>*</span>
+                          Loại khóa học <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
                             value={field.value}
-                            className='flex flex-col space-y-1'
+                            className="flex flex-col space-y-1"
                           >
-                            <div className='flex items-center space-x-2'>
-                              <RadioGroupItem
-                                value='global'
-                                id='global'
-                              />
-                              <Label htmlFor='global'>Toàn hệ thống</Label>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="global" id="global" />
+                              <Label htmlFor="global">Toàn hệ thống</Label>
                             </div>
-                            <div className='flex items-center space-x-2'>
-                              <RadioGroupItem
-                                value='custom'
-                                id='custom'
-                              />
-                              <Label htmlFor='custom'>Tùy chỉnh</Label>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="custom" id="custom" />
+                              <Label htmlFor="custom">Tùy chỉnh</Label>
                             </div>
                           </RadioGroup>
                         </FormControl>
@@ -629,20 +736,20 @@ export default function NewCoursePage() {
 
                   <FormField
                     control={form.control}
-                    name='type_of_age'
+                    name="type_of_age"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
                           Độ tuổi phù hợp{" "}
-                          <span className='text-red-500'>*</span>
+                          <span className="text-red-500">*</span>
                         </FormLabel>
                         {loadingAgeRules ? (
-                          <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
-                            <Loader2 className='h-4 w-4 animate-spin' />
+                          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md">
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             Đang tải độ tuổi...
                           </div>
                         ) : ageRules.length === 0 ? (
-                          <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                          <div className="px-3 py-2 text-sm text-muted-foreground border rounded-md">
                             Không có độ tuổi nào
                           </div>
                         ) : (
@@ -691,11 +798,11 @@ export default function NewCoursePage() {
 
                   <FormField
                     control={form.control}
-                    name='is_active'
+                    name="is_active"
                     render={({ field }) => (
-                      <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
-                        <div className='space-y-0.5'>
-                          <FormLabel className='text-base'>
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
                             Trạng thái hoạt động
                           </FormLabel>
                           <FormDescription>
@@ -716,51 +823,63 @@ export default function NewCoursePage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Nội dung chi tiết</CardTitle>
-                  <p className='text-sm text-muted-foreground'>
+                  <CardTitle>
+                    Nội dung chi tiết <span className="text-red-500">*</span>
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
                     Số lượng nội dung chi tiết sẽ tự động khớp với số buổi học
                     bạn đã chọn.
                   </p>
                 </CardHeader>
-                <CardContent className='space-y-6'>
-                  <Accordion
-                    type='multiple'
-                    className='w-full'
-                  >
-                    {form.watch("detail")?.map((_, index) => (
+                <CardContent className="space-y-6">
+                  <Accordion type="multiple" className="w-full">
+                    {fields.map((_, index) => (
                       <AccordionItem
-                        key={index}
+                        key={fields[index].id}
                         value={`detail-${index}`}
-                        className='border rounded-lg mb-4'
+                        className="border rounded-lg mb-4"
                       >
-                        <AccordionTrigger className='px-4 py-3 hover:no-underline'>
-                          <div className='flex items-center gap-3'>
-                            <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
-                              {index + 1}
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline group">
+                          <div className="flex items-center justify-between w-full pr-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">
+                                {index + 1}
+                              </div>
+                              <div className="text-left">
+                                <h4 className="font-semibold text-foreground flex items-center gap-2">
+                                  Nội dung {index + 1}
+                                </h4>
+                                {form.watch(`detail.${index}.title`) && (
+                                  <p className="text-sm text-muted-foreground line-clamp-1">
+                                    {form.watch(`detail.${index}.title`)}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className='text-left'>
-                              <h4 className='font-semibold text-foreground'>
-                                Nội dung {index + 1}
-                              </h4>
-                              {form.watch(`detail.${index}.title`) && (
-                                <p className='text-sm text-muted-foreground'>
-                                  {form.watch(`detail.${index}.title`)}
-                                </p>
-                              )}
-                            </div>
+                            {form.formState.errors.detail?.[index] && (
+                              <div className="flex items-center gap-2 text-destructive animate-pulse">
+                                <AlertCircle className="h-5 w-5" />
+                                <span className="text-xs font-medium hidden sm:inline">
+                                  Có lỗi
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </AccordionTrigger>
-                        <AccordionContent className='px-4 pb-4'>
-                          <div className='space-y-4 pt-2'>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="space-y-4 pt-2">
                             <FormField
                               control={form.control}
                               name={`detail.${index}.title`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Tiêu đề {index + 1}</FormLabel>
+                                  <FormLabel>
+                                    Tiêu đề {index + 1}{" "}
+                                    <span className="text-red-500">*</span>
+                                  </FormLabel>
                                   <FormControl>
                                     <Input
-                                      placeholder='Tiêu đề nội dung chi tiết'
+                                      placeholder="Tiêu đề nội dung chi tiết"
                                       {...field}
                                     />
                                   </FormControl>
@@ -773,11 +892,14 @@ export default function NewCoursePage() {
                               name={`detail.${index}.description`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Mô tả {index + 1}</FormLabel>
+                                  <FormLabel>
+                                    Mô tả {index + 1}{" "}
+                                    <span className="text-red-500">*</span>
+                                  </FormLabel>
                                   <FormControl>
                                     <Textarea
-                                      placeholder='Mô tả chi tiết nội dung'
-                                      className='resize-none min-h-[80px]'
+                                      placeholder="Mô tả chi tiết nội dung"
+                                      className="resize-none min-h-[80px]"
                                       {...field}
                                     />
                                   </FormControl>
@@ -787,7 +909,7 @@ export default function NewCoursePage() {
                             />
 
                             {/* FormJudge Builder */}
-                            <div className='mt-4'>
+                            <div className="mt-4">
                               <FormJudgeBuilder
                                 value={detailFormJudges[index]}
                                 onChange={(schema) => {
@@ -804,45 +926,55 @@ export default function NewCoursePage() {
                     ))}
                   </Accordion>
 
-                  <div className='flex items-center gap-2 p-4 bg-muted/50 rounded-lg'>
-                    <div className='text-sm text-muted-foreground'>
-                      Số lượng nội dung chi tiết sẽ tự động điều chỉnh theo số
-                      buổi học. Hiện tại có {form.watch("detail")?.length || 0}{" "}
-                      nội dung cho {form.watch("session_number") || 0} buổi học.
+                  <div className="flex flex-col gap-2 p-4 bg-muted/50 rounded-lg">
+                    <div className="text-sm text-muted-foreground">
+                      Hiện tại có {fields.length || 0} nội dung cho{" "}
+                      {form.watch("session_number") || 0} buổi học.
                     </div>
+                    {form.formState.errors.detail && (
+                      <p className="text-sm font-medium text-destructive">
+                        {form.formState.errors.detail.message ||
+                          (typeof form.formState.errors.detail === "object" &&
+                            "root" in form.formState.errors.detail &&
+                            (form.formState.errors.detail.root as any)
+                              ?.message)}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Hình ảnh khóa học</CardTitle>
+                  <CardTitle>
+                    Hình ảnh khóa học <span className="text-red-500">*</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className='space-y-6'>
+                <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor='image'>Tải lên hình ảnh</Label>
-                    <div className='mt-2 flex items-center gap-3'>
+                    <Label htmlFor="image">Tải lên hình ảnh</Label>
+                    <div className="mt-2 flex items-center gap-3">
                       <Button
-                        type='button'
-                        variant='outline'
+                        type="button"
+                        variant="outline"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingMedia}
-                        className='w-full sm:w-auto'
+                        className="w-full sm:w-auto"
                       >
                         {uploadingMedia ? (
-                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <ImagePlus className='mr-2 h-4 w-4' />
+                          <ImagePlus className="mr-2 h-4 w-4" />
                         )}
                         Chọn hình ảnh
                       </Button>
                       <input
                         ref={fileInputRef}
-                        type='file'
-                        id='image'
-                        accept='image/*'
+                        type="file"
+                        id="image"
+                        accept="image/*"
                         onChange={handleFileUpload}
-                        className='hidden'
+                        className="hidden"
                       />
                     </div>
                   </div>
@@ -850,25 +982,22 @@ export default function NewCoursePage() {
                   {uploadedImages.length > 0 && (
                     <div>
                       <Label>Hình ảnh đã tải lên</Label>
-                      <div className='mt-2 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4'>
+                      <div className="mt-2 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                         {uploadedImages.map((image, index) => (
-                          <div
-                            key={index}
-                            className='relative group'
-                          >
+                          <div key={index} className="relative group">
                             <img
                               src={image.preview}
                               alt={image.title}
-                              className='h-32 w-full object-cover rounded-md border'
+                              className="h-32 w-full object-cover rounded-md border"
                             />
                             <Button
-                              type='button'
-                              variant='destructive'
-                              size='icon'
-                              className='absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity'
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => handleRemoveImage(index)}
                             >
-                              <Trash2 className='h-4 w-4' />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         ))}
@@ -877,34 +1006,31 @@ export default function NewCoursePage() {
                   )}
 
                   {!form.formState.errors.media ? null : (
-                    <p className='text-sm font-medium text-destructive'>
+                    <p className="text-sm font-medium text-destructive">
                       {form.formState.errors.media.message}
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              <div className='flex justify-end gap-4'>
+              <div className="flex justify-end gap-4">
                 <Button
-                  type='button'
-                  variant='outline'
+                  type="button"
+                  variant="outline"
                   onClick={() => router.push("/dashboard/manager/courses")}
                   disabled={loading}
                 >
                   Hủy
                 </Button>
-                <Button
-                  type='submit'
-                  disabled={loading}
-                >
+                <Button type="submit" disabled={loading}>
                   {loading ? (
                     <>
-                      <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Đang
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang
                       tạo...
                     </>
                   ) : (
                     <>
-                      <Plus className='mr-2 h-4 w-4' /> Tạo khóa học
+                      <Plus className="mr-2 h-4 w-4" /> Tạo khóa học
                     </>
                   )}
                 </Button>

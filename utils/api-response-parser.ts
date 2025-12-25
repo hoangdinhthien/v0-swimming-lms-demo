@@ -176,6 +176,18 @@ export function parseApiFieldErrors(error: any): {
       if (/^\d+$/.test(trimmed)) {
         // numeric-only -> convert to friendly per-field message
         value = Number(trimmed);
+      } else if (
+        /Duplicate entry found for unique constraints/i.test(trimmed)
+      ) {
+        // Handle technical unique constraint errors
+        if (field) {
+          if (/email/i.test(field))
+            return "Email này đã được sử dụng hoặc đã tồn tại";
+          if (/username/i.test(field))
+            return "Tên đăng nhập này đã được sử dụng";
+          if (/phone/i.test(field)) return "Số điện thoại này đã được sử dụng";
+        }
+        return "Dữ liệu đã tồn tại trong hệ thống (trùng lặp)";
       } else if (/^[{}\[\]\n].*/.test(trimmed)) {
         // JSON-like string: prefer short generic
         return field && /email/i.test(field)
@@ -355,7 +367,7 @@ export function parseApiFieldErrors(error: any): {
       } else if (/phone/i.test(errorMessage)) {
         fieldErrors.phone = "Số điện thoại này đã được sử dụng";
       } else {
-        fieldErrors.email = errorMessage; // Default to email field
+        fieldErrors.email = normalizeFieldMessage(errorMessage, "email"); // Default to email field
       }
     }
     // Check for validation errors
@@ -465,7 +477,7 @@ export function parseApiFieldErrors(error: any): {
     generalError = "Vui lòng kiểm tra lại thông tin đã nhập";
   } else {
     // Use the original error message
-    generalError = errorMessage;
+    generalError = normalizeFieldMessage(errorMessage);
   }
 
   return { fieldErrors, generalError };

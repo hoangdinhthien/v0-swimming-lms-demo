@@ -1,164 +1,136 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft,
-  Loader2,
   Mail,
-  Phone,
   User,
   Key,
-  Building,
+  Shield,
+  Loader2,
   Save,
-  UserPlus,
   Upload,
-  X,
-  Check,
+  Phone,
+  Calendar,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { createStaff } from "@/api/manager/staff-api";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { getAuthToken } from "@/api/auth-utils";
-import { uploadMedia } from "@/api/media-api";
-import config from "@/api/config.json";
+import { uploadMedia, getMediaDetails } from "@/api/media-api";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  optionalPhoneSchema,
+  passwordSchema,
+  requiredStringSchema,
+  getBirthDateSchema,
+} from "@/lib/schemas";
+import { getTenantInfo } from "@/api/tenant-api";
+import MultiSelect from "@/components/ui/multi-select";
 
-// Staff creation function using the actual API
-async function createStaffMember(staffData: any, avatarFile: File | null) {
-  const tenantId = getSelectedTenant();
-  const token = getAuthToken();
+// Inline available roles since utils/permission-utils is missing
+const AVAILABLE_ROLES = ["staff", "manager", "admin"];
 
-  if (!tenantId) throw new Error("No tenant selected");
-  if (!token) throw new Error("Not authenticated");
+const staffFormSchema = z
+  .object({
+    username: requiredStringSchema("Tên đăng nhập là bắt buộc"),
+    email: z.string().email("Email không hợp lệ"),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+    phone: optionalPhoneSchema.optional(),
+    address: z.string().optional(),
+    birthday: getBirthDateSchema(18, "Nhân viên").optional(),
+    is_active: z.boolean().default(true),
+    role_front: z.array(z.string()).min(1, "Vui lòng chọn ít nhất một vai trò"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
 
-  let uploadedMediaId = null;
-
-  // Upload avatar image if provided
-  if (avatarFile) {
-    try {
-      const uploadResult = await uploadMedia({
-        file: avatarFile,
-        title: `Avatar for ${staffData.username}`,
-        alt: `Profile picture of ${staffData.username}`,
-        tenantId,
-        token,
-      });
-
-      uploadedMediaId = uploadResult.data._id;
-    } catch (error) {
-      console.error("Failed to upload avatar:", error);
-      throw new Error("Không thể tải lên ảnh đại diện. Vui lòng thử lại.");
-    }
-  }
-
-  // Prepare the request body to match the API expected format
-  const requestBody = {
-    username: staffData.username,
-    email: staffData.email,
-    password: staffData.password,
-    phone: staffData.phone,
-    address: staffData.address,
-    is_active: staffData.isActive,
-    role: ["staff"], // Default role for staff
-    ...(staffData.birthday && { birthday: staffData.birthday }),
-    ...(uploadedMediaId && { featured_image: [uploadedMediaId] }),
-  };
-
-  const response = await fetch(
-    `${config.API}/v1/workflow-process/manager/user`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-tenant-id": tenantId,
-      },
-      body: JSON.stringify(requestBody),
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage;
-    try {
-      const errorData = JSON.parse(errorText);
-      errorMessage =
-        errorData.message ||
-        `Error (${response.status}): ${response.statusText}`;
-    } catch (e) {
-      errorMessage = `Error (${response.status}): ${
-        errorText || response.statusText
-      }`;
-    }
-    console.error("API error response:", errorText);
-    throw new Error(errorMessage);
-  }
-
-  return await response.json();
-}
+type StaffFormValues = z.infer<typeof staffFormSchema>;
 
 export default function NewStaffPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [tenantName, setTenantName] = useState("");
+  const [isFetchingTenant, setIsFetchingTenant] = useState(false);
 
-  // Form data
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    birthday: "",
-    address: "",
-    isActive: true,
+  // Initialize form
+  const form = useForm<StaffFormValues>({
+    resolver: zodResolver(staffFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      is_active: true,
+      role_front: ["staff"],
+    },
   });
 
-  // Form validation
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Fetch tenant name
+  useEffect(() => {
+    const fetchTenant = async () => {
+      const tenantId = getSelectedTenant();
+      if (!tenantId) return;
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
-    }
-  };
+      setIsFetchingTenant(true);
+      try {
+        const { title } = await getTenantInfo(tenantId);
+        setTenantName(title);
+      } catch (err) {
+        console.error("Error fetching tenant name:", err);
+      } finally {
+        setIsFetchingTenant(false);
+      }
+    };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+    fetchTenant();
+  }, []);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "Lỗi",
-          description: "Kích thước file không được vượt quá 5MB",
+          title: "File quá lớn",
+          description: "Vui lòng chọn ảnh có kích thước dưới 5MB",
           variant: "destructive",
         });
         return;
@@ -167,124 +139,112 @@ export default function NewStaffPage() {
       // Validate file type
       if (!file.type.startsWith("image/")) {
         toast({
-          title: "Lỗi",
-          description: "Vui lòng chọn file ảnh hợp lệ",
+          title: "Định dạng không hợp lệ",
+          description: "Vui lòng chọn file ảnh",
           variant: "destructive",
         });
         return;
       }
 
       setAvatarFile(file);
-
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
+      reader.onload = (event) => {
+        setAvatarPreview(event.target?.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveImage = () => {
-    setAvatarFile(null);
-    setAvatarPreview(null);
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Tên nhân viên là bắt buộc";
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email là bắt buộc";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email không hợp lệ";
-    }
-    if (!formData.password) {
-      newErrors.password = "Mật khẩu là bắt buộc";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    }
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp";
-    }
-    if (
-      formData.phone &&
-      !/^\d{10,11}$/.test(formData.phone.replace(/\D/g, ""))
-    ) {
-      newErrors.phone = "Số điện thoại không hợp lệ";
-    }
-
-    // Validate birthday if provided
-    if (formData.birthday) {
-      const birthDate = new Date(formData.birthday);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-
-      // Check if date is valid
-      if (isNaN(birthDate.getTime())) {
-        newErrors.birthday = "Ngày sinh không hợp lệ";
-      }
-      // Check if date is not in the future
-      else if (birthDate > today) {
-        newErrors.birthday = "Ngày sinh không hợp lệ";
-      }
-      // Check if age is reasonable (between 0 and 120 years)
-      else if (age < 0 || age > 120) {
-        newErrors.birthday = "Ngày sinh không hợp lệ";
-      }
-      // If age is exactly 120, check month and day
-      else if (
-        age === 120 &&
-        (monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate()))
-      ) {
-        newErrors.birthday = "Ngày sinh không hợp lệ";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (values: StaffFormValues) => {
     setLoading(true);
     try {
-      const staffData = {
-        ...formData,
+      const tenantId = getSelectedTenant();
+      if (!tenantId) throw new Error("Tenant ID not found");
+
+      const token = getAuthToken();
+      if (!token) throw new Error("Auth token not found");
+
+      // Handle avatar upload first if exists
+      let featured_image = undefined;
+      if (avatarFile) {
+        try {
+          const uploadResponse = await uploadMedia({
+            file: avatarFile,
+            tenantId,
+            token,
+            title: `Avatar for ${values.username}`,
+            alt: `avatar-${values.username}`,
+          });
+          if (uploadResponse?.data?._id) {
+            featured_image = [uploadResponse.data._id];
+          }
+        } catch (uploadError) {
+          console.error("Failed to upload avatar:", uploadError);
+          toast({
+            title: "Cảnh báo",
+            description:
+              "Không thể tải ảnh đại diện lên, nhưng vẫn sẽ tạo nhân viên.",
+            variant: "default",
+            className: "bg-yellow-50 border-yellow-200 text-yellow-800",
+          });
+        }
+      }
+
+      // Prepare payload
+      const payload: any = {
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        role_front: values.role_front,
+        is_active: values.is_active,
+        phone: values.phone,
+        address: values.address,
+        birthday: values.birthday,
       };
 
-      const result = await createStaffMember(staffData, avatarFile);
-
-      if (result) {
-        toast({
-          title: "Thành công",
-          description: "Nhân viên đã được tạo thành công!",
-        });
-        router.push("/dashboard/manager/staff");
-        router.refresh(); // Refresh to show the new staff member
+      if (featured_image) {
+        payload.featured_image = featured_image;
       }
+
+      // Remove empty optional string fields
+      Object.keys(payload).forEach((key) => {
+        if (
+          payload[key] === "" ||
+          payload[key] === null ||
+          payload[key] === undefined
+        ) {
+          delete payload[key];
+        }
+      });
+
+      await createStaff({
+        tenantId,
+        token,
+        staffData: payload,
+      });
+
+      toast({
+        title: "Thành công",
+        description: "Đã tạo nhân viên mới thành công",
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+
+      router.push("/dashboard/manager/staff");
+      router.refresh();
     } catch (error: any) {
-      // Parse field-specific errors from API response
+      console.error("Error creating staff:", error);
       const { fieldErrors, generalError } = parseApiFieldErrors(error);
 
-      // Set field-specific errors
-      setErrors((prev) => ({
-        ...prev,
-        ...fieldErrors,
-      }));
+      // Set field errors
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        if (["username", "email", "password", "phone"].includes(field)) {
+          form.setError(field as any, { type: "server", message });
+        }
+      });
 
       toast({
         title: "Lỗi",
-        description: generalError,
+        description: generalError || "Có lỗi xảy ra khi tạo nhân viên",
         variant: "destructive",
       });
     } finally {
@@ -292,285 +252,346 @@ export default function NewStaffPage() {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .substring(0, 2);
-  };
+  const roleOptions = AVAILABLE_ROLES.map((role) => ({
+    label: role,
+    value: role,
+    id: role,
+  }));
 
   return (
-    <div className='container py-8 px-4'>
-      <div className='mb-6'>
-        <Link
-          href='/dashboard/manager/staff'
-          className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
-        >
-          <ArrowLeft className='mr-1 h-4 w-4' />
-          Quay về Danh sách nhân viên
-        </Link>
-      </div>
-
-      <div className='mb-8'>
-        <h1 className='text-3xl font-bold flex items-center gap-3'>
-          <UserPlus className='h-8 w-8 text-primary' />
-          Thêm Nhân viên mới
-        </h1>
-        <p className='text-muted-foreground mt-2'>
-          Điền thông tin để thêm nhân viên mới vào hệ thống
-        </p>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className='space-y-8'
-      >
-        {/* Avatar Section */}
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <User className='h-5 w-5 text-primary' />
-              Ảnh đại diện
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='flex items-center gap-6'>
-              <div className='relative'>
-                <Avatar className='h-24 w-24 border-4 border-primary/10'>
-                  <AvatarImage
-                    src={avatarPreview || "/placeholder-user.jpg"}
-                    alt='Preview'
-                  />
-                  <AvatarFallback className='bg-primary/10 text-primary text-lg'>
-                    {formData.username ? getInitials(formData.username) : "NV"}
-                  </AvatarFallback>
-                </Avatar>
-                {avatarPreview && (
-                  <Button
-                    type='button'
-                    variant='destructive'
-                    size='sm'
-                    className='absolute -top-2 -right-2 h-6 w-6 rounded-full p-0'
-                    onClick={handleRemoveImage}
-                  >
-                    <X className='h-3 w-3' />
-                  </Button>
-                )}
-              </div>
-              <div className='space-y-3'>
-                <div className='flex gap-2'>
-                  <Label
-                    htmlFor='avatar-upload'
-                    className='cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors'
-                  >
-                    <Upload className='h-4 w-4' />
-                    {avatarFile ? "Thay đổi ảnh" : "Tải ảnh lên"}
-                  </Label>
-                </div>
-                <input
-                  id='avatar-upload'
-                  type='file'
-                  accept='image/*'
-                  onChange={handleImageUpload}
-                  className='hidden'
-                />
-                {avatarFile && (
-                  <div className='flex items-center gap-2 text-sm text-green-600'>
-                    <Check className='h-4 w-4' />
-                    <span>{avatarFile.name}</span>
-                  </div>
-                )}
-                <p className='text-xs text-muted-foreground'>
-                  JPG, PNG hoặc GIF. Tối đa 5MB.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Basic Information */}
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <User className='h-5 w-5 text-primary' />
-              Thông tin cơ bản
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label htmlFor='username'>
-                  Tên nhân viên <span className='text-red-500'>*</span>
-                </Label>
-                <Input
-                  id='username'
-                  value={formData.username}
-                  onChange={(e) =>
-                    handleInputChange("username", e.target.value)
-                  }
-                  placeholder='Nhập tên đầy đủ'
-                  className={errors.username ? "border-red-500" : ""}
-                />
-                {errors.username && (
-                  <p className='text-red-500 text-sm'>{errors.username}</p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='email'>
-                  Email <span className='text-red-500'>*</span>
-                </Label>
-                <Input
-                  id='email'
-                  type='email'
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder='example@domain.com'
-                  className={errors.email ? "border-red-500" : ""}
-                />
-                {errors.email && (
-                  <p className='text-red-500 text-sm'>{errors.email}</p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='phone'>Số điện thoại</Label>
-                <Input
-                  id='phone'
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  placeholder='0123456789'
-                  className={errors.phone ? "border-red-500" : ""}
-                />
-                {errors.phone && (
-                  <p className='text-red-500 text-sm'>{errors.phone}</p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='birthday'>Ngày sinh</Label>
-                <Input
-                  id='birthday'
-                  type='date'
-                  value={formData.birthday}
-                  onChange={(e) =>
-                    handleInputChange("birthday", e.target.value)
-                  }
-                />
-                {errors.birthday && (
-                  <p className='text-red-500 text-sm'>{errors.birthday}</p>
-                )}
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='address'>Địa chỉ</Label>
-              <Textarea
-                id='address'
-                value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-                placeholder='Nhập địa chỉ thường trú'
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Account Information */}
-        <Card className='bg-card/80 backdrop-blur-sm border shadow-lg'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Key className='h-5 w-5 text-primary' />
-              Thông tin tài khoản
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div className='space-y-2'>
-                <Label htmlFor='password'>
-                  Mật khẩu <span className='text-red-500'>*</span>
-                </Label>
-                <Input
-                  id='password'
-                  type='password'
-                  value={formData.password}
-                  onChange={(e) =>
-                    handleInputChange("password", e.target.value)
-                  }
-                  placeholder='Ít nhất 6 ký tự'
-                  className={errors.password ? "border-red-500" : ""}
-                />
-                {errors.password && (
-                  <p className='text-red-500 text-sm'>{errors.password}</p>
-                )}
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='confirmPassword'>
-                  Xác nhận mật khẩu <span className='text-red-500'>*</span>
-                </Label>
-                <Input
-                  id='confirmPassword'
-                  type='password'
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    handleInputChange("confirmPassword", e.target.value)
-                  }
-                  placeholder='Nhập lại mật khẩu'
-                  className={errors.confirmPassword ? "border-red-500" : ""}
-                />
-                {errors.confirmPassword && (
-                  <p className='text-red-500 text-sm'>
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className='flex items-center space-x-2'>
-              <Checkbox
-                id='isActive'
-                checked={formData.isActive}
-                onCheckedChange={(checked) =>
-                  handleInputChange("isActive", checked)
-                }
-              />
-              <Label htmlFor='isActive'>Kích hoạt tài khoản ngay</Label>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action buttons */}
-        <div className='flex items-center justify-end gap-4 pt-6'>
-          <Link href='/dashboard/manager/staff'>
-            <Button
-              variant='outline'
-              disabled={loading}
-            >
-              Hủy bỏ
-            </Button>
-          </Link>
-          <Button
-            type='submit'
-            disabled={loading || isUploadingImage}
-            className='min-w-[120px]'
+    <div className="container max-w-4xl py-6 animate-in fade-in duration-500">
+      <div className="mb-6">
+        <Button variant="ghost" asChild className="pl-0 hover:bg-transparent">
+          <Link
+            href="/dashboard/manager/staff"
+            className="flex items-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            {loading ? (
-              <>
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                {avatarFile ? "Đang tải ảnh..." : "Đang tạo..."}
-              </>
-            ) : (
-              <>
-                <Save className='mr-2 h-4 w-4' />
-                Tạo nhân viên
-              </>
-            )}
-          </Button>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Quay lại danh sách nhân viên
+          </Link>
+        </Button>
+        <div className="mt-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Thêm nhân viên mới
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Tạo tài khoản nhân viên mới cho{" "}
+              {isFetchingTenant ? "..." : tenantName}
+            </p>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <div className="grid gap-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Thông tin cơ bản
+                </CardTitle>
+                <CardDescription>
+                  Thông tin đăng nhập và nhận dạng của nhân viên
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Tên nhân viên <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nhập tên hiển thị" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="example@domain.com"
+                              className="pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Mật khẩu <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="Nhập mật khẩu"
+                              className="pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Xác nhận mật khẩu{" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="password"
+                              placeholder="Nhập lại mật khẩu"
+                              className="pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="avatar">Ảnh đại diện</Label>
+                    <div className="flex items-center gap-6">
+                      <div className="h-24 w-24 rounded-full border-2 border-dashed flex items-center justify-center overflow-hidden bg-muted relative group">
+                        {avatarPreview ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={avatarPreview}
+                            alt="Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Upload className="h-8 w-8 text-muted-foreground" />
+                        )}
+                        <label
+                          htmlFor="avatar-upload"
+                          className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                          <span className="text-white text-xs font-medium">
+                            Thay đổi
+                          </span>
+                        </label>
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <Input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarChange}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() =>
+                            document.getElementById("avatar-upload")?.click()
+                          }
+                        >
+                          Chọn ảnh
+                        </Button>
+                        <p className="text-xs text-muted-foreground">
+                          Hỗ trợ: JPG, PNG, GIF. Tối đa 5MB.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Thông tin cá nhân & Vai trò
+                </CardTitle>
+                <CardDescription>
+                  Thông tin liên hệ và phân quyền hệ thống
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="0912345678"
+                              className="pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="birthday"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input type="date" className="pl-9" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-1 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Địa chỉ</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="Nhập địa chỉ liên hệ"
+                              className="pl-9"
+                              {...field}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="role_front"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Vai trò <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <MultiSelect
+                            options={roleOptions}
+                            onChange={field.onChange}
+                            value={field.value}
+                            placeholder="Chọn vai trò"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_active"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Trạng thái hoạt động
+                          </FormLabel>
+                          <FormDescription>
+                            Cho phép nhân viên đăng nhập vào hệ thống
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/manager/staff")}
+                disabled={loading}
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="min-w-[120px]"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Đang tạo...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Tạo nhân viên
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }

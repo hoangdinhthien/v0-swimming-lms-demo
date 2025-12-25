@@ -29,65 +29,31 @@ import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import {
+  optionalPhoneSchema,
+  passwordSchema,
+  requiredStringSchema,
+  getBirthDateSchema,
+} from "@/lib/schemas";
 import PermissionGuard from "@/components/permission-guard";
 
 // Form schema for validation
 const instructorFormSchema = z
   .object({
-    username: z.string().min(1, "Vui lòng nhập tên đăng nhập"),
+    username: requiredStringSchema("Vui lòng nhập tên đăng nhập"),
     email: z.string().email("Vui lòng nhập email hợp lệ"),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    password: passwordSchema,
     confirmPassword: z.string(),
     // Optional fields
-    phone: z.string().optional(),
-    birthday: z.string().optional(),
+    phone: optionalPhoneSchema.optional(),
+    birthday: getBirthDateSchema(18, "Huấn luyện viên").optional(),
     address: z.string().optional(),
     is_active: z.boolean().default(true),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",
     path: ["confirmPassword"],
-  })
-  .refine(
-    (data) => {
-      // Validate birthday if provided
-      if (data.birthday) {
-        const birthDate = new Date(data.birthday);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        // Check if date is valid
-        if (isNaN(birthDate.getTime())) {
-          return false;
-        }
-
-        // Check if date is not in the future
-        if (birthDate > today) {
-          return false;
-        }
-
-        // Check if age is reasonable (between 0 and 120 years)
-        if (age < 0 || age > 120) {
-          return false;
-        }
-
-        // If age is exactly 120, check month and day
-        if (
-          age === 120 &&
-          (monthDiff < 0 ||
-            (monthDiff === 0 && today.getDate() < birthDate.getDate()))
-        ) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message: "Ngày sinh không hợp lệ",
-      path: ["birthday"],
-    }
-  );
+  });
 
 type InstructorFormValues = z.infer<typeof instructorFormSchema>;
 
@@ -186,42 +152,39 @@ export default function NewInstructorPage() {
 
   return (
     <PermissionGuard
-      module='User'
-      action='POST'
-      redirectTo='/dashboard/manager/instructors'
+      module="User"
+      action="POST"
+      redirectTo="/dashboard/manager/instructors"
     >
-      <div className='container mx-auto py-8 px-4'>
-        <div className='mb-6'>
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-6">
           <Link
-            href='/dashboard/manager/instructors'
-            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+            href="/dashboard/manager/instructors"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách Huấn luyện
+            <ArrowLeft className="mr-1 h-4 w-4" /> Quay về danh sách Huấn luyện
             viên
           </Link>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className='text-2xl'>Thêm Huấn luyện viên mới</CardTitle>
+            <CardTitle className="text-2xl">Thêm Huấn luyện viên mới</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className='space-y-6'
+                className="space-y-6"
               >
                 <FormField
                   control={form.control}
-                  name='username'
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tên đăng nhập</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Nhập tên đăng nhập'
-                          {...field}
-                        />
+                        <Input placeholder="Nhập tên đăng nhập" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -230,15 +193,12 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='email'
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Nhập email'
-                          {...field}
-                        />
+                        <Input placeholder="Nhập email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -247,14 +207,14 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='password'
+                  name="password"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mật khẩu</FormLabel>
                       <FormControl>
                         <Input
-                          type='password'
-                          placeholder='Nhập mật khẩu'
+                          type="password"
+                          placeholder="Nhập mật khẩu"
                           {...field}
                         />
                       </FormControl>
@@ -268,14 +228,14 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='confirmPassword'
+                  name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Xác nhận mật khẩu</FormLabel>
                       <FormControl>
                         <Input
-                          type='password'
-                          placeholder='Nhập lại mật khẩu'
+                          type="password"
+                          placeholder="Nhập lại mật khẩu"
                           {...field}
                         />
                       </FormControl>
@@ -286,15 +246,12 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='phone'
+                  name="phone"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Số điện thoại</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Nhập số điện thoại'
-                          {...field}
-                        />
+                        <Input placeholder="Nhập số điện thoại" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -303,14 +260,14 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='birthday'
+                  name="birthday"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ngày sinh</FormLabel>
                       <FormControl>
                         <Input
-                          type='date'
-                          placeholder='Chọn ngày sinh'
+                          type="date"
+                          placeholder="Chọn ngày sinh"
                           {...field}
                         />
                       </FormControl>
@@ -321,15 +278,12 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='address'
+                  name="address"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Địa chỉ</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Nhập địa chỉ'
-                          {...field}
-                        />
+                        <Input placeholder="Nhập địa chỉ" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -338,16 +292,16 @@ export default function NewInstructorPage() {
 
                 <FormField
                   control={form.control}
-                  name='is_active'
+                  name="is_active"
                   render={({ field }) => (
-                    <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4'>
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <div className='space-y-1 leading-none'>
+                      <div className="space-y-1 leading-none">
                         <FormLabel>Trạng thái hoạt động</FormLabel>
                         <FormDescription>
                           Chọn để đặt Huấn luyện viên ở trạng thái hoạt động
@@ -358,14 +312,11 @@ export default function NewInstructorPage() {
                   )}
                 />
 
-                <div className='flex justify-end'>
-                  <Button
-                    type='submit'
-                    disabled={isSubmitting}
-                  >
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Đang tạo...
                       </>
                     ) : (

@@ -46,16 +46,23 @@ import {
   CreateStudentData,
 } from "@/api/manager/students-api";
 
+import {
+  optionalPhoneSchema,
+  passwordSchema,
+  requiredStringSchema,
+  birthDateSchema,
+} from "@/lib/schemas";
+
 // Form schema for validation
 const studentFormSchema = z
   .object({
-    username: z.string().min(1, "Vui lòng nhập họ tên học viên"),
+    username: requiredStringSchema("Vui lòng nhập họ tên học viên"),
     email: z.string().email("Vui lòng nhập email hợp lệ"),
-    phone: z.string().optional(),
-    birthday: z.string().optional(),
+    phone: optionalPhoneSchema.optional(),
+    birthday: birthDateSchema.optional(),
     address: z.string().optional(),
     parent_id: z.string().optional(),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -270,13 +277,10 @@ export default function CreateStudentModal({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-      <DialogContent className='sm:max-w-[800px] max-h-[90vh] overflow-y-auto'>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className='text-xl'>Tạo tài khoản học viên</DialogTitle>
+          <DialogTitle className="text-xl">Tạo tài khoản học viên</DialogTitle>
           <DialogDescription>
             Tạo tài khoản cho khách hàng {guestData?.username || "này"} để thêm
             vào lớp học.
@@ -284,44 +288,35 @@ export default function CreateStudentModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className='space-y-6'
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <h3 className='text-lg font-medium'>Thông tin học viên</h3>
-              <Separator className='my-4' />
+              <h3 className="text-lg font-medium">Thông tin học viên</h3>
+              <Separator className="my-4" />
             </div>
 
             <FormField
               control={form.control}
-              name='username'
+              name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Họ và tên</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder='Nhập họ tên học viên'
-                      {...field}
-                    />
+                    <Input placeholder="Nhập họ tên học viên" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name='email'
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='Nhập email'
-                        {...field}
-                      />
+                      <Input placeholder="Nhập email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -330,15 +325,12 @@ export default function CreateStudentModal({
 
               <FormField
                 control={form.control}
-                name='phone'
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Số điện thoại</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='Nhập số điện thoại'
-                        {...field}
-                      />
+                      <Input placeholder="Nhập số điện thoại" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -346,18 +338,15 @@ export default function CreateStudentModal({
               />
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name='birthday'
+                name="birthday"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ngày sinh</FormLabel>
                     <FormControl>
-                      <Input
-                        type='date'
-                        {...field}
-                      />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -366,15 +355,12 @@ export default function CreateStudentModal({
 
               <FormField
                 control={form.control}
-                name='address'
+                name="address"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Địa chỉ</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder='Nhập địa chỉ'
-                        {...field}
-                      />
+                      <Input placeholder="Nhập địa chỉ" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -383,18 +369,18 @@ export default function CreateStudentModal({
             </div>
 
             <div>
-              <h3 className='text-lg font-medium'>Thông tin phụ huynh</h3>
+              <h3 className="text-lg font-medium">Thông tin phụ huynh</h3>
               <FormDescription>
                 Bắt buộc đối với học viên là trẻ em dưới 18 tuổi
               </FormDescription>
-              <Separator className='my-4' />
+              <Separator className="my-4" />
             </div>
 
             <FormField
               control={form.control}
-              name='parent_id'
+              name="parent_id"
               render={({ field }) => (
-                <FormItem className='flex flex-col'>
+                <FormItem className="flex flex-col">
                   <FormLabel>Chọn phụ huynh</FormLabel>
                   <Popover
                     open={parentPopoverOpen}
@@ -403,8 +389,8 @@ export default function CreateStudentModal({
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant='outline'
-                          role='combobox'
+                          variant="outline"
+                          role="combobox"
                           className={cn(
                             "w-full justify-between",
                             !field.value && "text-muted-foreground"
@@ -415,21 +401,21 @@ export default function CreateStudentModal({
                                 (parent) => parent.id === field.value
                               )?.username
                             : "Chọn phụ huynh"}
-                          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className='w-full p-0'>
+                    <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput placeholder='Tìm kiếm phụ huynh...' />
+                        <CommandInput placeholder="Tìm kiếm phụ huynh..." />
                         <CommandList>
                           <CommandEmpty>
                             Không tìm thấy phụ huynh nào.
                           </CommandEmpty>
                           <CommandGroup>
                             {isLoadingParents ? (
-                              <div className='flex justify-center py-4'>
-                                <Loader2 className='h-4 w-4 animate-spin' />
+                              <div className="flex justify-center py-4">
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               </div>
                             ) : (
                               parents.map((parent) => (
@@ -450,10 +436,10 @@ export default function CreateStudentModal({
                                     )}
                                   />
                                   <div>
-                                    <div className='font-medium'>
+                                    <div className="font-medium">
                                       {parent.username}
                                     </div>
-                                    <div className='text-sm text-muted-foreground'>
+                                    <div className="text-sm text-muted-foreground">
                                       {parent.email} • {parent.phone}
                                     </div>
                                   </div>
@@ -474,21 +460,21 @@ export default function CreateStudentModal({
             />
 
             <div>
-              <h3 className='text-lg font-medium'>Thông tin tài khoản</h3>
-              <Separator className='my-4' />
+              <h3 className="text-lg font-medium">Thông tin tài khoản</h3>
+              <Separator className="my-4" />
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name='password'
+                name="password"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Mật khẩu</FormLabel>
                     <FormControl>
                       <Input
-                        type='password'
-                        placeholder='Nhập mật khẩu'
+                        type="password"
+                        placeholder="Nhập mật khẩu"
                         {...field}
                       />
                     </FormControl>
@@ -499,14 +485,14 @@ export default function CreateStudentModal({
 
               <FormField
                 control={form.control}
-                name='confirmPassword'
+                name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Xác nhận mật khẩu</FormLabel>
                     <FormControl>
                       <Input
-                        type='password'
-                        placeholder='Nhập lại mật khẩu'
+                        type="password"
+                        placeholder="Nhập lại mật khẩu"
                         {...field}
                       />
                     </FormControl>
@@ -516,27 +502,24 @@ export default function CreateStudentModal({
               />
             </div>
 
-            <div className='flex justify-end gap-2 pt-4'>
+            <div className="flex justify-end gap-2 pt-4">
               <Button
-                type='button'
-                variant='outline'
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
                 Hủy
               </Button>
-              <Button
-                type='submit'
-                disabled={isSubmitting}
-              >
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Đang tạo...
                   </>
                 ) : (
                   <>
-                    <UserPlus className='mr-2 h-4 w-4' />
+                    <UserPlus className="mr-2 h-4 w-4" />
                     Tạo tài khoản
                   </>
                 )}

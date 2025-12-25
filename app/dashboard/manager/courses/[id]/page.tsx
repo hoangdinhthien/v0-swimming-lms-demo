@@ -22,6 +22,13 @@ import {
   Upload,
   X,
   Settings2,
+  RefreshCw,
+  ExternalLink,
+  GraduationCap,
+  Layout,
+  Pencil,
+  ImagePlus,
+  AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +82,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import PermissionGuard from "@/components/permission-guard";
 
@@ -89,7 +96,8 @@ const courseFormSchema = z.object({
       invalid_type_error: " Số buổi học phải là số nguyên dương",
     })
     .int(" Số buổi học phải là số nguyên")
-    .positive(" Số buổi học phải lớn hơn 0"),
+    .min(1, " Số buổi học phải từ 1 đến 100")
+    .max(100, " Số buổi học không được vượt quá 100"),
   session_number_duration: z
     .string()
     .min(1, " Thời lượng mỗi buổi không được để trống (VD: 45 phút, 1 giờ)"),
@@ -115,15 +123,19 @@ const courseFormSchema = z.object({
       invalid_type_error: " Giá khóa học phải là số",
     })
     .int(" Giá khóa học phải là số nguyên")
-    .nonnegative(" Giá khóa học không được là số âm"),
+    .min(0, " Giá khóa học không được là số âm")
+    .max(1000000000, " Giá khóa học không được vượt quá 1 tỷ VNĐ"),
   max_member: z.coerce
     .number({
       required_error: " Vui lòng nhập số học viên tối đa",
       invalid_type_error: " Số học viên tối đa phải là số nguyên dương",
     })
     .int(" Số học viên tối đa phải là số nguyên")
-    .positive(" Số học viên tối đa phải lớn hơn 0"),
-  media: z.array(z.string()).optional(),
+    .min(1, " Số học viên tối đa phải từ 1 đến 30")
+    .max(30, " Số học viên tối đa không được vượt quá 30"),
+  media: z
+    .array(z.string())
+    .min(1, " Vui lòng tải lên ít nhất 1 hình ảnh khóa học"),
 });
 
 type CourseFormValues = z.infer<typeof courseFormSchema>;
@@ -184,6 +196,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
       max_member: 20,
       media: [],
     },
+  });
+
+  const { fields, append, replace, remove } = useFieldArray({
+    control: form.control,
+    name: "detail",
   });
 
   // State for form_judge for each detail item
@@ -321,6 +338,49 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [courseImages, currentImageIndex]);
+
+  // Sync detail array with session_number with debounce
+  useEffect(() => {
+    const sessionNum = form.watch("session_number");
+    const timer = setTimeout(() => {
+      const currentSessionNumber =
+        typeof sessionNum === "string" ? parseInt(sessionNum) : sessionNum;
+      const currentDetails = form.getValues("detail") || [];
+
+      // Sanity check: only sync if it's a reasonable number (1-100)
+      if (
+        currentSessionNumber &&
+        currentSessionNumber > 0 &&
+        currentSessionNumber <= 100 &&
+        currentSessionNumber !== currentDetails.length
+      ) {
+        if (currentSessionNumber > currentDetails.length) {
+          // Add missing detail items
+          const newDetails = [...currentDetails];
+          while (newDetails.length < currentSessionNumber) {
+            newDetails.push({ title: "", description: "" });
+          }
+          replace(newDetails);
+        } else if (currentSessionNumber < currentDetails.length) {
+          // Remove excess detail items
+          const newDetails = currentDetails.slice(0, currentSessionNumber);
+          replace(newDetails);
+
+          // Also clean up form judges for removed items
+          const newFormJudges = { ...detailFormJudges };
+          Object.keys(newFormJudges).forEach((key) => {
+            const index = parseInt(key);
+            if (index >= currentSessionNumber) {
+              delete newFormJudges[index];
+            }
+          });
+          setDetailFormJudges(newFormJudges);
+        }
+      }
+    }, 400); // Debounce to prevent lag while typing
+
+    return () => clearTimeout(timer);
+  }, [form.watch("session_number"), replace, detailFormJudges]); // Re-run when session_number changes
 
   // Handle opening edit modal
   const handleEditClick = () => {
@@ -576,13 +636,13 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
   };
   if (loading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải chi tiết khoá học...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -595,21 +655,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
   if (error) {
     return (
-      <div className='min-h-screen flex items-center justify-center bg-background'>
-        <Card className='max-w-md mx-auto shadow-lg'>
-          <CardContent className='p-8 text-center'>
-            <div className='w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4'>
-              <Info className='h-8 w-8 text-destructive' />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md mx-auto shadow-lg">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Info className="h-8 w-8 text-destructive" />
             </div>
-            <h3 className='text-lg font-semibold text-foreground mb-2'>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Có lỗi xảy ra
             </h3>
-            <p className='text-destructive mb-4'>{error}</p>
+            <p className="text-destructive mb-4">{error}</p>
             <Link
-              href='/dashboard/manager/courses'
-              className='inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors'
+              href="/dashboard/manager/courses"
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
-              <ArrowLeft className='mr-2 h-4 w-4' />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Quay về danh sách
             </Link>
           </CardContent>
@@ -618,41 +678,38 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
     );
   }
   return (
-    <div className='min-h-screen bg-background animate-in fade-in duration-500'>
+    <div className="min-h-screen bg-background animate-in fade-in duration-500">
       {/* Header Section */}
-      <div className='bg-card shadow-sm border-b border-border'>
-        <div className='container mx-auto px-4 py-6'>
+      <div className="bg-card shadow-sm border-b border-border">
+        <div className="container mx-auto px-4 py-6">
           {/* Back Button and Edit Button */}
-          <div className='flex items-center justify-between mb-4'>
+          <div className="flex items-center justify-between mb-4">
             <Link
-              href='/dashboard/manager/courses'
-              className='inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
+              href="/dashboard/manager/courses"
+              className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30"
             >
-              <ArrowLeft className='h-4 w-4' />
+              <ArrowLeft className="h-4 w-4" />
               Quay về danh sách
             </Link>
-            <PermissionGuard
-              module='Course'
-              action='PUT'
-            >
+            <PermissionGuard module="Course" action="PUT">
               <Button
                 onClick={handleEditClick}
-                className='inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 px-4 py-2 rounded-lg font-medium'
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 px-4 py-2 rounded-lg font-medium"
               >
-                <Edit className='h-4 w-4' />
+                <Edit className="h-4 w-4" />
                 Chỉnh sửa khóa học
               </Button>
             </PermissionGuard>
           </div>
 
-          <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className='text-3xl font-bold text-foreground mb-2'>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 {course.title}
               </h1>
-              <div className='flex flex-wrap items-center gap-3'>
+              <div className="flex flex-wrap items-center gap-3">
                 <Badge
-                  variant='outline'
+                  variant="outline"
                   className={
                     course.is_active
                       ? "bg-green-50 text-green-700 border-green-200 font-medium dark:bg-green-950 dark:text-green-400 dark:border-green-800"
@@ -670,18 +727,18 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     .map((cat: any) => (
                       <Badge
                         key={cat._id}
-                        variant='secondary'
-                        className='font-medium'
+                        variant="secondary"
+                        className="font-medium"
                       >
-                        <Tag className='mr-1 h-3 w-3' />
+                        <Tag className="mr-1 h-3 w-3" />
                         {cat.title}
                       </Badge>
                     ))}
               </div>
             </div>
 
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <Calendar className='h-4 w-4' />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
               <span>
                 Tạo:{" "}
                 {course.created_at
@@ -689,7 +746,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   : "-"}
               </span>
               {course.updated_at && course.updated_at !== course.created_at && (
-                <span className='text-muted-foreground/70'>
+                <span className="text-muted-foreground/70">
                   • Cập nhật:{" "}
                   {new Date(course.updated_at).toLocaleDateString("vi-VN")}
                 </span>
@@ -699,19 +756,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         </div>
       </div>{" "}
       {/* Main Content */}
-      <div className='container mx-auto px-4 py-8'>
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Course Image and Description */}
-          <div className='lg:col-span-2 space-y-6'>
+          <div className="lg:col-span-2 space-y-6">
             {/* Course Image */}
-            <Card className='overflow-hidden shadow-lg border'>
-              <div className='aspect-video bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative'>
+            <Card className="overflow-hidden shadow-lg border">
+              <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center relative">
                 {courseImages && courseImages.length > 0 ? (
                   <>
                     <img
                       src={courseImages[currentImageIndex]}
                       alt={course.title}
-                      className='object-cover w-full h-full'
+                      className="object-cover w-full h-full"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = "/placeholder.svg";
@@ -722,17 +779,17 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                       <>
                         <button
                           onClick={prevImage}
-                          className='absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10'
-                          aria-label='Previous image'
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
+                          aria-label="Previous image"
                         >
-                          <ChevronLeft className='h-5 w-5' />
+                          <ChevronLeft className="h-5 w-5" />
                         </button>
                         <button
                           onClick={nextImage}
-                          className='absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10'
-                          aria-label='Next image'
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors z-10"
+                          aria-label="Next image"
                         >
-                          <ChevronRight className='h-5 w-5' />
+                          <ChevronRight className="h-5 w-5" />
                         </button>
                       </>
                     )}
@@ -743,20 +800,20 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                       course.title
                     )}`}
                     alt={course.title}
-                    className='object-cover w-full h-full'
+                    className="object-cover w-full h-full"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/placeholder.svg";
                     }}
                   />
                 )}
-                <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent' />
-                <div className='absolute bottom-4 left-4 right-4 z-10'>
-                  <div className='flex items-center justify-between'>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 z-10">
+                  <div className="flex items-center justify-between">
                     {courseImages && courseImages.length > 0 && (
-                      <div className='flex items-center gap-2'>
+                      <div className="flex items-center gap-2">
                         {courseImages.length > 1 && (
-                          <div className='flex gap-1'>
+                          <div className="flex gap-1">
                             {courseImages.map((_, index) => (
                               <button
                                 key={index}
@@ -779,8 +836,8 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
               {/* Thumbnail strip for multiple images */}
               {courseImages && courseImages.length > 1 && (
-                <div className='p-4 bg-muted/20 border-t'>
-                  <div className='flex gap-2 overflow-x-auto scrollbar-thin'>
+                <div className="p-4 bg-muted/20 border-t">
+                  <div className="flex gap-2 overflow-x-auto scrollbar-thin">
                     {courseImages.map((image, index) => (
                       <button
                         key={index}
@@ -794,7 +851,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         <img
                           src={image}
                           alt={`${course.title} - Image ${index + 1}`}
-                          className='w-full h-full object-cover'
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "/placeholder.svg";
@@ -808,15 +865,15 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </Card>
 
             {/* Description */}
-            <Card className='shadow-lg border'>
+            <Card className="shadow-lg border">
               <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Info className='h-5 w-5 text-primary' />
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-primary" />
                   Mô tả khoá học
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='text-foreground leading-relaxed whitespace-pre-wrap'>
+                <div className="text-foreground leading-relaxed whitespace-pre-wrap">
                   {course.description || "Chưa có mô tả cho khoá học này."}
                 </div>
               </CardContent>
@@ -824,31 +881,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
             {/* Course Details */}
             {Array.isArray(course.detail) && course.detail.length > 0 && (
-              <Card className='shadow-lg border'>
+              <Card className="shadow-lg border">
                 <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <BookOpen className='h-5 w-5 text-primary' />
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
                     Nội dung khoá học
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className='space-y-4'>
+                  <div className="space-y-4">
                     {course.detail.map((item: any, idx: number) => (
-                      <Card
-                        key={idx}
-                        className='border-2 bg-card'
-                      >
-                        <CardHeader className='pb-3'>
-                          <div className='flex items-start gap-3'>
-                            <div className='w-7 h-7 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0'>
+                      <Card key={idx} className="border-2 bg-card">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-7 h-7 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                               {idx + 1}
                             </div>
-                            <div className='flex-1'>
-                              <h4 className='font-semibold text-foreground text-lg'>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-foreground text-lg">
                                 {item.title}
                               </h4>
                               {item.description && (
-                                <p className='text-sm text-muted-foreground mt-1.5 leading-relaxed'>
+                                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                                   {item.description}
                                 </p>
                               )}
@@ -860,24 +914,24 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         {item.form_judge &&
                           item.form_judge.items &&
                           Object.keys(item.form_judge.items).length > 0 && (
-                            <CardContent className='pt-0'>
-                              <Separator className='mb-4' />
-                              <div className='bg-muted/50 rounded-lg p-4 border'>
-                                <div className='flex items-center gap-2 mb-3'>
-                                  <Settings2 className='h-4 w-4 text-primary' />
-                                  <span className='text-sm font-semibold text-foreground'>
+                            <CardContent className="pt-0">
+                              <Separator className="mb-4" />
+                              <div className="bg-muted/50 rounded-lg p-4 border">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <Settings2 className="h-4 w-4 text-primary" />
+                                  <span className="text-sm font-semibold text-foreground">
                                     Biểu mẫu đánh giá học viên
                                   </span>
                                   <Badge
-                                    variant='secondary'
-                                    className='text-xs'
+                                    variant="secondary"
+                                    className="text-xs"
                                   >
                                     {Object.keys(item.form_judge.items).length}{" "}
                                     trường
                                   </Badge>
                                 </div>
 
-                                <div className='space-y-2.5'>
+                                <div className="space-y-2.5">
                                   {(() => {
                                     const typeTranslations: {
                                       [key: string]: string;
@@ -906,35 +960,35 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                         ) => (
                                           <div
                                             key={fieldName}
-                                            className='bg-background rounded-md p-3 border'
+                                            className="bg-background rounded-md p-3 border"
                                           >
-                                            <div className='flex items-start justify-between gap-2 mb-2'>
-                                              <div className='flex items-center gap-2 flex-1'>
-                                                <span className='font-medium text-sm text-foreground'>
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <span className="font-medium text-sm text-foreground">
                                                   {idx2 + 1}. {fieldName}
                                                 </span>
                                                 <Badge
-                                                  variant='outline'
-                                                  className='text-xs'
+                                                  variant="outline"
+                                                  className="text-xs"
                                                 >
                                                   {typeTranslations[
                                                     fieldConfig.type
                                                   ] || fieldConfig.type}
                                                 </Badge>
                                               </div>
-                                              <div className='flex gap-1.5'>
+                                              <div className="flex gap-1.5">
                                                 {fieldConfig.required && (
                                                   <Badge
-                                                    variant='outline'
-                                                    className='h-5 px-1.5 text-[10px] bg-red-50 text-red-600 border-red-100 dark:bg-red-950/30 dark:text-red-400'
+                                                    variant="outline"
+                                                    className="h-5 px-1.5 text-[10px] bg-red-50 text-red-600 border-red-100 dark:bg-red-950/30 dark:text-red-400"
                                                   >
                                                     Yêu cầu
                                                   </Badge>
                                                 )}
                                                 {fieldConfig.is_filter && (
                                                   <Badge
-                                                    variant='outline'
-                                                    className='h-5 px-1.5 text-[10px] bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/30 dark:text-blue-400'
+                                                    variant="outline"
+                                                    className="h-5 px-1.5 text-[10px] bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/30 dark:text-blue-400"
                                                   >
                                                     Bộ lọc
                                                   </Badge>
@@ -943,7 +997,7 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                             </div>
 
                                             {/* Type-specific info */}
-                                            <div className='text-xs text-muted-foreground space-y-1'>
+                                            <div className="text-xs text-muted-foreground space-y-1">
                                               {fieldConfig.type === "string" &&
                                                 fieldConfig.text_type && (
                                                   <div>
@@ -1008,60 +1062,60 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             )}
           </div>{" "}
           {/* Sidebar */}
-          <div className='space-y-6'>
+          <div className="space-y-6">
             {/* Quick Stats */}
-            <Card className='shadow-lg border'>
+            <Card className="shadow-lg border">
               <CardHeader>
-                <CardTitle className='text-lg'>Thông tin khoá học</CardTitle>
+                <CardTitle className="text-lg">Thông tin khoá học</CardTitle>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between p-3 bg-green-50 rounded-lg border dark:bg-green-950/50 dark:border-green-800'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-green-900 dark:text-green-200'>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border dark:bg-green-950/50 dark:border-green-800">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-green-900 dark:text-green-200">
                       Giá
                     </span>
                   </div>
-                  <span className='text-lg font-bold text-green-700 dark:text-green-400'>
+                  <span className="text-lg font-bold text-green-700 dark:text-green-400">
                     {course.price?.toLocaleString() || 0}₫
                   </span>
                 </div>
 
                 <Separator />
 
-                <div className='flex items-center justify-between p-3 bg-blue-50 rounded-lg border dark:bg-blue-950/50 dark:border-blue-800'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-blue-900 dark:text-blue-200'>
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border dark:bg-blue-950/50 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-blue-900 dark:text-blue-200">
                       Số buổi
                     </span>
                   </div>
-                  <span className='text-lg font-bold text-blue-700 dark:text-blue-400'>
+                  <span className="text-lg font-bold text-blue-700 dark:text-blue-400">
                     {course.session_number || 0} buổi
                   </span>
                 </div>
 
                 <Separator />
 
-                <div className='flex items-center justify-between p-3 bg-purple-50 rounded-lg border dark:bg-purple-950/50 dark:border-purple-800'>
-                  <div className='flex items-center gap-2'>
-                    <span className='font-medium text-purple-900 dark:text-purple-200'>
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border dark:bg-purple-950/50 dark:border-purple-800">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-purple-900 dark:text-purple-200">
                       Thời lượng/buổi
                     </span>
                   </div>
-                  <span className='text-lg font-bold text-purple-700 dark:text-purple-400'>
+                  <span className="text-lg font-bold text-purple-700 dark:text-purple-400">
                     {course.session_number_duration || "-"}
                   </span>
                 </div>
 
                 <Separator />
 
-                <div className='flex items-center justify-between p-3 bg-orange-50 rounded-lg border dark:bg-orange-950/50 dark:border-orange-800'>
-                  <div className='flex items-center gap-2'>
-                    <Users className='h-4 w-4 text-orange-700 dark:text-orange-400' />
-                    <span className='font-medium text-orange-900 dark:text-orange-200'>
+                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border dark:bg-orange-950/50 dark:border-orange-800">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-orange-700 dark:text-orange-400" />
+                    <span className="font-medium text-orange-900 dark:text-orange-200">
                       Số học viên tối đa
                     </span>
                   </div>
-                  <span className='text-lg font-bold text-orange-700 dark:text-orange-400'>
+                  <span className="text-lg font-bold text-orange-700 dark:text-orange-400">
                     {course.max_member || 0} học viên
                   </span>
                 </div>
@@ -1127,12 +1181,9 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
         </div>
       </div>
       {/* Edit Course Modal */}
-      <Dialog
-        open={isEditModalOpen}
-        onOpenChange={setIsEditModalOpen}
-      >
-        <DialogContent className='max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col'>
-          <DialogHeader className='p-6 pb-2'>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>Chỉnh sửa khóa học</DialogTitle>
             <DialogDescription>
               Cập nhật thông tin khóa học. Tất cả thay đổi sẽ được lưu ngay lập
@@ -1140,31 +1191,36 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className='flex-1 overflow-y-auto p-6 pt-2'>
+          <div className="flex-1 overflow-y-auto p-6 pt-2">
             <Form {...form}>
               <form
-                id='edit-course-form'
-                onSubmit={form.handleSubmit(handleSaveCourse)}
-                className='space-y-8'
+                id="edit-course-form"
+                onSubmit={form.handleSubmit(handleSaveCourse, (errors) => {
+                  console.error("Form validation errors:", errors);
+                  toast({
+                    title: "Lỗi nhập liệu",
+                    description:
+                      "Vui lòng kiểm tra lại các trường thông tin còn thiếu hoặc sai định dạng",
+                    variant: "destructive",
+                  });
+                })}
+                className="space-y-8"
               >
                 <Card>
                   <CardHeader>
                     <CardTitle>Thông tin cơ bản</CardTitle>
                   </CardHeader>
-                  <CardContent className='space-y-6'>
+                  <CardContent className="space-y-6">
                     <FormField
                       control={form.control}
-                      name='title'
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Tên khóa học <span className='text-red-500'>*</span>
+                            Tên khóa học <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder='Nhập tên khóa học'
-                              {...field}
-                            />
+                            <Input placeholder="Nhập tên khóa học" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1173,17 +1229,17 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                     <FormField
                       control={form.control}
-                      name='description'
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Mô tả khóa học{" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder='Nhập mô tả chi tiết về khóa học'
-                              className='resize-none min-h-[120px]'
+                              placeholder="Nhập mô tả chi tiết về khóa học"
+                              className="resize-none min-h-[120px]"
                               {...field}
                             />
                           </FormControl>
@@ -1192,23 +1248,39 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                       )}
                     />
 
-                    <div className='grid gap-4 md:grid-cols-2'>
+                    <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name='session_number'
+                        name="session_number"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Số buổi học{" "}
-                              <span className='text-red-500'>*</span>
+                              <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
-                                type='number'
-                                placeholder='Nhập số buổi học'
+                                type="number"
+                                placeholder="Nhập số buổi học"
                                 {...field}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "") {
+                                    field.onChange(undefined);
+                                    return;
+                                  }
+                                  const num = parseInt(val);
+                                  if (!isNaN(num)) {
+                                    if (num > 100) {
+                                      field.onChange(100);
+                                    } else {
+                                      field.onChange(num);
+                                    }
+                                  }
+                                }}
                               />
                             </FormControl>
+                            <FormDescription>Tối đa 100 buổi</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1216,49 +1288,75 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                       <FormField
                         control={form.control}
-                        name='session_number_duration'
+                        name="session_number_duration"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Thời lượng mỗi buổi{" "}
-                              <span className='text-red-500'>*</span>
+                              <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder='Ví dụ: 45 phút'
-                                {...field}
-                              />
+                              <div className="relative">
+                                <Input
+                                  placeholder="Ví dụ: 45"
+                                  {...field}
+                                  onChange={(e) => {
+                                    const valString = e.target.value.replace(
+                                      /\D/g,
+                                      ""
+                                    );
+                                    let num = valString
+                                      ? parseInt(valString)
+                                      : 0;
+                                    // Cap at 300 minutes (5 hours)
+                                    if (num > 300) {
+                                      num = 300;
+                                    }
+                                    field.onChange(
+                                      num === 0 ? "" : num.toString()
+                                    );
+                                  }}
+                                />
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                                  phút
+                                </div>
+                              </div>
                             </FormControl>
+                            <FormDescription>Tối đa 300 phút</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                    <div className='grid gap-4 md:grid-cols-2'>
+                    <div className="grid gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name='price'
+                        name="price"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Giá khóa học (VNĐ){" "}
-                              <span className='text-red-500'>*</span>
+                              <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
                               <Input
-                                type='text'
-                                placeholder='Nhập giá khóa học'
+                                type="text"
+                                placeholder="Nhập giá khóa học"
                                 value={
                                   field.value
                                     ? field.value.toLocaleString("vi-VN")
                                     : ""
                                 }
                                 onChange={(e) => {
-                                  const value = e.target.value.replace(
+                                  let valString = e.target.value.replace(
                                     /\D/g,
                                     ""
                                   );
-                                  field.onChange(value ? parseInt(value) : 0);
+                                  let num = valString ? parseInt(valString) : 0;
+                                  if (num > 1000000000) {
+                                    num = 1000000000;
+                                  }
+                                  field.onChange(num);
                                 }}
                               />
                             </FormControl>
@@ -1269,23 +1367,59 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                       <FormField
                         control={form.control}
-                        name='max_member'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>
-                              Số học viên tối đa{" "}
-                              <span className='text-red-500'>*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                placeholder='Nhập số học viên tối đa'
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        name="max_member"
+                        render={({ field }) => {
+                          const selectedAgeRuleIds =
+                            form.watch("type_of_age") || [];
+                          const hasChildrenUnder10 = selectedAgeRuleIds.some(
+                            (id: string) => {
+                              const rule = ageRules.find((r) => r._id === id);
+                              if (!rule) return false;
+                              const ageRange = Array.isArray(rule.age_range)
+                                ? rule.age_range
+                                : undefined;
+                              const max = ageRange ? ageRange[1] : rule.max_age;
+                              return max != null && max <= 10;
+                            }
+                          );
+                          const maxLimit = hasChildrenUnder10 ? 20 : 30;
+
+                          return (
+                            <FormItem>
+                              <FormLabel>
+                                Số học viên tối đa{" "}
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder={`Nhập số học viên tối đa (mặc định ${maxLimit})`}
+                                  {...field}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "") {
+                                      field.onChange("");
+                                      return;
+                                    }
+                                    let num = parseInt(val);
+                                    if (!isNaN(num)) {
+                                      if (num > maxLimit) {
+                                        num = maxLimit;
+                                      }
+                                      field.onChange(num);
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Tối đa {maxLimit} học viên{" "}
+                                {hasChildrenUnder10 &&
+                                  "(Giới hạn 20 người cho trẻ dưới 10 tuổi)"}
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     </div>
                   </CardContent>
@@ -1295,23 +1429,23 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                   <CardHeader>
                     <CardTitle>Phân loại khóa học</CardTitle>
                   </CardHeader>
-                  <CardContent className='space-y-6'>
+                  <CardContent className="space-y-6">
                     <FormField
                       control={form.control}
-                      name='category'
+                      name="category"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Danh mục khóa học{" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           {loadingCategories ? (
-                            <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
-                              <Loader2 className='h-4 w-4 animate-spin' />
+                            <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md">
+                              <Loader2 className="h-4 w-4 animate-spin" />
                               Đang tải danh mục...
                             </div>
                           ) : categories.length === 0 ? (
-                            <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            <div className="px-3 py-2 text-sm text-muted-foreground border rounded-md">
                               Không có danh mục nào
                             </div>
                           ) : (
@@ -1338,34 +1472,34 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                     <FormField
                       control={form.control}
-                      name='type'
+                      name="type"
                       render={({ field }) => (
-                        <FormItem className='space-y-3'>
+                        <FormItem className="space-y-3">
                           <FormLabel>
                             Loại khóa học{" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
                               value={field.value}
-                              className='flex flex-col space-y-1'
+                              className="flex flex-col space-y-1"
                             >
-                              <div className='flex items-center space-x-2'>
+                              <div className="flex items-center space-x-2">
                                 <RadioGroupItem
-                                  value='global'
-                                  id='edit-global'
+                                  value="global"
+                                  id="edit-global"
                                 />
-                                <Label htmlFor='edit-global'>
+                                <Label htmlFor="edit-global">
                                   Toàn hệ thống
                                 </Label>
                               </div>
-                              <div className='flex items-center space-x-2'>
+                              <div className="flex items-center space-x-2">
                                 <RadioGroupItem
-                                  value='custom'
-                                  id='edit-custom'
+                                  value="custom"
+                                  id="edit-custom"
                                 />
-                                <Label htmlFor='edit-custom'>Tùy chỉnh</Label>
+                                <Label htmlFor="edit-custom">Tùy chỉnh</Label>
                               </div>
                             </RadioGroup>
                           </FormControl>
@@ -1377,20 +1511,20 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                     <FormField
                       control={form.control}
-                      name='type_of_age'
+                      name="type_of_age"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             Độ tuổi phù hợp{" "}
-                            <span className='text-red-500'>*</span>
+                            <span className="text-red-500">*</span>
                           </FormLabel>
                           {loadingAgeRules ? (
-                            <div className='flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md'>
-                              <Loader2 className='h-4 w-4 animate-spin' />
+                            <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground border rounded-md">
+                              <Loader2 className="h-4 w-4 animate-spin" />
                               Đang tải độ tuổi...
                             </div>
                           ) : ageRules.length === 0 ? (
-                            <div className='px-3 py-2 text-sm text-muted-foreground border rounded-md'>
+                            <div className="px-3 py-2 text-sm text-muted-foreground border rounded-md">
                               Không có độ tuổi nào
                             </div>
                           ) : (
@@ -1424,67 +1558,68 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Nội dung khóa học</CardTitle>
+                    <CardTitle>
+                      Nội dung khóa học <span className="text-red-500">*</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='flex items-center justify-between'>
-                      <Label>Nội dung chi tiết</Label>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>
+                        Nội dung chi tiết{" "}
+                        <span className="text-red-500">*</span>
+                      </Label>
                       <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        onClick={() => {
-                          const currentDetails = form.getValues("detail") || [];
-                          form.setValue("detail", [
-                            ...currentDetails,
-                            { title: "", description: "" },
-                          ]);
-                        }}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => append({ title: "", description: "" })}
                       >
-                        <Plus className='h-4 w-4 mr-1' />
+                        <Plus className="h-4 w-4 mr-1" />
                         Thêm mục
                       </Button>
                     </div>
-                    <Accordion
-                      type='multiple'
-                      className='w-full'
-                    >
-                      {form.watch("detail")?.map((item, index) => (
+                    <Accordion type="multiple" className="w-full">
+                      {fields.map((item, index) => (
                         <AccordionItem
-                          key={index}
+                          key={item.id}
                           value={`detail-${index}`}
-                          className='border rounded-lg mb-4'
+                          className="border rounded-lg mb-4"
                         >
-                          <AccordionTrigger className='px-4 py-3 hover:no-underline'>
-                            <div className='flex items-center justify-between w-full mr-4'>
-                              <div className='flex items-center gap-3'>
-                                <div className='w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium'>
+                          <AccordionTrigger className="px-4 py-3 hover:no-underline group">
+                            <div className="flex items-center justify-between w-full mr-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">
                                   {index + 1}
                                 </div>
-                                <div className='text-left'>
-                                  <h4 className='font-semibold text-foreground'>
-                                    Nội dung {index + 1}
-                                  </h4>
-                                  {item.title && (
-                                    <p className='text-sm text-muted-foreground'>
-                                      {item.title}
-                                    </p>
+                                <div className="text-left flex items-center gap-2">
+                                  <div>
+                                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                                      Nội dung {index + 1}
+                                    </h4>
+                                    {item.title && (
+                                      <p className="text-sm text-muted-foreground line-clamp-1">
+                                        {item.title}
+                                      </p>
+                                    )}
+                                  </div>
+                                  {form.formState.errors.detail?.[index] && (
+                                    <div className="flex items-center gap-2 text-destructive animate-pulse ml-2">
+                                      <AlertCircle className="h-5 w-5" />
+                                      <span className="text-xs font-medium hidden sm:inline">
+                                        Có lỗi
+                                      </span>
+                                    </div>
                                   )}
                                 </div>
                               </div>
                               {form.watch("detail").length > 1 && (
                                 <Button
-                                  type='button'
-                                  variant='outline'
-                                  size='icon'
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    const currentDetails =
-                                      form.getValues("detail");
-                                    if (currentDetails.length <= 1) return;
-                                    const newDetails = [...currentDetails];
-                                    newDetails.splice(index, 1);
-                                    form.setValue("detail", newDetails);
+                                    remove(index);
 
                                     // Remove form_judge for this detail
                                     const newFormJudges = {
@@ -1509,17 +1644,20 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                     );
                                     setDetailFormJudges(reindexed);
                                   }}
-                                  className='h-8 w-8'
+                                  className="h-8 w-8"
                                 >
-                                  <Trash2 className='h-4 w-4' />
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent className='px-4 pb-4'>
-                            <div className='space-y-4 pt-2'>
-                              <div className='space-y-2'>
-                                <Label>Tiêu đề {index + 1}</Label>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-4 pt-2">
+                              <div className="space-y-2">
+                                <Label>
+                                  Tiêu đề {index + 1}{" "}
+                                  <span className="text-red-500">*</span>
+                                </Label>
                                 <Input
                                   value={item.title}
                                   onChange={(e) => {
@@ -1534,9 +1672,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                   }}
                                   placeholder={`Tiêu đề ${index + 1}`}
                                 />
+                                {form.formState.errors.detail?.[index]
+                                  ?.title && (
+                                  <p className="text-sm font-medium text-destructive">
+                                    {
+                                      form.formState.errors.detail[index].title
+                                        .message
+                                    }
+                                  </p>
+                                )}
                               </div>
-                              <div className='space-y-2'>
-                                <Label>Mô tả {index + 1}</Label>
+                              <div className="space-y-2">
+                                <Label>
+                                  Mô tả {index + 1}{" "}
+                                  <span className="text-red-500">*</span>
+                                </Label>
                                 <Textarea
                                   value={item.description}
                                   onChange={(e) => {
@@ -1550,12 +1700,21 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                     form.setValue("detail", newDetails);
                                   }}
                                   placeholder={`Mô tả ${index + 1}`}
-                                  className='resize-none min-h-[80px]'
+                                  className="resize-none min-h-[80px]"
                                 />
+                                {form.formState.errors.detail?.[index]
+                                  ?.description && (
+                                  <p className="text-sm font-medium text-destructive">
+                                    {
+                                      form.formState.errors.detail[index]
+                                        .description.message
+                                    }
+                                  </p>
+                                )}
                               </div>
 
                               {/* FormJudge Builder */}
-                              <div className='mt-4'>
+                              <div className="mt-4">
                                 <FormJudgeBuilder
                                   value={detailFormJudges[index]}
                                   onChange={(schema) => {
@@ -1571,21 +1730,39 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         </AccordionItem>
                       ))}
                     </Accordion>
+
+                    <div className="mt-4 flex flex-col gap-2 p-4 bg-muted/50 rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        Hiện tại có {fields.length} mục chi tiết cho{" "}
+                        {form.watch("session_number")} buổi học.
+                      </p>
+                      {form.formState.errors.detail && (
+                        <p className="text-sm font-medium text-destructive">
+                          {form.formState.errors.detail.message ||
+                            (typeof form.formState.errors.detail === "object" &&
+                              "root" in form.formState.errors.detail &&
+                              (form.formState.errors.detail.root as any)
+                                ?.message)}
+                        </p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Hình ảnh khóa học</CardTitle>
+                    <CardTitle>
+                      Hình ảnh khóa học <span className="text-red-500">*</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className='space-y-4'>
+                  <CardContent className="space-y-4">
                     {/* Current Images */}
                     {courseImages.length > 0 && (
-                      <div className='space-y-2'>
-                        <p className='text-sm text-muted-foreground'>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
                           Hình ảnh hiện tại:
                         </p>
-                        <div className='flex gap-2 flex-wrap'>
+                        <div className="flex gap-2 flex-wrap">
                           {course.media && Array.isArray(course.media)
                             ? course.media.map(
                                 (mediaItem: any, index: number) => {
@@ -1606,11 +1783,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                       <img
                                         src={imagePath}
                                         alt={`Current ${index + 1}`}
-                                        className='w-full h-full object-cover'
+                                        className="w-full h-full object-cover"
                                       />
                                       {isMarkedForDeletion ? (
                                         <button
-                                          type='button'
+                                          type="button"
                                           onClick={() =>
                                             setImagesToDelete((prev) =>
                                               prev.filter(
@@ -1618,24 +1795,24 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                                               )
                                             )
                                           }
-                                          className='absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-green-600'
-                                          title='Khôi phục hình ảnh'
+                                          className="absolute top-1 right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-green-600"
+                                          title="Khôi phục hình ảnh"
                                         >
                                           +
                                         </button>
                                       ) : (
                                         <button
-                                          type='button'
+                                          type="button"
                                           onClick={() =>
                                             setImagesToDelete((prev) => [
                                               ...prev,
                                               mediaId,
                                             ])
                                           }
-                                          className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
-                                          title='Xóa hình ảnh'
+                                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                          title="Xóa hình ảnh"
                                         >
-                                          <X className='h-3 w-3' />
+                                          <X className="h-3 w-3" />
                                         </button>
                                       )}
                                     </div>
@@ -1644,30 +1821,30 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                               )
                             : course.media &&
                               courseImages[0] && (
-                                <div className='relative w-20 h-20 rounded border overflow-hidden'>
+                                <div className="relative w-20 h-20 rounded border overflow-hidden">
                                   <img
                                     src={courseImages[0]}
-                                    alt='Current'
-                                    className='w-full h-full object-cover'
+                                    alt="Current"
+                                    className="w-full h-full object-cover"
                                   />
                                   <button
-                                    type='button'
+                                    type="button"
                                     onClick={() =>
                                       setImagesToDelete((prev) => [
                                         ...prev,
                                         course.media._id || course.media,
                                       ])
                                     }
-                                    className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600'
-                                    title='Xóa hình ảnh'
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                    title="Xóa hình ảnh"
                                   >
-                                    <X className='h-3 w-3' />
+                                    <X className="h-3 w-3" />
                                   </button>
                                 </div>
                               )}
                         </div>
                         {imagesToDelete.length > 0 && (
-                          <p className='text-sm text-red-600'>
+                          <p className="text-sm text-red-600">
                             {imagesToDelete.length} hình ảnh sẽ bị xóa khi lưu
                             thay đổi
                           </p>
@@ -1676,51 +1853,51 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                     )}
 
                     {/* File Upload */}
-                    <div className='space-y-2'>
-                      <div className='flex items-center gap-2'>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
                         <input
-                          type='file'
-                          accept='image/*'
+                          type="file"
+                          accept="image/*"
                           multiple
                           onChange={handleFileSelect}
-                          className='hidden'
-                          id='media-upload'
+                          className="hidden"
+                          id="media-upload"
                         />
                         <Button
-                          type='button'
-                          variant='outline'
+                          type="button"
+                          variant="outline"
                           onClick={() =>
                             document.getElementById("media-upload")?.click()
                           }
                         >
-                          <Upload className='h-4 w-4 mr-2' />
+                          <Upload className="h-4 w-4 mr-2" />
                           Thêm hình ảnh
                         </Button>
                       </div>
 
                       {/* Selected Files Preview */}
                       {selectedFiles.length > 0 && (
-                        <div className='space-y-2'>
-                          <p className='text-sm text-muted-foreground'>
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">
                             Hình ảnh mới:
                           </p>
-                          <div className='flex gap-2 flex-wrap'>
+                          <div className="flex gap-2 flex-wrap">
                             {selectedFiles.map((file, index) => (
                               <div
                                 key={index}
-                                className='relative w-20 h-20 rounded border overflow-hidden'
+                                className="relative w-20 h-20 rounded border overflow-hidden"
                               >
                                 <img
                                   src={URL.createObjectURL(file)}
                                   alt={`New ${index + 1}`}
-                                  className='w-full h-full object-cover'
+                                  className="w-full h-full object-cover"
                                 />
                                 <button
-                                  type='button'
+                                  type="button"
                                   onClick={() => removeSelectedFile(index)}
-                                  className='absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs'
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                                 >
-                                  <X className='h-3 w-3' />
+                                  <X className="h-3 w-3" />
                                 </button>
                               </div>
                             ))}
@@ -1728,22 +1905,28 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
                         </div>
                       )}
                     </div>
+
+                    {!form.formState.errors.media ? null : (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        {form.formState.errors.media.message}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
 
-                <div className='flex items-center space-x-2'>
+                <div className="flex items-center space-x-2">
                   <FormField
                     control={form.control}
-                    name='is_active'
+                    name="is_active"
                     render={({ field }) => (
-                      <FormItem className='flex flex-row items-center space-x-3 space-y-0'>
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                         <FormControl>
                           <Switch
                             checked={field.value}
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>
-                        <div className='space-y-1 leading-none'>
+                        <div className="space-y-1 leading-none">
                           <FormLabel>Khóa học đang hoạt động</FormLabel>
                         </div>
                       </FormItem>
@@ -1754,23 +1937,19 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps) {
             </Form>
           </div>
 
-          <DialogFooter className='p-6 pt-2 border-t bg-muted/20'>
+          <DialogFooter className="p-6 pt-2 border-t bg-muted/20">
             <Button
-              type='button'
-              variant='outline'
+              type="button"
+              variant="outline"
               onClick={() => setIsEditModalOpen(false)}
               disabled={isSaving}
             >
               Hủy
             </Button>
-            <Button
-              type='submit'
-              form='edit-course-form'
-              disabled={isSaving}
-            >
+            <Button type="submit" form="edit-course-form" disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Đang lưu...
                 </>
               ) : (

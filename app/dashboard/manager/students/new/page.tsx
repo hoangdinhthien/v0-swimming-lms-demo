@@ -30,6 +30,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import {
+  optionalPhoneSchema,
+  passwordSchema,
+  requiredStringSchema,
+  birthDateSchema,
+} from "@/lib/schemas";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -56,59 +62,19 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 // Form schema for validation
 const studentFormSchema = z
   .object({
-    username: z.string().min(1, "Vui lòng nhập họ tên học viên"),
+    username: requiredStringSchema("Vui lòng nhập họ tên học viên"),
     email: z.string().email("Vui lòng nhập email hợp lệ"),
-    phone: z.string().optional(),
-    birthday: z.string().optional(), // Changed from date_of_birth to birthday
+    phone: optionalPhoneSchema.optional(),
+    birthday: birthDateSchema.optional(),
     address: z.string().optional(),
     parent_id: z.string().optional(),
-    password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",
     path: ["confirmPassword"],
-  })
-  .refine(
-    (data) => {
-      // Validate birthday if provided
-      if (data.birthday) {
-        const birthDate = new Date(data.birthday);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-
-        // Check if date is valid
-        if (isNaN(birthDate.getTime())) {
-          return false;
-        }
-
-        // Check if date is not in the future
-        if (birthDate > today) {
-          return false;
-        }
-
-        // Check if age is reasonable (between 0 and 120 years)
-        if (age < 0 || age > 120) {
-          return false;
-        }
-
-        // If age is exactly 120, check month and day
-        if (
-          age === 120 &&
-          (monthDiff < 0 ||
-            (monthDiff === 0 && today.getDate() < birthDate.getDate()))
-        ) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message: "Ngày sinh không hợp lệ",
-      path: ["birthday"],
-    }
-  );
+  });
 
 type StudentFormValues = z.infer<typeof studentFormSchema>;
 
@@ -347,64 +313,58 @@ export default function NewStudentPage() {
 
   return (
     <PermissionGuard
-      module='User'
-      action='POST'
-      redirectTo='/dashboard/manager/students'
+      module="User"
+      action="POST"
+      redirectTo="/dashboard/manager/students"
     >
-      <div className='container mx-auto py-8 px-4'>
-        <div className='mb-6'>
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-6">
           <Link
-            href='/dashboard/manager/students'
-            className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground'
+            href="/dashboard/manager/students"
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className='mr-1 h-4 w-4' /> Quay về danh sách học viên
+            <ArrowLeft className="mr-1 h-4 w-4" /> Quay về danh sách học viên
           </Link>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className='text-2xl'>Thêm học viên mới</CardTitle>
+            <CardTitle className="text-2xl">Thêm học viên mới</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className='space-y-6'
+                className="space-y-6"
               >
                 <div>
-                  <h3 className='text-lg font-medium'>Thông tin học viên</h3>
-                  <Separator className='my-4' />
+                  <h3 className="text-lg font-medium">Thông tin học viên</h3>
+                  <Separator className="my-4" />
                 </div>
 
                 <FormField
                   control={form.control}
-                  name='username'
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Họ và tên</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder='Nhập họ tên học viên'
-                          {...field}
-                        />
+                        <Input placeholder="Nhập họ tên học viên" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name='email'
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder='Nhập email'
-                            {...field}
-                          />
+                          <Input placeholder="Nhập email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -413,15 +373,12 @@ export default function NewStudentPage() {
 
                   <FormField
                     control={form.control}
-                    name='phone'
+                    name="phone"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Số điện thoại</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder='Nhập số điện thoại'
-                            {...field}
-                          />
+                          <Input placeholder="Nhập số điện thoại" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -429,18 +386,15 @@ export default function NewStudentPage() {
                   />
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name='birthday'
+                    name="birthday"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Ngày sinh</FormLabel>
                         <FormControl>
-                          <Input
-                            type='date'
-                            {...field}
-                          />
+                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -449,15 +403,12 @@ export default function NewStudentPage() {
 
                   <FormField
                     control={form.control}
-                    name='address'
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Địa chỉ</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder='Nhập địa chỉ'
-                            {...field}
-                          />
+                          <Input placeholder="Nhập địa chỉ" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -466,51 +417,48 @@ export default function NewStudentPage() {
                 </div>
 
                 <div>
-                  <h3 className='text-lg font-medium'>Thông tin phụ huynh</h3>
+                  <h3 className="text-lg font-medium">Thông tin phụ huynh</h3>
                   <FormDescription>
                     Bắt buộc đối với học viên là trẻ em dưới 18 tuổi
                   </FormDescription>
-                  <Separator className='my-4' />
+                  <Separator className="my-4" />
                 </div>
 
                 <FormField
                   control={form.control}
-                  name='parent_id'
+                  name="parent_id"
                   render={({ field }) => (
-                    <FormItem className='flex flex-col'>
+                    <FormItem className="flex flex-col">
                       <FormLabel>Chọn phụ huynh</FormLabel>
-                      <Popover
-                        open={open}
-                        onOpenChange={setOpen}
-                      >
+                      <Popover open={open} onOpenChange={setOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
-                              variant='outline'
-                              role='combobox'
+                              variant="outline"
+                              role="combobox"
                               aria-expanded={open}
-                              className='w-full justify-between'
+                              className="w-full justify-between"
                             >
                               {field.value
                                 ? parents.find(
                                     (parent) => parent.id === field.value
                                   )?.username
                                 : "Chọn phụ huynh..."}
-                              <Search className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className='w-full p-0'>
+                        <PopoverContent className="w-full p-0">
                           <Command>
-                            <CommandInput placeholder='Tìm kiếm phụ huynh...' />
+                            <CommandInput placeholder="Tìm kiếm phụ huynh..." />
                             <CommandEmpty>
                               Không tìm thấy phụ huynh
                             </CommandEmpty>
-                            <CommandGroup className='max-h-60 overflow-auto'>
+                            <CommandGroup className="max-h-60 overflow-auto">
                               {isLoadingParents ? (
-                                <div className='flex items-center justify-center p-4'>
-                                  <Loader2 className='h-4 w-4 animate-spin' />
-                                  <span className='ml-2'>Đang tải...</span>
+                                <div className="flex items-center justify-center p-4">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span className="ml-2">Đang tải...</span>
                                 </div>
                               ) : (
                                 parents.map((parent) => (
@@ -521,7 +469,7 @@ export default function NewStudentPage() {
                                       form.setValue("parent_id", parent.id);
                                       setOpen(false);
                                     }}
-                                    className='flex items-center gap-3 p-3'
+                                    className="flex items-center gap-3 p-3"
                                   >
                                     <CheckIcon
                                       className={cn(
@@ -531,23 +479,23 @@ export default function NewStudentPage() {
                                           : "opacity-0"
                                       )}
                                     />
-                                    <Avatar className='h-8 w-8 flex-shrink-0'>
+                                    <Avatar className="h-8 w-8 flex-shrink-0">
                                       <AvatarImage
                                         src={parent.avatar}
                                         alt={parent.username}
-                                        className='object-cover'
+                                        className="object-cover"
                                       />
-                                      <AvatarFallback className='bg-blue-100 text-blue-700 text-sm font-medium'>
+                                      <AvatarFallback className="bg-blue-100 text-blue-700 text-sm font-medium">
                                         {parent.username
                                           .charAt(0)
                                           .toUpperCase()}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <div className='flex flex-col flex-1 min-w-0'>
-                                      <span className='font-medium truncate'>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                      <span className="font-medium truncate">
                                         {parent.username}
                                       </span>
-                                      <span className='text-xs text-muted-foreground truncate'>
+                                      <span className="text-xs text-muted-foreground truncate">
                                         {parent.email}{" "}
                                         {parent.phone
                                           ? `• ${parent.phone}`
@@ -571,21 +519,21 @@ export default function NewStudentPage() {
                 />
 
                 <div>
-                  <h3 className='text-lg font-medium'>Thông tin tài khoản</h3>
-                  <Separator className='my-4' />
+                  <h3 className="text-lg font-medium">Thông tin tài khoản</h3>
+                  <Separator className="my-4" />
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name='password'
+                    name="password"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mật khẩu</FormLabel>
                         <FormControl>
                           <Input
-                            type='password'
-                            placeholder='Nhập mật khẩu'
+                            type="password"
+                            placeholder="Nhập mật khẩu"
                             {...field}
                           />
                         </FormControl>
@@ -599,14 +547,14 @@ export default function NewStudentPage() {
 
                   <FormField
                     control={form.control}
-                    name='confirmPassword'
+                    name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Xác nhận mật khẩu</FormLabel>
                         <FormControl>
                           <Input
-                            type='password'
-                            placeholder='Nhập lại mật khẩu'
+                            type="password"
+                            placeholder="Nhập lại mật khẩu"
                             {...field}
                           />
                         </FormControl>
@@ -616,14 +564,11 @@ export default function NewStudentPage() {
                   />
                 </div>
 
-                <div className='flex justify-end'>
-                  <Button
-                    type='submit'
-                    disabled={isSubmitting}
-                  >
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
-                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Đang tạo...
                       </>
                     ) : (

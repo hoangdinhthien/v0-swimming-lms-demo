@@ -54,6 +54,23 @@ import { toast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import ManagerNotFound from "@/components/manager/not-found";
 import { ScheduleModal } from "@/components/manager/schedule-modal";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  phoneSchema,
+  optionalPhoneSchema,
+  requiredStringSchema,
+  birthDateSchema,
+} from "@/lib/schemas";
 
 export default function StudentDetailPage() {
   const router = useRouter();
@@ -74,19 +91,31 @@ export default function StudentDetailPage() {
   const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
 
-  // Form state for student edit
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    phone: "",
-    address: "",
-    birthday: "",
-    is_active: true,
-    password: "", // Optional for update
+  // Form schema for student update
+  const studentUpdateSchema = z.object({
+    username: requiredStringSchema("Tên đăng nhập là bắt buộc"),
+    email: z.string().email("Email không hợp lệ"),
+    phone: optionalPhoneSchema.optional(),
+    address: z.string().optional(),
+    birthday: birthDateSchema.optional(),
+    is_active: z.boolean().default(true),
+    password: z.string().optional(), // Password is optional for updates
   });
 
-  // Form validation errors
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  type StudentFormValues = z.infer<typeof studentUpdateSchema>;
+
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentUpdateSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      phone: "",
+      address: "",
+      birthday: "",
+      is_active: true,
+      password: "",
+    },
+  });
 
   // Fetch tenant name function
   const fetchTenantName = async (tenantId: string) => {
@@ -122,15 +151,11 @@ export default function StudentDetailPage() {
         setDetail(detailData);
 
         // Fetch avatar if available - handle new featured_image structure
-        // Handle featured_image structure - Both formats are valid:
-        // - Array format: featured_image: [{ path: ["url"] }]
-        // - Object format: featured_image: { path: "url" }
         if (detailData?.user?.featured_image) {
           if (
             Array.isArray(detailData.user.featured_image) &&
             detailData.user.featured_image.length > 0
           ) {
-            // Array format: [{ path: ["url"] }]
             const firstImage = detailData.user.featured_image[0];
             if (firstImage?.path) {
               if (
@@ -146,7 +171,6 @@ export default function StudentDetailPage() {
             typeof detailData.user.featured_image === "object" &&
             detailData.user.featured_image.path
           ) {
-            // Object format: { path: "url" } or { path: ["url"] }
             if (Array.isArray(detailData.user.featured_image.path)) {
               setAvatarUrl(detailData.user.featured_image.path[0]);
             } else if (
@@ -155,7 +179,6 @@ export default function StudentDetailPage() {
               setAvatarUrl(detailData.user.featured_image.path);
             }
           } else if (typeof detailData.user.featured_image === "string") {
-            // Fallback: if it's just a media ID string, try to get media details
             try {
               const mediaPath = await getMediaDetails(
                 detailData.user.featured_image
@@ -175,17 +198,12 @@ export default function StudentDetailPage() {
           detailData.user.parent_id.length > 0
         ) {
           try {
-            // Fetch parent details based on parent_id
-            const parentId = detailData.user.parent_id[0]; // Assuming parent_id is an array and we use the first one
-
-            // Using fetchStudents to get all members, then filter by parent ID
+            const parentId = detailData.user.parent_id[0];
             const allMembers = await fetchStudents({
               tenantId,
               token,
               role: "member",
             });
-
-            // Find parent from members based on parent_id
             const parentData = allMembers.find(
               (member: any) => member.user?._id === parentId
             );
@@ -204,18 +222,19 @@ export default function StudentDetailPage() {
     }
     if (studentId) fetchDetail();
   }, [studentId]);
+
   // Effect to fetch tenant name when component loads
   useEffect(() => {
     const currentTenantId = getSelectedTenant();
     if (currentTenantId) {
       fetchTenantName(currentTenantId);
     }
-  }, []); // Run once when component mounts
+  }, []);
 
   // Populate form data when student detail is loaded
   useEffect(() => {
     if (detail?.user) {
-      setFormData({
+      form.reset({
         username: detail.user.username || "",
         email: detail.user.email || "",
         phone: detail.user.phone || "",
@@ -223,132 +242,43 @@ export default function StudentDetailPage() {
         birthday: detail.user.birthday
           ? new Date(detail.user.birthday).toISOString().split("T")[0]
           : "",
-        is_active: detail.user.is_active || false,
+        is_active: detail.user.is_active ?? true,
         password: "",
       });
     }
-  }, [detail]);
-
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-
-    // Clear error for this field when user starts typing
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-
-    if (type === "checkbox") {
-      setFormData({
-        ...formData,
-        [name]: (e.target as HTMLInputElement).checked,
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-  };
-
-  // Handle the switch toggle for active status
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData({
-      ...formData,
-      is_active: checked,
-    });
-  };
+  }, [detail, form]);
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Clear previous errors
-    setFormErrors({});
-
-    // Validate birthday if provided
-    if (formData.birthday) {
-      const birthDate = new Date(formData.birthday);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-
-      // Check if date is valid
-      if (isNaN(birthDate.getTime())) {
-        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
-        toast({
-          title: "Ngày sinh không hợp lệ",
-          description: "Vui lòng nhập ngày sinh hợp lệ",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if date is not in the future
-      if (birthDate > today) {
-        setFormErrors({ birthday: "Ngày sinh không thể là ngày tương lai" });
-        toast({
-          title: "Ngày sinh không hợp lệ",
-          description: "Ngày sinh không thể là ngày tương lai",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if age is reasonable (between 0 and 120 years)
-      if (age < 0 || age > 120) {
-        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
-        toast({
-          title: "Ngày sinh không hợp lệ",
-          description: "Ngày sinh không hợp lệ",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // If age is exactly 120, check month and day
-      if (
-        age === 120 &&
-        (monthDiff < 0 ||
-          (monthDiff === 0 && today.getDate() < birthDate.getDate()))
-      ) {
-        setFormErrors({ birthday: "Ngày sinh không hợp lệ" });
-        toast({
-          title: "Ngày sinh không hợp lệ",
-          description: "Ngày sinh không hợp lệ",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
+  const onSubmit = async (values: StudentFormValues) => {
     setIsSubmitting(true);
 
     // Prepare update data - only include fields that have values
-    const updateData = Object.entries(formData).reduce((acc, [key, value]) => {
-      // Only include the password if it's not empty
-      if (key === "password" && value === "") return acc;
-      // Otherwise include the field if it has a value
-      if (value !== undefined && value !== null && value !== "") {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as any);
+    // Using explicit mapping for greater control
+    const updateData: any = {
+      username: values.username,
+      email: values.email,
+      phone: values.phone,
+      address: values.address,
+      birthday: values.birthday,
+      is_active: values.is_active,
+    };
 
-    // Add role_front field to match API specification
+    // Only add password if provided
+    if (values.password && values.password.trim() !== "") {
+      updateData.password = values.password;
+    }
+
+    // Add role_front back to preserve it
     updateData.role_front = ["member"];
 
     // Add parent_id as string if it exists in the original data
     if (detail.user?.parent_id && detail.user.parent_id.length > 0) {
-      updateData.parent_id = detail.user.parent_id[0]; // Send first parent ID as string
+      updateData.parent_id = detail.user.parent_id[0];
     }
 
     // Add featured_image only if we have a new uploaded avatar
     if (uploadedAvatarId) {
-      updateData.featured_image = [uploadedAvatarId]; // Send as array of strings
+      updateData.featured_image = [uploadedAvatarId];
     }
 
     try {
@@ -379,14 +309,24 @@ export default function StudentDetailPage() {
       // Refresh student data
       fetchDetail();
     } catch (error: any) {
-      // Parse field-specific errors from API response
       const { fieldErrors, generalError } = parseApiFieldErrors(error);
 
       // Set field-specific errors
-      setFormErrors((prev) => ({
-        ...prev,
-        ...fieldErrors,
-      }));
+      Object.entries(fieldErrors).forEach(([field, message]) => {
+        // Check if field is valid key for setError
+        if (
+          [
+            "username",
+            "email",
+            "phone",
+            "address",
+            "birthday",
+            "password",
+          ].includes(field)
+        ) {
+          form.setError(field as any, { type: "server", message });
+        }
+      });
 
       toast({
         title: "Lỗi cập nhật thông tin",
@@ -491,16 +431,12 @@ export default function StudentDetailPage() {
       });
       setDetail(detailData);
 
-      // Fetch avatar if available - handle new featured_image structure
-      // Handle featured_image structure - Both formats are valid:
-      // - Array format: featured_image: [{ path: ["url"] }]
-      // - Object format: featured_image: { path: "url" }
+      // Fetch avatar if available
       if (detailData?.user?.featured_image) {
         if (
           Array.isArray(detailData.user.featured_image) &&
           detailData.user.featured_image.length > 0
         ) {
-          // Array format: [{ path: ["url"] }]
           const firstImage = detailData.user.featured_image[0];
           if (firstImage?.path) {
             if (Array.isArray(firstImage.path) && firstImage.path.length > 0) {
@@ -513,14 +449,12 @@ export default function StudentDetailPage() {
           typeof detailData.user.featured_image === "object" &&
           detailData.user.featured_image.path
         ) {
-          // Object format: { path: "url" } or { path: ["url"] }
           if (Array.isArray(detailData.user.featured_image.path)) {
             setAvatarUrl(detailData.user.featured_image.path[0]);
           } else if (typeof detailData.user.featured_image.path === "string") {
             setAvatarUrl(detailData.user.featured_image.path);
           }
         } else if (typeof detailData.user.featured_image === "string") {
-          // Fallback: if it's just a media ID string, try to get media details
           try {
             const mediaPath = await getMediaDetails(
               detailData.user.featured_image
@@ -537,17 +471,12 @@ export default function StudentDetailPage() {
       // Check if student has a parent and fetch parent information
       if (detailData?.user?.parent_id && detailData.user.parent_id.length > 0) {
         try {
-          // Fetch parent details based on parent_id
-          const parentId = detailData.user.parent_id[0]; // Assuming parent_id is an array and we use the first one
-
-          // Using fetchStudents to get all members, then filter by parent ID
+          const parentId = detailData.user.parent_id[0];
           const allMembers = await fetchStudents({
             tenantId,
             token,
             role: "member",
           });
-
-          // Find parent from members based on parent_id
           const parentData = allMembers.find(
             (member: any) => member.user?._id === parentId
           );
@@ -561,8 +490,6 @@ export default function StudentDetailPage() {
       }
     } catch (e: any) {
       console.error("Error fetching student detail:", e);
-
-      // Check if it's a 404 error (student not found)
       if (
         e.message?.includes("404") ||
         e.message?.includes("không tìm thấy") ||
@@ -637,169 +564,152 @@ export default function StudentDetailPage() {
       {/* Student Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
-          <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle>Chỉnh sửa thông tin học viên</DialogTitle>
-              <DialogDescription>
-                Cập nhật thông tin cho học viên {detail.user?.username}. Để
-                trống mật khẩu nếu không muốn thay đổi.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="username" className="text-right">
-                  Tên đăng nhập
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="username"
-                    name="username"
-                    value={formData.username}
-                    onChange={handleInputChange}
-                    className={
-                      formErrors.username
-                        ? "col-span-3 border-red-500"
-                        : "col-span-3"
-                    }
-                    required
-                  />
-                  {formErrors.username && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.username}
-                    </p>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Chỉnh sửa thông tin học viên</DialogTitle>
+                <DialogDescription>
+                  Cập nhật thông tin cho học viên {detail.user?.username}. Để
+                  trống mật khẩu nếu không muốn thay đổi.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">
+                        Tên đăng nhập
+                      </FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input {...field} placeholder="Nhập tên đăng nhập" />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={
-                      formErrors.email
-                        ? "col-span-3 border-red-500"
-                        : "col-span-3"
-                    }
-                    required
-                  />
-                  {formErrors.email && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.email}
-                    </p>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">Email</FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="Nhập email"
+                          />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Số điện thoại
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className={
-                      formErrors.phone
-                        ? "col-span-3 border-red-500"
-                        : "col-span-3"
-                    }
-                  />
-                  {formErrors.phone && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.phone}
-                    </p>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">
+                        Số điện thoại
+                      </FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Nhập số điện thoại (10 số)"
+                          />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">
-                  Địa chỉ
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className={
-                      formErrors.address
-                        ? "col-span-3 border-red-500"
-                        : "col-span-3"
-                    }
-                  />
-                  {formErrors.address && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.address}
-                    </p>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">Địa chỉ</FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input {...field} placeholder="Nhập địa chỉ" />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="birthday" className="text-right">
-                  Ngày sinh
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="birthday"
-                    name="birthday"
-                    type="date"
-                    value={formData.birthday}
-                    onChange={handleInputChange}
-                    className={formErrors.birthday ? "border-red-500" : ""}
-                  />
-                  {formErrors.birthday && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.birthday}
-                    </p>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="birthday"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">Ngày sinh</FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input {...field} type="date" />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="password" className="text-right">
-                  Mật khẩu mới
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={
-                      formErrors.password
-                        ? "col-span-3 border-red-500"
-                        : "col-span-3"
-                    }
-                    placeholder="Để trống nếu không thay đổi"
-                  />
-                  {formErrors.password && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.password}
-                    </p>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">Mật khẩu mới</FormLabel>
+                      <div className="col-span-3">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="Để trống nếu không thay đổi"
+                          />
+                        </FormControl>
+                        <FormMessage className="mt-1" />
+                      </div>
+                    </FormItem>
                   )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="is_active" className="text-right">
-                  Trạng thái hoạt động
-                </Label>
-                <div className="flex items-center space-x-2 col-span-3">
-                  <Switch
-                    id="is_active"
-                    name="is_active"
-                    checked={formData.is_active}
-                    onCheckedChange={handleSwitchChange}
-                  />
-                  <Label htmlFor="is_active" className="cursor-pointer">
-                    {formData.is_active ? "Đang hoạt động" : "Không hoạt động"}
-                  </Label>
-                </div>
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
+                      <FormLabel className="text-right">
+                        Trạng thái hoạt động
+                      </FormLabel>
+                      <div className="col-span-3 flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <Label
+                          htmlFor="is_active"
+                          className="cursor-pointer font-normal"
+                        >
+                          {field.value ? "Đang hoạt động" : "Không hoạt động"}
+                        </Label>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Avatar Upload Field */}
@@ -847,35 +757,36 @@ export default function StudentDetailPage() {
                   </label>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsEditModalOpen(false)}
-                disabled={isSubmitting}
-              >
-                Hủy
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Lưu thay đổi
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Đang lưu...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Lưu thay đổi
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 

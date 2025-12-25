@@ -36,6 +36,27 @@ import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const newsFormSchema = z.object({
+  title: z.string().min(1, "Vui lòng nhập tiêu đề tin tức"),
+  content: z.string().min(1, "Vui lòng nhập nội dung tin tức"),
+  type: z.array(z.string()).min(1, "Vui lòng chọn ít nhất một đối tượng xem"),
+  coverFile: z.instanceof(File).nullable().optional(),
+});
+
+type NewsFormValues = z.infer<typeof newsFormSchema>;
+
 export default function NewsListPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -45,23 +66,24 @@ export default function NewsListPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Separate state for search
-
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    type: [] as string[],
-    coverFile: null as File | null,
-  });
+  const [isSearching, setIsSearching] = useState(false);
 
   // Image preview
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const form = useForm<NewsFormValues>({
+    resolver: zodResolver(newsFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      type: [],
+      coverFile: null,
+    },
+  });
+
   // Extract fetch logic with search support
   const fetchNews = async (searchValue?: string, isInitialLoad = false) => {
     try {
-      // Only show full loading on initial load, use isSearching for searches
       if (isInitialLoad) {
         setIsLoading(true);
       } else if (searchValue !== undefined) {
@@ -71,7 +93,6 @@ export default function NewsListPage() {
       let searchParams: Record<string, string> | undefined;
 
       if (searchValue && searchValue.trim()) {
-        // Use searchOr pattern for consistency
         searchParams = {
           "searchOr[title:contains]": searchValue.trim(),
         };
@@ -94,7 +115,7 @@ export default function NewsListPage() {
   };
 
   useEffect(() => {
-    fetchNews(undefined, true); // Initial load
+    fetchNews(undefined, true);
   }, []);
 
   // Handle refresh
@@ -113,52 +134,17 @@ export default function NewsListPage() {
     }
   };
 
-  // Handle form input changes
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // Handle file upload
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, coverFile: file }));
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   // Handle type selection
   const handleTypeChange = (type: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      type: checked
-        ? [...prev.type, type]
-        : prev.type.filter((t) => t !== type),
-    }));
+    const currentTypes = form.getValues("type");
+    const newTypes = checked
+      ? [...currentTypes, type]
+      : currentTypes.filter((t) => t !== type);
+    form.setValue("type", newTypes, { shouldValidate: true });
   };
 
   // Create news article
-  const handleCreateNews = async () => {
-    if (
-      !formData.title.trim() ||
-      !formData.content.trim() ||
-      formData.type.length === 0
-    ) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onSubmit = async (data: NewsFormValues) => {
     setIsCreating(true);
     try {
       const token = getAuthToken();
@@ -171,11 +157,11 @@ export default function NewsListPage() {
       let coverId = null;
 
       // Upload image if provided
-      if (formData.coverFile) {
+      if (data.coverFile) {
         const uploadResult = await uploadMedia({
-          file: formData.coverFile,
-          title: formData.title,
-          alt: formData.title,
+          file: data.coverFile,
+          title: data.title,
+          alt: data.title,
           tenantId,
           token,
         });
@@ -184,21 +170,16 @@ export default function NewsListPage() {
 
       // Create news article
       const requestBody = {
-        title: formData.title,
-        content: formData.content,
-        type: formData.type,
+        title: data.title,
+        content: data.content,
+        type: data.type,
         ...(coverId && { cover: [coverId] }),
       };
 
       await createNews(requestBody, token, tenantId);
 
       // Reset form and close modal
-      setFormData({
-        title: "",
-        content: "",
-        type: [],
-        coverFile: null,
-      });
+      form.reset();
       setImagePreview(null);
       setIsModalOpen(false);
 
@@ -245,13 +226,13 @@ export default function NewsListPage() {
 
   if (isLoading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải tin tức...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -261,31 +242,28 @@ export default function NewsListPage() {
 
   return (
     <>
-      <div className='mb-6'>
-        <Button
-          variant='ghost'
-          asChild
-        >
+      <div className="mb-6">
+        <Button variant="ghost" asChild>
           <a
-            href='/dashboard/manager'
-            className='inline-flex items-center text-sm font-medium'
+            href="/dashboard/manager"
+            className="inline-flex items-center text-sm font-medium"
           >
-            <ArrowLeft className='mr-1 h-4 w-4' />
+            <ArrowLeft className="mr-1 h-4 w-4" />
             Quay lại Dashboard
           </a>
         </Button>
       </div>
 
-      <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className='text-3xl font-bold'>Quản lý Tin tức</h1>
-          <p className='text-muted-foreground'>
+          <h1 className="text-3xl font-bold">Quản lý Tin tức</h1>
+          <p className="text-muted-foreground">
             Quản lý tin tức, thông báo và sự kiện của trung tâm
           </p>
         </div>
-        <div className='flex gap-2'>
+        <div className="flex gap-2">
           <Button
-            variant='outline'
+            variant="outline"
             onClick={handleRefresh}
             disabled={refreshing || isLoading}
           >
@@ -294,240 +272,242 @@ export default function NewsListPage() {
             />
             Làm mới
           </Button>
-          <Dialog
-            open={isModalOpen}
-            onOpenChange={setIsModalOpen}
-          >
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className='mr-2 h-4 w-4' /> Tạo tin tức
+                <Plus className="mr-2 h-4 w-4" /> Tạo tin tức
               </Button>
             </DialogTrigger>
-            <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Tạo tin tức mới</DialogTitle>
                 <DialogDescription>
                   Nhập thông tin để tạo tin tức, thông báo hoặc sự kiện mới
                 </DialogDescription>
               </DialogHeader>
-              <div className='space-y-6'>
-                <div className='space-y-2'>
-                  <Label htmlFor='title'>Tiêu đề *</Label>
-                  <Input
-                    id='title'
-                    placeholder='Nhập tiêu đề tin tức...'
-                    value={formData.title}
-                    onChange={(e) => handleInputChange("title", e.target.value)}
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='content'>Nội dung *</Label>
-                  <Textarea
-                    id='content'
-                    placeholder='Nhập nội dung tin tức...'
-                    value={formData.content}
-                    onChange={(e) =>
-                      handleInputChange("content", e.target.value)
-                    }
-                    rows={6}
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label>Đối tượng xem tin tức *</Label>
-                  <div className='flex flex-col gap-3'>
-                    <div className='flex items-center space-x-2'>
-                      <Checkbox
-                        id='public'
-                        checked={formData.type.includes("public")}
-                        onCheckedChange={(checked) =>
-                          handleTypeChange("public", checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='public'
-                        className='cursor-pointer'
-                      >
-                        Công khai (Tất cả mọi người)
-                      </Label>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <Checkbox
-                        id='manager'
-                        checked={formData.type.includes("manager")}
-                        onCheckedChange={(checked) =>
-                          handleTypeChange("manager", checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='manager'
-                        className='cursor-pointer'
-                      >
-                        Quản lý (Chỉ quản lý có thể xem)
-                      </Label>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <Checkbox
-                        id='instructor'
-                        checked={formData.type.includes("instructor")}
-                        onCheckedChange={(checked) =>
-                          handleTypeChange("instructor", checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='instructor'
-                        className='cursor-pointer'
-                      >
-                        Huấn luyện viên (Quản lý và HLV có thể xem)
-                      </Label>
-                    </div>
-                    <div className='flex items-center space-x-2'>
-                      <Checkbox
-                        id='member'
-                        checked={formData.type.includes("member")}
-                        onCheckedChange={(checked) =>
-                          handleTypeChange("member", checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor='member'
-                        className='cursor-pointer'
-                      >
-                        Học viên (Quản lý và học viên có thể xem)
-                      </Label>
-                    </div>
-                  </div>
-                  <p className='text-xs text-muted-foreground mt-2'>
-                    Chọn ít nhất một đối tượng. Có thể chọn nhiều để nhiều nhóm
-                    cùng xem.
-                  </p>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='cover'>Ảnh bìa</Label>
-                  <div className='flex items-center gap-4'>
-                    <Input
-                      id='cover'
-                      type='file'
-                      accept='image/*'
-                      onChange={handleFileChange}
-                      className='hidden'
-                    />
-                    <Button
-                      type='button'
-                      variant='outline'
-                      onClick={() => document.getElementById("cover")?.click()}
-                    >
-                      <Upload className='mr-2 h-4 w-4' />
-                      Chọn ảnh
-                    </Button>
-                    {imagePreview && (
-                      <div className='relative'>
-                        <img
-                          src={imagePreview}
-                          alt='Preview'
-                          className='h-20 w-20 object-cover rounded'
-                        />
-                        <Button
-                          size='icon'
-                          variant='destructive'
-                          className='absolute -top-2 -right-2 h-6 w-6'
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              coverFile: null,
-                            }));
-                            setImagePreview(null);
-                          }}
-                        >
-                          <X className='h-3 w-3' />
-                        </Button>
-                      </div>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tiêu đề *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Nhập tiêu đề tin tức..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </div>
-                </div>
-              </div>
+                  />
 
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Hủy
-                </Button>
-                <Button
-                  onClick={handleCreateNews}
-                  disabled={isCreating}
-                >
-                  {isCreating ? "Đang tạo..." : "Tạo tin tức"}
-                </Button>
-              </DialogFooter>
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nội dung *</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Nhập nội dung tin tức..."
+                            rows={6}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>Đối tượng xem tin tức *</FormLabel>
+                        <div className="flex flex-col gap-3">
+                          {["public", "manager", "instructor", "member"].map(
+                            (type) => (
+                              <div
+                                key={type}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={type}
+                                  checked={form.watch("type").includes(type)}
+                                  onCheckedChange={(checked) =>
+                                    handleTypeChange(type, checked as boolean)
+                                  }
+                                />
+                                <Label
+                                  htmlFor={type}
+                                  className="cursor-pointer"
+                                >
+                                  {type === "public"
+                                    ? "Công khai (Tất cả mọi người)"
+                                    : type === "manager"
+                                    ? "Quản lý (Chỉ quản lý có thể xem)"
+                                    : type === "instructor"
+                                    ? "Huấn luyện viên (Quản lý và HLV có thể xem)"
+                                    : "Học viên (Quản lý và học viên có thể xem)"}
+                                </Label>
+                              </div>
+                            )
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="coverFile"
+                    render={({ field: { value, onChange, ...field } }) => (
+                      <FormItem>
+                        <FormLabel>Ảnh bìa</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-4">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="cover"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  onChange(file);
+                                  const reader = new FileReader();
+                                  reader.onload = (e) => {
+                                    setImagePreview(e.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                document.getElementById("cover")?.click()
+                              }
+                            >
+                              <Upload className="mr-2 h-4 w-4" />
+                              Chọn ảnh
+                            </Button>
+                            {imagePreview && (
+                              <div className="relative">
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="h-20 w-20 object-cover rounded"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute -top-2 -right-2 h-6 w-6"
+                                  type="button"
+                                  onClick={() => {
+                                    onChange(null);
+                                    setImagePreview(null);
+                                  }}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      Hủy
+                    </Button>
+                    <Button type="submit" disabled={isCreating}>
+                      {isCreating ? "Đang tạo..." : "Tạo tin tức"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className='grid gap-4 md:grid-cols-4 mt-6'>
+      <div className="grid gap-4 md:grid-cols-4 mt-6">
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Tổng số tin</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Tổng số tin</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='flex items-center gap-2'>
-              <Megaphone className='h-8 w-8 text-primary' />
-              <div className='text-2xl font-bold'>{newsItems.length}</div>
+            <div className="flex items-center gap-2">
+              <Megaphone className="h-8 w-8 text-primary" />
+              <div className="text-2xl font-bold">{newsItems.length}</div>
             </div>
-            <p className='text-xs text-muted-foreground'>
+            <p className="text-xs text-muted-foreground">
               Tổng số tin tức hiện có
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Công khai</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Công khai</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
+            <div className="text-2xl font-bold">
               {newsItems.filter((n) => n.type.includes("public")).length}
             </div>
-            <p className='text-xs text-muted-foreground'>
+            <p className="text-xs text-muted-foreground">
               Tin công khai cho tất cả
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
               Huấn luyện viên
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
+            <div className="text-2xl font-bold">
               {newsItems.filter((n) => n.type.includes("instructor")).length}
             </div>
-            <p className='text-xs text-muted-foreground'>Tin cho HLV</p>
+            <p className="text-xs text-muted-foreground">Tin cho HLV</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className='pb-2'>
-            <CardTitle className='text-sm font-medium'>Học viên</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Học viên</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>
+            <div className="text-2xl font-bold">
               {newsItems.filter((n) => n.type.includes("member")).length}
             </div>
-            <p className='text-xs text-muted-foreground'>Tin cho học viên</p>
+            <p className="text-xs text-muted-foreground">Tin cho học viên</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Data Table */}
-      <Card className='mt-8'>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle>Danh sách tin tức</CardTitle>
         </CardHeader>
@@ -535,10 +515,10 @@ export default function NewsListPage() {
           <DataTable
             columns={columns}
             data={newsItems}
-            searchKey='title'
-            searchPlaceholder='Tìm kiếm theo tiêu đề...'
+            searchKey="title"
+            searchPlaceholder="Tìm kiếm theo tiêu đề..."
             onServerSearch={handleServerSearch}
-            emptyMessage='Không tìm thấy tin tức nào.'
+            emptyMessage="Không tìm thấy tin tức nào."
           />
         </CardContent>
       </Card>
