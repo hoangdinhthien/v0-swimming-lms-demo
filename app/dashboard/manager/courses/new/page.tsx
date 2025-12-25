@@ -575,6 +575,7 @@ export default function NewCoursePage() {
                         <FormControl>
                           <Input
                             type='number'
+                            min='1'
                             placeholder='Nhập số buổi học'
                             {...field}
                             onChange={(e) => {
@@ -702,6 +703,7 @@ export default function NewCoursePage() {
                           <FormControl>
                             <Input
                               type='number'
+                              min='1'
                               placeholder={`Nhập số học viên tối đa (mặc định ${maxLimit})`}
                               {...field}
                               onChange={(e) => {
