@@ -923,8 +923,9 @@ export function AddClassForm({
             </SelectContent>
           </Select>
 
-          {/* Show schedule conflict warning for selected instructor */}
-          {selectedInstructor &&
+          {/* Inline schedule conflict alert temporarily hidden — validation still runs */}
+          {false &&
+            selectedInstructor &&
             busyInstructorIds.includes(selectedInstructor) && (
               <Alert
                 variant='destructive'

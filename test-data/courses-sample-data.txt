@@ -7,7 +7,7 @@ KHÓA HỌC #1 - Bơi Cơ Bản Cho Trẻ Em
 --------------------------------------------------------------------------------
 Tên khóa học: Khóa Học Bơi Cơ Bản Dành Cho Trẻ Em 6-10 Tuổi
 Mô tả: Khóa học giúp trẻ làm quen với môi trường nước, học các kỹ thuật bơi cơ bản như chân bơi, tay bơi, và thở đúng cách. Phù hợp cho trẻ mới bắt đầu.
-Số buổi học: 12
+Số buổi học: 6
 Thời lượng mỗi buổi: 45 phút
 Giá: 2500000 VNĐ
 Số học viên tối đa: 10
@@ -38,7 +38,7 @@ Nội dung chi tiết:
       - Đánh giá nhịp điệu: Select (Tốt/Trung bình/Cần cải thiện)
       - Nhận xét: Text
     
-  • Buổi 6-12: Luyện tập và hoàn thiện
+  • Buổi 6: Luyện tập và hoàn thiện
     Mô tả: Luyện tập các kỹ thuật đã học và hoàn thiện động tác
 
 --------------------------------------------------------------------------------
