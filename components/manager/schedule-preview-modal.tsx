@@ -765,7 +765,15 @@ export function SchedulePreviewModal({
             };
           });
 
-          parsedPreview[classId] = enrichedSchedules;
+          // Ensure schedules are in chronological order (oldest -> newest)
+          const sortedEnriched = enrichedSchedules
+            .slice()
+            .sort(
+              (a: any, b: any) =>
+                new Date(a.date).getTime() - new Date(b.date).getTime()
+            );
+
+          parsedPreview[classId] = sortedEnriched;
         }
       });
 
