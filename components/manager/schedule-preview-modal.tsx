@@ -242,6 +242,10 @@ export function SchedulePreviewModal({
   const [previewSchedules, setPreviewSchedules] = React.useState<{
     [classId: string]: PreviewSchedule[];
   }>({});
+  // Track duplicate conflicts: scheduleKey -> true when duplicate (same date+slot+instructor)
+  const [duplicateConflicts, setDuplicateConflicts] = React.useState<{
+    [scheduleKey: string]: boolean;
+  }>({});
   const [poolCapacities, setPoolCapacities] = React.useState<{
     [scheduleKey: string]: PoolCapacityInfo[];
   }>({});
@@ -272,6 +276,49 @@ export function SchedulePreviewModal({
     []
   );
   const [loadingInstructors, setLoadingInstructors] = React.useState(false);
+  const [legendAccordionOpen, setLegendAccordionOpen] = React.useState(false);
+
+  // When previewSchedules change, detect duplicates (same date + slot + instructor)
+  React.useEffect(() => {
+    const conflicts: { [k: string]: boolean } = {};
+
+    // Build map from signature -> array of scheduleKeys
+    const signatureMap: { [sig: string]: string[] } = {};
+
+    Object.entries(previewSchedules).forEach(([classId, schedules]) => {
+      schedules.forEach((schedule, idx) => {
+        // Normalize date to YYYY-MM-DD
+        const rawDate = schedule?.date || "";
+        const dateOnly = rawDate.split("T")[0];
+
+        // Normalize slot identifier: prefer _id then id then title+time
+        const slotId =
+          schedule?.slot?._id ||
+          (schedule?.slot as any)?.id ||
+          `${schedule?.slot?.title || ""}_${schedule?.slot?.start_time || ""}`;
+
+        // Normalize instructor identifier: prefer _id then id then username
+        const instrId =
+          schedule?.instructor?._id ||
+          (schedule?.instructor as any)?.id ||
+          schedule?.instructor?.username ||
+          String(schedule?.instructor || "");
+
+        const sig = `${dateOnly}::${slotId}::${instrId}`;
+        const key = `${classId}-${idx}`;
+        if (!signatureMap[sig]) signatureMap[sig] = [];
+        signatureMap[sig].push(key);
+      });
+    });
+
+    Object.values(signatureMap).forEach((keys) => {
+      if (keys.length > 1) {
+        keys.forEach((k) => (conflicts[k] = true));
+      }
+    });
+
+    setDuplicateConflicts(conflicts);
+  }, [previewSchedules]);
 
   // Reset state when modal closes
   React.useEffect(() => {
@@ -288,6 +335,7 @@ export function SchedulePreviewModal({
       setSelectedScheduleKey(null);
       setEditingSchedules({});
       setAvailableInstructors([]);
+      setLegendAccordionOpen(false);
       setError(null);
     }
   }, [open]);
@@ -1296,10 +1344,13 @@ export function SchedulePreviewModal({
         );
         if (!selectedPool) return false;
         // No age warning, no instructor conflict, no capacity warning
+        // Also require no duplicate conflicts
+        const hasDuplicate = !!duplicateConflicts[scheduleKey];
         return (
           !selectedPool.hasAgeWarning &&
           !selectedPool.hasInstructorConflict &&
-          !selectedPool.hasCapacityWarning
+          !selectedPool.hasCapacityWarning &&
+          !hasDuplicate
         );
       })
     );
@@ -1667,46 +1718,68 @@ export function SchedulePreviewModal({
                 </Alert>
 
                 {/* Color Legend */}
-                <Alert
-                  variant='destructive'
-                  className='bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800'
+                <Accordion
+                  type='single'
+                  collapsible
+                  value={legendAccordionOpen ? "legend" : ""}
+                  onValueChange={(value) =>
+                    setLegendAccordionOpen(value === "legend")
+                  }
                 >
-                  <AlertCircle className='h-4 w-4 text-amber-600' />
-                  <AlertDescription className='text-amber-800 dark:text-amber-200'>
-                    <div className='font-medium mb-1'>Chú thích màu sắc:</div>
-                    <ul className='text-xs space-y-1 ml-0'>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-green-600 flex-shrink-0' />
-                        <span>Xanh lá: Đã chọn hồ bơi</span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
-                        <span>Vàng: Có cảnh báo (Độ tuổi không phù hợp)</span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
-                        <span>
-                          Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
-                        </span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-orange-500 flex-shrink-0' />
-                        <span>
-                          Cam: Có vấn đề cần chỉnh sửa (không có hồ bơi hoặc HLV
-                          trùng lịch)
-                        </span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-blue-500 flex-shrink-0' />
-                        <span>Xanh dương: Có thể chỉnh sửa (ấn nút edit)</span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
-                        <span>Xám: Chưa chọn hồ bơi</span>
-                      </li>
-                    </ul>
-                  </AlertDescription>
-                </Alert>
+                  <AccordionItem
+                    value='legend'
+                    className='border-amber-200'
+                  >
+                    <AccordionTrigger className='text-sm font-medium text-amber-800 dark:text-amber-200 hover:no-underline'>
+                      Chú thích màu sắc
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <Alert
+                        variant='destructive'
+                        className='bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800 border-0'
+                      >
+                        <AlertCircle className='h-4 w-4 text-amber-600' />
+                        <AlertDescription className='text-amber-800 dark:text-amber-200'>
+                          <ul className='text-xs space-y-1 ml-0'>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-green-600 flex-shrink-0' />
+                              <span>Xanh lá: Đã chọn hồ bơi</span>
+                            </li>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-amber-500 flex-shrink-0' />
+                              <span>
+                                Vàng: Có cảnh báo (Độ tuổi không phù hợp)
+                              </span>
+                            </li>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-red-600 flex-shrink-0' />
+                              <span>
+                                Đỏ: Có xung đột (Huấn luyện viên trùng lịch)
+                              </span>
+                            </li>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-orange-500 flex-shrink-0' />
+                              <span>
+                                Cam: Có vấn đề cần chỉnh sửa (không có hồ bơi
+                                hoặc HLV trùng lịch)
+                              </span>
+                            </li>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-blue-500 flex-shrink-0' />
+                              <span>
+                                Xanh dương: Có thể chỉnh sửa (ấn nút edit)
+                              </span>
+                            </li>
+                            <li className='flex items-center gap-2'>
+                              <Circle className='h-3 w-3 text-gray-600 flex-shrink-0' />
+                              <span>Xám: Chưa chọn hồ bơi</span>
+                            </li>
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
                 {Object.keys(previewSchedules).length === 0 ? (
                   <div className='text-center py-8 text-muted-foreground'>
@@ -1890,13 +1963,21 @@ export function SchedulePreviewModal({
                                       openPoolPopover === scheduleKey;
                                     const isEditing =
                                       editingSchedules[scheduleKey];
+                                    const hasDuplicate =
+                                      !!duplicateConflicts[scheduleKey];
                                     const requiresEditing =
-                                      needsEditing(scheduleKey);
+                                      needsEditing(scheduleKey) || hasDuplicate;
 
                                     // Determine card color
                                     let cardBorderColor = "border-border";
                                     let cardBgColor = "bg-muted/30";
-                                    if (selectedPoolId) {
+
+                                    // Duplicate conflicts should take highest priority
+                                    if (hasDuplicate) {
+                                      cardBorderColor = "border-red-500";
+                                      cardBgColor =
+                                        "bg-red-50 dark:bg-red-950/20";
+                                    } else if (selectedPoolId) {
                                       if (hasConflict) {
                                         cardBorderColor = "border-red-400";
                                         cardBgColor =
@@ -2438,25 +2519,32 @@ export function SchedulePreviewModal({
                                             </Popover>
 
                                             {/* Warnings */}
-                                            {selectedPoolId &&
-                                              (hasWarning ||
-                                                selectedPool?.hasCapacityWarning) && (
-                                                <div className='mt-2 text-xs space-y-0.5'>
-                                                  {hasWarning && (
-                                                    <div className='text-amber-600 flex items-center gap-1'>
-                                                      <AlertCircle className='h-3 w-3' />
-                                                      Độ tuổi không phù hợp
-                                                    </div>
-                                                  )}
-                                                  {selectedPool?.hasCapacityWarning && (
-                                                    <div className='text-amber-600 flex items-center gap-1'>
-                                                      <AlertCircle className='h-3 w-3' />
-                                                      Sức chứa hồ bơi nhỏ hơn số
-                                                      học viên tối đa
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )}
+                                            {(hasDuplicate ||
+                                              (selectedPoolId &&
+                                                (hasWarning ||
+                                                  selectedPool?.hasCapacityWarning))) && (
+                                              <div className='mt-2 text-xs space-y-0.5'>
+                                                {hasDuplicate && (
+                                                  <div className='text-red-600 flex items-center gap-1'>
+                                                    <AlertCircle className='h-3 w-3' />
+                                                    Trùng buổi học
+                                                  </div>
+                                                )}
+                                                {hasWarning && (
+                                                  <div className='text-amber-600 flex items-center gap-1'>
+                                                    <AlertCircle className='h-3 w-3' />
+                                                    Độ tuổi không phù hợp
+                                                  </div>
+                                                )}
+                                                {selectedPool?.hasCapacityWarning && (
+                                                  <div className='text-amber-600 flex items-center gap-1'>
+                                                    <AlertCircle className='h-3 w-3' />
+                                                    Sức chứa hồ bơi nhỏ hơn số
+                                                    học viên tối đa
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
 
                                             {/* Edit prompt for cases that need editing */}
                                             {requiresEditing && (
