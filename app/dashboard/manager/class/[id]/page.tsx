@@ -941,9 +941,9 @@ export default function ClassDetailPage() {
             <Card className='bg-card/80 backdrop-blur-sm border shadow-xl'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-3'>
-                  <div className='p-2 bg-primary rounded-lg'>
+                  {/* <div className='p-2 bg-primary rounded-lg'>
                     <BookOpen className='h-5 w-5 text-primary-foreground' />
-                  </div>
+                  </div> */}
                   Thông tin khóa học
                 </CardTitle>
               </CardHeader>
@@ -960,11 +960,11 @@ export default function ClassDetailPage() {
 
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='flex items-center gap-3 p-4 bg-muted/50 rounded-lg'>
-                    <div className='p-2 bg-primary rounded-lg'>
+                    {/* <div className='p-2 bg-primary rounded-lg'>
                       <Clock className='h-4 w-4 text-primary-foreground' />
-                    </div>
+                    </div> */}
                     <div>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-md text-muted-foreground'>
                         Số buổi học
                       </p>
                       <p className='font-semibold'>
@@ -975,11 +975,11 @@ export default function ClassDetailPage() {
                     </div>
                   </div>
                   <div className='flex items-center gap-3 p-4 bg-muted/50 rounded-lg'>
-                    <div className='p-2 bg-primary rounded-lg'>
+                    {/* <div className='p-2 bg-primary rounded-lg'>
                       <Calendar className='h-4 w-4 text-primary-foreground' />
-                    </div>
+                    </div> */}
                     <div>
-                      <p className='text-sm text-muted-foreground'>
+                      <p className='text-md text-muted-foreground'>
                         Thời lượng mỗi buổi
                       </p>
                       <p className='font-semibold'>
@@ -989,11 +989,11 @@ export default function ClassDetailPage() {
                     </div>
                   </div>
                   <div className='flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
-                    <div className='p-2 bg-blue-600 rounded-lg'>
+                    {/* <div className='p-2 bg-blue-600 rounded-lg'>
                       <Calendar className='h-4 w-4 text-white' />
-                    </div>
+                    </div> */}
                     <div>
-                      <p className='text-sm text-blue-700 dark:text-blue-300'>
+                      <p className='text-md text-blue-700 dark:text-blue-300'>
                         Buổi học đã qua
                       </p>
                       <p className='font-semibold text-blue-600 dark:text-blue-400'>
@@ -1002,11 +1002,11 @@ export default function ClassDetailPage() {
                     </div>
                   </div>
                   <div className='flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg'>
-                    <div className='p-2 bg-amber-600 rounded-lg'>
+                    {/* <div className='p-2 bg-amber-600 rounded-lg'>
                       <Clock className='h-4 w-4 text-white' />
-                    </div>
+                    </div> */}
                     <div>
-                      <p className='text-sm text-amber-700 dark:text-amber-300'>
+                      <p className='text-md text-amber-700 dark:text-amber-300'>
                         Buổi học còn lại
                       </p>
                       <p className='font-semibold text-amber-600 dark:text-amber-400'>
@@ -1108,9 +1108,9 @@ export default function ClassDetailPage() {
             <Card className='bg-card/80 backdrop-blur-sm border shadow-xl'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-3'>
-                  <div className='p-2 bg-primary rounded-lg'>
+                  {/* <div className='p-2 bg-primary rounded-lg'>
                     <Users className='h-5 w-5 text-primary-foreground' />
-                  </div>
+                  </div> */}
                   Thông tin lớp học
                 </CardTitle>
               </CardHeader>{" "}
