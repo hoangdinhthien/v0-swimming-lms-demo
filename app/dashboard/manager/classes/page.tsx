@@ -99,7 +99,7 @@ export default function ClassesPage() {
   const averageStudentsPerClass =
     totalClasses > 0 ? Math.round(totalStudents / totalClasses) : 0;
   const activeClasses = allClasses.filter(
-    (classItem) => classItem.course.is_active
+    (classItem) => classItem.course?.is_active
   ).length;
 
   // Handle refresh

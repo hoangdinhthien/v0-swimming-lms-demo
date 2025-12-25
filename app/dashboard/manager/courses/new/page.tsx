@@ -54,6 +54,7 @@ import { createCourse, type CreateCourseData } from "@/api/manager/courses-api";
 import { fetchAllCourseCategories } from "@/api/manager/course-categories";
 import { fetchAgeRules, type AgeRule } from "@/api/manager/age-types";
 import { uploadMedia } from "@/api/media-api";
+import { fetchStudents } from "@/api/manager/students-api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
@@ -84,6 +85,7 @@ const courseFormSchema = z
       .array(z.string())
       .min(1, " Vui lòng chọn ít nhất 1 danh mục cho khóa học"),
     type: z.enum(["global", "custom"]),
+    member_custom: z.array(z.string()).optional(),
     type_of_age: z
       .array(z.string())
       .min(1, " Vui lòng chọn ít nhất 1 độ tuổi cho khóa học"),
@@ -129,6 +131,14 @@ export default function NewCoursePage() {
   const [loadingAgeRules, setLoadingAgeRules] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Student selection for custom-type courses
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentOptions, setStudentOptions] = useState<
+    Array<{ id: string; label: string }>
+  >([]);
+  const [searchingStudents, setSearchingStudents] = useState(false);
+  const [selectedStudentsData, setSelectedStudentsData] = useState<any[]>([]);
+
   // State to store form_judge for each detail item
   const [detailFormJudges, setDetailFormJudges] = useState<
     Record<number, FormJudgeSchema>
@@ -143,6 +153,7 @@ export default function NewCoursePage() {
     detail: [{ title: "", description: "" }],
     category: [],
     type: "global",
+    member_custom: [],
     type_of_age: [],
     is_active: false,
     price: 0,
@@ -245,6 +256,69 @@ export default function NewCoursePage() {
 
     return () => clearTimeout(timer);
   }, [form.watch("session_number"), replace, detailFormJudges]); // Re-run when session_number changes
+
+  // Fetch students for member_custom when search term changes
+  useEffect(() => {
+    const term = studentSearch;
+    const timer = setTimeout(async () => {
+      const tenantId = getSelectedTenant();
+      const token = getAuthToken();
+      if (!tenantId || !token) return;
+      setSearchingStudents(true);
+      try {
+        const students = await fetchStudents({
+          tenantId,
+          token,
+          role: "member",
+          searchKey: term || undefined,
+        });
+        const searchOpts = (students || [])
+          .map((s: any) => {
+            const label =
+              s.user?.username ||
+              s.username ||
+              s.user?.email ||
+              s.email ||
+              s._id ||
+              "(unknown)";
+            const id = s.user?._id || s._id || "";
+            return { id, label };
+          })
+          .filter((o: any) => o.id);
+
+        // Include selected students in options
+        const selectedOpts = selectedStudentsData
+          .map((m: any) => {
+            const id = m._id || m.user?._id || "";
+            const label =
+              m.user?.username || m.username || m.user?.email || m.email || id;
+            return { id, label };
+          })
+          .filter((o: any) => o.id);
+
+        // Merge and deduplicate
+        const allOpts = [...selectedOpts, ...searchOpts].filter(
+          (o, i, arr) => arr.findIndex((x) => x.id === o.id) === i
+        );
+
+        setStudentOptions(allOpts);
+      } catch (e) {
+        // On error, still include selected students
+        const selectedOpts = selectedStudentsData
+          .map((m: any) => {
+            const id = m._id || m.user?._id || "";
+            const label =
+              m.user?.username || m.username || m.user?.email || m.email || id;
+            return { id, label };
+          })
+          .filter((o: any) => o.id);
+        setStudentOptions(selectedOpts);
+      } finally {
+        setSearchingStudents(false);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [studentSearch, selectedStudentsData]);
 
   // Handle file upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,6 +459,7 @@ export default function NewCoursePage() {
         courseData: {
           ...values,
           type: [values.type], // Convert string to array as required by API
+          member_custom: (values as any).member_custom || [],
           detail: detailWithFormJudge,
         } as any,
         tenantId,
@@ -731,6 +806,35 @@ export default function NewCoursePage() {
                     </FormItem>
                   )}
                 />
+
+                {form.watch("type") === "custom" && (
+                  <FormField
+                    control={form.control}
+                    name='member_custom'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chọn học viên cho loại tùy chỉnh</FormLabel>
+                        <MultiSelect
+                          options={studentOptions}
+                          value={field.value || []}
+                          onChange={(vals) => field.onChange(vals)}
+                          onSearch={(searchTerm) =>
+                            setStudentSearch(searchTerm)
+                          }
+                          placeholder={
+                            searchingStudents
+                              ? "Đang tìm..."
+                              : "Tìm kiếm và chọn học viên"
+                          }
+                        />
+                        <FormDescription>
+                          Chọn một hoặc nhiều học viên cho khóa học tùy chỉnh.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}

@@ -13,6 +13,7 @@ type Props = {
   options: Option[];
   value: string[]; // array of ids
   onChange: (vals: string[]) => void;
+  onSearch?: (searchTerm: string) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -22,6 +23,7 @@ export default function MultiSelect({
   options,
   value,
   onChange,
+  onSearch,
   placeholder = "Chọn danh mục...",
   disabled = false,
   className = "",
@@ -137,7 +139,10 @@ export default function MultiSelect({
   };
 
   return (
-    <div ref={rootRef} className={`relative ${className}`}>
+    <div
+      ref={rootRef}
+      className={`relative ${className}`}
+    >
       <div
         className={`h-12 w-full rounded-md border-2 bg-background px-3 flex items-center gap-2 transition-all duration-200 ${
           disabled
@@ -153,28 +158,28 @@ export default function MultiSelect({
       >
         <div
           ref={containerRef}
-          className="flex-1 flex items-center gap-1.5 overflow-hidden"
+          className='flex-1 flex items-center gap-1.5 overflow-hidden'
         >
           {visibleOptions.map((opt) => (
             <Badge
               key={opt.id}
-              variant="secondary"
-              className="rounded-sm px-1.5 py-0.5 text-xs font-medium flex items-center gap-1 shrink-0 max-w-[150px]"
+              variant='secondary'
+              className='rounded-sm px-1.5 py-0.5 text-xs font-medium flex items-center gap-1 shrink-0 max-w-[150px]'
             >
-              <span className="truncate">{opt.label}</span>
+              <span className='truncate'>{opt.label}</span>
               <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive shrink-0"
+                className='h-3 w-3 cursor-pointer hover:text-destructive shrink-0'
                 onClick={(e) => remove(opt.id, e)}
               />
             </Badge>
           ))}
           {remainingCount > 0 && (
-            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm whitespace-nowrap flex-shrink-0">
+            <span className='text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm whitespace-nowrap flex-shrink-0'>
               +{remainingCount}
             </span>
           )}
           {selectedOptions.length === 0 && !input && (
-            <span className="text-sm text-muted-foreground truncate">
+            <span className='text-sm text-muted-foreground truncate'>
               {placeholder}
             </span>
           )}
@@ -182,31 +187,33 @@ export default function MultiSelect({
             ref={inputRef}
             value={input}
             onChange={(e) => {
-              setInput(e.target.value);
+              const newValue = e.target.value;
+              setInput(newValue);
               setOpen(true);
+              onSearch?.(newValue);
             }}
             onKeyDown={onKeyDown}
-            className="flex-1 border-0 outline-none bg-transparent text-sm py-1 min-w-[50px] shrink-1"
+            className='flex-1 border-0 outline-none bg-transparent text-sm py-1 min-w-[50px] shrink-1'
             disabled={disabled}
           />
         </div>
-        <div className="flex items-center gap-1 opacity-50 flex-shrink-0">
+        <div className='flex items-center gap-1 opacity-50 flex-shrink-0'>
           {selectedOptions.length > 0 && (
             <X
-              className="h-4 w-4 cursor-pointer hover:text-destructive"
+              className='h-4 w-4 cursor-pointer hover:text-destructive'
               onClick={(e) => {
                 e.stopPropagation();
                 onChange([]);
               }}
             />
           )}
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className='h-4 w-4' />
         </div>
       </div>
 
       {open && filtered.length > 0 && (
-        <div className="absolute z-50 mt-2 w-full rounded-md border-2 border-primary/30 bg-popover text-popover-foreground shadow-lg max-h-60 overflow-auto">
-          <ul className="py-1">
+        <div className='absolute z-50 mt-2 w-full rounded-md border-2 border-primary/30 bg-popover text-popover-foreground shadow-lg max-h-60 overflow-auto'>
+          <ul className='py-1'>
             {filtered.map((opt, idx) => {
               const isSelected = value.includes(opt.id);
               return (
@@ -220,10 +227,10 @@ export default function MultiSelect({
                   onMouseEnter={() => setHighlight(idx)}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => toggle(opt.id)}
-                  role="option"
+                  role='option'
                   aria-selected={idx === highlight}
                 >
-                  <span className="truncate mr-2">{opt.label}</span>
+                  <span className='truncate mr-2'>{opt.label}</span>
                   {isSelected && (
                     <Check
                       className={`h-4 w-4 ${

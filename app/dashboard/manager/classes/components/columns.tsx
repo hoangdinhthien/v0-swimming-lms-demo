@@ -58,7 +58,7 @@ export const createColumns = (
     cell: ({ row }) => {
       return (
         <HighlightText
-          text={row.original.course.title}
+          text={row.original.course?.title || "Không có thông tin"}
           searchQuery={searchQuery}
         />
       );
@@ -167,7 +167,7 @@ export const createColumns = (
     ),
     cell: ({ row }) => {
       const scheduledCount = row.original.schedules?.length || 0;
-      const totalSessions = row.original.course.session_number || 0;
+      const totalSessions = row.original.course?.session_number || 0;
 
       if (totalSessions === 0) {
         return (

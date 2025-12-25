@@ -107,6 +107,8 @@ export interface CreateCourseData {
   detail: Array<{ title: string; description: string }>;
   category: string[];
   media?: string[];
+  // Optional: selected student ids for custom-type courses
+  member_custom?: string[];
   is_active: boolean;
   price: number;
   max_member: number;
@@ -168,6 +170,8 @@ export interface UpdateCourseData {
   detail: Array<{ title: string; description: string }>;
   category: string[];
   media?: string[];
+  // Optional: selected student ids for custom-type courses
+  member_custom?: string[];
   is_active: boolean;
   price: number;
   max_member: number;

@@ -456,13 +456,13 @@ export default function StaffDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">
+      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
+        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
+          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
+          <p className='text-lg font-medium text-foreground'>
             Đang tải chi tiết nhân viên...
           </p>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className='text-sm text-muted-foreground mt-2'>
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -476,15 +476,18 @@ export default function StaffDetailPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-96 py-16">
-        <div className="text-center space-y-4">
-          <div className="text-lg font-medium text-foreground mb-2">
+      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
+        <div className='text-center space-y-4'>
+          <div className='text-lg font-medium text-foreground mb-2'>
             Có lỗi xảy ra
           </div>
-          <div className="text-sm text-muted-foreground mb-4">{error}</div>
-          <Button asChild variant="outline">
-            <Link href="/dashboard/manager/staff">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+          <div className='text-sm text-muted-foreground mb-4'>{error}</div>
+          <Button
+            asChild
+            variant='outline'
+          >
+            <Link href='/dashboard/manager/staff'>
+              <ArrowLeft className='mr-2 h-4 w-4' />
               Quay về danh sách nhân viên
             </Link>
           </Button>
@@ -494,58 +497,62 @@ export default function StaffDetailPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 animate-in fade-in duration-500">
+    <div className='container mx-auto py-8 px-4 animate-in fade-in duration-500'>
       {/* Back Button */}
-      <div className="mb-6">
+      <div className='mb-6'>
         <Link
-          href="/dashboard/manager/staff"
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30"
+          href='/dashboard/manager/staff'
+          className='inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors duration-200 hover:bg-muted/30 px-3 py-1.5 rounded-lg border border-muted/30'
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className='h-4 w-4' />
           Quay về danh sách
         </Link>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Hồ sơ nhân viên</h1>
-        <p className="text-muted-foreground mt-1">
+      <div className='mb-6'>
+        <h1 className='text-3xl font-bold'>Hồ sơ nhân viên</h1>
+        <p className='text-muted-foreground mt-1'>
           Thông tin chi tiết và công việc của nhân viên
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
         {/* Profile Section */}
-        <Card className="md:col-span-1 overflow-hidden border-0 shadow-md">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-400 h-24 dark:from-green-600 dark:to-emerald-500"></div>
-          <CardContent className="flex flex-col items-center text-center pt-0 relative pb-6">
+        <Card className='md:col-span-1 overflow-hidden border-0 shadow-md'>
+          <div className='bg-gradient-to-r from-green-500 to-emerald-400 h-24 dark:from-green-600 dark:to-emerald-500'></div>
+          <CardContent className='flex flex-col items-center text-center pt-0 relative pb-6'>
             <UserAvatar
               user={{
                 username: detail.user?.username || "NV",
                 featured_image: detail.user?.featured_image,
               }}
-              className="h-32 w-32 border-4 border-background shadow-md absolute -top-16"
+              className='h-32 w-32 border-4 border-background shadow-md absolute -top-16'
             />
-            <div className="mt-16 w-full">
-              <h2 className="text-2xl font-bold mt-2">
+            <div className='mt-16 w-full'>
+              <h2 className='text-2xl font-bold mt-2'>
                 {detail.user?.username || "Không có tên"}
               </h2>
-              <p className="text-muted-foreground mb-3 italic">
+              <p className='text-muted-foreground mb-3 italic'>
                 {detail.position || "Nhân viên"}
               </p>
 
               {detail.user?.role_front?.length > 0 && (
-                <div className="flex flex-wrap gap-1 justify-center mb-4">
+                <div className='flex flex-wrap gap-1 justify-center mb-4'>
                   {detail.user.role_front.map((role: string) => (
-                    <Badge key={role} variant="secondary" className="text-xs">
+                    <Badge
+                      key={role}
+                      variant='secondary'
+                      className='text-xs'
+                    >
                       {role}
                     </Badge>
                   ))}
                 </div>
               )}
 
-              <div className="mt-3">
+              <div className='mt-3'>
                 <Badge
-                  variant="outline"
+                  variant='outline'
                   className={
                     detail.user?.is_active
                       ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
@@ -558,20 +565,20 @@ export default function StaffDetailPage() {
                 </Badge>
               </div>
 
-              <div className="flex flex-col gap-3 mt-6">
+              <div className='flex flex-col gap-3 mt-6'>
                 <Button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="w-full"
+                  className='w-full'
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className='mr-2 h-4 w-4' />
                   Chỉnh sửa thông tin
                 </Button>
                 <Button
                   onClick={handleOpenPermissionsModal}
-                  variant="outline"
-                  className="w-full"
+                  variant='outline'
+                  className='w-full'
                 >
-                  <UserCheck className="mr-2 h-4 w-4" />
+                  <UserCheck className='mr-2 h-4 w-4' />
                   Quản lý quyền truy cập
                 </Button>
               </div>
@@ -580,55 +587,55 @@ export default function StaffDetailPage() {
         </Card>
 
         {/* Details Section */}
-        <Card className="md:col-span-2 border-0 shadow-md">
-          <CardHeader className="bg-gradient-to-r from-muted/50 to-muted border-b">
-            <CardTitle className="text-xl flex items-center gap-2">
+        <Card className='md:col-span-2 border-0 shadow-md'>
+          <CardHeader className='bg-gradient-to-r from-muted/50 to-muted border-b'>
+            <CardTitle className='text-xl flex items-center gap-2'>
               Chi tiết nhân viên
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
-                <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2">
-                  <User className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
+          <CardContent className='space-y-8 pt-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+              <div className='space-y-5 bg-muted/50 p-5 rounded-lg'>
+                <h3 className='text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2'>
+                  <User className='h-5 w-5 mr-2 text-green-600 dark:text-green-400' />
                   Thông tin cá nhân
                 </h3>
 
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                <div className='flex items-center gap-3'>
+                  <Mail className='h-4 w-4 text-muted-foreground' />
                   <div>
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='text-sm font-medium'>Email</p>
+                    <p className='text-sm text-muted-foreground'>
                       {detail.user?.email || "Không có"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                <div className='flex items-center gap-3'>
+                  <Phone className='h-4 w-4 text-muted-foreground' />
                   <div>
-                    <p className="text-sm font-medium">Số điện thoại</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='text-sm font-medium'>Số điện thoại</p>
+                    <p className='text-sm text-muted-foreground'>
                       {detail.user?.phone || "Không có"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                <div className='flex items-center gap-3'>
+                  <MapPin className='h-4 w-4 text-muted-foreground' />
                   <div>
-                    <p className="text-sm font-medium">Địa chỉ</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='text-sm font-medium'>Địa chỉ</p>
+                    <p className='text-sm text-muted-foreground'>
                       {detail.user.address || "Không có"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className='flex items-center gap-3'>
+                  <Calendar className='h-4 w-4 text-muted-foreground' />
                   <div>
-                    <p className="text-sm font-medium">Ngày tạo tài khoản</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='text-sm font-medium'>Ngày tạo tài khoản</p>
+                    <p className='text-sm text-muted-foreground'>
                       {detail.user?.created_at
                         ? new Date(detail.user.created_at).toLocaleDateString(
                             "vi-VN",
@@ -644,76 +651,27 @@ export default function StaffDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Key className="h-4 w-4 text-muted-foreground" />
+                <div className='flex items-center gap-3'>
+                  <Key className='h-4 w-4 text-muted-foreground' />
                   <div>
-                    <p className="text-sm font-medium">Mã nhân viên</p>
-                    <p className="text-sm text-muted-foreground font-mono">
+                    <p className='text-sm font-medium'>Mã nhân viên</p>
+                    <p className='text-sm text-muted-foreground font-mono'>
                       {detail.user?._id?.slice(-8) || "Không có"}
                     </p>
                   </div>
                 </div>
               </div>
-
-              <div className="space-y-5 bg-muted/50 p-5 rounded-lg">
-                <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 flex items-center mb-4 border-b pb-2">
-                  <Building className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
-                  Thông tin công việc
-                </h3>
-
-                <div className="flex items-center gap-3">
-                  <BadgeIcon className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Chức vụ</p>
-                    <p className="text-sm text-muted-foreground">
-                      {detail.position || "Không có"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* <div className='flex items-center gap-3'>
-                  <Calendar className='h-4 w-4 text-muted-foreground' />
-                  <div>
-                    <p className='text-sm font-medium'>Ngày bắt đầu làm việc</p>
-                    <p className='text-sm text-muted-foreground'>
-                      {detail.start_date
-                        ? new Date(detail.start_date).toLocaleDateString(
-                            "vi-VN",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                              timeZone: "UTC",
-                            }
-                          )
-                        : "Không có"}
-                    </p>
-                  </div>
-                </div> */}
-
-                {detail.bio && (
-                  <div className="flex items-start gap-3">
-                    <User className="h-4 w-4 text-muted-foreground mt-1" />
-                    <div>
-                      <p className="text-sm font-medium">Ghi chú</p>
-                      <p className="text-sm text-muted-foreground">
-                        {detail.bio}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Permissions Section */}
             {detail.permission && detail.permission.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2">
-                  <UserCheck className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
+              <div className='mt-8'>
+                <h3 className='text-lg font-semibold text-blue-800 dark:text-blue-300 flex items-center mb-4 border-b pb-2'>
+                  <UserCheck className='h-5 w-5 mr-2 text-blue-600 dark:text-blue-400' />
                   Quyền truy cập hệ thống
                 </h3>
-                <div className="bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800">
-                  <div className="space-y-4">
+                <div className='bg-blue-50/50 dark:bg-blue-950/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+                  <div className='space-y-4'>
                     {detail.permission
                       .filter(
                         (perm: any) => perm?.module && perm.module.length > 0
@@ -721,12 +679,12 @@ export default function StaffDetailPage() {
                       .map((perm: any, index: number) => (
                         <div
                           key={index}
-                          className="border-b border-blue-200 dark:border-blue-700 last:border-b-0 pb-4 last:pb-0"
+                          className='border-b border-blue-200 dark:border-blue-700 last:border-b-0 pb-4 last:pb-0'
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h4 className="font-medium text-blue-900 dark:text-blue-200">
+                          <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2 mb-2'>
+                                <h4 className='font-medium text-blue-900 dark:text-blue-200'>
                                   {perm.module
                                     .map((module: string) => {
                                       const moduleTranslations: {
@@ -749,15 +707,15 @@ export default function StaffDetailPage() {
                                 </h4>
                                 {perm.noReview && (
                                   <Badge
-                                    variant="outline"
-                                    className="bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700 text-xs"
+                                    variant='outline'
+                                    className='bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/50 dark:text-orange-300 dark:border-orange-700 text-xs'
                                   >
                                     Không cần duyệt
                                   </Badge>
                                 )}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                <span className="font-medium">
+                              <div className='text-sm text-muted-foreground'>
+                                <span className='font-medium'>
                                   Quyền thao tác:{" "}
                                 </span>
                                 {perm.action && Array.isArray(perm.action)
@@ -779,7 +737,7 @@ export default function StaffDetailPage() {
                                   : "Không có"}
                               </div>
                             </div>
-                            <div className="flex flex-wrap gap-1">
+                            <div className='flex flex-wrap gap-1'>
                               {perm.action.map((action: string) => {
                                 const actionConfig: {
                                   [key: string]: {
@@ -816,7 +774,7 @@ export default function StaffDetailPage() {
                                 return (
                                   <Badge
                                     key={action}
-                                    variant="outline"
+                                    variant='outline'
                                     className={`text-xs ${config.className}`}
                                   >
                                     {config.label}
@@ -832,16 +790,19 @@ export default function StaffDetailPage() {
               </div>
             )}
 
-            <Separator className="my-6" />
+            <Separator className='my-6' />
           </CardContent>
         </Card>
       </div>
 
       {/* Edit Staff Dialog */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <Dialog
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+      >
+        <DialogContent className='sm:max-w-[600px] max-h-[90vh] overflow-y-auto'>
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className='text-lg font-semibold'>
               Chỉnh sửa thông tin nhân viên
             </DialogTitle>
             <DialogDescription>
@@ -849,73 +810,59 @@ export default function StaffDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid gap-6 py-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className='space-y-4'
+            >
+              <div className='grid gap-6 py-4'>
                 {/* Avatar Upload Section */}
-                <div className="flex flex-col items-center gap-4">
+                <div className='flex flex-col items-center gap-4'>
                   <UserAvatar
                     user={{
                       username: detail.user?.username || "NV",
                       featured_image: detail.user?.featured_image,
                     }}
-                    className="h-24 w-24 border-4 border-primary/10"
+                    className='h-24 w-24 border-4 border-primary/10'
                   />
-                  <div className="flex flex-col items-center gap-2">
+                  <div className='flex flex-col items-center gap-2'>
                     <Label
-                      htmlFor="avatar-upload"
-                      className="cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      htmlFor='avatar-upload'
+                      className='cursor-pointer inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md text-sm font-medium transition-colors'
                     >
                       {isAvatarUploading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className='h-4 w-4 animate-spin' />
                       ) : (
-                        <Camera className="h-4 w-4" />
+                        <Camera className='h-4 w-4' />
                       )}
                       {isAvatarUploading ? "Đang tải..." : "Thay đổi ảnh"}
                     </Label>
                     <input
-                      id="avatar-upload"
-                      type="file"
-                      accept="image/*"
+                      id='avatar-upload'
+                      type='file'
+                      accept='image/*'
                       onChange={handleAvatarUpload}
-                      className="hidden"
+                      className='hidden'
                       disabled={isAvatarUploading}
                     />
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className='text-xs text-muted-foreground text-center'>
                       JPG, PNG hoặc GIF. Tối đa 5MB.
                     </p>
                   </div>
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <FormField
                     control={form.control}
-                    name="username"
+                    name='username'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Tên nhân viên <span className="text-red-500">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nhập tên đầy đủ" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Email <span className="text-red-500">*</span>
+                          Tên nhân viên <span className='text-red-500'>*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
-                            type="email"
-                            placeholder="example@domain.com"
+                            placeholder='Nhập tên đầy đủ'
                             {...field}
                           />
                         </FormControl>
@@ -926,14 +873,18 @@ export default function StaffDetailPage() {
 
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name='email'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Số điện thoại <span className="text-red-500">*</span>
+                          Email <span className='text-red-500'>*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="0123456789" {...field} />
+                          <Input
+                            type='email'
+                            placeholder='example@domain.com'
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -942,14 +893,36 @@ export default function StaffDetailPage() {
 
                   <FormField
                     control={form.control}
-                    name="birthday"
+                    name='phone'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Ngày sinh <span className="text-red-500">*</span>
+                          Số điện thoại <span className='text-red-500'>*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input
+                            placeholder='0123456789'
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='birthday'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Ngày sinh <span className='text-red-500'>*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type='date'
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -959,13 +932,13 @@ export default function StaffDetailPage() {
 
                 <FormField
                   control={form.control}
-                  name="address"
+                  name='address'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Địa chỉ</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Nhập địa chỉ thường trú"
+                          placeholder='Nhập địa chỉ thường trú'
                           rows={3}
                           {...field}
                         />
@@ -977,14 +950,14 @@ export default function StaffDetailPage() {
 
                 <FormField
                   control={form.control}
-                  name="is_active"
+                  name='is_active'
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">
+                    <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                      <div className='space-y-0.5'>
+                        <FormLabel className='text-base'>
                           Trạng thái hoạt động
                         </FormLabel>
-                        <div className="text-sm text-muted-foreground">
+                        <div className='text-sm text-muted-foreground'>
                           Bật/tắt trạng thái hoạt động của nhân viên
                         </div>
                       </div>
@@ -1001,16 +974,19 @@ export default function StaffDetailPage() {
 
               <DialogFooter>
                 <Button
-                  type="button"
-                  variant="outline"
+                  type='button'
+                  variant='outline'
                   onClick={() => setIsEditModalOpen(false)}
                 >
                   Hủy
                 </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
+                <Button
+                  type='submit'
+                  disabled={form.formState.isSubmitting}
+                >
                   {form.formState.isSubmitting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                       Đang cập nhật...
                     </>
                   ) : (
