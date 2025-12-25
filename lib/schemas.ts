@@ -49,7 +49,10 @@ const validatePhone = (val: string, ctx: z.RefinementCtx) => {
   }
 };
 
-export const phoneSchema = z.string().superRefine(validatePhone);
+export const phoneSchema = z
+  .string()
+  .min(1, "Số điện thoại là bắt buộc")
+  .superRefine(validatePhone);
 
 export const optionalPhoneSchema = z.string().superRefine((val, ctx) => {
   if (!val || val.trim() === "") return;
@@ -75,9 +78,20 @@ export const requiredStringSchema = (message: string) =>
  * @param minAge Minimum age requirement
  * @param entityName Name of the entity (e.g., "Học viên", "Nhân viên") for specific error messages
  */
-export const getBirthDateSchema = (minAge = 0, entityName = "Ngày sinh") =>
+export const getBirthDateSchema = (
+  minAge = 0,
+  entityName = "Ngày sinh",
+  isOptional = false
+) =>
   z.string().superRefine((val, ctx) => {
-    if (!val) return;
+    if (!val || val.trim() === "") {
+      if (isOptional) return;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${entityName} là bắt buộc`,
+      });
+      return;
+    }
 
     const date = new Date(val);
     const today = new Date();

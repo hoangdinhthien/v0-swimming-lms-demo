@@ -186,32 +186,32 @@ export default function DashboardLayout({
       {
         name: "Dashboard",
         href: "/dashboard/manager",
-        icon: <Home className='h-4 w-4' />,
+        icon: <Home className="h-4 w-4" />,
       },
       {
         name: "Học Viên",
         href: "/dashboard/manager/students",
-        icon: <GraduationCap className='h-4 w-4' />,
+        icon: <GraduationCap className="h-4 w-4" />,
       },
       {
         name: "Huấn luyện viên",
         href: "/dashboard/manager/instructors",
-        icon: <UserCheck className='h-4 w-4' />,
+        icon: <UserCheck className="h-4 w-4" />,
       },
       {
         name: "Nhân Viên",
         href: "/dashboard/manager/staff",
-        icon: <Users className='h-4 w-4' />,
+        icon: <Users className="h-4 w-4" />,
       },
       {
         name: "Khóa Học",
         href: "/dashboard/manager/courses",
-        icon: <BookOpen className='h-4 w-4' />,
+        icon: <BookOpen className="h-4 w-4" />,
       },
       {
         name: "Lớp Học",
         href: "/dashboard/manager/classes",
-        icon: <Users className='h-4 w-4' />,
+        icon: <Users className="h-4 w-4" />,
       },
       // {
       //   name: "Hồ Bơi",
@@ -221,42 +221,42 @@ export default function DashboardLayout({
       {
         name: "Slots",
         href: "/dashboard/manager/slots",
-        icon: <Clock className='h-4 w-4' />,
+        icon: <Clock className="h-4 w-4" />,
       },
       {
         name: "Phê duyệt",
         href: "/dashboard/manager/data-review",
-        icon: <FileCheck className='h-4 w-4' />,
+        icon: <FileCheck className="h-4 w-4" />,
       },
       {
         name: "Lịch",
         href: "/dashboard/manager/calendar",
-        icon: <Clock className='h-4 w-4' />,
+        icon: <Clock className="h-4 w-4" />,
       },
       {
         name: "Tin tức",
         href: "/dashboard/manager/news",
-        icon: <Bell className='h-4 w-4' />,
+        icon: <Bell className="h-4 w-4" />,
       },
       {
         name: "Liên hệ",
         href: "/dashboard/manager/contacts",
-        icon: <MessageSquare className='h-4 w-4' />,
+        icon: <MessageSquare className="h-4 w-4" />,
       },
       {
         name: "Đơn từ",
         href: "/dashboard/manager/applications",
-        icon: <FileText className='h-4 w-4' />,
+        icon: <FileText className="h-4 w-4" />,
       },
       {
         name: "Loại Đơn Từ",
         href: "/dashboard/manager/application-types",
-        icon: <Settings className='h-4 w-4' />,
+        icon: <Settings className="h-4 w-4" />,
       },
       {
         name: "Giao Dịch",
         href: "/dashboard/manager/transactions",
-        icon: <PaymentIcon className='h-4 w-4' />,
+        icon: <PaymentIcon className="h-4 w-4" />,
       },
       // {
       //   name: "Khuyến Mãi",
@@ -266,7 +266,7 @@ export default function DashboardLayout({
       {
         name: "Cài Đặt Tài Khoản",
         href: "/dashboard/manager/settings",
-        icon: <Cog className='h-4 w-4' />,
+        icon: <Cog className="h-4 w-4" />,
       },
     ],
     // We keep this structure for compatibility but it won't be used
@@ -274,32 +274,32 @@ export default function DashboardLayout({
       {
         name: "Dashboard",
         href: "/dashboard/admin",
-        icon: <LayoutDashboard className='h-4 w-4 mr-2' />,
+        icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
       },
       {
         name: "Học Viên",
         href: "/dashboard/admin/students",
-        icon: <Users className='h-4 w-4 mr-2' />,
+        icon: <Users className="h-4 w-4 mr-2" />,
       },
       {
         name: "Huấn luyện viên",
         href: "/dashboard/admin/instructors",
-        icon: <Users className='h-4 w-4 mr-2' />,
+        icon: <Users className="h-4 w-4 mr-2" />,
       },
       {
         name: "Khóa Học",
         href: "/dashboard/admin/courses",
-        icon: <Award className='h-4 w-4 mr-2' />,
+        icon: <Award className="h-4 w-4 mr-2" />,
       },
       {
         name: "Giao Dịch",
         href: "/dashboard/admin/transactions",
-        icon: <CreditCard className='h-4 w-4 mr-2' />,
+        icon: <CreditCard className="h-4 w-4 mr-2" />,
       },
       {
         name: "Thống Kê",
         href: "/dashboard/admin/analytics",
-        icon: <BarChart3 className='h-4 w-4 mr-2' />,
+        icon: <BarChart3 className="h-4 w-4 mr-2" />,
       },
       // {
       //   name: "Khuyến Mãi",
@@ -309,7 +309,7 @@ export default function DashboardLayout({
       {
         name: "Cài Đặt Hệ Thống",
         href: "/dashboard/admin/settings",
-        icon: <Settings className='h-4 w-4 mr-2' />,
+        icon: <Settings className="h-4 w-4 mr-2" />,
       },
     ],
   };
@@ -371,47 +371,37 @@ export default function DashboardLayout({
 
   // Build the content
   const content = (
-    <div className='flex min-h-screen flex-col'>
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className='fixed top-0 left-0 right-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6'>
-        <nav className='hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6'>
-          <Link
-            href='/'
-            className='flex items-center gap-2 font-semibold'
-          >
-            <Waves className='h-6 w-6 text-sky-500' />
-            <span className='hidden md:inline-block'>
+      <header className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Waves className="h-6 w-6 text-sky-500" />
+            <span className="hidden md:inline-block">
               SCMP {isStaff ? "Staff" : "Manager"}
             </span>
           </Link>
         </nav>
         <Sheet>
           <SheetTrigger asChild>
-            <Button
-              variant='outline'
-              size='sm'
-              className='md:hidden'
-            >
-              <Menu className='h-5 w-5' />
+            <Button variant="outline" size="sm" className="md:hidden">
+              <Menu className="h-5 w-5" />
               sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
             </Button>
           </SheetTrigger>{" "}
-          <SheetContent
-            side='left'
-            className='pr-0 overflow-y-auto'
-          >
-            <div className='px-4 py-6'>
-              <div className='mb-6'>
+          <SheetContent side="left" className="pr-0 overflow-y-auto">
+            <div className="px-4 py-6">
+              <div className="mb-6">
                 <Link
-                  href='/'
-                  className='flex items-center gap-2 font-semibold text-lg'
+                  href="/"
+                  className="flex items-center gap-2 font-semibold text-lg"
                 >
-                  <Waves className='h-6 w-6 text-sky-500' />
+                  <Waves className="h-6 w-6 text-sky-500" />
                   <span>SCMP</span>
                 </Link>
               </div>
 
-              <div className='space-y-2'>
+              <div className="space-y-2">
                 {currentNavItems.map((item) => {
                   const isActive =
                     normalizePath(pathname) === normalizePath(item.href);
@@ -426,10 +416,10 @@ export default function DashboardLayout({
                             : "text-muted-foreground hover:text-foreground"
                         }`}
                     >
-                      <AnimatePresence mode='wait'>
+                      <AnimatePresence mode="wait">
                         {isActive && (
                           <motion.div
-                            key='active-nav-mobile'
+                            key="active-nav-mobile"
                             initial={{ x: "-150%", opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "150%", opacity: 0 }}
@@ -438,11 +428,11 @@ export default function DashboardLayout({
                               duration: 0.4,
                               ease: "easeInOut",
                             }}
-                            className='absolute inset-0 rounded-lg bg-primary'
+                            className="absolute inset-0 rounded-lg bg-primary"
                           />
                         )}
                       </AnimatePresence>
-                      <span className='relative flex items-center gap-3 z-10'>
+                      <span className="relative flex items-center gap-3 z-10">
                         {item.icon}
                         <span>{item.name}</span>
                       </span>
@@ -451,17 +441,17 @@ export default function DashboardLayout({
                 })}
               </div>
 
-              <div className='mt-6 pt-6 border-t'>
+              <div className="mt-6 pt-6 border-t">
                 <AlertDialog
                   open={logoutDialogOpen}
                   onOpenChange={setLogoutDialogOpen}
                 >
                   <AlertDialogTrigger asChild>
                     <Button
-                      variant='ghost'
-                      className='w-full justify-start px-3 text-muted-foreground hover:text-foreground'
+                      variant="ghost"
+                      className="w-full justify-start px-3 text-muted-foreground hover:text-foreground"
                     >
-                      <LogOut className='h-4 w-4 mr-3' />
+                      <LogOut className="h-4 w-4 mr-3" />
                       Đăng xuất
                     </Button>
                   </AlertDialogTrigger>
@@ -487,42 +477,39 @@ export default function DashboardLayout({
             </div>
           </SheetContent>
         </Sheet>{" "}
-        <div className='flex flex-1 items-center gap-4 md:gap-2 lg:gap-4'>
+        <div className="flex flex-1 items-center gap-4 md:gap-2 lg:gap-4">
           {/* Tenant Dropdown */}
           {tenantName && availableTenants.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className='flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md px-2 py-1 hover:bg-muted'
-                  title='Switch tenant'
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md px-2 py-1 hover:bg-muted"
+                  title="Switch tenant"
                 >
-                  <Building className='h-4 w-4' />
-                  <span className='hidden md:inline'>Chi nhánh:</span>
-                  <span className='font-semibold text-foreground'>
+                  <Building className="h-4 w-4" />
+                  <span className="hidden md:inline">Chi nhánh:</span>
+                  <span className="font-semibold text-foreground">
                     {tenantName}
                   </span>
-                  <ChevronDown className='h-4 w-4' />
+                  <ChevronDown className="h-4 w-4" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align='start'
-                className='w-64'
-              >
+              <DropdownMenuContent align="start" className="w-64">
                 <DropdownMenuLabel>Chọn Chi Nhánh</DropdownMenuLabel>
                 <DropdownMenuSeparator />{" "}
                 {availableTenants.map((tenant) => (
                   <DropdownMenuItem
                     key={tenant.tenant_id._id}
                     onClick={() => handleTenantSwitch(tenant.tenant_id._id)}
-                    className='flex items-center justify-between cursor-pointer'
+                    className="flex items-center justify-between cursor-pointer"
                   >
-                    <div className='flex flex-col'>
-                      <span className='font-medium'>
+                    <div className="flex flex-col">
+                      <span className="font-medium">
                         {tenant.tenant_id.title}
                       </span>
                     </div>
                     {selectedTenantId === tenant.tenant_id._id && (
-                      <Check className='h-4 w-4 text-primary' />
+                      <Check className="h-4 w-4 text-primary" />
                     )}
                   </DropdownMenuItem>
                 ))}
@@ -530,17 +517,17 @@ export default function DashboardLayout({
             </DropdownMenu>
           )}
 
-          <div className='ml-auto flex items-center gap-2'>
-            <div className='hidden items-center gap-2 md:flex'>
-              <span className='text-sm text-muted-foreground'>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden items-center gap-2 md:flex">
+              <span className="text-sm text-muted-foreground">
                 Xin chào, {userName || getRoleDisplayName()}
               </span>
               {isStaff && (
-                <span className='text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800'>
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full border border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-800">
                   Nhân viên
                 </span>
               )}
-              <div className='h-6 w-px bg-muted'></div>
+              <div className="h-6 w-px bg-muted"></div>
               {/* Add ThemeToggle button here */}
               <ThemeToggle />
               <AlertDialog
@@ -549,11 +536,11 @@ export default function DashboardLayout({
               >
                 <AlertDialogTrigger asChild>
                   <Button
-                    variant='ghost'
-                    size='sm'
-                    className='justify-start gap-2 px-2'
+                    variant="ghost"
+                    size="sm"
+                    className="justify-start gap-2 px-2"
                   >
-                    <LogOut className='h-4 w-4' />
+                    <LogOut className="h-4 w-4" />
                     <span>Đăng xuất</span>
                   </Button>
                 </AlertDialogTrigger>
@@ -579,21 +566,21 @@ export default function DashboardLayout({
           </div>
         </div>
       </header>{" "}
-      <div className='flex flex-1'>
+      <div className="flex flex-1">
         <nav
           className={`hidden border-r bg-gradient-to-b from-slate-50/90 to-slate-100/50 dark:from-slate-800/90 dark:to-slate-900/50 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 dark:supports-[backdrop-filter]:bg-slate-800/60 md:flex h-[calc(100vh-64px)] fixed top-16 z-20 shadow-sm border-r-border/50 transition-all duration-300 ${
             sidebarCollapsed ? "w-[70px]" : "w-[260px]"
           }`}
         >
-          <div className='flex flex-col w-full'>
+          <div className="flex flex-col w-full">
             {/* Sidebar Header */}
-            <div className='p-4 border-b border-border/50 flex items-center justify-between'>
+            <div className="p-4 border-b border-border/50 flex items-center justify-between">
               <div
                 className={`flex items-center gap-2 text-sm font-medium text-muted-foreground transition-opacity duration-200 ${
                   sidebarCollapsed ? "opacity-0" : "opacity-100"
                 }`}
               >
-                <Building className='h-4 w-4 text-primary' />
+                <Building className="h-4 w-4 text-primary" />
                 {!sidebarCollapsed && (
                   <span>
                     {isStaff ? "Hệ Thống Nhân Viên" : "Quản Lý Hệ Thống"}
@@ -601,25 +588,25 @@ export default function DashboardLayout({
                 )}
               </div>
               <Button
-                variant='ghost'
-                size='sm'
+                variant="ghost"
+                size="sm"
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className='h-8 w-8 p-0 hover:bg-muted'
+                className="h-8 w-8 p-0 hover:bg-muted"
                 title={sidebarCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
               >
                 {sidebarCollapsed ? (
-                  <ChevronRight className='h-4 w-4' />
+                  <ChevronRight className="h-4 w-4" />
                 ) : (
-                  <ChevronLeft className='h-4 w-4' />
+                  <ChevronLeft className="h-4 w-4" />
                 )}
               </Button>
             </div>
 
             {/* Navigation Items */}
-            <div className='flex-1 overflow-y-auto px-3 py-4'>
-              <div className='space-y-6'>
+            <div className="flex-1 overflow-y-auto px-3 py-4">
+              <div className="space-y-6">
                 {/* Overview Section */}
-                <div className='space-y-1'>
+                <div className="space-y-1">
                   <div
                     className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
                       sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
@@ -642,13 +629,13 @@ export default function DashboardLayout({
                       }`}
                     title={sidebarCollapsed ? "Dashboard" : undefined}
                   >
-                    <AnimatePresence mode='wait'>
+                    <AnimatePresence mode="wait">
                       {normalizePath(pathname) ===
                         normalizePath(
                           isStaff ? "/dashboard/staff" : "/dashboard/manager"
                         ) && (
                         <motion.div
-                          key='active-nav-sidebar-item'
+                          key="active-nav-sidebar-item"
                           initial={{ x: "-150%", opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
                           exit={{ x: "150%", opacity: 0 }}
@@ -657,7 +644,7 @@ export default function DashboardLayout({
                             duration: 0.4,
                             ease: "easeInOut",
                           }}
-                          className='absolute inset-0 rounded-md bg-primary shadow-sm'
+                          className="absolute inset-0 rounded-md bg-primary shadow-sm"
                         />
                       )}
                     </AnimatePresence>
@@ -676,17 +663,17 @@ export default function DashboardLayout({
                             : "group-hover:text-foreground"
                         }`}
                       >
-                        <Home className='h-4 w-4' />
+                        <Home className="h-4 w-4" />
                       </div>
                       {!sidebarCollapsed && (
-                        <span className='truncate'>Dashboard</span>
+                        <span className="truncate">Dashboard</span>
                       )}
                     </div>
                   </Link>
                 </div>
 
                 {/* Management Section - Permission-based for staff */}
-                <div className='space-y-1'>
+                <div className="space-y-1">
                   <div
                     className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
                       sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
@@ -701,7 +688,7 @@ export default function DashboardLayout({
                           {
                             name: "Học Viên",
                             href: "/dashboard/manager/students",
-                            icon: <GraduationCap className='h-4 w-4' />,
+                            icon: <GraduationCap className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -710,7 +697,7 @@ export default function DashboardLayout({
                           {
                             name: "Huấn luyện viên",
                             href: "/dashboard/manager/instructors",
-                            icon: <UserCheck className='h-4 w-4' />,
+                            icon: <UserCheck className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -720,7 +707,7 @@ export default function DashboardLayout({
                           {
                             name: "Nhân Viên",
                             href: "/dashboard/manager/staff",
-                            icon: <Users className='h-4 w-4' />,
+                            icon: <Users className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -730,7 +717,7 @@ export default function DashboardLayout({
                           {
                             name: "Khóa Học",
                             href: "/dashboard/manager/courses",
-                            icon: <BookOpen className='h-4 w-4' />,
+                            icon: <BookOpen className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -740,7 +727,7 @@ export default function DashboardLayout({
                           {
                             name: "Lớp Học",
                             href: "/dashboard/manager/classes",
-                            icon: <Users className='h-4 w-4' />,
+                            icon: <Users className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -760,7 +747,7 @@ export default function DashboardLayout({
                           {
                             name: "Phê duyệt",
                             href: "/dashboard/manager/data-review",
-                            icon: <FileCheck className='h-4 w-4' />,
+                            icon: <FileCheck className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -773,7 +760,7 @@ export default function DashboardLayout({
                             // we keep the canonical URL under /dashboard/manager/calendar
                             // but staff will access with the required 'service: Schedule' header.
                             href: "/dashboard/manager/calendar",
-                            icon: <Clock className='h-4 w-4' />,
+                            icon: <Clock className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -793,10 +780,10 @@ export default function DashboardLayout({
                           }`}
                         title={sidebarCollapsed ? item.name : undefined}
                       >
-                        <AnimatePresence mode='wait'>
+                        <AnimatePresence mode="wait">
                           {isActive && (
                             <motion.div
-                              key='active-nav-sidebar-common'
+                              key="active-nav-sidebar-common"
                               initial={{ x: "-150%", opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
                               exit={{ x: "150%", opacity: 0 }}
@@ -805,7 +792,7 @@ export default function DashboardLayout({
                                 duration: 0.4,
                                 ease: "easeInOut",
                               }}
-                              className='absolute inset-0 rounded-md bg-primary shadow-sm'
+                              className="absolute inset-0 rounded-md bg-primary shadow-sm"
                             />
                           )}
                         </AnimatePresence>
@@ -824,7 +811,7 @@ export default function DashboardLayout({
                             {item.icon}
                           </div>
                           {!sidebarCollapsed && (
-                            <span className='truncate'>{item.name}</span>
+                            <span className="truncate">{item.name}</span>
                           )}
                         </div>
                       </Link>
@@ -833,7 +820,7 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Operations Section - Permission-based for staff */}
-                <div className='space-y-1'>
+                <div className="space-y-1">
                   <div
                     className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
                       sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
@@ -848,7 +835,7 @@ export default function DashboardLayout({
                           {
                             name: "Tin tức",
                             href: "/dashboard/manager/news",
-                            icon: <Bell className='h-4 w-4' />,
+                            icon: <Bell className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -858,7 +845,7 @@ export default function DashboardLayout({
                           {
                             name: "Liên hệ",
                             href: "/dashboard/manager/contacts",
-                            icon: <MessageSquare className='h-4 w-4' />,
+                            icon: <MessageSquare className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -869,7 +856,7 @@ export default function DashboardLayout({
                           {
                             name: "Đơn từ",
                             href: "/dashboard/manager/applications",
-                            icon: <FileText className='h-4 w-4' />,
+                            icon: <FileText className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -879,7 +866,7 @@ export default function DashboardLayout({
                           {
                             name: "Loại Đơn Từ",
                             href: "/dashboard/manager/application-types",
-                            icon: <Settings className='h-4 w-4' />,
+                            icon: <Settings className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -889,17 +876,7 @@ export default function DashboardLayout({
                           {
                             name: "Giao Dịch",
                             href: "/dashboard/manager/transactions",
-                            icon: <PaymentIcon className='h-4 w-4' />,
-                          },
-                        ]
-                      : []),
-                    // Promotions - only for managers
-                    ...(isManager
-                      ? [
-                          {
-                            name: "Khuyến Mãi",
-                            href: "/dashboard/manager/promotions",
-                            icon: <Tag className='h-4 w-4' />,
+                            icon: <PaymentIcon className="h-4 w-4" />,
                           },
                         ]
                       : []),
@@ -919,10 +896,10 @@ export default function DashboardLayout({
                           }`}
                         title={sidebarCollapsed ? item.name : undefined}
                       >
-                        <AnimatePresence mode='wait'>
+                        <AnimatePresence mode="wait">
                           {isActive && (
                             <motion.div
-                              key='active-nav-sidebar-common'
+                              key="active-nav-sidebar-common"
                               initial={{ x: "-100%", opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
                               exit={{ x: "100%", opacity: 0 }}
@@ -931,7 +908,7 @@ export default function DashboardLayout({
                                 stiffness: 400,
                                 damping: 30,
                               }}
-                              className='absolute inset-0 rounded-md bg-primary shadow-sm'
+                              className="absolute inset-0 rounded-md bg-primary shadow-sm"
                             />
                           )}
                         </AnimatePresence>
@@ -950,7 +927,7 @@ export default function DashboardLayout({
                             {item.icon}
                           </div>
                           {!sidebarCollapsed && (
-                            <span className='truncate'>{item.name}</span>
+                            <span className="truncate">{item.name}</span>
                           )}
                         </div>
                       </Link>
@@ -960,7 +937,7 @@ export default function DashboardLayout({
 
                 {/* Settings Section - Only for managers or specific staff permissions */}
                 {isManager && (
-                  <div className='space-y-1'>
+                  <div className="space-y-1">
                     <div
                       className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider transition-opacity duration-200 ${
                         sidebarCollapsed ? "opacity-0 h-0 p-0" : "opacity-100"
@@ -969,7 +946,7 @@ export default function DashboardLayout({
                       {!sidebarCollapsed && "Cài Đặt"}
                     </div>
                     <Link
-                      href='/dashboard/manager/settings'
+                      href="/dashboard/manager/settings"
                       className={`group relative flex items-center ${
                         sidebarCollapsed ? "justify-center" : "gap-3"
                       } rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden
@@ -980,10 +957,10 @@ export default function DashboardLayout({
                         }`}
                       title={sidebarCollapsed ? "Cài Đặt Tài Khoản" : undefined}
                     >
-                      <AnimatePresence mode='wait'>
+                      <AnimatePresence mode="wait">
                         {pathname === "/dashboard/manager/settings" && (
                           <motion.div
-                            key='active-nav-sidebar-settings'
+                            key="active-nav-sidebar-settings"
                             initial={{ x: "-150%", opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "150%", opacity: 0 }}
@@ -992,7 +969,7 @@ export default function DashboardLayout({
                               duration: 0.4,
                               ease: "easeInOut",
                             }}
-                            className='absolute inset-0 rounded-md bg-primary shadow-sm'
+                            className="absolute inset-0 rounded-md bg-primary shadow-sm"
                           />
                         )}
                       </AnimatePresence>
@@ -1008,10 +985,10 @@ export default function DashboardLayout({
                               : "group-hover:text-foreground"
                           }`}
                         >
-                          <Cog className='h-4 w-4' />
+                          <Cog className="h-4 w-4" />
                         </div>
                         {!sidebarCollapsed && (
-                          <span className='truncate'>Cài Đặt Tài Khoản</span>
+                          <span className="truncate">Cài Đặt Tài Khoản</span>
                         )}
                       </div>
                     </Link>
@@ -1021,17 +998,17 @@ export default function DashboardLayout({
             </div>
 
             {/* Sidebar Footer */}
-            <div className='p-4 border-t border-border/50 mt-auto bg-slate-100/40 dark:bg-slate-900/40'>
+            <div className="p-4 border-t border-border/50 mt-auto bg-slate-100/40 dark:bg-slate-900/40">
               <div
                 className={`flex items-center text-xs text-muted-foreground transition-all duration-200 ${
                   sidebarCollapsed ? "justify-center" : "gap-2 justify-center"
                 }`}
               >
-                <Waves className='h-3 w-3 text-primary' />
+                <Waves className="h-3 w-3 text-primary" />
                 {!sidebarCollapsed && (
                   <>
-                    <span className='font-medium'>SCMP Manager</span>
-                    <span className='text-muted-foreground/60'>v2.0</span>
+                    <span className="font-medium">SCMP Manager</span>
+                    <span className="text-muted-foreground/60">v2.0</span>
                   </>
                 )}
               </div>
@@ -1052,10 +1029,7 @@ export default function DashboardLayout({
   // If a userRole is specified, wrap with RoleGuard
   if (userRole) {
     return (
-      <RoleGuard
-        allowedRoles={[userRole]}
-        fallbackUrl='/'
-      >
+      <RoleGuard allowedRoles={[userRole]} fallbackUrl="/">
         {content}
       </RoleGuard>
     );

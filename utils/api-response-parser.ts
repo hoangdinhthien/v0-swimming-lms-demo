@@ -188,6 +188,12 @@ export function parseApiFieldErrors(error: any): {
           if (/phone/i.test(field)) return "Số điện thoại này đã được sử dụng";
         }
         return "Dữ liệu đã tồn tại trong hệ thống (trùng lặp)";
+      } else if (
+        /Error in node.*Required field 'user' is null/i.test(trimmed)
+      ) {
+        return "Lỗi hệ thống: Thông tin người dùng không hợp lệ (user null)";
+      } else if (/Error in node.*Create mapping/i.test(trimmed)) {
+        return "Lỗi phân ánh dữ liệu khi khởi tạo. Vui lòng thử lại hoặc liên hệ kỹ thuật.";
       } else if (/^[{}\[\]\n].*/.test(trimmed)) {
         // JSON-like string: prefer short generic
         return field && /email/i.test(field)

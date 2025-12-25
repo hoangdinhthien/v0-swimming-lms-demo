@@ -63,7 +63,7 @@ import ManagerNotFound from "@/components/manager/not-found";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import StaffPermissionModal from "@/components/manager/staff-permission-modal";
 import {
-  optionalPhoneSchema,
+  phoneSchema,
   requiredStringSchema,
   getBirthDateSchema,
 } from "@/lib/schemas";
@@ -71,9 +71,9 @@ import {
 const staffFormSchema = z.object({
   username: requiredStringSchema("Tên nhân viên là bắt buộc"),
   email: z.string().email("Email không hợp lệ"),
-  phone: optionalPhoneSchema.optional(),
+  phone: phoneSchema,
   address: z.string().optional(),
-  birthday: getBirthDateSchema(18, "Nhân viên").optional(),
+  birthday: getBirthDateSchema(18, "Nhân viên"),
   is_active: z.boolean().optional(),
 });
 
@@ -893,7 +893,9 @@ export default function StaffDetailPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tên nhân viên</FormLabel>
+                        <FormLabel>
+                          Tên nhân viên <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="Nhập tên đầy đủ" {...field} />
                         </FormControl>
@@ -907,7 +909,9 @@ export default function StaffDetailPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="email"
@@ -925,7 +929,9 @@ export default function StaffDetailPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormLabel>
+                          Số điện thoại <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input placeholder="0123456789" {...field} />
                         </FormControl>
@@ -939,7 +945,9 @@ export default function StaffDetailPage() {
                     name="birthday"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormLabel>
+                          Ngày sinh <span className="text-red-500">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
