@@ -138,5 +138,5 @@ export const getBirthDateSchema = (
     }
   });
 
-// Default birthDateSchema for students (minimum 4 years old)
-export const birthDateSchema = getBirthDateSchema(4, "Học viên");
+// Default birthDateSchema for students (minimum 3 years old)
+export const birthDateSchema = getBirthDateSchema(3, "Học viên");
