@@ -111,31 +111,34 @@ function ProfileImage({
 
   if (loading) {
     return (
-      <div className='h-12 w-12 rounded-full bg-primary/10 ring-2 ring-primary/20 flex items-center justify-center'>
-        <div className='animate-pulse bg-primary/20 h-8 w-8 rounded-full' />
+      <div className="h-12 w-12 rounded-full bg-primary/10 ring-2 ring-primary/20 flex items-center justify-center">
+        <div className="animate-pulse bg-primary/20 h-8 w-8 rounded-full" />
       </div>
     );
   }
 
   return (
-    <Avatar className='h-12 w-12 ring-2 ring-primary/20'>
+    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
       {imageUrl && (
         <AvatarImage
           src={imageUrl}
           alt={`${username} profile`}
-          className='object-cover'
+          className="object-cover"
           onError={() => setImageUrl(null)}
         />
       )}
-      <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
+      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
         {getInitials(username)}
       </AvatarFallback>
     </Avatar>
   );
 }
 
+import { useWithReview } from "@/hooks/use-with-review";
+
 export default function ApplicationDetailPage() {
   const { toast } = useToast();
+  const { handleResponse } = useWithReview();
   const params = useParams();
   const applicationId = params?.id as string;
   const [application, setApplication] = useState<Application | null>(null);
@@ -197,34 +200,34 @@ export default function ApplicationDetailPage() {
         status: [selectedStatus],
       };
 
-      const success = await replyToApplication(
+      const response = await replyToApplication(
         applicationId,
         tenantId,
         token,
         replyData
       );
 
-      if (success) {
-        toast({
-          title: "Thành công",
-          description: "Phản hồi đã được gửi thành công",
-        });
+      handleResponse(response, {
+        onSuccess: async () => {
+          toast({
+            title: "Thành công",
+            description: "Phản hồi đã được gửi thành công",
+          });
 
-        // Refresh application data
-        const appData = await getApplicationDetail(
-          applicationId,
-          tenantId,
-          token
-        );
-        setApplication(appData);
+          // Refresh application data
+          const appData = await getApplicationDetail(
+            applicationId,
+            tenantId,
+            token
+          );
+          setApplication(appData);
 
-        // Reset form
-        setReplyText("");
-        setSelectedStatus("pending");
-        setShowReplyForm(false);
-      } else {
-        throw new Error("Không thể gửi phản hồi");
-      }
+          // Reset form
+          setReplyText("");
+          setSelectedStatus("pending");
+          setShowReplyForm(false);
+        },
+      });
     } catch (error: any) {
       toast({
         title: "Lỗi",
@@ -297,15 +300,15 @@ export default function ApplicationDetailPage() {
   };
   if (loading) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
-        <div className='relative'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mb-4' />
-          <div className='absolute inset-0 h-12 w-12 rounded-full border-2 border-primary/20'></div>
+      <div className="flex flex-col items-center justify-center min-h-96 py-16">
+        <div className="relative">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <div className="absolute inset-0 h-12 w-12 rounded-full border-2 border-primary/20"></div>
         </div>
-        <div className='text-lg font-medium text-foreground mb-2'>
+        <div className="text-lg font-medium text-foreground mb-2">
           Đang tải chi tiết đơn từ
         </div>
-        <div className='text-sm text-muted-foreground'>
+        <div className="text-sm text-muted-foreground">
           Vui lòng chờ trong giây lát...
         </div>
       </div>
@@ -314,18 +317,15 @@ export default function ApplicationDetailPage() {
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
-        <XCircle className='h-12 w-12 text-destructive mb-4' />
-        <div className='text-lg font-medium text-foreground mb-2'>
+      <div className="flex flex-col items-center justify-center min-h-96 py-16">
+        <XCircle className="h-12 w-12 text-destructive mb-4" />
+        <div className="text-lg font-medium text-foreground mb-2">
           Có lỗi xảy ra
         </div>
-        <div className='text-sm text-muted-foreground mb-4'>{error}</div>
-        <Button
-          asChild
-          variant='outline'
-        >
-          <Link href='/dashboard/manager/applications'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
+        <div className="text-sm text-muted-foreground mb-4">{error}</div>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/manager/applications">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Quay về danh sách
           </Link>
         </Button>
@@ -335,20 +335,17 @@ export default function ApplicationDetailPage() {
 
   if (!application) {
     return (
-      <div className='flex flex-col items-center justify-center min-h-96 py-16'>
-        <FileText className='h-12 w-12 text-muted-foreground mb-4' />
-        <div className='text-lg font-medium text-foreground mb-2'>
+      <div className="flex flex-col items-center justify-center min-h-96 py-16">
+        <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+        <div className="text-lg font-medium text-foreground mb-2">
           Không tìm thấy đơn từ
         </div>
-        <div className='text-sm text-muted-foreground mb-4'>
+        <div className="text-sm text-muted-foreground mb-4">
           Đơn từ này có thể đã bị xóa hoặc không tồn tại
         </div>
-        <Button
-          asChild
-          variant='outline'
-        >
-          <Link href='/dashboard/manager/applications'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
+        <Button asChild variant="outline">
+          <Link href="/dashboard/manager/applications">
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Quay về danh sách
           </Link>
         </Button>
@@ -416,20 +413,20 @@ export default function ApplicationDetailPage() {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className='space-y-6 p-4 md:p-6 max-w-7xl mx-auto w-full animate-in fade-in duration-500'>
+    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto w-full animate-in fade-in duration-500">
       {/* Breadcrumb Navigation */}
-      <div className='flex items-center justify-between'>
+      <div className="flex items-center justify-between">
         <Button
           asChild
-          variant='ghost'
-          size='sm'
-          className='h-8 px-2 hover:bg-muted/80 transition-colors'
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 hover:bg-muted/80 transition-colors"
         >
           <Link
-            href='/dashboard/manager/applications'
-            className='flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors'
+            href="/dashboard/manager/applications"
+            className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className='h-4 w-4' />
+            <ArrowLeft className="h-4 w-4" />
             <span>Quay về danh sách đơn từ</span>
           </Link>
         </Button>
@@ -439,34 +436,34 @@ export default function ApplicationDetailPage() {
           <Button
             onClick={() => setShowReplyForm(!showReplyForm)}
             variant={showReplyForm ? "outline" : "default"}
-            size='sm'
-            className='flex items-center space-x-2'
+            size="sm"
+            className="flex items-center space-x-2"
           >
-            <Edit3 className='h-4 w-4' />
+            <Edit3 className="h-4 w-4" />
             <span>{showReplyForm ? "Hủy phản hồi" : "Phản hồi đơn từ"}</span>
           </Button>
         ) : (
           <Badge
-            variant='default'
-            className='bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 px-4 py-2 flex items-center gap-2'
+            variant="default"
+            className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 px-4 py-2 flex items-center gap-2"
           >
-            <CheckCircle2 className='h-4 w-4' />
+            <CheckCircle2 className="h-4 w-4" />
             <span>Đã phản hồi</span>
           </Badge>
         )}
       </div>
 
       {/* Main Content */}
-      <div className='space-y-6'>
+      <div className="space-y-6">
         {/* Header Card */}
-        <Card className='border-0 shadow-xl bg-gradient-to-br from-background via-background to-muted/40 backdrop-blur-sm'>
-          <CardHeader className='pb-6'>
-            <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0'>
-              <div className='flex-1 space-y-3'>
-                <CardTitle className='text-2xl md:text-3xl xl:text-4xl font-bold text-foreground leading-tight'>
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-background via-background to-muted/40 backdrop-blur-sm">
+          <CardHeader className="pb-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+              <div className="flex-1 space-y-3">
+                <CardTitle className="text-2xl md:text-3xl xl:text-4xl font-bold text-foreground leading-tight">
                   {application.title}
                 </CardTitle>
-                <div className='flex flex-wrap items-center gap-3'>
+                <div className="flex flex-wrap items-center gap-3">
                   <Badge
                     variant={typeStyle.variant}
                     className={`${typeStyle.className} px-4 py-2 text-sm font-medium shadow-sm`}
@@ -511,17 +508,17 @@ export default function ApplicationDetailPage() {
                     variant={statusInfo.variant}
                     className={`${statusInfo.className} px-4 py-2 text-sm font-medium shadow-sm flex items-center gap-2`}
                   >
-                    <StatusIcon className='h-4 w-4' />
+                    <StatusIcon className="h-4 w-4" />
                     {statusInfo.label}
                   </Badge>
                 </div>
               </div>
-              <div className='text-right text-sm text-muted-foreground lg:ml-6 flex-shrink-0 space-y-2'>
-                <div className='flex items-center space-x-2 justify-end'>
-                  <div className='p-1.5 rounded-md bg-muted/50'>
-                    <Calendar className='h-4 w-4' />
+              <div className="text-right text-sm text-muted-foreground lg:ml-6 flex-shrink-0 space-y-2">
+                <div className="flex items-center space-x-2 justify-end">
+                  <div className="p-1.5 rounded-md bg-muted/50">
+                    <Calendar className="h-4 w-4" />
                   </div>
-                  <span className='font-medium'>
+                  <span className="font-medium">
                     {formatDate(application.created_at)}
                   </span>
                 </div>
@@ -532,78 +529,60 @@ export default function ApplicationDetailPage() {
 
         {/* Reply Form - Only show if no reply exists */}
         {showReplyForm && !application.reply && (
-          <Card className='border border-primary/20 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm'>
-            <CardHeader className='pb-3'>
-              <CardTitle className='flex items-center space-x-2 text-lg text-primary'>
-                <Send className='h-5 w-5' />
+          <Card className="border border-primary/20 shadow-lg bg-gradient-to-br from-primary/5 to-primary/10 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center space-x-2 text-lg text-primary">
+                <Send className="h-5 w-5" />
                 <span>Phản hồi đơn từ</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='reply-content'>Nội dung phản hồi</Label>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reply-content">Nội dung phản hồi</Label>
                 <Textarea
-                  id='reply-content'
-                  placeholder='Nhập nội dung phản hồi cho đơn từ...'
+                  id="reply-content"
+                  placeholder="Nhập nội dung phản hồi cho đơn từ..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  className='min-h-[120px] bg-background/80'
+                  className="min-h-[120px] bg-background/80"
                 />
               </div>
 
-              <div className='space-y-3'>
+              <div className="space-y-3">
                 <Label>Trạng thái xử lý</Label>
                 <RadioGroup
                   value={selectedStatus}
                   onValueChange={setSelectedStatus}
-                  className='flex flex-wrap gap-4'
+                  className="flex flex-wrap gap-4"
                 >
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='pending'
-                      id='pending'
-                    />
-                    <Label
-                      htmlFor='pending'
-                      className='cursor-pointer'
-                    >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pending" id="pending" />
+                    <Label htmlFor="pending" className="cursor-pointer">
                       <Badge
-                        variant='outline'
-                        className='bg-yellow-100 text-yellow-800 border-yellow-200'
+                        variant="outline"
+                        className="bg-yellow-100 text-yellow-800 border-yellow-200"
                       >
                         Đang chờ xử lý
                       </Badge>
                     </Label>
                   </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='approved'
-                      id='approved'
-                    />
-                    <Label
-                      htmlFor='approved'
-                      className='cursor-pointer'
-                    >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="approved" id="approved" />
+                    <Label htmlFor="approved" className="cursor-pointer">
                       <Badge
-                        variant='outline'
-                        className='bg-green-100 text-green-800 border-green-200'
+                        variant="outline"
+                        className="bg-green-100 text-green-800 border-green-200"
                       >
                         Duyệt đơn
                       </Badge>
                     </Label>
                   </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='rejected'
-                      id='rejected'
-                    />
-                    <Label
-                      htmlFor='rejected'
-                      className='cursor-pointer'
-                    >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="rejected" id="rejected" />
+                    <Label htmlFor="rejected" className="cursor-pointer">
                       <Badge
-                        variant='outline'
-                        className='bg-red-100 text-red-800 border-red-200'
+                        variant="outline"
+                        className="bg-red-100 text-red-800 border-red-200"
                       >
                         Từ chối
                       </Badge>
@@ -612,21 +591,21 @@ export default function ApplicationDetailPage() {
                 </RadioGroup>
               </div>
 
-              <div className='flex gap-3 pt-4'>
+              <div className="flex gap-3 pt-4">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       disabled={!replyText.trim() || isSubmittingReply}
-                      className='flex-1'
+                      className="flex-1"
                     >
                       {isSubmittingReply ? (
                         <>
-                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Đang gửi...
                         </>
                       ) : (
                         <>
-                          <Send className='mr-2 h-4 w-4' />
+                          <Send className="mr-2 h-4 w-4" />
                           Gửi phản hồi
                         </>
                       )}
@@ -650,9 +629,9 @@ export default function ApplicationDetailPage() {
                 </AlertDialog>
 
                 <Button
-                  variant='outline'
+                  variant="outline"
                   onClick={() => setShowReplyForm(false)}
-                  className='px-6'
+                  className="px-6"
                 >
                   Hủy
                 </Button>
@@ -662,32 +641,32 @@ export default function ApplicationDetailPage() {
         )}
 
         {/* Two Column Layout */}
-        <div className='grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 gap-6'>
+        <div className="grid grid-cols-1 xl:grid-cols-4 lg:grid-cols-3 gap-6">
           {/* Main Content */}
-          <div className='xl:col-span-3 lg:col-span-2 space-y-6'>
+          <div className="xl:col-span-3 lg:col-span-2 space-y-6">
             {/* Application Content */}
-            <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
-              <CardHeader className='pb-3'>
-                <CardTitle className='flex items-center space-x-2 text-lg'>
-                  <div className='p-2 rounded-lg bg-primary/10'>
-                    <FileText className='h-5 w-5 text-primary' />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="h-5 w-5 text-primary" />
                   </div>
                   <span>Nội dung đơn từ</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className='space-y-4'>
-                  <div className='p-6 bg-muted/40 rounded-xl border'>
+                <div className="space-y-4">
+                  <div className="p-6 bg-muted/40 rounded-xl border">
                     {application.content ? (
-                      <div className='prose max-w-none dark:prose-invert'>
-                        <p className='text-foreground leading-relaxed whitespace-pre-wrap'>
+                      <div className="prose max-w-none dark:prose-invert">
+                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                           {application.content}
                         </p>
                       </div>
                     ) : (
-                      <div className='flex items-center justify-center p-8 text-muted-foreground'>
-                        <div className='text-center'>
-                          <FileText className='h-12 w-12 mx-auto mb-4 opacity-50' />
+                      <div className="flex items-center justify-center p-8 text-muted-foreground">
+                        <div className="text-center">
+                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                           <p>Không có nội dung đơn từ</p>
                         </div>
                       </div>
@@ -699,27 +678,27 @@ export default function ApplicationDetailPage() {
 
             {/* Manager Reply */}
             {application.reply && (
-              <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-gradient-to-br from-green-50/50 to-green-100/30 dark:from-green-900/20 dark:to-green-800/10 backdrop-blur-sm'>
-                <CardHeader className='pb-3'>
-                  <CardTitle className='flex items-center space-x-2 text-lg'>
-                    <div className='p-2 rounded-lg bg-green-100 dark:bg-green-900/30'>
-                      <MessageSquare className='h-5 w-5 text-green-600 dark:text-green-400' />
+              <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-gradient-to-br from-green-50/50 to-green-100/30 dark:from-green-900/20 dark:to-green-800/10 backdrop-blur-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center space-x-2 text-lg">
+                    <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                      <MessageSquare className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <span>Phản hồi từ quản lý</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className='space-y-4'>
-                    <div className='p-6 bg-background/60 rounded-xl border border-green-200/50 dark:border-green-800/50'>
-                      <div className='prose max-w-none dark:prose-invert'>
-                        <p className='text-foreground leading-relaxed whitespace-pre-wrap'>
+                  <div className="space-y-4">
+                    <div className="p-6 bg-background/60 rounded-xl border border-green-200/50 dark:border-green-800/50">
+                      <div className="prose max-w-none dark:prose-invert">
+                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                           {application.reply}
                         </p>
                       </div>
                       {application.updated_at && (
-                        <div className='mt-4 pt-4 border-t border-muted-foreground/20'>
-                          <div className='flex items-center text-sm text-muted-foreground'>
-                            <Clock className='h-4 w-4 mr-2' />
+                        <div className="mt-4 pt-4 border-t border-muted-foreground/20">
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4 mr-2" />
                             <span>
                               Phản hồi lúc {formatDate(application.updated_at)}
                             </span>
@@ -734,28 +713,28 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className='space-y-6'>
+          <div className="space-y-6">
             {/* Applicant Information */}
-            <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
-              <CardHeader className='pb-3'>
-                <CardTitle className='flex items-center space-x-2 text-lg'>
-                  <div className='p-2 rounded-lg bg-green-100 dark:bg-green-900/30'>
-                    <User className='h-5 w-5 text-green-600 dark:text-green-400' />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <span>Thông tin người gửi</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center space-x-3 p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-xl border'>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-3 p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-xl border">
                   <ProfileImage
                     featuredImage={application.created_by?.featured_image}
                     username={application.created_by?.username || "User"}
                   />
-                  <div className='flex-1 min-w-0'>
-                    <div className='font-semibold text-foreground truncate'>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground truncate">
                       {application.created_by?.username || "Không xác định"}
                     </div>
-                    <div className='text-sm text-muted-foreground'>
+                    <div className="text-sm text-muted-foreground">
                       {application.created_by?.role_front?.[0] === "instructor"
                         ? "Huấn luyện viên"
                         : application.created_by?.role_front?.[0] === "member"
@@ -769,46 +748,46 @@ export default function ApplicationDetailPage() {
 
                 <Separator />
 
-                <div className='space-y-3'>
+                <div className="space-y-3">
                   {application.created_by?.email && (
-                    <div className='flex items-center space-x-3'>
-                      <div className='p-1.5 rounded-md bg-muted/50 flex-shrink-0'>
-                        <Mail className='h-4 w-4 text-muted-foreground' />
+                    <div className="flex items-center space-x-3">
+                      <div className="p-1.5 rounded-md bg-muted/50 flex-shrink-0">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className='text-sm text-foreground truncate'>
+                      <span className="text-sm text-foreground truncate">
                         {application.created_by.email}
                       </span>
                     </div>
                   )}
 
                   {application.created_by?.phone && (
-                    <div className='flex items-center space-x-3'>
-                      <div className='p-1.5 rounded-md bg-muted/50 flex-shrink-0'>
-                        <Phone className='h-4 w-4 text-muted-foreground' />
+                    <div className="flex items-center space-x-3">
+                      <div className="p-1.5 rounded-md bg-muted/50 flex-shrink-0">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className='text-sm text-foreground'>
+                      <span className="text-sm text-foreground">
                         {application.created_by.phone}
                       </span>
                     </div>
                   )}
 
                   {application.created_by?.address && (
-                    <div className='flex items-center space-x-3'>
-                      <div className='p-1.5 rounded-md bg-muted/50 flex-shrink-0'>
-                        <MapPin className='h-4 w-4 text-muted-foreground' />
+                    <div className="flex items-center space-x-3">
+                      <div className="p-1.5 rounded-md bg-muted/50 flex-shrink-0">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className='text-sm text-foreground'>
+                      <span className="text-sm text-foreground">
                         {application.created_by.address}
                       </span>
                     </div>
                   )}
 
                   {application.created_by?.birthday && (
-                    <div className='flex items-center space-x-3'>
-                      <div className='p-1.5 rounded-md bg-muted/50 flex-shrink-0'>
-                        <Cake className='h-4 w-4 text-muted-foreground' />
+                    <div className="flex items-center space-x-3">
+                      <div className="p-1.5 rounded-md bg-muted/50 flex-shrink-0">
+                        <Cake className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <span className='text-sm text-foreground'>
+                      <span className="text-sm text-foreground">
                         {new Date(
                           application.created_by.birthday
                         ).toLocaleDateString("vi-VN")}
@@ -820,21 +799,21 @@ export default function ApplicationDetailPage() {
             </Card>
 
             {/* Application Status Card */}
-            <Card className='shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm'>
-              <CardHeader className='pb-3'>
-                <CardTitle className='flex items-center space-x-2 text-lg'>
-                  <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30'>
-                    <ClockIcon className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+            <Card className="shadow-sm hover:shadow-md transition-shadow duration-200 border-0 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <ClockIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <span>Trạng thái đơn từ</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-xl border'>
-                  <div className='flex items-center justify-center mb-3'>
-                    <StatusIcon className='h-8 w-8 text-center' />
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-gradient-to-br from-muted/40 to-muted/60 rounded-xl border">
+                  <div className="flex items-center justify-center mb-3">
+                    <StatusIcon className="h-8 w-8 text-center" />
                   </div>
-                  <div className='text-center'>
+                  <div className="text-center">
                     <Badge
                       variant={statusInfo.variant}
                       className={`${statusInfo.className} px-4 py-2 text-sm font-medium shadow-sm`}
@@ -844,20 +823,20 @@ export default function ApplicationDetailPage() {
                   </div>
                 </div>
 
-                <div className='space-y-3 text-sm'>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>Ngày tạo:</span>
-                    <span className='font-medium'>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Ngày tạo:</span>
+                    <span className="font-medium">
                       {new Date(application.created_at).toLocaleDateString(
                         "vi-VN"
                       )}
                     </span>
                   </div>
-                  <div className='flex justify-between'>
-                    <span className='text-muted-foreground'>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
                       Cập nhật lần cuối:
                     </span>
-                    <span className='font-medium'>
+                    <span className="font-medium">
                       {new Date(application.updated_at).toLocaleDateString(
                         "vi-VN"
                       )}

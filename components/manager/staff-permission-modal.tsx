@@ -23,6 +23,7 @@ import {
 } from "@/api/staff/staff-permissions-api";
 import { fetchStaffDetailWithModule } from "@/api/manager/staff-api";
 import { useAuth } from "@/hooks/use-auth";
+import { isDataReviewResponse } from "@/utils/review-utils";
 
 interface StaffPermissionModalProps {
   open: boolean;
@@ -224,27 +225,49 @@ export default function StaffPermissionModal({
     });
   };
 
+  const [reviewPending, setReviewPending] = useState(false);
+
   const handleSave = async () => {
     if (!staffData || !token || !tenantId) {
       return;
     }
 
     setSaving(true);
+    setReviewPending(false); // Reset pending state
     try {
-      await updateStaffPermissions({
+      const response = await updateStaffPermissions({
         userId: staffData._id,
         permissions: selectedPermissions,
         tenantId,
         token,
       });
 
-      toast({
-        title: "Thành công",
-        description: "Quyền hạn nhân viên đã được cập nhật",
-      });
+      console.log(
+        "Staff Permission Response:",
+        JSON.stringify(response, null, 2)
+      );
 
-      onSuccess?.();
-      onOpenChange(false);
+      // Check for data-review message using the shared utility
+      const isDataReview = isDataReviewResponse(response);
+      console.log("isDataReview result:", isDataReview);
+
+      if (isDataReview) {
+        toast({
+          title: "Thông báo",
+          description: "Thông tin cần được quản lý phê duyệt",
+          variant: "default",
+          className: "bg-yellow-500 text-white border-none", // Custom styling for warning/info if needed
+        });
+        setReviewPending(true);
+        // Do NOT close the modal
+      } else {
+        toast({
+          title: "Thành công",
+          description: "Quyền hạn nhân viên đã được cập nhật",
+        });
+        onSuccess?.();
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error("Error updating staff permissions:", error);
       toast({
@@ -260,11 +283,8 @@ export default function StaffPermissionModal({
   if (!staffData) return null;
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-      <DialogContent className='max-w-4xl max-h-[80vh] overflow-y-auto'>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Quản lý quyền hạn nhân viên</DialogTitle>
           <DialogDescription>
@@ -274,17 +294,17 @@ export default function StaffPermissionModal({
         </DialogHeader>
 
         {loading || loadingPermissions ? (
-          <div className='flex items-center justify-center py-8'>
-            <Loader2 className='h-8 w-8 animate-spin' />
-            <span className='ml-2'>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">
               {loading
                 ? "Đang tải danh sách quyền hạn..."
                 : "Đang tải quyền hạn hiện tại..."}
             </span>
           </div>
         ) : (
-          <div className='space-y-6'>
-            <div className='grid gap-4'>
+          <div className="space-y-6">
+            <div className="grid gap-4">
               {Array.isArray(availablePermissions) &&
               availablePermissions.length > 0 ? (
                 availablePermissions
@@ -303,10 +323,10 @@ export default function StaffPermissionModal({
                     return (
                       <Card
                         key={`${moduleName}-${permissionIndex}`} // Use index to ensure unique keys
-                        className='border'
+                        className="border"
                       >
-                        <CardHeader className='pb-3'>
-                          <div className='flex items-center space-x-2'>
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`module-${moduleName}-${permissionIndex}`}
                               checked={isModuleSelected}
@@ -316,7 +336,7 @@ export default function StaffPermissionModal({
                             />
                             <Label
                               htmlFor={`module-${moduleName}-${permissionIndex}`}
-                              className='text-lg font-medium cursor-pointer'
+                              className="text-lg font-medium cursor-pointer"
                             >
                               {getModuleDisplayName(moduleName)}
                             </Label>
@@ -328,17 +348,17 @@ export default function StaffPermissionModal({
 
                         {isModuleSelected && selectedModuleIndex >= 0 && (
                           <CardContent>
-                            <div className='space-y-4'>
+                            <div className="space-y-4">
                               {/* Actions */}
                               <div>
-                                <Label className='text-sm font-medium mb-2 block'>
+                                <Label className="text-sm font-medium mb-2 block">
                                   Hành động được phép:
                                 </Label>
-                                <div className='grid grid-cols-2 md:grid-cols-4 gap-2'>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                   {modulePermission.action.map((action) => (
                                     <div
                                       key={action}
-                                      className='flex items-center space-x-2'
+                                      className="flex items-center space-x-2"
                                     >
                                       <Checkbox
                                         id={`${moduleName}-${action}-${permissionIndex}`}
@@ -357,7 +377,7 @@ export default function StaffPermissionModal({
                                       />
                                       <Label
                                         htmlFor={`${moduleName}-${action}-${permissionIndex}`}
-                                        className='cursor-pointer'
+                                        className="cursor-pointer"
                                       >
                                         {getActionDisplayName(action)}
                                       </Label>
@@ -368,11 +388,11 @@ export default function StaffPermissionModal({
 
                               {/* Review Settings */}
                               <div>
-                                <Label className='text-sm font-medium mb-2 block'>
+                                <Label className="text-sm font-medium mb-2 block">
                                   Quy trình phê duyệt:
                                 </Label>
-                                <div className='flex gap-4'>
-                                  <div className='flex items-center space-x-2'>
+                                <div className="flex gap-4">
+                                  <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id={`${moduleName}-no-review-${permissionIndex}`}
                                       checked={
@@ -388,12 +408,12 @@ export default function StaffPermissionModal({
                                     />
                                     <Label
                                       htmlFor={`${moduleName}-no-review-${permissionIndex}`}
-                                      className='cursor-pointer'
+                                      className="cursor-pointer"
                                     >
                                       Không cần phê duyệt
                                     </Label>
                                   </div>
-                                  <div className='flex items-center space-x-2'>
+                                  <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id={`${moduleName}-need-review-${permissionIndex}`}
                                       checked={
@@ -409,7 +429,7 @@ export default function StaffPermissionModal({
                                     />
                                     <Label
                                       htmlFor={`${moduleName}-need-review-${permissionIndex}`}
-                                      className='cursor-pointer'
+                                      className="cursor-pointer"
                                     >
                                       Cần phê duyệt từ quản lý
                                     </Label>
@@ -423,34 +443,74 @@ export default function StaffPermissionModal({
                     );
                   })
               ) : (
-                <div className='text-center py-8 text-muted-foreground'>
+                <div className="text-center py-8 text-muted-foreground">
                   Không có quyền hạn nào có sẵn để cấp cho nhân viên.
                   <br />
-                  <small className='text-xs'>
+                  <small className="text-xs">
                     Available permissions: {availablePermissions.length}
                   </small>
                 </div>
               )}
             </div>
 
-            <div className='mt-4 p-3 bg-blue-50 rounded-lg'>
-              <h4 className='font-medium text-blue-800 mb-2'>
+            {reviewPending && (
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start">
+                <div className="mr-3 mt-0.5">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                      stroke="#EAB308"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 8V12"
+                      stroke="#EAB308"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 16H12.01"
+                      stroke="#EAB308"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-medium text-yellow-800">Cần phê duyệt</h4>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    Thông tin thay đổi quyền hạn này cần được quản lý phê duyệt
+                    trước khi có hiệu lực.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-800 mb-2">
                 Quyền hạn hiện tại:
               </h4>
               {selectedPermissions.length > 0 ? (
-                <div className='space-y-2'>
+                <div className="space-y-2">
                   {selectedPermissions
                     .filter((perm) => perm?.module && perm.module.length > 0)
                     .map((perm, index) => (
-                      <div
-                        key={index}
-                        className='text-sm text-blue-700'
-                      >
+                      <div key={index} className="text-sm text-blue-700">
                         <strong>{getModuleDisplayName(perm.module[0])}:</strong>{" "}
                         {perm.action
                           ?.map((action) => getActionDisplayName(action))
                           .join(", ")}{" "}
-                        <span className='text-xs'>
+                        <span className="text-xs">
                           ({perm.noReview ? "Không cần duyệt" : "Cần phê duyệt"}
                           )
                         </span>
@@ -458,7 +518,7 @@ export default function StaffPermissionModal({
                     ))}
                 </div>
               ) : (
-                <div className='text-sm text-blue-600'>
+                <div className="text-sm text-blue-600">
                   Chưa có quyền hạn nào được chọn. Nhân viên vẫn có thể đăng
                   nhập nhưng không thể truy cập các chức năng.
                 </div>
@@ -469,11 +529,11 @@ export default function StaffPermissionModal({
 
         <DialogFooter>
           <Button
-            variant='outline'
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={saving || loadingPermissions}
           >
-            <X className='h-4 w-4 mr-2' />
+            <X className="h-4 w-4 mr-2" />
             Hủy
           </Button>
           <Button
@@ -481,9 +541,9 @@ export default function StaffPermissionModal({
             disabled={saving || loading || loadingPermissions}
           >
             {saving ? (
-              <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <Save className='h-4 w-4 mr-2' />
+              <Save className="h-4 w-4 mr-2" />
             )}
             Lưu quyền hạn
           </Button>

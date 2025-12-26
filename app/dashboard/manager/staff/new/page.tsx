@@ -53,6 +53,7 @@ import {
   getBirthDateSchema,
 } from "@/lib/schemas";
 import { getTenantInfo } from "@/api/tenant-api";
+import { useWithReview } from "@/hooks/use-with-review";
 
 const staffFormSchema = z
   .object({
@@ -81,6 +82,10 @@ export default function NewStaffPage() {
   const [tenantName, setTenantName] = useState("");
   const [isFetchingTenant, setIsFetchingTenant] = useState(false);
 
+  import { useWithReview } from "@/hooks/use-with-review";
+
+  // ... imports
+
   // Initialize form
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
@@ -93,6 +98,19 @@ export default function NewStaffPage() {
       address: "",
       birthday: "",
       is_active: true,
+    },
+  });
+
+  const { handleResponse } = useWithReview({
+    onSuccess: () => {
+      toast({
+        title: "Thành công",
+        description: "Đã tạo nhân viên mới thành công",
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+
+      router.push("/dashboard/manager/staff");
+      router.refresh();
     },
   });
 
@@ -210,20 +228,13 @@ export default function NewStaffPage() {
         }
       });
 
-      await createStaff({
+      const response = await createStaff({
         tenantId,
         token,
         staffData: payload,
       });
 
-      toast({
-        title: "Thành công",
-        description: "Đã tạo nhân viên mới thành công",
-        className: "bg-green-50 border-green-200 text-green-800",
-      });
-
-      router.push("/dashboard/manager/staff");
-      router.refresh();
+      handleResponse(response);
     } catch (error: any) {
       console.error("Error creating staff:", error);
       const { fieldErrors, generalError } = parseApiFieldErrors(error);

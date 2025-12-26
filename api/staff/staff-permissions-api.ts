@@ -131,7 +131,7 @@ export async function updateStaffPermissions({
   permissions: PermissionModule[];
   tenantId: string;
   token: string;
-}): Promise<void> {
+}): Promise<any> {
   if (!userId || !tenantId || !token) {
     throw new Error("Missing required parameters");
   }
@@ -161,6 +161,7 @@ export async function updateStaffPermissions({
   }
 
   const data = await res.json();
+  return data;
 }
 
 /**

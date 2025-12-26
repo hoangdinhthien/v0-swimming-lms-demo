@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadMedia } from "@/api/media-api";
 import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
+import { useWithReview } from "@/hooks/use-with-review";
 
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -73,11 +74,22 @@ export default function NewsListPage() {
 
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(newsFormSchema),
+    // Initialize form
     defaultValues: {
       title: "",
       content: "",
       type: [],
       coverFile: null,
+    },
+  });
+
+  const { handleResponse } = useWithReview({
+    onSuccess: async () => {
+      await fetchNews();
+      toast({
+        title: "Thành công",
+        description: "Tạo tin tức thành công!",
+      });
     },
   });
 
@@ -176,19 +188,14 @@ export default function NewsListPage() {
         ...(coverId && { cover: [coverId] }),
       };
 
-      await createNews(requestBody, token, tenantId);
+      const response = await createNews(requestBody, token, tenantId);
+
+      handleResponse(response);
 
       // Reset form and close modal
       form.reset();
       setImagePreview(null);
       setIsModalOpen(false);
-
-      // Refresh news list
-      await fetchNews();
-      toast({
-        title: "Thành công",
-        description: "Tạo tin tức thành công!",
-      });
     } catch (error: any) {
       console.error("Error creating news:", error);
       toast({

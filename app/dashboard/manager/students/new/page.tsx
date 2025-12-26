@@ -318,10 +318,20 @@ function NewStudentForm() {
     }
   };
 
+import { useWithReview } from "@/hooks/use-with-review";
+
+// ... existing code ...
+
+const NewStudentForm = () => {
+  // ... existing code ...
+  const { handleResponse } = useWithReview();
+
+  // ... existing code ...
+
   const onSubmit = async (data: StudentFormValues) => {
     setIsSubmitting(true);
     try {
-      // Get tenant ID and auth token
+      // ... same data prep code ...
       const tenantId = getSelectedTenant();
       const token = getAuthToken();
 
@@ -349,61 +359,88 @@ function NewStudentForm() {
       if (data.parent_id) studentData.parent_id = data.parent_id;
 
       // Call the API to create student
-      const result = await createStudent({
+      const response = await createStudent({
         data: studentData,
         tenantId,
         token,
       });
 
-      // Send account created email (fire and forget)
-      // Call the test endpoint to send welcome email
-      sendAccountCreatedEmail({
-        email: studentData.email,
-        password: studentData.password,
-        tenantId,
-        token,
-      });
+      handleResponse(response, {
+        onSuccess: () => {
+          // Send account created email (fire and forget)
+          // Call the test endpoint to send welcome email
+          sendAccountCreatedEmail({
+            email: studentData.email,
+            password: studentData.password,
+            tenantId,
+            token,
+          });
 
-      // Show success message
-      toast({
-        title: "Thành công",
-        description: "Đã thêm học viên và gửi email thông báo",
-      });
+          // Show success message
+          toast({
+            title: "Thành công",
+            description: "Đã thêm học viên và gửi email thông báo",
+          });
 
-      // Check if there's a return URL from guest order flow
-      const guestDataStr = sessionStorage.getItem("guestData");
-      let returnUrl = null;
+          // Check if there's a return URL from guest order flow
+          const guestDataStr = sessionStorage.getItem("guestData");
+          let returnUrl = null;
 
-      if (guestDataStr) {
-        try {
-          const guestData = JSON.parse(guestDataStr);
-          returnUrl = guestData.returnUrl;
+          if (guestDataStr) {
+            try {
+              const guestData = JSON.parse(guestDataStr);
+              returnUrl = guestData.returnUrl;
 
-          // Store the newly created user ID for the transaction page to use
-          const newUserData = {
-            userId: result.data?._id || result._id, // API might return data in different structures
-            showClassModal: true, // Flag to show class modal immediately
-          };
-          sessionStorage.setItem("newUserData", JSON.stringify(newUserData));
+              // Store the newly created user ID for the transaction page to use
+              const newUserData = {
+                userId: response.data?._id || response._id, // API might return data in different structures
+                showClassModal: true, // Flag to show class modal immediately
+              };
+              sessionStorage.setItem("newUserData", JSON.stringify(newUserData));
 
-          sessionStorage.removeItem("guestData");
-        } catch (error) {
-          console.error("Error parsing guest data:", error);
+              sessionStorage.removeItem("guestData");
+            } catch (error) {
+              console.error("Error parsing guest data:", error);
+            }
+          }
+
+          // Redirect appropriately
+          if (returnUrl) {
+            // Coming from transaction detail page - go back there
+            router.push(returnUrl);
+          } else {
+            // Normal flow - go to students list
+            router.push("/dashboard/manager/students");
+          }
+
+          router.refresh(); // Refresh the page to show the new student
+        },
+        onReview: () => {
+             // Redirect appropriately even if review needed
+             // Check if there's a return URL from guest order flow (logic duplicated because routing logic is same)
+            const guestDataStr = sessionStorage.getItem("guestData");
+            let returnUrl = null;
+            if (guestDataStr) {
+                try {
+                const guestData = JSON.parse(guestDataStr);
+                returnUrl = guestData.returnUrl;
+                sessionStorage.removeItem("guestData");
+                } catch (e) {
+                     console.error("Error parsing guest data:", e);
+                }
+            }
+
+            if (returnUrl) {
+                router.push(returnUrl);
+            } else {
+                router.push("/dashboard/manager/students");
+            }
+             router.refresh();
         }
-      }
+      });
 
-      // Redirect appropriately
-      if (returnUrl) {
-        // Coming from transaction detail page - go back there
-        router.push(returnUrl);
-      } else {
-        // Normal flow - go to students list
-        router.push("/dashboard/manager/students");
-      }
-
-      router.refresh(); // Refresh the page to show the new student
     } catch (error: any) {
-      // Parse field-specific errors from API response
+      // ... existing error handling ...
       const { fieldErrors, generalError } = parseApiFieldErrors(error);
 
       // Set field-specific errors

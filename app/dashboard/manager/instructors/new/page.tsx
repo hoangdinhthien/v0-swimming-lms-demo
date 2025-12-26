@@ -36,6 +36,7 @@ import {
   getBirthDateSchema,
 } from "@/lib/schemas";
 import PermissionGuard from "@/components/permission-guard";
+import { useWithReview } from "@/hooks/use-with-review";
 
 // Form schema for validation
 const instructorFormSchema = z
@@ -80,6 +81,17 @@ export default function NewInstructorPage() {
     mode: "onChange",
   });
 
+  const { handleResponse } = useWithReview({
+    onSuccess: () => {
+      toast({
+        title: "Thành công",
+        description: "Đã thêm Huấn luyện viên mới",
+      });
+      router.push("/dashboard/manager/instructors");
+      router.refresh();
+    },
+  });
+
   const onSubmit = async (data: InstructorFormValues) => {
     setIsSubmitting(true);
     try {
@@ -115,15 +127,7 @@ export default function NewInstructorPage() {
         token,
       });
 
-      // Show success message
-      toast({
-        title: "Thành công",
-        description: "Đã thêm Huấn luyện viên mới",
-      });
-
-      // Redirect to instructors list
-      router.push("/dashboard/manager/instructors");
-      router.refresh(); // Refresh the page to show the new instructor
+      handleResponse(result);
     } catch (error: any) {
       // Parse field-specific errors from API response
       const { fieldErrors, generalError } = parseApiFieldErrors(error);

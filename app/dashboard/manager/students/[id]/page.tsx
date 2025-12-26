@@ -72,181 +72,13 @@ import {
   birthDateSchema,
 } from "@/lib/schemas";
 
+import { useWithReview } from "@/hooks/use-with-review";
+
 export default function StudentDetailPage() {
-  const router = useRouter();
-  const params = useParams();
-  const studentId = params?.id as string;
-  const [detail, setDetail] = useState<any>(null);
-  const [parentInfo, setParentInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string>("/placeholder.svg");
-  const [tenantName, setTenantName] = useState<string>("");
-  const [isFetchingTenant, setIsFetchingTenant] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  // ... existing code ...
+  const { handleResponse } = useWithReview();
 
-  // New state to track avatar upload for form submission
-  const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
-  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
-
-  // Form schema for student update
-  const studentUpdateSchema = z.object({
-    username: requiredStringSchema("Tên đăng nhập là bắt buộc"),
-    email: z.string().email("Email không hợp lệ"),
-    phone: optionalPhoneSchema.optional(),
-    address: z.string().optional(),
-    birthday: birthDateSchema.optional(),
-    is_active: z.boolean().default(true),
-    password: z.string().optional(), // Password is optional for updates
-  });
-
-  type StudentFormValues = z.infer<typeof studentUpdateSchema>;
-
-  const form = useForm<StudentFormValues>({
-    resolver: zodResolver(studentUpdateSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      phone: "",
-      address: "",
-      birthday: "",
-      is_active: true,
-      password: "",
-    },
-  });
-
-  // Fetch tenant name function
-  const fetchTenantName = async (tenantId: string) => {
-    if (!tenantId) return;
-    setIsFetchingTenant(true);
-    try {
-      const { title } = await getTenantInfo(tenantId);
-      setTenantName(title);
-    } catch (err) {
-      console.error("Error fetching tenant name:", err);
-    } finally {
-      setIsFetchingTenant(false);
-    }
-  };
-
-  useEffect(() => {
-    async function fetchDetail() {
-      setLoading(true);
-      setError(null);
-      setDetail(null);
-      setParentInfo(null);
-      try {
-        const tenantId = getSelectedTenant();
-        if (!tenantId) throw new Error("Không tìm thấy tenant");
-        const token = getAuthToken();
-        if (!token) throw new Error("Không có thông tin xác thực");
-
-        const detailData = await fetchStudentDetail({
-          studentId,
-          tenantId,
-          token,
-        });
-        setDetail(detailData);
-
-        // Fetch avatar if available - handle new featured_image structure
-        if (detailData?.user?.featured_image) {
-          if (
-            Array.isArray(detailData.user.featured_image) &&
-            detailData.user.featured_image.length > 0
-          ) {
-            const firstImage = detailData.user.featured_image[0];
-            if (firstImage?.path) {
-              if (
-                Array.isArray(firstImage.path) &&
-                firstImage.path.length > 0
-              ) {
-                setAvatarUrl(firstImage.path[0]);
-              } else if (typeof firstImage.path === "string") {
-                setAvatarUrl(firstImage.path);
-              }
-            }
-          } else if (
-            typeof detailData.user.featured_image === "object" &&
-            detailData.user.featured_image.path
-          ) {
-            if (Array.isArray(detailData.user.featured_image.path)) {
-              setAvatarUrl(detailData.user.featured_image.path[0]);
-            } else if (
-              typeof detailData.user.featured_image.path === "string"
-            ) {
-              setAvatarUrl(detailData.user.featured_image.path);
-            }
-          } else if (typeof detailData.user.featured_image === "string") {
-            try {
-              const mediaPath = await getMediaDetails(
-                detailData.user.featured_image
-              );
-              if (mediaPath) {
-                setAvatarUrl(mediaPath);
-              }
-            } catch (error) {
-              console.error("Error fetching media details:", error);
-            }
-          }
-        }
-
-        // Check if student has a parent and fetch parent information
-        if (
-          detailData?.user?.parent_id &&
-          detailData.user.parent_id.length > 0
-        ) {
-          try {
-            const parentId = detailData.user.parent_id[0];
-            const allMembers = await fetchStudents({
-              tenantId,
-              token,
-              role: "member",
-            });
-            const parentData = allMembers.find(
-              (member: any) => member.user?._id === parentId
-            );
-
-            if (parentData) {
-              setParentInfo(parentData);
-            }
-          } catch (parentErr) {
-            console.error("Lỗi khi tải thông tin phụ huynh:", parentErr);
-          }
-        }
-      } catch (e: any) {
-        setError(e.message || "Lỗi khi lấy thông tin học viên");
-      }
-      setLoading(false);
-    }
-    if (studentId) fetchDetail();
-  }, [studentId]);
-
-  // Effect to fetch tenant name when component loads
-  useEffect(() => {
-    const currentTenantId = getSelectedTenant();
-    if (currentTenantId) {
-      fetchTenantName(currentTenantId);
-    }
-  }, []);
-
-  // Populate form data when student detail is loaded
-  useEffect(() => {
-    if (detail?.user) {
-      form.reset({
-        username: detail.user.username || "",
-        email: detail.user.email || "",
-        phone: detail.user.phone || "",
-        address: detail.user.address || "",
-        birthday: detail.user.birthday
-          ? new Date(detail.user.birthday).toISOString().split("T")[0]
-          : "",
-        is_active: detail.user.is_active ?? true,
-        password: "",
-      });
-    }
-  }, [detail, form]);
+  // ... existing code ...
 
   // Handle form submission
   const onSubmit = async (values: StudentFormValues) => {
@@ -288,26 +120,30 @@ export default function StudentDetailPage() {
       if (!token) throw new Error("Không có thông tin xác thực");
 
       // Call the update API
-      await updateStudent({
+      const response = await updateStudent({
         studentId,
         data: updateData,
         tenantId,
         token,
       });
 
-      // Close modal and refresh data
-      setIsEditModalOpen(false);
-      toast({
-        title: "Cập nhật thành công",
-        description: "Thông tin học viên đã được cập nhật",
-        variant: "default",
+      handleResponse(response, {
+        onSuccess: () => {
+          // Close modal and refresh data
+          setIsEditModalOpen(false);
+          toast({
+            title: "Cập nhật thành công",
+            description: "Thông tin học viên đã được cập nhật",
+            variant: "default",
+          });
+
+          // Clear the uploaded avatar ID after successful update
+          setUploadedAvatarId(null);
+
+          // Refresh student data
+          fetchDetail();
+        },
       });
-
-      // Clear the uploaded avatar ID after successful update
-      setUploadedAvatarId(null);
-
-      // Refresh student data
-      fetchDetail();
     } catch (error: any) {
       const { fieldErrors, generalError } = parseApiFieldErrors(error);
 

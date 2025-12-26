@@ -164,24 +164,24 @@ export async function replyToApplication(
   tenantId: string,
   token: string,
   replyData: ReplyApplicationRequest
-): Promise<boolean> {
-  try {
-    const response = await apiPut(
-      `${config.API}/v1/workflow-process/manager/application?id=${id}`,
-      replyData,
-      {
-        requireAuth: true,
-        includeTenant: false,
-        headers: {
-          "x-tenant-id": tenantId,
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+): Promise<any> {
+  const response = await apiPut(
+    `${config.API}/v1/workflow-process/manager/application?id=${id}`,
+    replyData,
+    {
+      requireAuth: true,
+      includeTenant: false,
+      headers: {
+        "x-tenant-id": tenantId,
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
-    return response.ok;
-  } catch (error) {
-    console.error("Error replying to application:", error);
-    return false;
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to reply to application");
   }
+
+  return response.json();
 }

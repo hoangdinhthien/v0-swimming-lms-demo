@@ -60,6 +60,7 @@ import { getAuthToken } from "@/api/auth-utils";
 import { getSelectedTenant } from "@/utils/tenant-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useWithReview } from "@/hooks/use-with-review";
 
 // News detail page
 export default function NewsDetailPage() {
@@ -71,6 +72,37 @@ export default function NewsDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { handleResponse } = useWithReview({
+    onSuccess: async () => {
+      // Close modal and refresh data
+      setIsEditModalOpen(false);
+
+      if (!newsItem) return;
+
+      // Refresh the news detail
+      const updatedNewsDetail = await getNewsDetail(newsItem._id);
+      if (updatedNewsDetail) {
+        setNewsItem(updatedNewsDetail);
+
+        // Update cover images based on updated news data
+        if (updatedNewsDetail.cover) {
+          const imageUrls = extractNewsImageUrls(updatedNewsDetail.cover);
+          setCoverImages(imageUrls);
+          setCurrentImageIndex(0); // Reset to first image
+        } else {
+          // Cover was removed, set to empty array
+          setCoverImages([]);
+        }
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Cập nhật tin tức thành công!",
+        variant: "default",
+      });
+    },
+  });
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -268,32 +300,14 @@ export default function NewsDetailPage() {
         ...(coverIds.length > 0 && { cover: coverIds }),
       };
 
-      await updateNews(newsItem._id, requestBody, token, tenantId);
+      const response = await updateNews(
+        newsItem._id,
+        requestBody,
+        token,
+        tenantId
+      );
 
-      // Close modal and refresh data
-      setIsEditModalOpen(false);
-
-      // Refresh the news detail
-      const updatedNewsDetail = await getNewsDetail(newsItem._id);
-      if (updatedNewsDetail) {
-        setNewsItem(updatedNewsDetail);
-
-        // Update cover images based on updated news data
-        if (updatedNewsDetail.cover) {
-          const imageUrls = extractNewsImageUrls(updatedNewsDetail.cover);
-          setCoverImages(imageUrls);
-          setCurrentImageIndex(0); // Reset to first image
-        } else {
-          // Cover was removed, set to empty array
-          setCoverImages([]);
-        }
-      }
-
-      toast({
-        title: "Thành công",
-        description: "Cập nhật tin tức thành công!",
-        variant: "default",
-      });
+      handleResponse(response);
     } catch (error) {
       console.error("Error updating news:", error);
       toast({
@@ -388,13 +402,13 @@ export default function NewsDetailPage() {
 
   if (isLoading) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <Loader2 className='h-12 w-12 animate-spin text-primary mx-auto mb-4' />
-          <p className='text-lg font-medium text-foreground'>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-medium text-foreground">
             Đang tải chi tiết tin tức...
           </p>
-          <p className='text-sm text-muted-foreground mt-2'>
+          <p className="text-sm text-muted-foreground mt-2">
             Vui lòng chờ trong giây lát
           </p>
         </div>
@@ -404,20 +418,17 @@ export default function NewsDetailPage() {
 
   if (error) {
     return (
-      <div className='min-h-screen flex flex-col items-center justify-center bg-background'>
-        <div className='bg-card rounded-lg shadow-lg p-8 text-center border'>
-          <div className='text-red-600 dark:text-red-400 flex items-center gap-2 mb-4'>
-            <div className='p-2 bg-red-100 dark:bg-red-900/20 rounded-lg'>
-              <Eye className='h-5 w-5' />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="bg-card rounded-lg shadow-lg p-8 text-center border">
+          <div className="text-red-600 dark:text-red-400 flex items-center gap-2 mb-4">
+            <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
+              <Eye className="h-5 w-5" />
             </div>
             {error}
           </div>
-          <Button
-            asChild
-            variant='outline'
-          >
-            <Link href='/dashboard/manager/news'>
-              <ArrowLeft className='mr-2 h-4 w-4' />
+          <Button asChild variant="outline">
+            <Link href="/dashboard/manager/news">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Quay về danh sách tin tức
             </Link>
           </Button>
@@ -427,36 +438,36 @@ export default function NewsDetailPage() {
   }
 
   return (
-    <div className='px-2 sm:px-4 md:px-6 lg:px-8  max-w-full space-y-6 animate-in fade-in duration-500'>
+    <div className="px-2 sm:px-4 md:px-6 lg:px-8  max-w-full space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className='relative'>
-        <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />
-        <div className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 rounded-xl p-6 shadow-lg'>
-          <div className='flex items-center justify-between'>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10" />
+        <div className="relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between">
             <Link
-              href='/dashboard/manager/news'
-              className='inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 group'
+              href="/dashboard/manager/news"
+              className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 group"
             >
-              <ArrowLeft className='mr-2 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1' />
+              <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
               Quay về danh sách
             </Link>
 
-            <div className='flex gap-2'>
+            <div className="flex gap-2">
               <Button
                 onClick={handleOpenEditModal}
-                className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200'
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                <Edit className='mr-2 h-4 w-4' />
+                <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    variant='destructive'
-                    className='bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200'
+                    variant="destructive"
+                    className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg hover:shadow-xl transition-all duration-200"
                   >
-                    <Trash2 className='mr-2 h-4 w-4' />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Xóa
                   </Button>
                 </AlertDialogTrigger>
@@ -473,7 +484,7 @@ export default function NewsDetailPage() {
                     <AlertDialogAction
                       onClick={handleDeleteNews}
                       disabled={isDeleting}
-                      className='bg-red-600 hover:bg-red-700'
+                      className="bg-red-600 hover:bg-red-700"
                     >
                       {isDeleting ? "Đang xóa..." : "Xóa"}
                     </AlertDialogAction>
@@ -485,36 +496,36 @@ export default function NewsDetailPage() {
         </div>
       </div>
 
-      <div className='relative'>
-        <div className='absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10' />
-        <Card className='relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg overflow-hidden'>
-          <CardHeader className='pb-4'>
-            <div className='space-y-4'>
-              <CardTitle className='text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight'>
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 dark:from-blue-500/5 dark:to-indigo-500/5 rounded-xl blur-xl -z-10" />
+        <Card className="relative bg-white/80 dark:bg-black/80 backdrop-blur-sm border border-white/20 dark:border-gray-800/50 shadow-lg overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="space-y-4">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
                 {newsItem!.title}
               </CardTitle>
 
               {/* Meta Information */}
-              <div className='flex flex-wrap gap-4 text-sm'>
-                <div className='flex items-center gap-2 text-muted-foreground'>
-                  <div className='p-1.5 bg-blue-100 dark:bg-blue-900/20 rounded-lg'>
-                    <Calendar className='h-3.5 w-3.5 text-blue-600 dark:text-blue-400' />
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                    <Calendar className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className='font-medium'>
+                  <span className="font-medium">
                     {formatRelativeTime(newsItem!.created_at)}
                   </span>
                 </div>
 
-                <div className='flex items-center gap-2 text-muted-foreground'>
-                  <div className='p-1.5 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg'>
-                    <User className='h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400' />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+                    <User className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <span className='font-medium'>Đối tượng:</span>
+                  <span className="font-medium">Đối tượng:</span>
                 </div>
               </div>
 
               {/* Audience Badges */}
-              <div className='flex flex-wrap gap-2'>
+              <div className="flex flex-wrap gap-2">
                 {newsItem!.type.map((type, index) => {
                   const roleInfo = {
                     admin: {
@@ -546,10 +557,10 @@ export default function NewsDetailPage() {
                   return (
                     <Badge
                       key={index}
-                      variant='secondary'
+                      variant="secondary"
                       className={`${roleInfo.color} border-0 font-medium`}
                     >
-                      <Tag className='mr-1 h-3 w-3' />
+                      <Tag className="mr-1 h-3 w-3" />
                       {roleInfo.label}
                     </Badge>
                   );
@@ -558,43 +569,43 @@ export default function NewsDetailPage() {
             </div>
           </CardHeader>
 
-          <CardContent className='space-y-8'>
+          <CardContent className="space-y-8">
             {/* Cover Images */}
             {coverImages.length > 0 && (
-              <div className='relative'>
-                <div className='relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900'>
+              <div className="relative">
+                <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
                   <img
                     src={coverImages[currentImageIndex]}
                     alt={`${newsItem!.title} - Hình ${currentImageIndex + 1}`}
-                    className='w-full h-auto max-h-96 object-contain rounded-xl transition-all duration-300 hover:scale-105'
+                    className="w-full h-auto max-h-96 object-contain rounded-xl transition-all duration-300 hover:scale-105"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/placeholder.svg";
                     }}
                   />
-                  <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl' />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 rounded-xl" />
 
                   {/* Navigation Buttons */}
                   {coverImages.length > 1 && (
                     <>
                       <button
                         onClick={prevImage}
-                        className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10"
                       >
-                        <ChevronLeft className='h-5 w-5' />
+                        <ChevronLeft className="h-5 w-5" />
                       </button>
                       <button
                         onClick={nextImage}
-                        className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10'
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 z-10"
                       >
-                        <ChevronRight className='h-5 w-5' />
+                        <ChevronRight className="h-5 w-5" />
                       </button>
                     </>
                   )}
 
                   {/* Image Counter */}
                   {coverImages.length > 1 && (
-                    <div className='absolute bottom-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full'>
+                    <div className="absolute bottom-4 right-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
                       {currentImageIndex + 1} / {coverImages.length}
                     </div>
                   )}
@@ -602,7 +613,7 @@ export default function NewsDetailPage() {
 
                 {/* Image Thumbnails */}
                 {coverImages.length > 1 && (
-                  <div className='flex gap-2 mt-4 justify-center overflow-x-auto pb-2'>
+                  <div className="flex gap-2 mt-4 justify-center overflow-x-auto pb-2">
                     {coverImages.map((image, index) => (
                       <button
                         key={index}
@@ -616,7 +627,7 @@ export default function NewsDetailPage() {
                         <img
                           src={image}
                           alt={`Thumbnail ${index + 1}`}
-                          className='w-full h-full object-cover'
+                          className="w-full h-full object-cover"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "/placeholder.svg";
@@ -630,25 +641,25 @@ export default function NewsDetailPage() {
             )}
 
             {/* Content */}
-            <div className='prose max-w-none'>
-              <div className='bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-black/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50'>
-                <div className='text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap text-base'>
+            <div className="prose max-w-none">
+              <div className="bg-gradient-to-br from-gray-50/50 to-white/50 dark:from-gray-900/50 dark:to-black/50 rounded-xl p-6 border border-gray-200/50 dark:border-gray-700/50">
+                <div className="text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap text-base">
                   {newsItem!.content}
                 </div>
               </div>
             </div>
 
             {/* Footer Information */}
-            <div className='border-t border-gray-200/50 dark:border-gray-700/50 pt-6'>
-              <div className='bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 rounded-xl p-4'>
-                <div className='flex justify-between items-start gap-4 text-sm'>
-                  <div className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <Clock className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                      <span className='font-medium text-gray-700 dark:text-gray-300'>
+            <div className="border-t border-gray-200/50 dark:border-gray-700/50 pt-6">
+              <div className="bg-gradient-to-r from-gray-50/80 to-blue-50/80 dark:from-gray-900/80 dark:to-blue-900/20 rounded-xl p-4">
+                <div className="flex justify-between items-start gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
                         Ngày tạo:
                       </span>
-                      <span className='text-gray-900 dark:text-gray-100'>
+                      <span className="text-gray-900 dark:text-gray-100">
                         {new Date(newsItem!.created_at).toLocaleDateString(
                           "vi-VN",
                           {
@@ -664,12 +675,12 @@ export default function NewsDetailPage() {
                     </div>
 
                     {newsItem!.created_at !== newsItem!.updated_at && (
-                      <div className='flex items-center gap-2'>
-                        <Clock className='h-4 w-4 text-indigo-600 dark:text-indigo-400' />
-                        <span className='font-medium text-gray-700 dark:text-gray-300'>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
                           Cập nhật:
                         </span>
-                        <span className='text-gray-900 dark:text-gray-100'>
+                        <span className="text-gray-900 dark:text-gray-100">
                           {new Date(newsItem!.updated_at).toLocaleDateString(
                             "vi-VN",
                             {
@@ -693,60 +704,51 @@ export default function NewsDetailPage() {
       </div>
 
       {/* Edit Modal */}
-      <Dialog
-        open={isEditModalOpen}
-        onOpenChange={handleModalClose}
-      >
-        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+      <Dialog open={isEditModalOpen} onOpenChange={handleModalClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className='text-xl font-bold text-gray-900 dark:text-gray-100'>
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">
               Chỉnh Sửa Tin Tức
             </DialogTitle>
             <DialogDescription>Cập nhật thông tin tin tức</DialogDescription>
           </DialogHeader>
 
-          <div className='space-y-6 py-4'>
+          <div className="space-y-6 py-4">
             {/* Title */}
-            <div className='space-y-2'>
-              <Label
-                htmlFor='edit-title'
-                className='text-sm font-medium'
-              >
-                Tiêu đề tin tức <span className='text-red-500'>*</span>
+            <div className="space-y-2">
+              <Label htmlFor="edit-title" className="text-sm font-medium">
+                Tiêu đề tin tức <span className="text-red-500">*</span>
               </Label>
               <Input
-                id='edit-title'
-                placeholder='Nhập tiêu đề tin tức...'
+                id="edit-title"
+                placeholder="Nhập tiêu đề tin tức..."
                 value={formData.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
-                className='w-full'
+                className="w-full"
               />
             </div>
 
             {/* Content */}
-            <div className='space-y-2'>
-              <Label
-                htmlFor='edit-content'
-                className='text-sm font-medium'
-              >
-                Nội dung tin tức <span className='text-red-500'>*</span>
+            <div className="space-y-2">
+              <Label htmlFor="edit-content" className="text-sm font-medium">
+                Nội dung tin tức <span className="text-red-500">*</span>
               </Label>
               <Textarea
-                id='edit-content'
-                placeholder='Nhập nội dung chi tiết của tin tức...'
+                id="edit-content"
+                placeholder="Nhập nội dung chi tiết của tin tức..."
                 value={formData.content}
                 onChange={(e) => handleInputChange("content", e.target.value)}
-                className='w-full min-h-32 resize-none'
+                className="w-full min-h-32 resize-none"
                 rows={6}
               />
             </div>
 
             {/* Target Audience */}
-            <div className='space-y-3'>
-              <Label className='text-sm font-medium'>
-                Đối tượng xem tin tức <span className='text-red-500'>*</span>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">
+                Đối tượng xem tin tức <span className="text-red-500">*</span>
               </Label>
-              <div className='grid grid-cols-2 gap-3'>
+              <div className="grid grid-cols-2 gap-3">
                 {[
                   {
                     id: "manager",
@@ -771,7 +773,7 @@ export default function NewsDetailPage() {
                 ].map((type) => (
                   <div
                     key={type.id}
-                    className='flex items-start space-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                    className="flex items-start space-x-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     <Checkbox
                       id={`edit-${type.id}`}
@@ -780,14 +782,14 @@ export default function NewsDetailPage() {
                         handleTypeChange(type.id, checked as boolean)
                       }
                     />
-                    <div className='grid gap-1.5 leading-none'>
+                    <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor={`edit-${type.id}`}
-                        className='text-sm font-medium cursor-pointer'
+                        className="text-sm font-medium cursor-pointer"
                       >
                         {type.label}
                       </Label>
-                      <p className='text-xs text-muted-foreground'>
+                      <p className="text-xs text-muted-foreground">
                         {type.description}
                       </p>
                     </div>
@@ -797,38 +799,35 @@ export default function NewsDetailPage() {
             </div>
 
             {/* Cover Image */}
-            <div className='space-y-3'>
-              <Label className='text-sm font-medium'>Ảnh bìa (tùy chọn)</Label>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Ảnh bìa (tùy chọn)</Label>
 
               {/* Existing Images */}
               {formData.existingImages.length > 0 && (
-                <div className='space-y-2'>
-                  <Label className='text-xs text-muted-foreground'>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
                     Ảnh hiện tại ({formData.existingImages.length})
                   </Label>
-                  <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {formData.existingImages.map((imageUrl, index) => (
-                      <div
-                        key={index}
-                        className='relative group'
-                      >
+                      <div key={index} className="relative group">
                         <img
                           src={imageUrl}
                           alt={`Cover ${index + 1}`}
-                          className='w-full h-24 object-cover rounded-lg border'
+                          className="w-full h-24 object-cover rounded-lg border"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "/placeholder.svg";
                           }}
                         />
                         <Button
-                          type='button'
-                          variant='destructive'
-                          size='sm'
-                          className='absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity'
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => handleRemoveExistingImage(imageUrl)}
                         >
-                          <X className='h-3 w-3' />
+                          <X className="h-3 w-3" />
                         </Button>
                       </div>
                     ))}
@@ -837,19 +836,19 @@ export default function NewsDetailPage() {
               )}
 
               {/* New Image Upload */}
-              <div className='border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors'>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
                 {imagePreview ? (
-                  <div className='relative'>
+                  <div className="relative">
                     <img
                       src={imagePreview}
-                      alt='New Preview'
-                      className='w-full h-48 object-cover rounded-lg'
+                      alt="New Preview"
+                      className="w-full h-48 object-cover rounded-lg"
                     />
                     <Button
-                      type='button'
-                      variant='destructive'
-                      size='sm'
-                      className='absolute top-2 right-2'
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
                       onClick={() => {
                         // Remove the new uploaded image
                         setImagePreview(null);
@@ -859,32 +858,32 @@ export default function NewsDetailPage() {
                         }));
                       }}
                     >
-                      <X className='h-4 w-4' />
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <div className='text-center'>
-                    <ImageIcon className='mx-auto h-12 w-12 text-gray-400' />
-                    <div className='mt-4'>
+                  <div className="text-center">
+                    <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-4">
                       <div
                         onClick={triggerFileUpload}
-                        className='cursor-pointer'
+                        className="cursor-pointer"
                       >
-                        <span className='mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors'>
+                        <span className="mt-2 block text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           {formData.existingImages.length > 0
                             ? "Thêm ảnh bìa mới"
                             : "Tải lên ảnh bìa"}
                         </span>
-                        <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
+                        <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                           PNG, JPG, JPEG tối đa 5MB
                         </span>
                       </div>
                     </div>
                     <input
-                      id='edit-cover-upload'
-                      type='file'
-                      className='hidden'
-                      accept='image/*'
+                      id="edit-cover-upload"
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
                       onChange={handleFileChange}
                     />
                   </div>
@@ -893,17 +892,17 @@ export default function NewsDetailPage() {
             </div>
           </div>
 
-          <DialogFooter className='flex gap-2'>
+          <DialogFooter className="flex gap-2">
             <Button
-              type='button'
-              variant='outline'
+              type="button"
+              variant="outline"
               onClick={handleModalClose}
               disabled={isUpdating}
             >
               Hủy
             </Button>
             <Button
-              type='button'
+              type="button"
               onClick={handleUpdateNews}
               disabled={
                 isUpdating ||
@@ -911,9 +910,9 @@ export default function NewsDetailPage() {
                 !formData.content.trim() ||
                 formData.type.length === 0
               }
-              className='bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
             >
-              {isUpdating && <Loader2 className='h-4 w-4 mr-2 animate-spin' />}
+              {isUpdating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isUpdating ? "Đang cập nhật..." : "Cập nhật tin tức"}
             </Button>
           </DialogFooter>

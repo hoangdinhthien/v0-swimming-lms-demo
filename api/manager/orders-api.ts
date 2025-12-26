@@ -344,7 +344,7 @@ export async function updateOrderStatus({
   }
 
   const data = await res.json();
-  return data.data || {};
+  return data;
 }
 
 /**
@@ -764,9 +764,7 @@ export async function createOrder(
   }
 
   const result = await response.json();
-  // Extract the order from the response structure
-  const order = result.data || result;
-  return order;
+  return result;
 }
 
 export async function updateOrder(
@@ -819,9 +817,7 @@ export async function updateOrder(
   }
 
   const result = await response.json();
-  // Extract the order from the response structure
-  const order = result.data || result;
-  return order;
+  return result;
 }
 
 /**
