@@ -50,7 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import PermissionGuard from "@/components/permission-guard";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { parseApiFieldErrors } from "@/utils/api-response-parser";
 import ManagerNotFound from "@/components/manager/not-found";
 import { ScheduleModal } from "@/components/manager/schedule-modal";
@@ -74,13 +74,99 @@ import {
 
 import { useWithReview } from "@/hooks/use-with-review";
 
+// Define form schema
+const studentFormSchema = z.object({
+  username: requiredStringSchema("Tên người dùng là bắt buộc"),
+  email: z.string().email("Email không hợp lệ"),
+  phone: phoneSchema,
+  address: z.string().optional(),
+  birthday: birthDateSchema.optional(),
+  password: z.string().optional(),
+  is_active: z.boolean().default(true),
+});
+
+type StudentFormValues = z.infer<typeof studentFormSchema>;
+
 export default function StudentDetailPage() {
-  // ... existing code ...
+  const params = useParams();
+  const studentId = (params?.id as string) || "";
+  const { toast } = useToast();
   const { handleResponse } = useWithReview();
+  const router = useRouter();
 
-  // ... existing code ...
+  // State
+  const [detail, setDetail] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form submission
+  // Extra state to fix lint errors
+  const [parentInfo, setParentInfo] = useState<any>(null);
+  const [isFetchingTenant, setIsFetchingTenant] = useState(false);
+  const [tenantName, setTenantName] = useState("");
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [uploadedAvatarId, setUploadedAvatarId] = useState<string | null>(null);
+
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      phone: "",
+      address: "",
+      is_active: true,
+    },
+  });
+
+  // Initial fetch
+  useEffect(() => {
+    if (studentId) {
+      fetchDetail();
+    }
+  }, [studentId]);
+
+  // Update form when detail changes
+  useEffect(() => {
+    if (detail && detail.user) {
+      form.reset({
+        username: detail.user.username || "",
+        email: detail.user.email || "",
+        phone: detail.user.phone || "",
+        address: detail.user.address || "",
+        birthday: detail.user.birthday
+          ? new Date(detail.user.birthday).toISOString().split("T")[0]
+          : undefined,
+        is_active: detail.user.is_active ?? true,
+      });
+    }
+  }, [detail, form]);
+
+  // Fetch tenant info
+  useEffect(() => {
+    const fetchTenant = async () => {
+      setIsFetchingTenant(true);
+      try {
+        const tenantId = getSelectedTenant();
+        if (tenantId) {
+          const res = await getTenantInfo(tenantId);
+          // Tenant info might be res or res.data depending on API
+          // Assuming res has name property directly or checking structure
+          if (res && res.title) {
+            setTenantName(res.title);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      setIsFetchingTenant(false);
+    };
+    fetchTenant();
+  }, []);
   const onSubmit = async (values: StudentFormValues) => {
     setIsSubmitting(true);
 
@@ -554,7 +640,7 @@ export default function StudentDetailPage() {
                 <div className="flex items-center gap-4 col-span-3">
                   <Avatar className="h-16 w-16 border-4 border-background shadow-md">
                     <AvatarImage
-                      src={avatarUrl}
+                      src={avatarUrl || undefined}
                       alt={detail.user?.username || "Student"}
                       className="object-cover"
                     />
@@ -633,7 +719,7 @@ export default function StudentDetailPage() {
           <CardContent className="flex flex-col items-center text-center pt-0 relative pb-6">
             <Avatar className="h-32 w-32 border-4 border-background shadow-md absolute -top-16">
               <AvatarImage
-                src={avatarUrl}
+                src={avatarUrl || undefined}
                 alt={detail.user?.username || "Student"}
                 className="object-cover"
               />

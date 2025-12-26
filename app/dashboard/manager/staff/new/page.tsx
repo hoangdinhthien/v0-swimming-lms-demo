@@ -82,10 +82,6 @@ export default function NewStaffPage() {
   const [tenantName, setTenantName] = useState("");
   const [isFetchingTenant, setIsFetchingTenant] = useState(false);
 
-  import { useWithReview } from "@/hooks/use-with-review";
-
-  // ... imports
-
   // Initialize form
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),

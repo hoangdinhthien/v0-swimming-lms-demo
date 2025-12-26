@@ -79,13 +79,12 @@ import {
 } from "@/api/manager/orders-api";
 import { fetchCourseById } from "@/api/manager/courses-api";
 import { CreateOrderModal } from "@/components/manager/create-order-modal";
+import { useWithReview } from "@/hooks/use-with-review";
 
 interface CourseInfo {
   title: string;
   price?: number;
 }
-
-import { useWithReview } from "@/hooks/use-with-review";
 
 export default function TransactionsPage() {
   const router = useRouter();
