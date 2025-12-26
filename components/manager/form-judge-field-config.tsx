@@ -381,8 +381,8 @@ export function FormJudgeFieldConfig({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='1-1'>Chỉ 1 tập tin</SelectItem>
-                    <SelectItem value='1-n'>Nhiều tập tin</SelectItem>
-                    <SelectItem value='n-n'>Không giới hạn</SelectItem>
+                    {/* <SelectItem value='1-n'>Nhiều tập tin</SelectItem>
+                    <SelectItem value='n-n'>Không giới hạn</SelectItem> */}
                   </SelectContent>
                 </Select>
               </div>
