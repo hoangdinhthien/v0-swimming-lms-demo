@@ -365,10 +365,18 @@ function NewStudentForm() {
       });
 
       // Show success message
-      toast({
-        title: "Thành công",
-        description: "Đã thêm học viên và gửi email thông báo",
-      });
+      if (result.data?.[0]?.[0]?.message === "data-review") {
+        toast({
+          title: "Dữ liệu cần phê duyệt",
+          description: "Dữ liệu đã được gửi và đang chờ phê duyệt",
+          variant: "warning",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: "Đã thêm học viên và gửi email thông báo",
+        });
+      }
 
       // Check if there's a return URL from guest order flow
       const guestDataStr = sessionStorage.getItem("guestData");

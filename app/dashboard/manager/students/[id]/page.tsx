@@ -288,7 +288,7 @@ export default function StudentDetailPage() {
       if (!token) throw new Error("Không có thông tin xác thực");
 
       // Call the update API
-      await updateStudent({
+      const result = await updateStudent({
         studentId,
         data: updateData,
         tenantId,
@@ -297,11 +297,20 @@ export default function StudentDetailPage() {
 
       // Close modal and refresh data
       setIsEditModalOpen(false);
-      toast({
-        title: "Cập nhật thành công",
-        description: "Thông tin học viên đã được cập nhật",
-        variant: "default",
-      });
+
+      if (result.data?.[0]?.[0]?.message === "data-review") {
+        toast({
+          title: "Dữ liệu cần phê duyệt",
+          description: "Dữ liệu đã được gửi và đang chờ phê duyệt",
+          variant: "warning",
+        });
+      } else {
+        toast({
+          title: "Cập nhật thành công",
+          description: "Thông tin học viên đã được cập nhật",
+          variant: "default",
+        });
+      }
 
       // Clear the uploaded avatar ID after successful update
       setUploadedAvatarId(null);
